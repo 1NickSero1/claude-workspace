@@ -1,0 +1,136 @@
+========================================
+  ACTUALIZACIONES — Ruta Segura
+  Formato: fecha · qué cambió · por qué importa
+========================================
+
+------------------------------------------------------------
+v0.1 — 2026-05-29 · Versión inicial
+------------------------------------------------------------
+• Se creó la app desde cero con 6 pantallas:
+  Bienvenida, Registro, Selección de estado,
+  Menú principal, Categorías y Mi caso
+• Soporte bilingüe: español e inglés
+• Modo anónimo en el registro (sin nombre ni correo)
+• 4 estados de EE.UU. disponibles: NC, Georgia, Florida, Texas
+• 5 áreas de ayuda: Comunidad, Violencia, Alimentación, Legal, Social
+• Botón SOS de emergencia en el menú principal
+
+------------------------------------------------------------
+v0.2 — 2026-06-11 · Pantalla de bienvenida rediseñada
+------------------------------------------------------------
+• Nuevo fondo oscuro elegante (morado profundo)
+  — antes se veía como app de salud/período
+• Emoji principal cambiado de 🛡️ a 🎀
+• Nuevo mensaje de bienvenida:
+  "No estás sola en este camino,
+   encontremos juntas la salida."
+• Se agregaron 3 accesos directos visibles desde
+  la bienvenida: 💜 Emergencias · ⚖️ Legal · 🤝 Comunidad
+• Cada acceso lleva directo a su sección con un toque
+
+------------------------------------------------------------
+v0.3 — 2026-06-11 · Más estados y emojis con significado
+------------------------------------------------------------
+• Se pasó de 4 a 8 estados con mayor comunidad
+  latina en EE.UU.:
+  California, Texas, Florida, New York,
+  North Carolina, Georgia, Illinois, Arizona
+• Emojis cambiados por símbolos con significado:
+  ⚖️ legal · 🛡️ protección · 🌺 comunidad
+  🗽 migración · 💜 violencia de género
+  ✊ derechos · 🤝 apoyo · 🌵 zona fronteriza
+• Ciudades principales actualizadas en cada estado
+
+------------------------------------------------------------
+v0.4 — 2026-06-11 · Navegación, emojis y onboarding
+------------------------------------------------------------
+• Botón "Volver al inicio" tras enviar un caso ahora
+  regresa al menú principal con el estado y nombre del usuario
+  — antes intentaba abrir 'Inicio' (pantalla inexistente → crash)
+• Emojis de las 5 áreas unificados en toda la app:
+  alimentación 🌾 → 🍽️ · social 🌸 → 📖
+  (menú principal y pantalla de categoría ahora coinciden)
+• Pills de acceso directo en onboarding actualizados:
+  💜 → 🎀 Emergencias · ⚖️ Legal · 🤝 → 👥 Comunidad
+• Onboarding rediseñado:
+  — eliminada redundancia de frases "no estás sola"
+  — nueva frase única: "Tu red de apoyo para mujeres migrantes."
+  — botón "Quiero encontrar ayuda" anclado al fondo, ancho completo
+  — ícono, título y pills centrados verticalmente en toda la pantalla
+
+------------------------------------------------------------
+v0.5 — 2026-06-16 · Bugs críticos resueltos + config producción
+------------------------------------------------------------
+• Corregido CRASH en MiCasoScreen: "Volver al inicio" navegaba a 'Inicio'
+  (pantalla inexistente) → ahora navega a 'MenuPrincipal' con nombre/idioma/estado
+• CategoriaScreen ahora pasa nombre, idioma y estado a MiCasoScreen
+  (antes se perdían → el "volver" no podía funcionar correctamente)
+• MenuPrincipalScreen SOS ahora pasa nombre y estado a CategoriaScreen
+• Emoji social corregido: 🌸 → 📖 (coherente con MenuPrincipal y metricas.txt)
+• Emoji pill violencia en Onboarding: 💜 → 🎀 (coherente con metricas.txt)
+• app.json preparado para build EAS:
+  — bundleIdentifier: com.rutasegura.app
+  — android package: com.rutasegura.app
+  — scheme: rutasegura
+  — splash backgroundColor: #0d0221 (brand color)
+  — adaptiveIcon.backgroundColor: #4A0E6E (antes era #E6F4FE, azul bebé)
+  — supportsTablet: false (app diseñada para móvil)
+
+------------------------------------------------------------
+v0.6 — 2026-06-16 · Branding Ana Laverde + nuevos estados y contenido
+------------------------------------------------------------
+  Basado en feedback de Ana Laverde (Founder & CEO, Ana's Immigration Solutions LLC)
+
+• Botón "Ana Laverde" en OnboardingScreen:
+  — Círculo magenta con iniciales "AL" (placeholder para logo real)
+  — Texto "Ana Laverde · más recursos →"
+  — Al presionar: abre WhatsApp (número por confirmar)
+
+• Watermark "AL · Ana Laverde" en esquina inferior derecha
+  de TODAS las pantallas (6 pantallas en total)
+
+• EstadoScreen — 4 cambios:
+  — Bandera 🇺🇸 agregada al título
+  — New York: Boston agregado a las ciudades
+  — Nuevo card "Sur EE.UU.": Georgia · Mississippi · Alabama · Carolina
+    (Atlanta · Jackson · Birmingham · Charlotte · Columbia)
+  — Nuevo card final "¿Otro estado diferente?" con estilo diferenciado
+
+• CategoriaScreen — 3 nuevas cards:
+  — Comunidad: "Cursos de inglés" (📚 · gratuitos · en tu área)
+  — Social: "Consulados" (🏛️ · directorio latinoamericano)
+  — Social: "Ana Laverde" (👩‍💼 · abre WhatsApp · botón outline magenta)
+
+------------------------------------------------------------
+v0.7 — 2026-06-16 · SOSScreen + fixes MEJORAX
+------------------------------------------------------------
+
+[MEJORAX — Bugs resueltos]
+• Emoji alimentación corregido: MenuPrincipalScreen 🌾 → 🍽️
+  (el log decía resuelto pero el código nunca se actualizó)
+
+[NUEVO — PECAS: SOSScreen dedicada]
+• Nueva pantalla screens/SOSScreen.js — Emergencia real
+• El botón "🚨 Activar SOS ahora" ahora abre SOSScreen (antes abría un formulario — incorrecto)
+• El botón SOS del MenuPrincipal también va directo a SOSScreen
+• SOSScreen incluye 5 líneas de emergencia con botón de llamada directa:
+  — 🚨 911 (emergencia general)
+  — 💜 1-800-799-7233 (National DV Hotline, 24/7, en español)
+  — 🤝 1-800-656-4673 (RAINN, agresión sexual)
+  — 💬 741741 (Crisis Text Line, texto HOME)
+  — 🌐 1-888-498-3511 (ACLU, detención migratoria)
+• Botón "Registrar caso" discreto en SOSScreen → navega a MiCasoScreen
+• Fondo gradiente urgente oscuro (#0d0008 → #6b0030 → #8B0045)
+• App.js actualizado: SOSScreen registrada en el navegador
+• Watermark "AL · Ana Laverde" incluido en SOSScreen
+
+------------------------------------------------------------
+[PRÓXIMO]
+------------------------------------------------------------
+• Reemplazar PLACEHOLDER_NUMERO con el WhatsApp real de Ana Laverde
+• Reemplazar círculo "AL" con imagen real del logo (assets/ana-laverde-logo.png)
+• Build permanente (APK / TestFlight) para compartir
+  sin necesitar el servidor encendido
+• Contenido real en cada categoría (recursos verificados)
+
+========================================

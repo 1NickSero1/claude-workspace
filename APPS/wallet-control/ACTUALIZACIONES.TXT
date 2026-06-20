@@ -1,0 +1,431 @@
+========================================
+  ACTUALIZACIONES — Wallet Control
+  Formato: fecha · qué cambió · por qué importa
+========================================
+
+------------------------------------------------------------
+v0.1 — 2026-06-04 · Versión inicial
+------------------------------------------------------------
+• App creada desde cero con 4 pantallas principales:
+  Resumen, Tarjetas/Cuentas, Finando IA, Historial
+• Pantalla de Onboarding con registro de perfil
+• Pantalla de Ayuda con acordeón de preguntas frecuentes
+• Almacenamiento local 100% offline con AsyncStorage
+• Soporte de 2 quincenas mensuales
+• Sistema de categorías de gastos con colores
+• Metas de ahorro con historial de depósitos
+
+------------------------------------------------------------
+v0.2 — 2026-06-06 · Finando IA integrado
+------------------------------------------------------------
+• Integración con Claude API (modelo sonnet-4-6)
+• Registro de gastos e ingresos en lenguaje natural
+  — "Pagué arriendo $475.000 y Spotify $30.000"
+  — "Me pagaron el sueldo $2.000.000"
+• Extracción automática: monto, nombre, categoría
+• Asignación de gastos a tarjeta/cuenta específica
+• Vista previa de gastos antes de confirmar
+• Análisis financiero conversacional del mes
+
+------------------------------------------------------------
+v0.3 — 2026-06-10 · Tarjetas y Cuentas
+------------------------------------------------------------
+• Gestión de cuentas débito y tarjetas de crédito
+• Vista de tarjetas con scroll horizontal (CardView)
+• Seguimiento de saldo disponible en cuentas débito
+• Control de cupo usado vs disponible en crédito
+• Barra de progreso de límite de crédito
+• Edición y eliminación de gastos por tarjeta
+• Filtro de gastos por cuenta/tarjeta seleccionada
+
+------------------------------------------------------------
+v0.4 — 2026-06-12 · Resumen visual y PDF
+------------------------------------------------------------
+• DonutChart estilo Monefy con categorías por color
+• Resumen hero: ingresos, gastos, ahorro del mes
+• Cards de crédito y débito con métricas clave
+• Grid de categorías con montos y porcentajes
+• Metas de ahorro en pantalla de Resumen
+• Exportar reporte PDF mensual (expo-print + sharing)
+• Botón acceso a pantalla de Ayuda desde Resumen
+• Modal de entrada rápida de gastos (QuickEntryModal)
+
+------------------------------------------------------------
+v0.5 — 2026-06-13 · Historial y tendencias
+------------------------------------------------------------
+• Historial de meses expandibles con resumen
+• Gráfica de líneas (últimos 6 meses):
+  — ingresos (verde) · gastos (rojo) · ahorro (púrpura)
+• Lista de gastos e ingresos por mes en acordeón
+• Navegación directa a mes anterior/siguiente
+
+------------------------------------------------------------
+v0.6 — 2026-06-15 · Dark mode completo
+------------------------------------------------------------
+• ThemeContext con paleta oscura y clara
+• Todos los screens y componentes usan useColors()
+• Estilos reactivos al tema del sistema (useColorScheme)
+• Paleta dark: bg #0A0E1A · card #141828 · text #F0F2FF
+• Tab bar adaptada al tema (COLORS.tabBar)
+• Fix: ThemeProvider importado de @react-navigation/native
+• Fix: splash screen sin parpadeo en blanco (checked state)
+
+------------------------------------------------------------
+v0.7 — 2026-06-16 · Pantalla de inicio más completa
+------------------------------------------------------------
+• Botón para cambiar entre tema claro y oscuro directo desde
+  la pantalla de bienvenida (antes solo se podía desde Perfil)
+• Nueva pantalla al darle "Únete a la comunidad" con 3 opciones:
+  — Crear cuenta nueva
+  — Iniciar sesión (si ya tenías cuenta en este celular)
+  — Modo anónimo (entras sin registrarte, pero Finando IA
+    queda desactivada porque no hay datos guardados)
+• Al crear tu cuenta ahora puedes poner un emoji del teclado
+  como avatar, además de elegir un color
+• Mensaje de privacidad más profesional al crear la cuenta:
+  "Seguridad garantizada: tus datos se almacenan de forma
+  local y privada en tu dispositivo"
+
+------------------------------------------------------------
+v0.8 — 2026-06-16 · Tarjetas más simple e intuitivo
+------------------------------------------------------------
+• "Débito" y "Efectivo" ahora son un solo apartado llamado
+  "Cuentas" — ya no hay que entrar a una pestaña aparte para
+  registrar el dinero en físico
+• Al crear una cuenta, eliges el tipo (Débito o Efectivo) con
+  una leyenda clara debajo de cada opción explicando qué es
+• El formulario de nueva tarjeta se ve más limpio: la vista
+  previa de la tarjeta ahora aparece arriba, antes de llenar
+  los datos, para verla "tomar forma" mientras escribes
+• Quitado el botón "+" morado de la parte superior — ahora solo
+  existen los botones "Agregar cuenta" / "Agregar tarjeta de
+  crédito" dentro de cada sección
+• Al editar una tarjeta ya no se puede cambiar su tipo por error
+  (antes quedaba desbloqueado sin querer)
+• Nuevo color ámbar dedicado para identificar cuentas de efectivo
+
+------------------------------------------------------------
+v0.9 — 2026-06-16 · Tarjetas con más vida y control de deudas
+------------------------------------------------------------
+• Las 2 pestañas de "Balance" ahora son visualmente distintas:
+  — "Cuentas" se pone verde cuando está activa
+  — "Crédito" se pone roja cuando está activa
+  — Aparece un número en la pastilla indicando cuántas cuentas
+    tienes registradas en cada sección
+• Las cuentas débito ya no muestran los últimos 4 dígitos —
+  ese dato solo aplica para tarjetas de crédito (CardView)
+• Al mantener presionada una cuenta aparece un panel elegante
+  (no el pop-up genérico del sistema) que muestra:
+  — Una mini vista previa de la tarjeta con su color
+  — El saldo disponible actualizado
+  — Botones de Editar y Eliminar
+  — Un botón grande de "Agregar dinero" (para cuentas/efectivo)
+    o "Abonar a la deuda" (para deudas)
+  — Al elegir agregar/abonar, aparece un campo numérico para
+    ingresar el monto y confirmar con un toque
+• Nueva sección "Deudas pendientes" en la pestaña Crédito:
+  — Puedes anotar deudas informales (lo que le debes a alguien,
+    préstamos pendientes, etc.)
+  — Cada deuda muestra el monto pendiente en naranja
+  — Puedes abonar desde el panel de acción y el monto se reduce
+  — El total de deudas aparece en el encabezado de la sección
+
+------------------------------------------------------------
+v1.0 — 2026-06-16 · Panel inteligente + Préstamos + Patrimonio Neto
+------------------------------------------------------------
+• Un solo toque en cualquier cuenta abre el panel de acción
+  (antes había que mantener presionado; ahora es más rápido y natural)
+• El panel ahora incluye un "Historial reciente" por cuenta:
+  — Muestra los últimos depósitos o abonos que hiciste
+  — En crédito: muestra los últimos gastos registrados
+  — Puedes tocar un gasto para editarlo directamente desde ahí
+• Para tarjetas de crédito el panel muestra: cupo gastado,
+  disponible, límite y la barra de progreso del cupo
+• Las pestañas ahora dicen "🏦 Débito" y "💳 Crédito"
+  (antes "Cuentas" era confuso junto al efectivo fusionado)
+• Renombrada la sección "Deudas pendientes" → "Préstamos"
+  en toda la app: botones, labels, subtítulos y modales
+• Al crear un préstamo puedes poner un emoji como ícono
+  (opcional — se ve en la fila y en el panel; aparece en
+  la preview de la tarjeta en el formulario)
+• Todos los campos de dinero ahora formatean automáticamente
+  con puntos de miles mientras escribes: 1500000 → 1.500.000
+  Aplica en: monto del préstamo, saldo, límite de crédito y
+  el campo "Agregar dinero" del panel de acción
+• NUEVO por PECAS — Patrimonio Neto en pantalla Resumen:
+  Tarjeta que muestra Activos (débito + efectivo disponible)
+  menos Pasivos (crédito gastado + préstamos) = Neto real
+  Se pone verde si tienes más activos que pasivos, rojo si no.
+  Solo aparece cuando tienes cuentas o préstamos registrados
+
+------------------------------------------------------------
+v1.1 — 2026-06-16 · Tab Débito reorganizado + formulario de crédito mejorado
+------------------------------------------------------------
+• Las pills del tab "Balance" ahora usan ícono + texto en mayúsculas:
+  — [🏦] DÉBITO (verde cuando activo)
+  — [💳] CRÉDITO (rojo cuando activo)
+  — Más limpias y fáciles de identificar de un vistazo
+• El tab DÉBITO ahora tiene dos secciones visuales separadas:
+  — "Débito" arriba: tus cuentas bancarias y tarjetas débito
+  — "Efectivo" abajo (con sección igual a Préstamos): dinero
+    en billetera o en casa, con su total en amarillo dorado
+  — Botones de agregar separados: "Agregar débito" y "Agregar
+    efectivo", cada uno abre el formulario bloqueado al tipo
+• Al agregar una tarjeta de crédito el título del formulario
+  ahora dice "Nueva tarjeta de crédito" (antes "Nuevo crédito")
+• Nuevo campo opcional "Últimos 4 dígitos" al crear o editar
+  una tarjeta de crédito — si lo llenas se guarda, si no se
+  genera automáticamente (solo aplica para tipo Crédito)
+
+------------------------------------------------------------
+v1.2 — 2026-06-16 · Débito visual + resumen deudas + abonos con nota
+------------------------------------------------------------
+• El campo "Nombre" en el formulario de tarjeta/deuda/efectivo
+  ahora se llama "Alias" — más claro para referirse a lo que
+  tú llamás tu cuenta (no el nombre oficial del banco)
+• Las tarjetas débito ahora se muestran como cards visuales
+  (igual que las de crédito), con scroll horizontal:
+  — Se ve el alias en grande, el banco arriba, el saldo abajo
+  — Se eliminaron los últimos 4 dígitos para débito — ese dato
+    no aplica para cuentas bancarias o billeteras digitales
+• Nueva tarjeta resumen en la sección "Préstamos" del tab Crédito:
+  — Aparece cuando tienes al menos un préstamo registrado
+  — Muestra el total pendiente + un badge con el número de préstamos
+  — Fondo naranja suave igual al color del tipo
+• El saldo total del tab DÉBITO es ahora menos intrusivo:
+  — Quitado el gran banner verde del top de la pantalla
+  — Reemplazado por una fila pequeña al final del listado
+    que dice "Saldo total disponible $X.XXX.XXX"
+• Al agregar dinero o hacer un abono a un préstamo, ahora puedes
+  escribir una observación opcional (ej: "cuota de junio",
+  "anticipo del trabajo", "me pagó Juan"):
+  — Se guarda junto al evento en el historial de la cuenta
+  — Aparece en el panel de historial en letra pequeña debajo
+    del tipo de movimiento (Depósito / Abono)
+
+------------------------------------------------------------
+v1.3 — 2026-06-17 · Débito con métricas + préstamos en rojo + historial de abonos
+------------------------------------------------------------
+• Nueva fila de resumen en el tab DÉBITO (igual que el de crédito):
+  — "Total gastado" en rojo y "Total disponible" en verde
+  — Solo aparece cuando hay 2 o más cuentas débito registradas
+• Los valores monetarios de Préstamos ahora se muestran en rojo:
+  — El monto en la fila de cada préstamo va en rojo
+  — El total del divisor "Préstamos" va en rojo
+  — El total en la tarjeta resumen va en rojo
+  — El monto pendiente en el panel de acción va en rojo
+• La tarjeta "Total deuda" (antes "Total pendiente") ahora es tocable:
+  — Al tocarla se abre un popup "Historial de abonos"
+  — Muestra todos los abonos de TODOS los préstamos combinados
+  — Ordenados de más reciente a más antiguo
+  — Incluye total acumulado abonado en la parte superior
+  — Muestra nombre del préstamo, monto en rojo, fecha y nota (si hay)
+• Fixes técnicos aplicados por FIXA:
+  — CardView en modo compacto ya no muestra dígitos inventados
+    para tarjetas débito/efectivo en el selector de Finando IA
+  — Eliminados 3 estilos CSS muertos (balanceBanner, etc.)
+  — Eliminado import TypeScript sin uso (CardEvent)
+
+------------------------------------------------------------
+v1.4 — 2026-06-17 · Cuentas unificadas + préstamos más inteligentes
+------------------------------------------------------------
+• El resumen de débito ahora incluye el efectivo:
+  — "Total gastado" suma todos los gastos de cuentas débito Y efectivo
+  — "Total disponible" muestra el saldo combinado de débito + efectivo
+  — Aparece cuando tienes 2 o más cuentas en total (antes solo 2+ débito)
+  — Quitada la fila "Saldo total disponible" del fondo de la pantalla
+    (esa info ya está visible en el resumen de arriba)
+• Los préstamos ahora tienen memoria de su monto original:
+  — Al crear un préstamo se guarda la "Deuda inicial"
+  — En el panel del préstamo aparecen dos cifras separadas:
+    · Deuda inicial: el monto cuando lo creaste (fijo, en gris)
+    · Pendiente por pagar: lo que falta (en rojo, baja con cada abono)
+• Protección contra abonos inválidos en préstamos:
+  — Si intentas abonar más de lo que debes, aparece un aviso:
+    "El monto que ingresaste ($X) supera lo pendiente por pagar ($Y)"
+  — No se registra el abono hasta que el monto sea correcto
+
+------------------------------------------------------------
+v1.5 — 2026-06-17 · Alertas bonitas + crédito organizado + emoji global + recordatorios
+------------------------------------------------------------
+• El aviso de "abono mayor a la deuda" ahora es un modal del propio estilo
+  de la app (no el popup genérico del sistema):
+  — Ícono rojo de alerta, bordes en rojo suave
+  — Muestra el monto que ingresaste vs lo que realmente debes
+  — Botón claro: "Entendido, voy a corregirlo"
+• El tab Crédito ahora tiene una sección con título igual al de Débito:
+  — Cabecera "Tarjetas de crédito" con total gastado a la derecha
+  — Separa visualmente las tarjetas de los préstamos
+• Al abrir el panel de un préstamo, la tarjeta mini muestra la deuda original:
+  — Debajo del badge "Préstamo" aparece el monto inicial (blanco, pequeño)
+  — Abajo en el panel: "Deuda inicial" (gris) + "Pendiente" (rojo) separados
+• El emoji ahora es opcional en cualquier tipo de cuenta:
+  — Débito, crédito, efectivo y préstamos pueden tener emoji
+  — Aparece en la tarjeta visual (CardView) y en la fila de lista (AccountRow)
+  — Placeholder inteligente según el tipo: 🏦 💳 💵 💸
+• Nueva opción para préstamos: fecha límite + recordatorio:
+  — Puedes ingresar la fecha de vencimiento en formato DD/MM/AAAA
+  — Al ingresar la fecha aparece el toggle "Notificarme el día del vencimiento"
+  — Si activas el toggle, se agenda una notificación local a las 9:00 AM del
+    día de vencimiento (pide permisos si aún no se han otorgado)
+  — La fecha aparece en la lista ("Vence: DD/MM/AAAA") y en el panel
+
+------------------------------------------------------------
+v1.6 — 2026-06-18 · Jerarquía visual de secciones
+------------------------------------------------------------
+• El resumen "Total gastado / Total disponible" ahora aparece
+  ARRIBA del título de sección en ambos tabs:
+  — Tab DÉBITO: resumen → "Tarjetas de débito" → cards
+  — Tab CRÉDITO: resumen → "Tarjetas de crédito" → cards
+  — Si solo hay 1 tarjeta (sin resumen), el título aparece igual
+• El importe de efectivo disponible en la sección "Efectivo"
+  ahora se muestra en verde (#debit) en vez del color ámbar
+  — Más coherente visualmente con el resto del tab DÉBITO
+
+------------------------------------------------------------
+v1.7 — 2026-06-18 · Resumen visual mejorado + emojis en categorías
+------------------------------------------------------------
+• El selector de color al crear/editar una categoría fue reemplazado
+  por un grid de 30 emojis (5 columnas):
+  — Toca el emoji que mejor represente tu categoría
+  — El color se asigna automáticamente según la posición del emoji
+  — La preview muestra el emoji grande en tiempo real
+  — En el grid de Resumen y en el modal de detalle se ve el emoji
+• La card de Patrimonio Neto se rediseñó para ser más visual:
+  — Borde lateral de 4px en verde (positivo) o rojo (negativo)
+  — Fondo con tinte suave reactivo al signo del resultado
+  — Ícono trending-up/trending-down al lado del título
+  — Activos y Pasivos en 2 columnas en vez de filas separadas
+  — El valor "Neto" ahora es más grande y en negrita
+• Nuevo resumen compacto de Metas debajo del Patrimonio Neto:
+  — Aparece si tienes al menos 1 meta registrada
+  — Muestra barra de progreso global, total ahorrado vs meta total
+  — Contador "X/Y completadas" en el encabezado
+• El botón "+" flotante ahora tiene una leyenda pequeña
+  "Registrar" debajo del círculo para que sea más obvio
+
+------------------------------------------------------------
+v1.8 — 2026-06-18 · Metas con emoji + donut interactivo
+------------------------------------------------------------
+• El selector de color al crear/editar una meta fue reemplazado
+  por un grid de 30 emojis (igual que las categorías):
+  — Elige el emoji que represente tu meta (viaje, casa, auto...)
+  — El color de la barra se asigna automáticamente
+  — La preview muestra el emoji + nombre en tiempo real
+  — En la lista de metas se ve el emoji en el ícono de la card
+• Nuevo bloque de suma global encima de la lista de metas:
+  — Muestra total ahorrado en verde y meta total al lado
+  — Porcentaje de avance global de todas las metas
+  — Barra de progreso unificada que resume el estado general
+  — Solo aparece cuando hay al menos 1 meta con monto objetivo
+• El donut chart ahora es interactivo:
+  — Aparece texto "Toca para ver" debajo del total
+  — Al tocar se abre un popup "Resumen del mes"
+  — El popup muestra Ingresos (verde) y Gastos (rojo) en cabecera
+  — Lista todas las categorías con gasto, monto y % del total
+  — Se cierra tocando fuera o en el botón "Cerrar"
+• Quitada la sección de ahorro del donut — la barra de ahorro
+  fue eliminada (esa info ya aparece en el hero con las pills)
+
+------------------------------------------------------------
+v1.9 — 2026-06-18 · UX visual mejorada en Resumen
+------------------------------------------------------------
+• Los campos de monto en metas de ahorro ahora formatean automáticamente:
+  — "Monto objetivo" y "Ya ahorrado" muestran puntos de miles mientras escribes
+  — Ej: al escribir 5000000 aparece 5.000.000 en tiempo real
+  — El valor numérico se guarda sin puntos (sin cambiar la lógica de cálculo)
+• Nuevo gadget de Metas dentro del hero card del donut:
+  — Aparece debajo de las pills de Ingresos/Gastos si hay metas activas
+  — Barra de progreso horizontal con porcentaje global de metas
+  — Total ahorrado (verde) vs. meta total, todo en una línea compacta
+• Los botones de acción del header son ahora más llamativos:
+  — PDF → 📊 PDF (color primario + borde más visible)
+  — Ayuda → ❓ Ayuda
+  — Meta → 🎯 Meta (fondo morado sólido para destacar la acción principal)
+  — Todos son más grandes: padding y border más pronunciados
+• El popup "Resumen del mes" fue rediseñado completamente:
+  — Fix: ya no hay gap entre el popup y el borde inferior de la pantalla
+  — 3 stat boxes: Ingresos, Gastos y Balance (con emoji + color contextual)
+  — Sección "Gastos por categoría" con título + total y mini-barra de progreso
+    relativa por debajo de cada fila de categoría
+  — Sección "Fuentes de ingreso" con lista de ingresos si hay registrados
+  — Colores de las cifras de gastos coinciden con el color de cada categoría
+• El emoji elegido al crear una meta ahora aparece en el detalle de la meta:
+  — Al abrir una meta, el ícono grande del header muestra el emoji propio
+  — Si no tiene emoji: sigue mostrando 🎉 (completada) o 🎯 (en progreso)
+
+------------------------------------------------------------
+v1.10 — 2026-06-18 · Hero rediseñado + pulidos visuales
+------------------------------------------------------------
+• El hero del Resumen ahora tiene dos donuts lado a lado:
+  — Izquierda: donut de gastos por categoría (igual que antes, toca para ver resumen)
+  — Derecha: donut de metas de ahorro — cada meta es una porción de color
+  — El arco vacío del donut de metas muestra lo que falta por ahorrar
+  — Centro del donut de metas: porcentaje global de avance (ej: "72%")
+  — Si no hay metas creadas, el lado derecho muestra "Sin metas"
+  — Separador vertical sutil entre los dos donuts
+• El título de la pantalla ya no dice "Resumen":
+  — Solo muestra el mes en negrita: "Junio 2026"
+  — Más limpio y directo
+• La leyenda "Registrar" del botón flotante es ahora más visible:
+  — Texto 12px (antes 10px) con fondo pill en color primary muy suave
+  — Borde fino en primary + padding lateral para efecto de badge
+  — Se distingue bien sin tapar el contenido de la pantalla
+
+------------------------------------------------------------
+v1.11 — 2026-06-18 · Navegación rediseñada + cards interactivas
+------------------------------------------------------------
+• El botón flotante "Registrar" ahora abre un mini menú con 2 opciones:
+  — 💸 Gasto / Ingreso → abre el modal de registro rápido de siempre
+  — 🎯 Nueva Meta de ahorro → abre el formulario de metas
+  — El botón "Meta" fue removido del header (ya no hace falta)
+• El hero de Resumen ahora es un gadget swipeable horizontal con 2 páginas:
+  — Desliza a la derecha para ver el donut de Metas de ahorro
+  — Desliza a la izquierda para volver al donut de Gastos por categoría
+  — Indicadores de página (dots) debajo del gadget — el activo se extiende
+  — Las pills Ingresos/Gastos ahora aparecen ARRIBA del gadget, no abajo
+• El header ahora tiene un solo botón ❓ que abre una hoja de opciones:
+  — 📊 Exportar PDF del mes
+  — ❓ Ir a la sección de Ayuda
+  — Reemplaza los 3 botones que había antes (PDF · Ayuda · Meta)
+• La card de Patrimonio Neto ahora es tappable:
+  — Al tocar muestra un popup con el desglose completo de Activos y Pasivos
+  — Activos: cada cuenta débito y efectivo con su saldo disponible (verde)
+  — Pasivos: cada tarjeta de crédito (gastado) y préstamo (saldo) en rojo
+  — Totales por sección + caja de Patrimonio Neto al fondo
+  — Texto sutil "Toca para ver detalle →" en el card
+• El modal de categorías fue rediseñado para ser más llamativo:
+  — Cabecera con fondo del color de la categoría (cambia en tiempo real)
+  — Emoji grande (52px) + nombre en vivo mientras escribes
+  — Subtítulo contextual: "Editando categoría" o "Toca un emoji para personalizar"
+  — Botón Guardar toma el mismo color de la categoría
+  — Texto de labels en uppercase con letra más pequeña y espaciado
+
+------------------------------------------------------------
+v1.12 — 2026-06-18 · Hero con 3 donuts + pills elegantes
+------------------------------------------------------------
+• Las pills de Ingresos y Gastos son ahora tarjetas verticales elegantes:
+  — Fondo sólido (verde para ingresos, rojo para gastos) en vez de fondo tintado
+  — Ícono + label pequeño en uppercase arriba · valor grande en blanco abajo
+  — Nunca más se corta la palabra "Ingresos"
+• El gadget swipeable del hero ahora tiene 3 páginas:
+  — Slide 1: Donut de Gastos por categoría (toca para ver resumen del mes)
+  — Slide 2: Donut de Metas con emojis de cada meta como leyenda debajo
+    · Centro muestra total ahorrado ($X.XXXk) y "de $X.XXXk" abajo
+    · Cada meta tiene su emoji encima de una barra de su color
+    · Estado vacío: "Sin metas aún · Toca + para crear tu primera meta"
+  — Slide 3: Donut de Fuentes de ingreso (cada ingreso es una porción)
+    · Centro muestra el total de ingresos del mes
+    · Lista de hasta 4 ingresos con nombre, color y monto
+    · Estado vacío: "Sin ingresos · Toca + para registrar un ingreso"
+  — 3 puntos de paginación debajo del gadget
+
+------------------------------------------------------------
+[PRÓXIMO]
+------------------------------------------------------------
+• Build permanente (APK) para compartir sin servidor
+• Notificaciones de presupuesto al 80% y 100%
+• Widget de saldo rápido para pantalla de inicio
+• Exportar datos a Excel/CSV
+
+========================================

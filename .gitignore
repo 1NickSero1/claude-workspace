@@ -1,0 +1,17 @@
+# Node / React Native
+node_modules/
+.expo/
+dist/
+build/
+
+# Env
+.env
+.env.local
+.env*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code state (local)
+.claude/settings.local.json

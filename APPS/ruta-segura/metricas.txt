@@ -1,0 +1,326 @@
+========================================
+  MÉTRICAS Y PARÁMETROS — Ruta Segura
+  ARCHIVO DE CONTROL DE ESTILO
+  ⚠️  NO MODIFICAR — Claude debe respetar
+      estos valores en toda la app sin excepción.
+      Cualquier pantalla nueva debe seguir
+      exactamente estas métricas.
+========================================
+
+------------------------------------------------------------
+COLORES
+------------------------------------------------------------
+
+[FONDO ONBOARDING — Gradiente único]
+  De oscuro a claro (de arriba a abajo):
+  #0d0221  →  #4A0E6E  →  #8B1A6B
+
+[FONDOS DE PANTALLAS INTERNAS]
+  Fondo general pantallas:     #f8f4ff   (morado muy suave)
+  Fondo cards y modales:       #ffffff
+  Fondo inputs:                #fafafa
+
+[TEXTO]
+  Título principal:            #1a1a2e   (casi negro azulado)
+  Texto secundario:            #888888
+  Descripción / cuerpo:        #555555
+  Label de formulario:         #444444
+  Texto sobre fondo oscuro:    #ffffff
+  Texto opaco sobre oscuro:    rgba(255,255,255,0.88)
+  Texto muy opaco:             rgba(255,255,255,0.5)
+
+[COLOR PRIMARIO / ACENTO]
+  Magenta principal:           #C850C0   ← color identidad de la app
+  Morado profundo:             #4A0E6E   (texto botón en onboarding)
+  Morado rosado:               #8B1A6B   (sombra de botón onboarding)
+
+[SOS / EMERGENCIA]
+  Rojo urgente (MenuPrincipal): #8B0045
+  ⚠️  USAR SIEMPRE #8B0045 para SOS — no usar #FF6B6B (color antiguo de InicioScreen, inconsistente)
+
+[COLORES POR CATEGORÍA]
+  Comunidad     →  oscuro: #1a6b5a  /  claro: #e6f5f1
+  Violencia     →  oscuro: #8B0045  /  claro: #fdf0f5
+  Alimentación  →  oscuro: #7a5c00  /  claro: #fdf6e3
+  Legal         →  oscuro: #3d3580  /  claro: #eeecf8
+  Social        →  oscuro: #6b2050  /  claro: #f9eaf4
+
+[ESTADOS Y BANNERS]
+  Online / activo:             #4CAF50   (punto verde)
+  Banner anónimo:              fondo #e8f5e9  /  texto #2e7d32
+  Banner privacidad:           fondo #f0e6ff  /  texto #7b2d8b
+  Borde inputs:                #e0e0e0
+  Switch activo:               #C850C0
+
+------------------------------------------------------------
+TIPOGRAFÍA
+------------------------------------------------------------
+
+[FUENTE]
+  Sistema por defecto de React Native (sin fuente personalizada)
+
+[TAMAÑOS — de mayor a menor]
+  40px  → Título héroe (Onboarding)
+  28px  → Título de pantalla (ej. "Crear cuenta")
+  26px  → Header de categoría
+  22px  → Saludo principal (ej. "Hola, amiga 👋")
+  20px  → Tagline onboarding
+  18px  → Título de card / texto de botón principal
+  17px  → Encabezado de sección
+  16px  → Inputs y botones secundarios
+  15px  → Texto de elementos interactivos
+  14px  → Descripción de card
+  13px  → Subtítulo SOS / estado / pills idioma
+  12px  → Texto pequeño / desc. secundaria
+  11px  → Etiqueta urgente en MAYÚSCULAS
+
+[PESOS]
+  900  →  Título onboarding (ultra bold)
+  800  →  Saludo, título card, texto de botones
+  700  →  Encabezados de sección, labels, avatar
+  600  →  Pills, idioma activo, botón volver
+  300  →  Tagline onboarding (ligero)
+
+[ESPACIADO DE LETRAS]
+  Título principal onboarding:  letterSpacing: 1
+  Botón onboarding:             letterSpacing: 0.3
+  Etiqueta urgente MAYÚS:       letterSpacing: 1.2
+  Privacidad / sub-texto:       letterSpacing: 1
+
+[ALTURA DE LÍNEA]
+  Tagline onboarding:   lineHeight: 30
+  Subtítulo header:     lineHeight: 21
+  Descripción cards:    lineHeight: 21
+  Desc. pequeña:        lineHeight: 16
+
+------------------------------------------------------------
+ESPACIADO Y TAMAÑOS
+------------------------------------------------------------
+
+[PADDING HORIZONTAL]
+  Pantallas internas:   paddingHorizontal: 20
+  Registro / Onboarding: paddingHorizontal: 24
+  Header categoría:     paddingHorizontal: 24
+
+[PADDING VERTICAL]
+  Scroll bottom:        paddingBottom: 40
+  Header top interno:   paddingTop: 20
+  Botón principal:      paddingVertical: 16–18
+
+[GAP ENTRE ELEMENTOS]
+  Entre cards:          gap: 10–14
+  Dentro de cards:      gap: 14
+  Entre pills:          gap: 10
+
+[BORDER RADIUS]
+  Botones principales (pill): 30
+  Cards grandes:              16–18
+  Cards pequeñas / anónimo:   12–14
+  Inputs:                     12
+  Pills / tags:               20
+  Ícono en card:              14–16
+  Avatar:                     22 (círculo — 44x44)
+  Ícono onboarding:           60 (círculo — 120x120)
+  SOS banner:                 16
+
+[BORDER WIDTH]
+  Inputs:               1.5
+  Pills idioma:         1.5
+  Cards urgentes:       2
+
+[TAMAÑOS FIJOS]
+  Avatar:               44 × 44
+  Ícono hero:          120 × 120
+  Card ícono interno:   52 × 52  (MenuPrincipal)
+  Card ícono categoría: 56 × 56  (CategoriaScreen)
+
+[EMOJIS — tamaños]
+  Ícono hero onboarding:  fontSize: 60
+  Header categoría:       fontSize: 48
+  SOS icon (menú):        fontSize: 30
+  Card emoji (menú):      fontSize: 26
+  Card emoji (categoría): fontSize: 28
+  Feature pill:           fontSize: 15
+
+------------------------------------------------------------
+SOMBRAS
+------------------------------------------------------------
+
+[CARDS NORMALES]
+  shadowColor:   '#000'
+  shadowOffset:  { width: 0, height: 2 }
+  shadowOpacity: 0.06–0.07
+  shadowRadius:  6–10
+  elevation:     2–3
+
+[CARDS URGENTES]
+  shadowOpacity: 0.14
+  elevation:     6
+
+[BOTÓN PRINCIPAL ONBOARDING]
+  shadowColor:   '#8B1A6B'
+  shadowOffset:  { width: 0, height: 6 }
+  shadowOpacity: 0.4
+  shadowRadius:  12
+  elevation:     8
+
+------------------------------------------------------------
+COMPONENTES
+------------------------------------------------------------
+
+[BOTÓN PRIMARIO (pantallas internas)]
+  backgroundColor:  #C850C0
+  paddingVertical:  16
+  borderRadius:     30
+  width:            100% (ancho completo)
+  color texto:      #ffffff
+  fontSize:         18
+  fontWeight:       700
+
+[BOTÓN PRINCIPAL ONBOARDING]
+  backgroundColor:  #ffffff
+  paddingVertical:  18
+  paddingHorizontal: 48
+  borderRadius:     30
+  width:            100%
+  color texto:      #4A0E6E
+  fontSize:         17
+  fontWeight:       800
+  Con sombra (ver sección SOMBRAS)
+
+[BOTÓN SOS]
+  backgroundColor:  #8B0045
+  borderRadius:     16
+  padding:          18
+  Layout:           fila (icon · texto · flecha)
+
+[CARD ESTÁNDAR]
+  backgroundColor:  #ffffff
+  borderRadius:     16
+  padding:          16
+  Layout:           fila (ícono · texto · flecha)
+  Con sombra normal
+
+[CARD CATEGORÍA]
+  backgroundColor:  #ffffff
+  borderRadius:     18
+  overflow:         hidden
+  Con sombra normal
+
+[INPUT DE FORMULARIO]
+  borderWidth:      1.5
+  borderColor:      #e0e0e0
+  borderRadius:     12
+  paddingHorizontal: 16
+  paddingVertical:  14
+  fontSize:         16
+  color:            #1a1a2e
+  backgroundColor:  #fafafa
+  placeholderTextColor: #aaa
+
+[AVATAR]
+  Tamaño:           44 × 44
+  borderRadius:     22
+  backgroundColor:  #C850C0
+  Letra inicial:    color #fff, fontSize: 18, fontWeight: 700
+
+[PILL DE IDIOMA (onboarding)]
+  paddingHorizontal: 14
+  paddingVertical:   6
+  borderRadius:      20
+  borderWidth:       1.5
+  Inactivo: borderColor rgba(255,255,255,0.35) / texto rgba(255,255,255,0.55)
+  Activo:   borderColor #fff / fondo rgba(255,255,255,0.2) / texto #fff
+
+[PILL DE ACCESO RÁPIDO (onboarding)]
+  Layout:           fila (emoji + texto)
+  backgroundColor:  rgba(255,255,255,0.13)
+  borderWidth:      1
+  borderColor:      rgba(255,255,255,0.2)
+  paddingHorizontal: 14
+  paddingVertical:  9
+  borderRadius:     20
+
+[INDICADOR ONLINE]
+  Círculo verde:    10 × 10, borderRadius: 5, backgroundColor: #4CAF50
+
+------------------------------------------------------------
+NAVEGACIÓN
+------------------------------------------------------------
+
+[PANTALLAS — orden de flujo]
+  1. OnboardingScreen    ← punto de entrada
+  2. RegistroScreen
+  3. EstadoScreen
+  4. MenuPrincipalScreen
+  5. CategoriaScreen
+  6. MiCasoScreen
+
+[STATUSBAR]
+  Pantallas con fondo oscuro:  style="light"
+  Pantallas con fondo claro:   style="dark"
+
+[BOTÓN VOLVER]
+  Texto: "← Volver"
+  En onboarding oscuro:  color rgba(255,255,255,0.85), fontSize: 15, fontWeight: 600
+  En pantallas claras:   color #C850C0, fontSize: 16
+
+[SELECTOR DE IDIOMA]
+  Posición: esquina superior derecha
+  paddingHorizontal: 24, paddingTop: 16
+  Ver spec de PILL DE IDIOMA arriba
+
+------------------------------------------------------------
+REGLAS DE EMOJIS PROFESIONALES
+------------------------------------------------------------
+
+✅ PERMITIDOS (contexto profesional y técnico):
+- ✅ ❌ ⚠️  → Estados y validaciones
+- 📁 📄 🗂️  → Archivos y carpetas
+- 🔧 ⚙️ 🛠️  → Configuración y herramientas
+- 📊 📈 📉  → Datos y métricas
+- 🔒 🔓 🛡️  → Seguridad
+- 🚀 ⚡ 🔄  → Rendimiento y procesos
+- 📝 📌 🔍  → Notas y búsqueda
+- ℹ️ 💡 📢  → Información y alertas
+- ✔️ 🔴 🟡 🟢 → Indicadores de estado
+
+❌ PROHIBIDOS:
+- Emojis de reacciones emocionales (😂 🥰 😎 🤩)
+- Emojis de gestos informales (👀 💅 🫡 🤙)
+- Emojis de objetos irrelevantes al contexto técnico
+- Cualquier emoji que pueda percibirse como frívolo o no profesional
+
+FRECUENCIA:
+- Máximo 1 emoji por ítem en listas
+- No usar emojis en medio de párrafos de texto corrido
+- No repetir el mismo emoji más de 3 veces en el mismo bloque
+
+OBJETIVO: Mantener una comunicación visual clara, técnica y profesional.
+
+------------------------------------------------------------
+EMOJIS CON SIGNIFICADO FIJO — NO CAMBIAR
+------------------------------------------------------------
+
+  🎀  →  Emergencias / Violencia de género
+  ⚖️  →  Legal
+  👥  →  Comunidad
+  🍽️  →  Alimentación
+  📖  →  Social
+  🆘  →  Botón SOS
+  📍  →  Estado / ubicación
+  🔒  →  Modo anónimo / privacidad
+
+------------------------------------------------------------
+MÉTRICAS DE USO / KPIs
+------------------------------------------------------------
+
+  [Por completar — agregar aquí cuando haya datos reales]
+  Ejemplo de métricas a rastrear:
+  - Usuarios registrados vs. anónimos
+  - Categoría más consultada
+  - Tasa de completitud del registro
+  - Activaciones del botón SOS
+  - Estado con más usuarios
+
+========================================

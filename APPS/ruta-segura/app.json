@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Ruta Segura",
+    "slug": "ruta-segura",
+    "version": "1.0.0",
+    "scheme": "rutasegura",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "assetBundlePatterns": ["**/*"],
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d0221"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.rutasegura.app"
+    },
+    "android": {
+      "package": "com.rutasegura.app",
+      "minSdkVersion": 24,
+      "adaptiveIcon": {
+        "backgroundColor": "#4A0E6E",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}

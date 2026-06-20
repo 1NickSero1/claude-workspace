@@ -1,0 +1,404 @@
+========================================
+  AJUSTES — Wallet Control
+  Bugs · tareas · mejoras pendientes
+  Gestionado por FIXA
+========================================
+
+COMANDO RÁPIDO:
+  "MEJORAX" = leer este archivo y resolver todo lo pendiente
+
+========================================
+
+------------------------------------------------------------
+[PENDIENTE]
+------------------------------------------------------------
+
+  — (vacío)
+
+
+
+------------------------------------------------------------
+[EN PROGRESO]
+------------------------------------------------------------
+
+  — (vacío por ahora)
+
+------------------------------------------------------------
+[RESUELTO]
+------------------------------------------------------------
+
+  ✓ Pills Ingresos/Gastos con tipografía elegante (v1.12)
+    → Rediseñadas como tarjetas verticales con fondo sólido (verde/rojo)
+    → Label en uppercase pequeño arriba · valor grande en blanco abajo
+    → Sin corte de texto · legible y llamativo en cualquier monto
+
+  ✓ Leyenda de metas vacías en donut (v1.12)
+    → DonutChart ahora acepta emptyLabel y emptyHint como props
+    → Slide de Metas muestra "Sin metas aún · Toca + para crear tu primera meta de ahorro"
+    → Slide de Ingresos muestra "Sin ingresos · Toca + para registrar un ingreso"
+
+  ✓ Diagrama de torta para Ingresos (v1.12)
+    → 3er slide en el gadget swipeable: donut de fuentes de ingreso
+    → Cada ingreso registrado = una porción con color de INCOME_COLORS
+    → Centro muestra total de ingresos del mes
+    → Lista de hasta 4 ingresos con punto de color, nombre y monto debajo
+
+  ✓ Emojis y valor total en donut de Metas (v1.12)
+    → Centro del donut muestra totalSaved/totalTarget en formato compacto ($500k / de $2.0M)
+    → Leyenda con emoji de cada meta + barra de su color debajo del donut
+    → fmtShort() helper para comprimir valores grandes en el centro del donut
+
+  ✓ FAB con menú Registrar (v1.11)
+    → Botón flotante abre registrarSheet con 2 opciones: Gasto/Ingreso + Meta
+    → Botón "Meta" eliminado del header
+    → onPress del FAB cambiado de setQuickEntry a setRegistrarSheet
+
+  ✓ Donut gadget swipeable (v1.11)
+    → heroCard usa ScrollView horizontal pagingEnabled en lugar de dos donuts lado a lado
+    → Slide 1: donut de gastos (tappable → summaryModal)
+    → Slide 2: donut de metas (goalsDonutData)
+    → Dots de paginación que se extienden según la página activa
+    → Pills Ingresos/Gastos movidas ARRIBA del slider (antes estaban abajo)
+
+  ✓ Botón ❓ único en header (v1.11)
+    → Reemplaza 3 botones (PDF + Ayuda + Meta) por un solo ❓
+    → helpSheet con opciones 📊 PDF y ❓ Ayuda
+
+  ✓ Patrimonio Neto tappable (v1.11)
+    → TouchableOpacity envuelve el card, onPress abre patrimonioModal
+    → Modal con desglose de Activos (debit + cash) y Pasivos (credit + debt)
+    → Totales por sección + PatNetBox con color reactivo al neto
+    → activoItems / pasivoItems computados desde cards[]
+
+  ✓ CategoryFormModal más llamativo (v1.11)
+    → Hero header coloreado con el color auto-asignado de la categoría
+    → Emoji grande (52px) + nombre + subtítulo contextual en tiempo real
+    → Botón Guardar toma el mismo color del hero
+    → Labels en uppercase, input con borderWidth 1.5 y padding más generoso
+
+  ✓ Dos donuts lado a lado en el hero (v1.10)
+    → Reemplazado el donut único centrado por dos donuts en fila
+    → goalsDonutData: goals.filter(savedAmount > 0).map → DonutSlice por meta
+    → donutSizeSm = min((SCREEN_W - 80) / 2, 150) para ambos donuts
+    → Goals donut: total=totalTarget, muestra el arco vacío como lo que falta
+    → Center del donut de metas: "🎯 Metas" + porcentaje global
+    → Si no hay metas: "Sin metas" en el centro del donut vacío
+    → Separador vertical View entre los dos donuts
+    → Eliminado el heroGoalsWidget de barra de progreso (reemplazado por el donut)
+
+  ✓ Título del header solo con el mes (v1.10)
+    → Removida la línea <Text>Resumen</Text>
+    → headerTitle ahora muestra formatMonthLabel(monthKey) en negrita
+    → headerSub eliminado
+
+  ✓ FAB label "Registrar" más llamativo (v1.10)
+    → fontSize 10 → 12, backgroundColor: COLORS.primaryBg (pill suave)
+    → paddingHorizontal 10, borderRadius 10, border fino en primary + '33'
+    → Efecto de badge/pill sin ser intrusivo
+
+  ✓ Formateo de miles en campos de metas (v1.9)
+    → TextInput "Monto objetivo" y "Ya ahorrado" en GoalFormModal
+    → value={target ? Number(target).toLocaleString('es-CO') : ''}
+    → onChangeText sigue stripping con /\D/g — no rompe el cálculo
+
+  ✓ Gadget de metas dentro del hero card (v1.9)
+    → Aparece debajo de las pills si goals.length > 0 && totalTarget > 0
+    → Barra de progreso horizontal con % global de metas
+    → "🎯 Metas" label + {totalSaved} ahorrados / de {totalTarget}
+
+  ✓ Botones PDF/Ayuda/Meta más llamativos (v1.9)
+    → Reemplazados Ionicons por emojis: 📊 PDF · ❓ Ayuda · 🎯 Meta
+    → Padding y border más grandes, fontWeight 800
+    → Meta ahora tiene fondo sólido (headerBtnPrimary) para destacar
+
+  ✓ Popup Resumen del mes rediseñado (v1.9)
+    → Fix gap: estructura cambiada a View+TouchableOpacity-dismiss+View sheet
+    → 3 stat boxes: Ingresos 💰 · Gastos 💸 · Balance 📈/📉
+    → Sección "Gastos por categoría" con header, importes coloreados y mini-bars
+    → Sección "Fuentes de ingreso" con lista de incomes si existen
+
+  ✓ Emoji del usuario en GoalDetailModal (v1.9)
+    → goal?.emoji ?? (done ? '🎉' : '🎯') — muestra el emoji elegido
+    → Sin emoji: fallback a 🎉 completada / 🎯 en progreso
+
+  ✓ Suma global de metas en sección Metas de ahorro (v1.8)
+    → Eliminado el resumen 2x2 (goalsSummaryCard) que estaba debajo de Patrimonio Neto
+    → Nuevo bloque inline encima del listado: total ahorrado (verde) + "de X · Y%"
+    → Barra de progreso global que resume el avance de todas las metas
+    → Solo aparece cuando goals.length > 0 && totalTarget > 0
+
+  ✓ Emoji picker en formulario de metas de ahorro (v1.8)
+    → Grid de 30 emojis (igual al de categorías) reemplaza el selector de colores
+    → Color de la barra se auto-asigna según posición del emoji (GOAL_COLORS)
+    → Preview muestra emoji + nombre de la meta en tiempo real
+    → Goal.emoji?: string ya existía en storage.ts
+    → La card de cada meta muestra el emoji si está seteado, sino muestra Ionicons
+
+  ✓ Donut interactivo con popup de resumen (v1.8)
+    → DonutChart envuelto en TouchableOpacity que abre summaryModal
+    → Texto "Toca para ver" como centerLabel del donut
+    → Popup slide-up: stat boxes Ingresos (verde) + Gastos (rojo)
+    → Lista de categorías con color dot, nombre (+ emoji si existe), monto y %
+    → Se cierra tocando fuera o con botón "Cerrar"
+    → Barra de ahorro eliminada del donut (info duplicada con las pills del hero)
+
+  ✓ Emoji picker en formulario de categorías (v1.7)
+    → CategoryFormModal: grid de color reemplazado por grid 5 columnas de 30 emojis
+    → CustomCategory ahora tiene campo emoji?: string en storage.ts
+    → Color se auto-asigna desde CATEGORY_COLOR_OPTIONS según posición del emoji
+    → Preview del modal muestra el emoji grande en lugar de un dot de color
+    → resumen.tsx: catGrid muestra emoji si cat.emoji existe, sino usa Ionicons
+    → CategoryDetailModal: mismo guard en el header del modal de detalle
+
+  ✓ Mini resumen de metas bajo Patrimonio Neto (v1.7)
+    → Card compacta: título "🎯 Metas de ahorro" + contador "X/Y completadas"
+    → Barra de progreso global (totalSaved / totalTarget)
+    → Fila: Ahorrado (verde) vs Meta total
+    → Solo aparece si hay al menos 1 meta registrada
+
+  ✓ FAB con leyenda "Registrar" (v1.7)
+    → Envuelto en fabContainer (position: absolute) con alignItems: center
+    → Texto pequeño "Registrar" debajo del círculo en color primary
+    → Llama la atención para registrar gastos/ingresos
+
+  ✓ Patrimonio Neto más llamativo (v1.7)
+    → Borde izquierdo grueso (4px) en color verde o rojo según el signo
+    → Fondo con tinte sutil (color + '0D') reactivo al resultado
+    → Ícono trending-up/trending-down al lado del título
+    → Activos y Pasivos en 2 columnas lado a lado en vez de filas
+    → Valor "Neto" en FONT.xl con peso 800
+
+  ✓ Orden visual en tabs DÉBITO y CRÉDITO (v1.6)
+    → Tab CRÉDITO: resumen "Total gastado/disponible" se mueve arriba del título "Tarjetas de crédito"
+    → Tab DÉBITO: mismo patrón — resumen arriba, nuevo título "Tarjetas de débito" debajo
+    → Sección Efectivo: importe del total ahora en verde (COLORS.debit) en vez del ámbar de cash
+
+  ✓ Modal de abono excedido con tema de la app (v1.5)
+    → Reemplazado Alert.alert por modal centrado con animación "fade"
+    → Ícono de alerta rojo, borde danger, muestra monto ingresado vs pendiente
+    → Botón "Entendido, voy a corregirlo" — no cierra el step de abono
+
+  ✓ Título "Tarjetas de crédito" en el tab CRÉDITO (v1.5)
+    → sectionDivider agregado arriba de las CardViews de crédito
+    → Muestra total gastado a la derecha (en rojo) si hay gastos registrados
+    → Consistente con el divider "Efectivo" que ya existía en DÉBITO
+
+  ✓ Saldo inicial en tarjeta preview del panel de préstamos (v1.5)
+    → En el preview card del panel de acción, debajo del badge "Préstamo"
+    → Muestra el initialBalance en blanco semitransparente (tamaño 11)
+    → Si no tiene initialBalance (deudas antiguas), no muestra nada
+
+  ✓ Emoji opcional para todos los tipos de tarjeta (v1.5)
+    → Campo "Emoji (opcional)" ahora aparece para debit, credit, cash y debt
+    → Placeholder contextual: 🏦 débito · 💳 crédito · 💵 efectivo · 💸 deuda
+    → CardView muestra el emoji en la esquina inferior izquierda si está seteado
+    → Para crédito: emoji + últimos 4 dígitos en la misma fila
+    → AccountRow muestra emoji en el ícono para cualquier tipo de cuenta
+    → handleSave guarda emoji para todos los tipos (antes solo para debt)
+
+  ✓ Fecha límite + notificación local para préstamos (v1.5)
+    → Nuevo campo dueDate?: string en interfaz Card (storage.ts)
+    → En CardFormModal para deuda: campo "Fecha límite de pago" (DD/MM/AAAA)
+    → Al ingresar fecha, aparece toggle "Notificarme el día del vencimiento"
+    → Toggle activa expo-notifications: pide permiso + schedula notif a las 9AM
+    → La fecha se muestra en AccountRow ("Vence: DD/MM/AAAA") y en el panel
+    → Panel de acción: ícono de calendario + "Fecha límite" en fila separada
+
+  ✓ Resumen DÉBITO incluye efectivo en "Total disponible" (v1.4)
+    → Fila de resumen ahora muestra totalCuentasSpent (debit + cash) en "Total gastado"
+    → "Total disponible" = totalBalance (debit + cash combinados)
+    → Condición cambiada a cuentas.length > 1 (antes solo debitCards.length > 1)
+    → Eliminado el footer "Saldo total disponible" del fondo del tab
+
+  ✓ Validación: abono no puede superar el pendiente por pagar (v1.4)
+    → handleAddMoney verifica: si isDebt && amount > balance → Alert.alert
+    → Mensaje explica el exceso y pide modificar el valor
+    → No registra el evento ni actualiza la tarjeta hasta que sea válido
+
+  ✓ "Deuda inicial" en el panel de acción de préstamos (v1.4)
+    → Nuevo campo initialBalance?: number en interfaz Card (storage.ts)
+    → CardFormModal.tsx: al crear una deuda, initialBalance = balance (monto ingresado)
+    → Al editar, initialBalance se preserva (no cambia)
+    → Panel de acción: muestra "Deuda inicial" (en gris/muted) + "Pendiente por pagar" (en rojo)
+    → "Pendiente por pagar" disminuye con cada abono; "Deuda inicial" queda fijo
+
+  ✓ Fix CardView compact: lastFour oculto para tarjetas no-crédito (FIXA)
+    → CardView.tsx línea 35: lastFour solo se renderiza cuando card.type === 'credit'
+    → Evita mostrar número random en selector de tarjetas de Finando IA
+
+  ✓ Limpieza de styles muertos en tarjetas.tsx (FIXA)
+    → Eliminados balanceBanner, balanceLabel, balanceAmount del useMemo de styles
+    → Eliminado import CardEvent sin usar de tarjetas.tsx
+
+  ✓ Fila "Total gastado / Total disponible" en tab DÉBITO (v1.3)
+    → Aparece cuando hay más de 1 tarjeta débito (igual que crédito)
+    → Total gastado en rojo · Total disponible en verde
+    → Computed: totalDebitSpent, totalDebitAvail
+
+  ✓ Valores de préstamos en rojo COLORS.danger (v1.3)
+    → AccountRow: balance de deuda en COLORS.danger (#EF4444)
+    → debtSummaryCard: valor total en COLORS.danger
+    → Divisor de sección Préstamos: total en COLORS.danger
+    → Panel de acción: accentColor para debt cambiado a COLORS.danger
+
+  ✓ "Total pendiente" → "Total deuda" + clickeable (v1.3)
+    → debtSummaryCard ahora es TouchableOpacity
+    → Chevron (›) a la derecha como indicador visual
+    → Al tocar abre modal "Historial de abonos" con TODOS los pagos
+      de TODAS las deudas combinados, ordenados por fecha reciente
+    → Muestra total abonado acumulado, card por card, con notas
+
+  ✓ "Nombre" → "Alias" en el formulario de tarjeta/deuda/efectivo (v1.2)
+    → CardFormModal.tsx: label cambiado a "Alias" en el campo de nombre
+
+  ✓ Tarjetas débito con vista de tarjeta igual que crédito (v1.2)
+    → Sección débito usa CardView horizontal (scroll), igual que crédito
+    → CardView.tsx: lastFour ocultado para tipo debit; se muestra alias + banco
+    → El alias va en grande arriba, el banco en pequeño, sin dígitos
+
+  ✓ Resumen de préstamos en el tab CRÉDITO (v1.2)
+    → Card compacta bajo el divisor "Préstamos" mostrando total pendiente + contador
+    → Fondo naranja suave con badge "X préstamos" a la derecha
+
+  ✓ Saldo total menos intrusivo y abajo (v1.2)
+    → Removido el banner verde grande del top del tab DÉBITO
+    → Reemplazado por una fila pequeña al fondo: "Saldo total disponible $X"
+    → Solo aparece cuando hay al menos una cuenta registrada
+
+  ✓ Observación opcional en la sección de abonos (v1.2)
+    → Campo de texto debajo del monto en el paso de agregar dinero / abonar
+    → Se guarda como note?: string en CardEvent (storage.ts)
+    → El historial del panel muestra la nota debajo del tipo de evento
+
+  ✓ Botón de tema claro/oscuro en pantalla de bienvenida (app/onboarding.tsx)
+    → Ícono flotante arriba a la derecha (sol/luna) sobre el step 'welcome'
+    → Usa useThemeInfo() para alternar entre 'light' y 'dark', persistido en AsyncStorage
+
+  ✓ Pantalla de elección tras "Únete a la comunidad 🚀" (app/onboarding.tsx)
+    → Nuevo step 'choice' con 3 opciones: Crear cuenta nueva / Iniciar sesión / Modo anónimo
+    → La opción de modo anónimo aclara que la IA de Finando estará desactivada
+
+  ✓ Flujo de "Iniciar sesión" (app/onboarding.tsx)
+    → Nuevo step 'login': compara email + contraseña contra el perfil guardado localmente
+    → Si coincide entra a la app; si no, muestra alerta de credenciales no encontradas
+
+  ✓ Modo anónimo + bloqueo de Finando IA
+    → "Modo anónimo" crea un perfil con isAnonymous: true (lib/storage.ts) y entra directo a la app
+    → app/(tabs)/index.tsx detecta isAnonymous y muestra pantalla de IA bloqueada en vez del chat
+    → app/(tabs)/perfil.tsx muestra "Modo anónimo · Finando IA desactivada" en lugar del correo
+
+  ✓ Selector de emoji para avatar en creación de cuenta (app/onboarding.tsx)
+    → Campo de texto junto a la paleta de colores que acepta un emoji del teclado del dispositivo
+    → avatarEmoji se guarda en UserProfile y se muestra en vez de las iniciales (onboarding y perfil)
+
+  ✓ Leyenda de privacidad más profesional (app/onboarding.tsx)
+    → Reemplazado "Tus datos nunca salen de este dispositivo..." por
+      "🔒 Seguridad garantizada: tus datos se almacenan de forma local y privada en tu dispositivo."
+
+  ✓ Pantalla de Perfil/Configuración (app/(tabs)/perfil.tsx)
+    → Tab "Perfil" en la barra de navegación
+    → Secciones: avatar + nombre editable, tema, idioma, versión, cerrar sesión
+    → Botón de tema con 3 opciones: Sistema / Claro / Oscuro (persiste en AsyncStorage)
+    → Cerrar sesión borra el perfil y redirige a onboarding
+
+  ✓ Renombrar "Cuentas" → "Débito" en la pantalla Balance
+    → Tab renombrado de "🏦 Cuentas" a "🏦 Débito"
+    → Botones de agregar cambiados a "Agregar tarjeta débito"
+    → CardFormModal bloqueado a tipo debit cuando se abre desde este tab
+
+  ✓ Tab "💵 Efectivo" en Balance
+    → Tercer sub-tab para registrar dinero en efectivo
+    → Mismo funcionamiento que tarjetas débito (saldo + gastos)
+    → Icono diferenciado (cash-outline), no requiere banco ni lastFour
+    → type 'cash' agregado a la interfaz Card en storage.ts
+
+  ✓ COLORS is not defined en tarjetas.tsx
+    → Todos los screens migrados a useColors() + useMemo
+
+  ✓ ThemeProvider undefined en _layout.tsx (Render Error)
+    → Movido import de expo-router a @react-navigation/native
+
+  ✓ Pantalla en blanco al cargar la app
+    → SplashScreen.hideAsync() movido a efecto separado
+       que espera loaded && checked antes de ejecutarse
+
+  ✓ router.replace('/onboarding') antes de que Stack esté montado
+    → Envuelto en setTimeout(0) para diferir al siguiente ciclo
+
+  ✓ Metro puerto 8081 ocupado (error recurrente)
+    → Usar taskkill /PID $portPID /F antes de iniciar Metro
+
+  ✓ Sub-tabs con leyendas diferenciadas y contador por tipo (v0.9)
+    → "🏦 Cuentas" activo en verde (COLORS.debit), "💳 Crédito" activo en rojo (COLORS.credit)
+    → Badge con conteo de cuentas aparece en la pill activa
+    → La unión Débito+Efectivo en la misma pestaña Cuentas se mantiene fusionada
+
+  ✓ Eliminado campo de últimos 4 dígitos en cuentas débito (v0.9)
+    → AccountRow muestra solo el nombre del banco para débito, sin "••XXXX"
+    → Para efectivo muestra "Efectivo", para deudas muestra "Deuda pendiente"
+    → El campo lastFour solo sigue siendo visible en tarjetas de crédito (CardView)
+
+  ✓ Modal de acción hermoso al tocar una cuenta (v0.9)
+    → Reemplazado Alert.alert de long-press por bottom sheet personalizado con tema de la app
+    → Muestra mini vista previa de la tarjeta con su color y nombre
+    → Opciones: Editar / Eliminar / Agregar dinero (débito/efectivo) o Abonar deuda (deuda)
+    → "Agregar dinero" suma al balance; "Abonar" resta del monto de deuda
+    → Paso 2: input numérico centrado con botón de confirmación en color del tipo de cuenta
+
+  ✓ Sección de Préstamos en pestaña Crédito (v0.9)
+    → Nuevo tipo 'debt' con su color naranja (#F97316) y fondo en constants/theme.ts
+    → Sección "Deudas pendientes" visible siempre en el tab Crédito, con total en naranja
+    → Crear deuda desde CardFormModal con campos: nombre + monto (sin banco, sin lastFour)
+    → Se puede abonar a cada préstamo desde el modal de acción (reduce el monto pendiente)
+
+  ✓ Panel de acción con un solo toque (v1.0)
+    → Cambiado de onLongPress a onPress en todas las filas (débito, efectivo, crédito, préstamos)
+    → Eliminada la selección con expansión de detalle debajo — el detalle pasa al panel
+
+  ✓ Mini historial en el panel de acción (v1.0)
+    → Nuevos CardEvent (deposit/pay) guardados en Card.events via appendCardEvent en storage.ts
+    → Panel muestra últimos 3 eventos de depósito/abono + últimos 3 gastos por tarjeta
+    → Para crédito muestra cupo gastado / disponible / límite + barra de progreso
+
+  ✓ Pills "🏦 Débito" / "💳 Crédito" (v1.0)
+    → Etiqueta "Cuentas" cambiada a "Débito" en la pill activa verde
+
+  ✓ Renombrado "Deudas pendientes" → "Préstamos" (v1.0)
+    → Cambiado en todos los textos: pills, botones, subtítulos, TYPE_META, panel
+
+  ✓ Emoji opcional para préstamos (v1.0)
+    → Nuevo campo emoji? en interfaz Card (storage.ts)
+    → CardFormModal muestra input de emoji para tipo debt (opcional, maxLength 2)
+    → AccountRow y panel de acción muestran el emoji en lugar del ícono si está seteado
+
+  ✓ Formateo automático de miles (v1.0)
+    → Helper fmt() con toLocaleString('es-CO') en CardFormModal y tarjetas.tsx
+    → Aplica en: saldo, límite, monto del préstamo, y campo "Agregar dinero" del panel
+
+  ✓ Patrimonio Neto en Resumen (v1.0 — adición PECAS)
+    → Tarjeta entre el hero y las cards de débito/crédito
+    → Activos = debit disponible + cash disponible
+    → Pasivos = crédito gastado + total préstamos
+    → Neto = verde si positivo, rojo si negativo
+    → Solo aparece si hay al menos un activo o pasivo registrado
+
+------------------------------------------------------------
+[ERRORES REGISTRADOS POR FIXA]
+------------------------------------------------------------
+
+  2026-06-15 | Metro caché corrupto
+    Síntoma: "COLORS is not defined" aparecía aunque el código era correcto
+    Causa: bundle antiguo en caché de Metro
+    Fix: npx expo start --clear
+
+  2026-06-15 | ThemeProvider undefined
+    Síntoma: Render Error "Element type is invalid: got undefined" en RootLayout
+    Causa: expo-router v6 no exporta ThemeProvider
+    Fix: import { ThemeProvider } from '@react-navigation/native'
+
+  2026-06-15 | Blank screen sin error
+    Síntoma: App cargaba pero pantalla quedaba completamente en blanco
+    Causa: SplashScreen.hideAsync() llamado mientras layout retornaba null
+    Fix: useEffect separado que solo ejecuta cuando loaded && checked = true
+
+========================================

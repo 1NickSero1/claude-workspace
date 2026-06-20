@@ -1,0 +1,125 @@
+========================================
+  ajustes app ruta.txt — Tablero de bugs / tareas
+  Proyecto: ruta-segura
+  Agente: FIXA — anota aquí todos los errores encontrados
+  Comando: "MEJORAX" = leer este archivo y resolver todo lo pendiente
+========================================
+
+------------------------------------------------------------
+[PENDIENTE]
+------------------------------------------------------------
+
+
+------------------------------------------------------------
+[EN PROGRESO]
+------------------------------------------------------------
+
+
+
+------------------------------------------------------------
+[RESUELTO]
+------------------------------------------------------------
+
+✅ 2026-06-20 — MenuPrincipalScreen: 4 ajustes — MEJORAX
+   • metricas.txt: agregada sección REGLAS DE EMOJIS PROFESIONALES
+   • Botón "¿Emergencia?" eliminado → pill 🚨 SOS en top-left (igual que Onboarding)
+   • SafeAreaView → react-native-safe-area-context
+   • Categorías ordenadas alfabéticamente: Ayudas comunitarias · Alimentación · Legal · Social · Violencia
+   • Emoji alimentación: 🌽 → 🍽️ (según métricas fijas)
+
+✅ 2026-06-20 — EstadoScreen: 4 ajustes — MEJORAX FIXA
+   • Emoji 🇺🇸 movido al final del título, después del "?"
+   • Estados ordenados alfabéticamente (California · Florida · Georgia · New York · Texas · Otro)
+   • Emojis actualizados: 🌉 🌴 🌳 🗽 ⭐ 🗺️
+   • "¿Otro estado diferente?" abre Modal con 7 estados frecuentes + TextInput para escribir cualquiera
+
+✅ 2026-06-11 — OnboardingScreen v2
+   • Copy: "No estás sola en este camino, encontremos juntas la salida."
+   • 🆘 → 💜 (color morado = símbolo feminista / violencia de género)
+   • Pills clicables: 💜→Categoria violencia, ⚖️→legal, 🤝→comunidad
+   • Pills navegan directo a la sección correspondiente sin necesitar registro
+
+✅ 2026-06-11 — OnboardingScreen rediseñada
+   • Gradiente oscuro y elegante: #0d0221 → #4A0E6E → #8B1A6B
+   • Emoji 🛡️ → 🎀 en círculo con borde translúcido
+   • Copy empoderador: "No estás sola en este camino. Encontramos juntas la salida."
+   • 3 pills de features: 🆘 Emergencias · ⚖️ Legal · 🤝 Comunidad
+   • Botón con sombra púrpura, texto "✨ Quiero empezar"
+
+✅ 2026-06-11 — EstadoScreen: emojis y estados actualizados
+   • Emojis temáticos: ⚖️ legal, 🛡️ protección, 🌺 comunidad, 🗽 migración,
+     💜 violencia de género, ✊ derechos, 🤝 apoyo, 🌵 frontera
+   • 8 estados con mayor comunidad latina migrante:
+     California, Texas, Florida, New York, NC, Georgia, Illinois, Arizona
+   • Ciudades principales actualizadas en cada estado
+
+✅ 2026-06-11 — OnboardingScreen v3: copy y botón
+   • "BIENVENIDA A" → "Aquí no caminas sola 💜" (ES) / "You don't walk alone here 💜" (EN)
+   • Botón "✨ Quiero empezar" → "Quiero encontrar ayuda →" (más accionable)
+
+✅ 2026-06-11 — CategoriaScreen: Comunidad y Legal actualizadas
+   • Subtítulos empodoradores en ambos headers (igual que Violencia)
+   • Comunidad: emoji 🤝 → 👥 · cards: foros, recursos locales, mentoría
+   • Legal: emoji ⚖️ (se mantiene) · cards: abogadas verificadas, formularios, traducción
+   • Textos de acción mejorados en todas las cards
+
+✅ 2026-06-11 — EstadoScreen: reducido a 4 estados con emojis profesionales
+   • 8 estados → 4: California, Texas, Florida, New York
+   • Emojis: 🌴 · ⭐ · 🌊 · 🗽 (geográficos, limpios, profesionales)
+
+✅ 2026-06-11 — MenuPrincipalScreen: emojis profesionales actualizados
+   • comunidad 🤝 → 👥 · violencia 🆘 → 🎀 · alimentacion 🍽️ → 🌾 · social 🌸 → 📖 · legal ⚖️ (igual)
+   • Color botón SOS: #7b2d2d → #8B0045 (coherente con rediseño violencia)
+   • Descripciones actualizadas para coincidir con las nuevas cards
+
+✅ 2026-06-11 — CategoriaScreen: Violencia de género rediseñada
+   • Emoji 🆘 → 🎀 (mismo que onboarding, coherencia visual)
+   • Color: #7b2d2d → #8B0045 (rose profundo, más empoderador)
+   • Subtítulo empoderador en el header: "Estás en un lugar seguro..."
+   • Header rediseñado: emoji + título en fila horizontal, más limpio
+   • Card SOS: banner "⚡ AYUDA INMEDIATA DISPONIBLE" encima del card
+   • Botón SOS: "Activar SOS" → "🚨 Activar SOS ahora" + más grande
+   • Textos mejorados: "Psicólogo" → "Apoyo emocional" · "Refugios" → "Refugios seguros"
+
+✅ 2026-06-11 — Metro bundler caché corrupto
+   Error: "Unable to resolve ./DrawerRouter.js from @react-navigation/routers"
+   Causa: Metro tenía cacheado un estado viejo donde DrawerRouter.js no existía,
+          aunque el archivo sí estaba instalado en node_modules.
+   Fix: npx expo start --clear (limpia caché de Metro)
+
+------------------------------------------------------------
+[ERRORES REGISTRADOS POR FIXA]
+------------------------------------------------------------
+
+
+✅ 2026-06-11 — Navegación post-envío de caso corregida
+   • MiCasoScreen navegaba a 'Inicio' (pantalla inexistente → crash)
+   • Fix: MenuPrincipalScreen pasa `nombre` a Categoria (también en SOS + cards)
+   • Fix: CategoriaScreen recibe `nombre` y lo reenvía a MiCaso con `{ tipo, nombre, idioma, estado }`
+   • Fix: MiCasoScreen navega a 'MenuPrincipal' con `{ nombre, idioma, estado }` al enviar
+
+✅ 2026-06-11 — Emojis de las 5 áreas unificados
+   • alimentacion: MenuPrincipal 🌾 → 🍽️ (coincide con CategoriaScreen)
+   • social: CategoriaScreen 🌸 → 📖 (coincide con MenuPrincipalScreen)
+   • Pills de Onboarding también actualizadas con emojis correctos (🎀, ⚖️, 👥)
+
+✅ 2026-06-11 — OnboardingScreen rediseñada v4
+   • Eliminada redundancia: "Aquí no caminas sola" + tagline "No estás sola" → una sola frase
+   • Nueva frase: "Tu red de apoyo para mujeres migrantes." (ES) / "Your support network for migrant women." (EN)
+   • Botón anclado al fondo con layout space-between, ancho full
+   • Centro ocupa todo el espacio disponible (icon + título + frase + pills verticalmente centrados)
+
+✅ 2026-06-19 — OnboardingScreen v9 — MEJORAX #2
+   • Botón 🚨 movido a top-left (barra superior junto a selector de idioma)
+   • Botón más pequeño: pill compacta "🚨 SOS" con fondo #8B0045
+   • Al presionar → navega a SOSScreen (pantalla de números de emergencia)
+   • Botón Ana Laverde: círculo magenta "AL" → círculo verde WhatsApp #25D366 con emoji 💬
+   • Subtexto cambiado: "más recursos →" → "Chatea en WhatsApp →"
+
+✅ 2026-06-19 — OnboardingScreen v8 — MEJORAX
+   • SafeAreaView cambiado a react-native-safe-area-context → margen correcto top en Android/iOS
+   • Tagline actualizado: "Tu red de apoyo para mujeres migrantes." (ya en código, no solo en historial)
+   • Pills de Emergencias/Legal/Comunidad eliminadas
+   • Nuevo botón flotante circular 🚨 (#8B0045 + sombra) → navega a Violencia de género
+   • Texto "Gratuita · Confidencial · Segura" eliminado
+   • Espaciado redistribuido: iconContainer mb 24→20, tagline mb 32→24, botón full-width

@@ -1,0 +1,37 @@
+Para cuando quieras un demo permanente (sin necesitar el servidor corriendo), lo siguiente sería hacer un build con EAS — genera un .apk para Android o un link de TestFlight para iOS que funciona 24/7 sin depender de tu PC. Dime cuando llegues a ese punto y lo configuramos.
+
+
+* Sugerir en el apartado un botón en la pantalla donde describa funcionalidad y si es necesario añadir el servicio de la consultoría
+* Cambiar el nombre ( ruta segura), proponer nombres distintos y no tan genéricos
+* Validar el nombre de ( bienvenida por otras frases de interacción mas efectivas llamas a la acción)
+
+========================================
+  CONSEJOS DE MEJORA — Respuestas de Ana Laverde (2026-06-16)
+========================================
+
+1. BOTÓN ANA LAVERDE / WHATSAPP
+   → Además de WhatsApp, considerar agregar enlace a www.helpanasimmigration.com
+   → Razón: hay usuarias que no tienen WhatsApp o lo tienen restringido.
+   → Implementación: modal con dos opciones — "Abrir WhatsApp" y "Ver sitio web"
+
+2. LOGO EN ESQUINAS (watermark)
+   → En MiCasoScreen el ScrollView largo puede tapar el logo al hacer scroll.
+   → Alternativa: considerar mostrar el watermark solo en OnboardingScreen y MenuPrincipal.
+   → O mejor: mover el branding de Ana al footer fijo del MenuPrincipal.
+
+3. CARD "ANA LAVERDE" EN SOCIAL
+   → Agregar también Instagram @ais_analaverde como segundo punto de contacto.
+   → Las usuarias jóvenes suelen preferir Instagram sobre WhatsApp para primeros contactos.
+
+4. "OTRO ESTADO DIFERENTE" — MEJORA FUTURA
+   → Al seleccionar este card, mostrar un pequeño input de texto para capturar el estado real.
+   → Así se acumula data de dónde hay demanda para saber en qué estados expandir la app.
+
+5. CONSULADOS — MEJORA FUTURA
+   → La card de Consulados podría filtrar por país de origen del usuario (México, Colombia, Venezuela...).
+   → Más personalizado y útil que mostrar un directorio general de todos los consulados.
+
+6. NÚMERO DE WHATSAPP PENDIENTE
+   → Reemplazar "PLACEHOLDER_NUMERO" con el número real de Ana Laverde en:
+      screens/OnboardingScreen.js (línea del Linking.openURL)
+      screens/CategoriaScreen.js (línea del Linking.openURL en card esAna)

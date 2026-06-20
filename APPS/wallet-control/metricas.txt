@@ -1,0 +1,193 @@
+========================================
+  MÉTRICAS — Wallet Control
+  ⚠️  NO MODIFICAR — Claude debe respetar estos valores
+  Fuente de verdad del sistema visual de la app
+========================================
+
+------------------------------------------------------------
+COLORES — LIGHT MODE (COLORS)
+------------------------------------------------------------
+
+Backgrounds:
+  bg          #EEF0F8   — fondo principal de pantallas
+  card        #FFFFFF   — tarjetas y modales
+  card2       #F4F6FB   — fondo de inputs y cards secundarias
+
+Brand:
+  primary     #6C5CE7   — color principal, botones, íconos activos
+  primaryDim  #A29BFE   — versión suave de primary
+  primaryBg   #EDE9FF   — fondo suave con tono primary
+
+Tipos financieros:
+  debit       #00C896   — color de cuentas débito (verde)
+  debitBg     #E3FAF4   — fondo de badges de débito
+  credit      #FF5C5C   — color de tarjetas crédito (rojo)
+  creditBg    #FFE8E8   — fondo de badges de crédito
+
+Texto:
+  text        #1A1A2E   — texto principal
+  textMuted   #6B7280   — texto secundario / subtítulos
+  textDim     #B0B7C3   — texto deshabilitado / placeholder
+
+UI:
+  border      #E4E7EF   — bordes de cards, separadores
+  shadow      rgba(60,60,120,0.08) — sombra de elevación
+
+Chat:
+  userBubble  #6C5CE7   — burbuja usuario en Finando IA
+  aiBubble    #FFFFFF   — burbuja de Claude en Finando IA
+
+Estado:
+  danger      #EF4444   — errores, alertas críticas
+  warning     #F59E0B   — advertencias (presupuesto 80%)
+  gold        #F59E0B   — progreso de metas de ahorro
+
+Navegación:
+  tabBar      #FFFFFF   — fondo del tab bar
+
+------------------------------------------------------------
+COLORES — DARK MODE (DARK_COLORS)
+------------------------------------------------------------
+
+Backgrounds:
+  bg          #0A0E1A
+  card        #141828
+  card2       #1A1F35
+
+Brand:
+  primary     #7C6FF0
+  primaryDim  #A29BFE
+  primaryBg   #1A1535
+
+Tipos financieros:
+  debit       #00C896   (sin cambio)
+  debitBg     #0D2E24
+  credit      #FF5C5C   (sin cambio)
+  creditBg    #2E1515
+
+Texto:
+  text        #F0F2FF
+  textMuted   #8B92B8
+  textDim     #4A5080
+
+UI:
+  border      #1E2540
+  shadow      rgba(0,0,0,0.4)
+
+Chat:
+  userBubble  #7C6FF0
+  aiBubble    #1A1F35
+
+Estado:
+  danger      #EF4444   (sin cambio)
+  warning     #F59E0B   (sin cambio)
+  gold        #F59E0B   (sin cambio)
+
+Navegación:
+  tabBar      #141828
+
+------------------------------------------------------------
+TIPOGRAFÍA (FONT)
+------------------------------------------------------------
+
+  sm    12px  — etiquetas, leyendas de gráficas, metadata
+  md    14px  — cuerpo de listas, subtítulos de card
+  base  16px  — texto estándar, inputs
+  lg    18px  — títulos de sección
+  xl    22px  — título de pantalla principal
+  xxl   28px  — montos grandes en tarjetas
+  hero  36px  — monto total del mes en Resumen
+
+Fuente: SpaceMono-Regular (cargada con expo-font)
+Pesos usados: 400 (normal) · 600 (semibold) · 700 (bold)
+
+------------------------------------------------------------
+ESPACIADO Y TAMAÑOS
+------------------------------------------------------------
+
+Border radius:
+  Chips / badges         4–6px
+  Inputs / filas         10–12px
+  Cards                  16px
+  Modales bottom sheet   24px (top corners)
+  Cards grandes / hero   20–24px
+
+Padding interno de cards:   16px
+Padding de pantallas:       16–20px
+Gap entre elementos:        8–12px
+Margen entre secciones:     20–24px
+
+Tamaño íconos:
+  Tab bar                    24px
+  Acciones en cards          18–20px
+  Botones CTA                16–18px
+
+------------------------------------------------------------
+SOMBRAS
+------------------------------------------------------------
+
+Light:  shadowColor: COLORS.shadow · elevation: 4
+        shadowOffset: {width:0, height:2} · shadowRadius: 8
+Dark:   shadowColor: '#000' · opacity 0.4 · elevation: 6
+
+------------------------------------------------------------
+COMPONENTES
+------------------------------------------------------------
+
+DonutChart (Resumen)
+  — Tamaño: 180px diámetro · 36px stroke width
+  — Categorías: color único por categoría (CATEGORY_COLORS)
+  — Centro: monto de gastos (FONT.xxl, bold)
+  — Leyenda: grid 2 col debajo del donut
+
+CardView (Tarjetas)
+  — Scroll horizontal con snap
+  — Debit: fondo debitBg · Crédito: fondo creditBg
+  — Número de cuenta últimos 4 dígitos
+  — Barra de progreso límite crédito (COLORS.credit)
+
+QuickEntryModal
+  — Bottom sheet animado (animationType: "slide")
+  — Input multiline · botón "Registrar"
+  — Trigger: FAB (+) en Resumen
+
+BudgetProgressBar
+  — 3 colores según porcentaje:
+    < 70%  → primary (azul)
+    70–90% → gold (amarillo)
+    > 90%  → danger (rojo)
+
+------------------------------------------------------------
+NAVEGACIÓN
+------------------------------------------------------------
+
+Tab bar — 4 tabs:
+  index (Chat/Finando IA) · resumen · tarjetas · history
+
+Pantallas fuera de tabs (Stack):
+  /onboarding  — primer uso, solo una vez
+  /ayuda       — acordeón con FAQs + exportar PDF de ayuda
+
+Flujo de inicio:
+  _layout → getUserProfile → ¿existe? → (tabs) : /onboarding
+
+------------------------------------------------------------
+EMOJIS DE CATEGORÍAS (constantes)
+------------------------------------------------------------
+
+Categorías por defecto en constants/categories.ts
+Cada una tiene: id · name · color · icon (Ionicons)
+Colores de categorías: 12 opciones en CATEGORY_COLOR_OPTIONS
+
+------------------------------------------------------------
+MÉTRICAS DE USO
+------------------------------------------------------------
+
+Almacenamiento: 100% AsyncStorage (offline-first)
+Formato de clave de mes: "YYYY-MM" (ej: "2026-06")
+Quincenas: Q1 = días 1–15 · Q2 = días 16–fin de mes
+Formato de moneda: COP con separador de miles (punto)
+Función: formatCOP(n) en lib/expenseParser.ts
+Exportación PDF: expo-print + expo-sharing
+
+========================================

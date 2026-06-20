@@ -1,0 +1,93 @@
+========================================
+  IDEAS — Wallet Control
+  Funcionalidades futuras y mejoras
+========================================
+
+------------------------------------------------------------
+ALTA PRIORIDAD (versión 1.0)
+------------------------------------------------------------
+
+[ ] APK build permanente
+    — Generar APK con EAS Build para no depender de Expo Go
+    — Compartir sin servidor de desarrollo
+
+[ ] Notificaciones de presupuesto
+    — Alerta al 80% del presupuesto mensual
+    — Alerta al 100% (presupuesto agotado)
+    — Usar expo-notifications (local, sin servidor)
+
+[ ] Widget de saldo rápido
+    — Widget de pantalla de inicio con saldo disponible
+    — Actualizado cada vez que se abre la app
+
+------------------------------------------------------------
+MEDIA PRIORIDAD (v1.1)
+------------------------------------------------------------
+
+[ ] Exportar datos a Excel / CSV
+    — Todos los gastos del mes en tabla
+    — Compatible con Google Sheets y Excel
+
+[ ] Modo quincena inteligente
+    — Detectar automáticamente en qué quincena está el usuario
+    — Mostrar cuántos días quedan en la quincena actual
+
+[ ] Búsqueda de gastos
+    — Buscador por nombre/descripción en historial
+    — Filtro por categoría y rango de fechas
+
+[ ] Gastos recurrentes
+    — Marcar un gasto como recurrente (mensual, semanal)
+    — Recordatorio automático cuando se acerca la fecha
+
+[ ] Comparativa mes a mes
+    — Card en Resumen con "vs mes anterior"
+    — Flecha arriba/abajo con diferencia en %
+
+------------------------------------------------------------
+BAJA PRIORIDAD / FUTURO (v2.0)
+------------------------------------------------------------
+
+[ ] Modo pareja / familia
+    — Compartir datos entre dos usuarios (sync por código)
+    — Vista de gastos por persona
+
+[ ] Categorías automáticas por IA
+    — Finando IA propone categoría basada en nombre del gasto
+    — Aprendizaje basado en historial personal
+
+[ ] Proyección de fin de mes
+    — Basado en promedio de gasto diario
+    — "A este ritmo terminarás el mes con $X"
+
+[ ] Integración bancaria (lectura)
+    — Leer extractos vía correo o CSV del banco
+    — Importar automáticamente en lugar de ingresar manual
+
+[ ] Versión web (dashboard)
+    — Vista de solo lectura en navegador
+    — Sync con datos de la app móvil
+
+------------------------------------------------------------
+MEJORAS DE UX
+------------------------------------------------------------
+
+[ ] Haptic feedback en botones principales
+[ ] Animaciones de entrada en cards (Reanimated)
+[ ] Swipe para eliminar gasto en lista
+[ ] Long press para editar gasto directamente
+[ ] Tema morado más intenso en dark mode
+[ ] Onboarding con tutorial rápido (3 slides)
+[ ] Icono de app personalizado (no el de Expo)
+
+------------------------------------------------------------
+FINANDO IA — IDEAS
+------------------------------------------------------------
+
+[ ] Respuestas con gráficas (texto + chart inline)
+[ ] Comando "/resumen" para pedir resumen del mes
+[ ] Sugerencias proactivas al entrar a la pantalla
+[ ] Historial de conversaciones guardado (últimas 10)
+[ ] Modo voz (speech-to-text para registrar gastos)
+
+========================================

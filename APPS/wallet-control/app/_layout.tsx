@@ -1,0 +1,88 @@
+import { useFonts } from 'expo-font';
+import { Stack, router } from 'expo-router';
+import { DefaultTheme, DarkTheme, ThemeProvider } from '@react-navigation/native';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useState } from 'react';
+import 'react-native-reanimated';
+import { StatusBar } from 'expo-status-bar';
+import { COLORS, DARK_COLORS } from '@/constants/theme';
+import { ThemeProvider as ColorsProvider, useThemeInfo } from '@/constants/ThemeContext';
+import { getUserProfile } from '@/lib/storage';
+
+export { ErrorBoundary } from 'expo-router';
+
+export const unstable_settings = {
+  initialRouteName: '(tabs)',
+};
+
+SplashScreen.preventAutoHideAsync();
+
+const LightNavTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: COLORS.bg,
+    card:       COLORS.card,
+    text:       COLORS.text,
+    border:     COLORS.border,
+    primary:    COLORS.primary,
+  },
+};
+
+const DarkNavTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: DARK_COLORS.bg,
+    card:       DARK_COLORS.card,
+    text:       DARK_COLORS.text,
+    border:     DARK_COLORS.border,
+    primary:    DARK_COLORS.primary,
+  },
+};
+
+function InnerLayout() {
+  const { isDark } = useThemeInfo();
+  return (
+    <ThemeProvider value={isDark ? DarkNavTheme : LightNavTheme}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: isDark ? DARK_COLORS.bg : COLORS.bg } }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+        <Stack.Screen name="ayuda" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  const [loaded, error] = useFonts({
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+  });
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    if (error) throw error;
+  }, [error]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    getUserProfile().then(profile => {
+      setChecked(true);
+      if (!profile) setTimeout(() => router.replace('/onboarding'), 0);
+    });
+  }, [loaded]);
+
+  useEffect(() => {
+    if (loaded && checked) SplashScreen.hideAsync();
+  }, [loaded, checked]);
+
+  if (!loaded || !checked) return null;
+
+  return (
+    <ColorsProvider>
+      <InnerLayout />
+    </ColorsProvider>
+  );
+}
