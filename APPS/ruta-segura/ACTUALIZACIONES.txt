@@ -125,6 +125,11 @@ v0.7 — 2026-06-16 · SOSScreen + fixes MEJORAX
 • Watermark "AL · Ana Laverde" incluido en SOSScreen
 
 ------------------------------------------------------------
+v0.8 — 2026-06-20 · Emoji comunidad actualizado
+------------------------------------------------------------
+• Emoji "Ayudas comunitarias" en MenuPrincipalScreen: 👥 → 🏘️
+
+------------------------------------------------------------
 [PRÓXIMO]
 ------------------------------------------------------------
 • Reemplazar PLACEHOLDER_NUMERO con el WhatsApp real de Ana Laverde

@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 const CATEGORIAS = [
   {
     id: 'comunidad',
-    emoji: '👥',
+    emoji: '🏘️',
     titulo: 'Ayudas comunitarias',
     desc: 'Foros de apoyo, recursos locales y mentoría',
     color: '#1a6b5a',
