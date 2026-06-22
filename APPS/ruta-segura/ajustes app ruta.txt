@@ -8,13 +8,7 @@
 ------------------------------------------------------------
 [PENDIENTE]
 ------------------------------------------------------------
-
-cambia el corazom de violencia de genero de la pantalla menuprincipal por un corazon morado representativo de las mujeres
-Elimina el toggle de cambio de visualización de todas las pantallas 
-
-podrías cambiar la tarjeta por un botón flotante en forma de teléfono rojo antiguo en la parte inferior izquierda del mismo apartado de violenvia de genero. 
-
-En la pantalla MenuPrincipalScreen.js, podrías cambiar el numero 12 por un numero aleatorio cada vez que se ingrese nuevamente cambie el numero de personas online. 
+en la pantalla categoríaScreen.js la parte de arriba donde sale la hora y los iconos de notificaciones, arréglalo como en las demás pantallas. 
 
 ------------------------------------------------------------
 [EN PROGRESO]
