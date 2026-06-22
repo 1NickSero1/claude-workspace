@@ -137,5 +137,8 @@ v0.8 — 2026-06-20 · Emoji comunidad actualizado
 • Build permanente (APK / TestFlight) para compartir
   sin necesitar el servidor encendido
 • Contenido real en cada categoría (recursos verificados)
+• Actualizar paquetes desactualizados (detectado 2026-06-20 al levantar servidor):
+  — react 19.0.0 → 19.1.0
+  — react-native 0.78.3 → 0.81.5
 
 ========================================

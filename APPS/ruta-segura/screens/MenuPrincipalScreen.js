@@ -75,7 +75,7 @@ export default function MenuPrincipalScreen({ navigation, route }) {
 
         {/* Saludo */}
         <View style={styles.saludo}>
-          <Text style={styles.saludoTexto}>Hola, {nombre || 'amiga'} 👋</Text>
+          <Text style={styles.saludoTexto}>Hola, {nombre || 'amiga'}</Text>
           <Text style={styles.estadoTexto}>📍 {estado}</Text>
         </View>
 
