@@ -48,7 +48,7 @@ function demoResponse(lastMsg: string): string {
   }
 
   return JSON.stringify({
-    message: '¡Hola! 👋 *Modo demo activo*\n\nCuéntame tus gastos o ingresos:\n• "Pagué arriendo $475.000, Spotify $30.000"\n• "Me pagaron el sueldo $2.000.000"\n• "Analiza mis finanzas"',
+    message: '¡Hola! *Modo demo activo*\n\nCuéntame tus gastos o ingresos:\n• "Pagué arriendo $475.000, Spotify $30.000"\n• "Me pagaron el sueldo $2.000.000"\n• "Analiza mis finanzas"',
     expenses: [], incomes: [], askForCard: false,
   });
 }

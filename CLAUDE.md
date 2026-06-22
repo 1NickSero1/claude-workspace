@@ -1,6 +1,6 @@
 Claude: Login# CLAUDE.md — Sistema Operativo de Desarrollo
 
-> **Versión:** 4.0 | **Actualizado:** 2026-06-06
+> **Versión:** 4.0 | **Actualizado:** 2026-06-22
 > Este es el archivo raíz del sistema. Todo parte de aquí.
 
 ---
@@ -55,6 +55,7 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 |---|---|---|
 | 1 | Verificar estado real del directorio antes de asumir qué existe | Siempre |
 | 2 | Los `node_modules` de React Native tienen rutas demasiado largas para `Remove-Item` — usar `robocopy` + `rd /s /q` | PowerShell / limpieza |
+| 3 | Si el puerto 8081 está ocupado (otro proyecto Expo corriendo), usar `npx expo start --port 8082` | Expo / React Native |
 
 ---
 
@@ -198,6 +199,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 | 2026-06-06 | Versión 3.0 — Convertido en raíz del sistema con mapa de skills |
 | 2026-06-06 | Versión 4.0 — Sistema entrenable: expertise, proyectos activos, lecciones aprendidas |
 | 2026-06-06 | Eliminado mi-finanzas; finance-ai renombrado a wallet-control; rutas corregidas a APPS/ |
+| 2026-06-20 | Lección 3 — conflicto de puertos Expo (8081 ocupado → usar 8082) |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise
