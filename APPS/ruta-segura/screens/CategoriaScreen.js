@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Linking, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
@@ -75,7 +75,8 @@ const CONTENIDO = {
   alimentacion: {
     titulo: 'Demandas por alimentación',
     subtitulo: 'Sin importar tu estatus migratorio,\ntienes derecho a comer. Aquí encontramos recursos sin preguntas.',
-    emoji: '🔨',
+    emoji: null,
+    imagen: require('../assets/gavel-icon.png'),
     color: '#7a5c00',
     light: '#fdf6e3',
     secciones: [
@@ -216,7 +217,10 @@ export default function CategoriaScreen({ navigation, route }) {
           </View>
         </View>
         <View style={styles.headerRow}>
-          <Text style={styles.headerEmoji}>{data.emoji}</Text>
+          {data.imagen
+            ? <Image source={data.imagen} style={styles.headerImage} />
+            : <Text style={styles.headerEmoji}>{data.emoji}</Text>
+          }
           <View style={styles.headerTextos}>
             <Text style={styles.headerTitulo}>{data.titulo}</Text>
             {estado && <Text style={styles.headerEstado}>📍 {estado}</Text>}
@@ -319,6 +323,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 6 },
   headerTextos: { flex: 1 },
   headerEmoji: { fontSize: 48 },
+  headerImage: { width: 56, height: 56, resizeMode: 'contain' },
   headerTitulo: { fontSize: 26, fontWeight: '900', color: '#fff', lineHeight: 32 },
   headerEstado: { color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 3 },
   headerSub: {
