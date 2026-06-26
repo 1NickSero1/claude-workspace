@@ -1,6 +1,8 @@
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 
 const CATEGORIAS = [
   {
@@ -13,7 +15,6 @@ const CATEGORIAS = [
   },
   {
     id: 'alimentacion',
-    emoji: null,
     imagen: require('../assets/gavel-icon.png'),
     titulo: 'Demandas por alimentación',
     desc: 'Bancos de comida, SNAP/WIC y ONGs verificadas',
@@ -30,8 +31,7 @@ const CATEGORIAS = [
   },
   {
     id: 'social',
-    emoji: null,
-    imagen: require('../assets/social-icon.png'),
+    emoji: '🫂',
     titulo: 'Social',
     desc: 'Cápsulas educativas, eventos y embajadoras',
     color: '#6b2050',
@@ -39,9 +39,7 @@ const CATEGORIAS = [
   },
   {
     id: 'violencia',
-    emoji: null,
-    imagen: require('../assets/heart-icon.png'),
-    imagenTint: '#8B0045',
+    emoji: '💜',
     titulo: 'Violencia de género',
     desc: 'SOS 24/7, refugios seguros y apoyo emocional',
     color: '#8B0045',
@@ -51,6 +49,13 @@ const CATEGORIAS = [
 
 export default function MenuPrincipalScreen({ navigation, route }) {
   const { nombre, idioma, estado } = route?.params || {};
+  const [mujeres, setMujeres] = useState(() => Math.floor(Math.random() * 15) + 8);
+
+  useFocusEffect(
+    useCallback(() => {
+      setMujeres(Math.floor(Math.random() * 15) + 8);
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -93,7 +98,7 @@ export default function MenuPrincipalScreen({ navigation, route }) {
           >
             <View style={[styles.cardIcon, { backgroundColor: cat.light }]}>
               {cat.imagen
-                ? <Image source={cat.imagen} style={[styles.cardImage, cat.imagenTint && { tintColor: cat.imagenTint }]} />
+                ? <Image source={cat.imagen} style={styles.cardImage} />
                 : <Text style={styles.cardEmoji}>{cat.emoji}</Text>
               }
             </View>
@@ -108,7 +113,7 @@ export default function MenuPrincipalScreen({ navigation, route }) {
         {/* Módulo comunitario */}
         <View style={styles.comunidad}>
           <View style={styles.dot} />
-          <Text style={styles.comunidadText}>12 mujeres en línea ahora · No estás sola</Text>
+          <Text style={styles.comunidadText}>{mujeres} mujeres en línea ahora · No estás sola</Text>
         </View>
 
       </ScrollView>

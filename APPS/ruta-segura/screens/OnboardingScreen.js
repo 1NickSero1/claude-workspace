@@ -91,7 +91,7 @@ export default function OnboardingScreen({ navigation }) {
         <TouchableOpacity
           style={styles.whatsappBtn}
           activeOpacity={0.75}
-          onPress={() => Linking.openURL('https://wa.me/17542758005')}
+          onPress={() => Linking.openURL('https://wa.me/17542758005?text=Hola%20necesito%20ayuda')}
         >
           <Image
             source={require('../assets/whatsapp-icon.png')}

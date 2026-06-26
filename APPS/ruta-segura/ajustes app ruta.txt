@@ -8,7 +8,6 @@
 ------------------------------------------------------------
 [PENDIENTE]
 ------------------------------------------------------------
-en la pantalla categoríaScreen.js la parte de arriba donde sale la hora y los iconos de notificaciones, arréglalo como en las demás pantallas. 
 
 ------------------------------------------------------------
 [EN PROGRESO]
@@ -19,6 +18,23 @@ en la pantalla categoríaScreen.js la parte de arriba donde sale la hora y los i
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+✅ 2026-06-26 — EstadoScreen: teclado cubre el TextInput — MEJORAX
+   • Causa: Modal sin KeyboardAvoidingView → el panel no subía al aparecer el teclado
+   • Fix: KeyboardAvoidingView reemplaza el overlay externo (behavior padding/iOS · height/Android)
+   • Fix: overlay de cierre movido a StyleSheet.absoluteFill detrás del panel
+   • Fix: contenido del modal envuelto en ScrollView con keyboardShouldPersistTaps="handled"
+   • Bonus: TextInput con returnKeyType="done" → confirma directo desde el teclado
+
+✅ 2026-06-26 — 3 ajustes — MEJORAX #2
+   • CategoriaScreen: toggle ⊞/☰ eliminado — siempre muestra cards, estilos lista borrados
+   • MenuPrincipalScreen: "mujeres en línea" ahora es un número aleatorio (8–22) que cambia cada vez que entras a la pantalla (useFocusEffect)
+   • SOSScreen: botón "Registrar caso" eliminado del topBar
+
+✅ 2026-06-26 — 3 ajustes — MEJORAX
+   • CategoriaScreen: SafeAreaView toma backgroundColor del header → barra de estado integrada visualmente
+   • MenuPrincipalScreen: imágenes reemplazadas por emojis (🌽 alimentación · 📖 social · 💜 violencia)
+   • WhatsApp (OnboardingScreen + CategoriaScreen): link actualizado con ?text=Hola%20necesito%20ayuda
 
 ✅ 2026-06-20 — MenuPrincipalScreen: 4 ajustes — MEJORAX
    • metricas.txt: agregada sección REGLAS DE EMOJIS PROFESIONALES

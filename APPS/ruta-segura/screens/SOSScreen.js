@@ -58,16 +58,10 @@ export default function SOSScreen({ navigation, route }) {
           <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
             <Text style={styles.backText}>← Volver</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.registrarBtn}
-            onPress={() => navigation.navigate('MiCaso', { tipo: 'Emergencia SOS', nombre, idioma, estado })}
-          >
-            <Text style={styles.registrarBtnText}>Registrar caso</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.headerBox}>
-          <Text style={styles.sosEmoji}>🆘</Text>
+          <Text style={styles.sosEmoji}>☎️</Text>
           <Text style={styles.titulo}>EMERGENCIA</Text>
           <Text style={styles.subtitulo}>
             {idioma === 'en'
@@ -130,14 +124,6 @@ const styles = StyleSheet.create({
   },
   back: { paddingVertical: 8 },
   backText: { color: 'rgba(255,255,255,0.75)', fontSize: 15, fontWeight: '600' },
-  registrarBtn: {
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-  },
-  registrarBtnText: { color: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: '600' },
   headerBox: { alignItems: 'center', paddingVertical: 16, paddingHorizontal: 24 },
   sosEmoji: { fontSize: 52, marginBottom: 8 },
   titulo: {

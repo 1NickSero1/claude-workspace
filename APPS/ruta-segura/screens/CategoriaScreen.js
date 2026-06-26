@@ -1,13 +1,12 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Linking, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 
 const CONTENIDO = {
   comunidad: {
     titulo: 'Ayudas comunitarias',
     subtitulo: 'Aquí hay mujeres que ya pasaron por lo mismo.\nEncontrarás apoyo real, sin juzgarte.',
-    emoji: '👥',
+    emoji: '🏘️',
     color: '#1a6b5a',
     light: '#e6f5f1',
     secciones: [
@@ -44,16 +43,16 @@ const CONTENIDO = {
   violencia: {
     titulo: 'Violencia de género',
     subtitulo: 'Estás en un lugar seguro.\nAquí encontrarás ayuda real, confidencial y sin juicios.',
-    emoji: '🎀',
+    emoji: '💜',
     color: '#8B0045',
     light: '#fdf0f5',
     secciones: [
       {
-        emoji: '🆘',
+        emoji: '🚨',
         titulo: 'Botón SOS',
         sub: 'Emergencia 24/7',
         desc: 'Alerta inmediata a voluntarias de turno y línea de emergencia local. Completamente confidencial.',
-        accion: '🚨 Activar SOS ahora',
+        accion: 'AYUDA INMEDIATA',
         urgente: true,
       },
       {
@@ -64,7 +63,7 @@ const CONTENIDO = {
         accion: 'Ver refugios cerca',
       },
       {
-        emoji: '🧠',
+        emoji: '💗',
         titulo: 'Apoyo emocional',
         sub: 'Bilingüe · Sin costo',
         desc: 'Habla con una psicóloga bilingüe. Confidencial. Respuesta en menos de 24 horas.',
@@ -75,7 +74,7 @@ const CONTENIDO = {
   alimentacion: {
     titulo: 'Demandas por alimentación',
     subtitulo: 'Sin importar tu estatus migratorio,\ntienes derecho a comer. Aquí encontramos recursos sin preguntas.',
-    emoji: '🌽',
+    imagen: require('../assets/gavel-icon.png'),
     color: '#7a5c00',
     light: '#fdf6e3',
     secciones: [
@@ -135,7 +134,7 @@ const CONTENIDO = {
   social: {
     titulo: 'Social',
     subtitulo: 'Aprende, conéctate y crece.\nAquí tienes herramientas para empoderarte y no depender de nadie.',
-    emoji: '📖',
+    emoji: '🫂',
     color: '#6b2050',
     light: '#f9eaf4',
     secciones: [
@@ -172,7 +171,7 @@ const CONTENIDO = {
         titulo: 'Ana Laverde',
         sub: 'Asesora de inmigración',
         desc: 'Recursos especializados de inmigración. Consultas personalizadas disponibles para tu situación.',
-        accion: 'Más recursos Ana Laverde →',
+        accion: 'Contacta a Ana Laverde →',
         esAna: true,
       },
     ],
@@ -182,16 +181,15 @@ const CONTENIDO = {
 export default function CategoriaScreen({ navigation, route }) {
   const { id, idioma, estado } = route?.params || {};
   const data = CONTENIDO[id] || CONTENIDO.comunidad;
-  const [vista, setVista] = useState('cards');
 
   const handlePress = (s) => {
-    if (s.esAna) return Linking.openURL('https://wa.me/17542758005');
+    if (s.esAna) return Linking.openURL('https://wa.me/17542758005?text=Hola%20necesito%20ayuda');
     if (s.urgente) return navigation.navigate('SOS', { nombre: route?.params?.nombre, idioma, estado });
     navigation.navigate('MiCaso', { tipo: s.titulo, nombre: route?.params?.nombre, idioma, estado });
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: data.color }]}>
       <StatusBar style="light" />
 
       {/* Header de color */}
@@ -200,23 +198,12 @@ export default function CategoriaScreen({ navigation, route }) {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
             <Text style={styles.backText}>← Volver</Text>
           </TouchableOpacity>
-          <View style={styles.vistaToggle}>
-            <TouchableOpacity
-              style={[styles.vistaPill, vista === 'cards' && styles.vistaPillActive]}
-              onPress={() => setVista('cards')}
-            >
-              <Text style={[styles.vistaPillText, vista === 'cards' && styles.vistaPillTextActive]}>⊞</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.vistaPill, vista === 'lista' && styles.vistaPillActive]}
-              onPress={() => setVista('lista')}
-            >
-              <Text style={[styles.vistaPillText, vista === 'lista' && styles.vistaPillTextActive]}>☰</Text>
-            </TouchableOpacity>
-          </View>
         </View>
         <View style={styles.headerRow}>
-          <Text style={styles.headerEmoji}>{data.emoji}</Text>
+          {data.imagen
+            ? <Image source={data.imagen} style={styles.headerImage} />
+            : <Text style={styles.headerEmoji}>{data.emoji}</Text>
+          }
           <View style={styles.headerTextos}>
             <Text style={styles.headerTitulo}>{data.titulo}</Text>
             {estado && <Text style={styles.headerEstado}>📍 {estado}</Text>}
@@ -225,64 +212,48 @@ export default function CategoriaScreen({ navigation, route }) {
         {data.subtitulo && <Text style={styles.headerSub}>{data.subtitulo}</Text>}
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {vista === 'cards'
-          ? data.secciones.map((s, i) => (
-              <View key={i} style={[styles.card, s.urgente && [styles.cardUrgente, { borderColor: data.color }]]}>
-                {s.urgente && (
-                  <View style={[styles.cardUrgenteHeader, { backgroundColor: data.color }]}>
-                    <Text style={styles.cardUrgenteHeaderText}>⚡ AYUDA INMEDIATA DISPONIBLE</Text>
-                  </View>
-                )}
-                <View style={[styles.cardBody, s.urgente && styles.cardBodyUrgente]}>
-                  <View style={[styles.cardIconWrap, { backgroundColor: s.urgente ? `${data.color}18` : data.light }]}>
-                    <Text style={styles.cardEmoji}>{s.emoji}</Text>
-                  </View>
-                  <Text style={[styles.cardTitulo, s.urgente && { color: data.color, fontSize: 20 }]}>{s.titulo}</Text>
-                  <Text style={styles.cardSub}>{s.sub}</Text>
-                  <Text style={styles.cardDesc}>{s.desc}</Text>
-                  <TouchableOpacity
-                    style={[styles.cardBtn, s.esAna ? styles.cardBtnAna : { backgroundColor: data.color }, s.urgente && styles.cardBtnUrgente]}
-                    activeOpacity={0.85}
-                    onPress={() => handlePress(s)}
-                  >
-                    <Text style={[styles.cardBtnText, s.esAna && styles.cardBtnAnaText]}>{s.accion}</Text>
-                  </TouchableOpacity>
+      <View style={styles.body}>
+        <ScrollView contentContainerStyle={styles.scroll}>
+          {data.secciones.map((s, i) => (
+            <View key={i} style={[styles.card, s.urgente && [styles.cardUrgente, { borderColor: data.color }]]}>
+              {s.urgente && (
+                <View style={[styles.cardUrgenteHeader, { backgroundColor: data.color }]}>
+                  <Text style={styles.cardUrgenteHeaderText}>⚡ AYUDA INMEDIATA DISPONIBLE</Text>
                 </View>
+              )}
+              <View style={[styles.cardBody, s.urgente && styles.cardBodyUrgente]}>
+                <View style={[styles.cardIconWrap, { backgroundColor: s.urgente ? `${data.color}18` : data.light }]}>
+                  <Text style={styles.cardEmoji}>{s.emoji}</Text>
+                </View>
+                <Text style={[styles.cardTitulo, s.urgente && { color: data.color, fontSize: 20 }]}>{s.titulo}</Text>
+                <Text style={styles.cardSub}>{s.sub}</Text>
+                <Text style={styles.cardDesc}>{s.desc}</Text>
+                <TouchableOpacity
+                  style={[styles.cardBtn, s.esAna ? styles.cardBtnAna : { backgroundColor: data.color }, s.urgente && styles.cardBtnUrgente]}
+                  activeOpacity={0.85}
+                  onPress={() => handlePress(s)}
+                >
+                  <Text style={[styles.cardBtnText, s.esAna && styles.cardBtnAnaText]}>{s.accion}</Text>
+                </TouchableOpacity>
               </View>
-            ))
-          : data.secciones.map((s, i) => (
-              <TouchableOpacity
-                key={i}
-                style={[styles.listaRow, s.urgente && { borderLeftWidth: 3, borderLeftColor: data.color }]}
-                activeOpacity={0.75}
-                onPress={() => handlePress(s)}
-              >
-                <View style={[styles.listaIconWrap, { backgroundColor: s.urgente ? `${data.color}18` : data.light }]}>
-                  <Text style={styles.listaEmoji}>{s.emoji}</Text>
-                </View>
-                <View style={styles.listaTextos}>
-                  <Text style={[styles.listaTitulo, s.urgente && { color: data.color }]}>{s.titulo}</Text>
-                  <Text style={styles.listaSub}>{s.sub}</Text>
-                </View>
-                <Text style={[styles.listaArrow, { color: data.color }]}>›</Text>
-              </TouchableOpacity>
-            ))
-        }
-      </ScrollView>
+            </View>
+          ))}
+        </ScrollView>
 
-      <View style={styles.watermark}>
-        <View style={styles.watermarkCircle}>
-          <Text style={styles.watermarkInitials}>AL</Text>
+        <View style={styles.watermark}>
+          <View style={styles.watermarkCircle}>
+            <Text style={styles.watermarkInitials}>AL</Text>
+          </View>
+          <Text style={styles.watermarkName}>Ana Laverde</Text>
         </View>
-        <Text style={styles.watermarkName}>Ana Laverde</Text>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f4ff' },
+  container: { flex: 1 },
+  body: { flex: 1, backgroundColor: '#f8f4ff' },
   header: {
     paddingHorizontal: 24,
     paddingTop: 20,
@@ -291,34 +262,10 @@ const styles = StyleSheet.create({
   headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   back: { alignSelf: 'flex-start' },
   backText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '600' },
-  vistaToggle: { flexDirection: 'row', gap: 4, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 20, padding: 3 },
-  vistaPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16 },
-  vistaPillActive: { backgroundColor: 'rgba(255,255,255,0.9)' },
-  vistaPillText: { fontSize: 14, color: 'rgba(255,255,255,0.6)' },
-  vistaPillTextActive: { color: '#1a1a2e' },
-  listaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  listaIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  listaEmoji: { fontSize: 20 },
-  listaTextos: { flex: 1 },
-  listaTitulo: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
-  listaSub: { fontSize: 12, color: '#999', marginTop: 1 },
-  listaArrow: { fontSize: 22, fontWeight: '300', lineHeight: 24 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 6 },
   headerTextos: { flex: 1 },
   headerEmoji: { fontSize: 48 },
+  headerImage: { width: 56, height: 56, resizeMode: 'contain', tintColor: '#fff' },
   headerTitulo: { fontSize: 26, fontWeight: '900', color: '#fff', lineHeight: 32 },
   headerEstado: { color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 3 },
   headerSub: {

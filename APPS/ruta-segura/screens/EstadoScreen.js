@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Modal, TextInput } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -85,50 +85,58 @@ export default function EstadoScreen({ navigation, route }) {
         animationType="slide"
         onRequestClose={() => setModalVisible(false)}
       >
-        <TouchableOpacity
+        <KeyboardAvoidingView
           style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setModalVisible(false)}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setModalVisible(false)}
+          />
           <TouchableOpacity activeOpacity={1} style={styles.modalPanel}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitulo}>{t.otrosTitulo}</Text>
 
-            {OTROS_ESTADOS.map(e => (
-              <TouchableOpacity
-                key={e.nombre}
-                style={styles.modalCard}
-                activeOpacity={0.8}
-                onPress={() => irAMenuPrincipal(e.nombre)}
-              >
-                <Text style={styles.modalEmoji}>{e.emoji}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.modalNombre}>{e.nombre}</Text>
-                  <Text style={styles.modalCiudad}>{e.ciudad}</Text>
-                </View>
-                <Text style={styles.modalArrow}>›</Text>
-              </TouchableOpacity>
-            ))}
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              {OTROS_ESTADOS.map(e => (
+                <TouchableOpacity
+                  key={e.nombre}
+                  style={styles.modalCard}
+                  activeOpacity={0.8}
+                  onPress={() => irAMenuPrincipal(e.nombre)}
+                >
+                  <Text style={styles.modalEmoji}>{e.emoji}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.modalNombre}>{e.nombre}</Text>
+                    <Text style={styles.modalCiudad}>{e.ciudad}</Text>
+                  </View>
+                  <Text style={styles.modalArrow}>›</Text>
+                </TouchableOpacity>
+              ))}
 
-            <TextInput
-              style={styles.modalInput}
-              placeholder={t.escribe}
-              placeholderTextColor="#aaa"
-              value={otroEstado}
-              onChangeText={setOtroEstado}
-            />
+              <TextInput
+                style={styles.modalInput}
+                placeholder={t.escribe}
+                placeholderTextColor="#aaa"
+                value={otroEstado}
+                onChangeText={setOtroEstado}
+                returnKeyType="done"
+                onSubmitEditing={() => otroEstado.trim() && irAMenuPrincipal(otroEstado.trim())}
+              />
 
-            {otroEstado.length > 0 && (
-              <TouchableOpacity
-                style={styles.modalBtn}
-                activeOpacity={0.85}
-                onPress={() => irAMenuPrincipal(otroEstado.trim())}
-              >
-                <Text style={styles.modalBtnText}>{t.confirmar}</Text>
-              </TouchableOpacity>
-            )}
+              {otroEstado.length > 0 && (
+                <TouchableOpacity
+                  style={styles.modalBtn}
+                  activeOpacity={0.85}
+                  onPress={() => irAMenuPrincipal(otroEstado.trim())}
+                >
+                  <Text style={styles.modalBtnText}>{t.confirmar}</Text>
+                </TouchableOpacity>
+              )}
+            </ScrollView>
           </TouchableOpacity>
-        </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
 
       <View style={styles.watermark}>
