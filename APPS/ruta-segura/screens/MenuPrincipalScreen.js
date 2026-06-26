@@ -13,7 +13,7 @@ const CATEGORIAS = [
   },
   {
     id: 'alimentacion',
-    emoji: null,
+    emoji: '🔨',
     imagen: require('../assets/gavel-icon.png'),
     titulo: 'Demandas por alimentación',
     desc: 'Bancos de comida, SNAP/WIC y ONGs verificadas',

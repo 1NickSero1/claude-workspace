@@ -75,7 +75,7 @@ const CONTENIDO = {
   alimentacion: {
     titulo: 'Demandas por alimentación',
     subtitulo: 'Sin importar tu estatus migratorio,\ntienes derecho a comer. Aquí encontramos recursos sin preguntas.',
-    emoji: '🌽',
+    emoji: '🔨',
     color: '#7a5c00',
     light: '#fdf6e3',
     secciones: [
