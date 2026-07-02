@@ -1,0 +1,67 @@
+====================================================
+ RECETA DE DESARROLLO DE APPS - BITACORA PASO A PASO
+====================================================
+Este archivo documenta, como una receta de cocina, todo lo que se
+va haciendo (y lo que falta por hacer) en la creacion de apps dentro
+de este workspace usando la skill PECAS.
+
+Se actualiza automaticamente cada vez que se ejecuta /compact
+(manual o automatico), agregando una nueva entrada al final del
+Historial de Cambios con fecha y hora.
+
+----------------------------------------------------
+IDEA / PROYECTO ACTUAL
+----------------------------------------------------
+Estado: EN DEFINICION
+Aun no se ha descrito la idea de la app. Pendiente de responder:
+  1. Que hace exactamente la app (una oracion)
+  2. Web, movil o escritorio
+  3. Necesita login de usuarios (Supabase Auth)
+  4. Necesita cobrar (Stripe: pago unico o suscripcion)
+  5. Cual es el MVP minimo vendible
+
+----------------------------------------------------
+PASOS DE LA RECETA (se van llenando conforme avanza el proyecto)
+----------------------------------------------------
+[ ] Paso 0 - Definir la idea con las 4 preguntas de PECAS
+[ ] Paso 1 - Elegir stack (web/movil/escritorio) y hacer setup inicial
+[ ] Paso 2 - Estructura base del proyecto (carpetas, .env, .gitignore)
+[ ] Paso 3 - Auth (si aplica)
+[ ] Paso 4 - Feature principal end-to-end
+[ ] Paso 5 - Pagos (si aplica)
+[ ] Paso 6 - Checklist de MVP listo
+[ ] Paso 7 - Deploy / build de produccion
+[ ] Paso 8 - Estrategia de venta (Gumroad / Lemon Squeezy / Product Hunt)
+
+----------------------------------------------------
+HISTORIAL DE CAMBIOS
+----------------------------------------------------
+
+[2026-07-01] Sesion inicial
+- Se activo la skill PECAS para desarrollar una nueva idea de app.
+- El usuario aun no describio la idea; quedaron pendientes las 4
+  preguntas de la Fase 0 de PECAS (que hace, plataforma, auth, pagos, MVP).
+- El usuario pidio documentar todo el proceso de creacion de la app en
+  este archivo, en formato receta paso a paso, guardado en:
+  C:\Users\Lenovo Ideapad\Documents\GitHub\claude-workspace\RECETAS
+- Se configuro un hook PostCompact (en .claude/settings.local.json) que,
+  cada vez que se ejecuta /compact, recuerda automaticamente actualizar
+  este archivo con lo nuevo hecho en la sesion.
+
+[2026-07-01] Fix de hook + comando fijo para abrir servidor wallet-control
+- El hook PostCompact fallo la primera vez que se ejecuto /compact: el
+  schema de Claude Code no permite "hookSpecificOutput.additionalContext"
+  para el evento PostCompact (solo aplica a PreToolUse, UserPromptSubmit,
+  PostToolUse, PostToolBatch, Stop/SubagentStop).
+- Se corrigio el hook para que el comando emita texto plano en vez de JSON
+  con hookSpecificOutput. Se valido que settings.local.json sigue siendo
+  JSON valido.
+- El usuario establecio una instruccion fija: cada vez que pida "abrir el
+  servidor" (de wallet-control), ejecutar el script de PowerShell que abre
+  Expo en el puerto 8082 (Start-Process powershell -NoExit -Command
+  "cd wallet-control; npx expo start --port 8082"). Se ejecuto una vez
+  para abrir el servidor ahora mismo.
+
+----------------------------------------------------
+(las entradas nuevas se agregan debajo de esta linea)
+----------------------------------------------------

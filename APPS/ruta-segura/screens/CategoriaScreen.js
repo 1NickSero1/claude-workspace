@@ -6,7 +6,7 @@ const CONTENIDO = {
   comunidad: {
     titulo: 'Ayudas comunitarias',
     subtitulo: 'Aquí hay mujeres que ya pasaron por lo mismo.\nEncontrarás apoyo real, sin juzgarte.',
-    emoji: '🏘️',
+    emoji: '⚖️',
     color: '#1a6b5a',
     light: '#e6f5f1',
     secciones: [

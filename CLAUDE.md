@@ -181,6 +181,24 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 
 ---
 
+## Palabras Clave de Commit
+
+> Estas palabras se usan en cualquier momento de la conversación para disparar un commit de git.
+> No son hooks de sistema (no requieren configuración en `settings.json`) — son instrucciones
+> de comportamiento que Claude sigue al detectarlas en el mensaje.
+
+| Palabra clave | Acción |
+|---|---|
+| `TERMINAR` | Commit general — agrega y confirma TODOS los cambios pendientes en el repo hasta ese momento, con un mensaje que resuma qué se hizo |
+| `PAUSA` | Commit específico — Claude pregunta primero cuál actualización/archivo se quiere confirmar, y hace commit solo de eso |
+
+**Reglas:**
+- Nunca hacer commit sin que se indique una de estas dos palabras (o se pida explícitamente)
+- `TERMINAR` = todo lo pendiente. `PAUSA` = solo lo que el usuario confirme tras la pregunta
+- Se sigue siempre el protocolo de seguridad de git (sin `--force`, sin `--no-verify`, revisar que no haya secrets antes de agregar archivos)
+
+---
+
 ## Checklist Universal de Proyecto Terminado
 
 - [ ] Feature principal funciona end-to-end
@@ -200,6 +218,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 | 2026-06-06 | Versión 4.0 — Sistema entrenable: expertise, proyectos activos, lecciones aprendidas |
 | 2026-06-06 | Eliminado mi-finanzas; finance-ai renombrado a wallet-control; rutas corregidas a APPS/ |
 | 2026-06-20 | Lección 3 — conflicto de puertos Expo (8081 ocupado → usar 8082) |
+| 2026-07-02 | Agregadas palabras clave de commit: `TERMINAR` (commit general) y `PAUSA` (commit específico, pregunta antes) |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise

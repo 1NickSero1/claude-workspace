@@ -1,0 +1,58 @@
+========================================
+  PALABRAS CLAVE — Comandos por voz de texto
+  Definidas hasta 2026-07-02
+========================================
+
+Estas palabras se pueden usar en cualquier momento de la conversación
+con Claude Code para disparar una acción automática, sin tener que
+explicar el proceso completo cada vez.
+
+------------------------------------------------------------
+COMMITS DE GIT (definidas en CLAUDE.md raíz)
+------------------------------------------------------------
+
+TERMINAR
+  → Commit GENERAL: agrega y confirma TODOS los cambios pendientes
+    del repo hasta ese momento, con mensaje que resume qué se hizo.
+
+PAUSA
+  → Commit ESPECÍFICO: Claude primero pregunta cuál actualización o
+    archivo se quiere confirmar, y hace commit solo de eso.
+
+------------------------------------------------------------
+SERVIDORES DE DESARROLLO
+------------------------------------------------------------
+
+"abre el servidor" (contexto wallet-control)
+  → Ejecuta directo: npx expo start --port 8082 en APPS/wallet-control
+
+"abre el servidor" (contexto ruta-segura)
+  → Ejecuta directo: npx expo start --port 8082 en APPS/ruta-segura
+
+------------------------------------------------------------
+ENTRENAMIENTO DE CLAUDE.md (raíz del sistema)
+------------------------------------------------------------
+
+"soy experto en [tema]"
+  → Agrega el tema a la tabla de Expertise
+
+"elimina expertise [tema] de CLAUDE.md"
+  → Quita el tema de la tabla de Expertise
+
+"agrega [nombre] a proyectos activos"
+  → Registra un proyecto nuevo en la tabla de Proyectos Activos
+
+"mueve [nombre] a proyectos terminados"
+  → Pasa un proyecto de Activos a Terminados
+
+"agrega lección: [lo que aprendiste]"
+  → Agrega una fila a la tabla de Lecciones Aprendidas
+
+"actualiza CLAUDE.md con [instrucción]"
+  → Cualquier otro cambio libre al archivo raíz
+
+========================================
+  Nota: TERMINAR y PAUSA son reglas de comportamiento, no hooks
+  de sistema (no están en settings.json). Claude las sigue porque
+  están documentadas en CLAUDE.md raíz.
+========================================
