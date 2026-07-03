@@ -78,7 +78,6 @@ export interface Goal {
 export interface UserProfile {
   name: string;
   email: string;
-  password: string;
   avatarColor: string;
   avatarEmoji?: string;
   isAnonymous?: boolean;

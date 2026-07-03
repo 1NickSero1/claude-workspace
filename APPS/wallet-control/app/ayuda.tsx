@@ -162,9 +162,8 @@ const buildPdfHtml = (): string => `
 <div class="step"><span class="num">2</span> <span class="label">Elige tu color de avatar</span> — este será el color de tu perfil en la app.</div>
 <div class="step"><span class="num">3</span> <span class="label">Escribe tu nombre</span> (mínimo 2 caracteres).</div>
 <div class="step"><span class="num">4</span> <span class="label">Ingresa tu correo electrónico</span> — la app verifica el formato.</div>
-<div class="step"><span class="num">5</span> <span class="label">Crea una contraseña</span> de mínimo 4 caracteres y confírmala.</div>
-<div class="step"><span class="num">6</span> <span class="label">Toca "Crear cuenta"</span> — el botón se habilita cuando todo es válido.</div>
-<div class="step"><span class="num">7</span> <span class="label">¡Listo!</span> Toca "Ir a Wallet Control" para empezar.</div>
+<div class="step"><span class="num">5</span> <span class="label">Toca "Crear cuenta"</span> — el botón se habilita cuando todo es válido.</div>
+<div class="step"><span class="num">6</span> <span class="label">¡Listo!</span> Toca "Ir a Wallet Control" para empezar.</div>
 
 <div class="tip">Tus datos se guardan SOLO en este dispositivo. No hay servidores involucrados.</div>
 
@@ -324,7 +323,7 @@ según la fecha en que los registres.</p>
   <tr><td>¿Necesita internet?</td><td>Solo para el chat con IA. El resto funciona offline</td></tr>
   <tr><td>¿Qué pasa si desinstalo la app?</td><td>Los datos se borran junto con la app</td></tr>
   <tr><td>¿Puedo hacer backup?</td><td>Próximamente — exportar a Excel/CSV</td></tr>
-  <tr><td>¿Mi contraseña es segura?</td><td>Se guarda localmente. Úsala solo en esta app</td></tr>
+  <tr><td>¿Necesito una contraseña?</td><td>No. Wallet Control no usa contraseñas — todo tu historial vive únicamente en este dispositivo</td></tr>
 </table>
 
 <div class="footer">
@@ -351,7 +350,7 @@ const SECTIONS: Section[] = [
     items: [
       'Toca "Crear mi cuenta" en la bienvenida',
       'Elige tu color de avatar',
-      'Ingresa nombre, correo y contraseña',
+      'Ingresa tu nombre y correo',
       'Toca "Crear cuenta" para comenzar',
     ],
   },

@@ -8,9 +8,11 @@
     "scheme": "walletcontrol",
     "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.walletcontrol.app"
     },
     "android": {
+      "package": "com.walletcontrol.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -26,6 +28,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {

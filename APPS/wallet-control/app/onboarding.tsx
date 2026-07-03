@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/storage';
+import { trackSignup } from '@/lib/userTracking';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors, useThemeInfo } from '@/constants/ThemeContext';
 
@@ -22,15 +23,11 @@ export default function OnboardingScreen() {
   const [step, setStep]           = useState<Step>('welcome');
   const [name, setName]           = useState('');
   const [email, setEmail]         = useState('');
-  const [password, setPassword]   = useState('');
-  const [confirm, setConfirm]     = useState('');
-  const [showPass, setShowPass]   = useState(false);
   const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
   const [avatarEmoji, setAvatarEmoji] = useState('');
   const [loading, setLoading]     = useState(false);
 
   const [loginEmail, setLoginEmail]       = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading]   = useState(false);
 
   const nameInitials = name.trim()
@@ -39,11 +36,7 @@ export default function OnboardingScreen() {
   const avatarGlyph = avatarEmoji.trim() || nameInitials;
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const canRegister =
-    name.trim().length >= 2 &&
-    emailValid &&
-    password.length >= 4 &&
-    password === confirm;
+  const canRegister = name.trim().length >= 2 && emailValid;
 
   const handleRegister = async () => {
     if (!canRegister) return;
@@ -52,12 +45,12 @@ export default function OnboardingScreen() {
       const profile: UserProfile = {
         name:        name.trim(),
         email:       email.trim().toLowerCase(),
-        password,
         avatarColor,
         avatarEmoji: avatarEmoji.trim() || undefined,
         createdAt:   new Date().toISOString(),
       };
       await saveUserProfile(profile);
+      trackSignup(profile);
       setStep('done');
     } catch {
       Alert.alert('Error', 'No se pudo guardar el perfil. Intenta de nuevo.');
@@ -71,16 +64,18 @@ export default function OnboardingScreen() {
     try {
       const profile = await getUserProfile();
       const matches = !!profile
-        && profile.email === loginEmail.trim().toLowerCase()
-        && profile.password === loginPassword;
+        && !profile.isAnonymous
+        && profile.email === loginEmail.trim().toLowerCase();
       if (matches) {
         router.replace('/(tabs)');
       } else {
         Alert.alert(
           'No encontramos tu cuenta',
-          'El correo o la contraseña no coinciden con ninguna cuenta guardada en este dispositivo.',
+          'El correo no coincide con ninguna cuenta guardada en este dispositivo.',
         );
       }
+    } catch {
+      Alert.alert('Error', 'No se pudo verificar tu cuenta. Intenta de nuevo.');
     } finally {
       setLoginLoading(false);
     }
@@ -90,12 +85,12 @@ export default function OnboardingScreen() {
     const profile: UserProfile = {
       name: 'Invitado',
       email: '',
-      password: '',
       avatarColor: AVATAR_COLORS[0],
       isAnonymous: true,
       createdAt: new Date().toISOString(),
     };
     await saveUserProfile(profile);
+    trackSignup(profile);
     router.replace('/(tabs)');
   };
 
@@ -356,7 +351,7 @@ export default function OnboardingScreen() {
             </TouchableOpacity>
 
             <Text style={styles.formTitle}>Inicia sesión</Text>
-            <Text style={styles.formSub}>Usa el correo y la contraseña de tu cuenta en este dispositivo</Text>
+            <Text style={styles.formSub}>Usa el correo de tu cuenta en este dispositivo</Text>
 
             <Text style={styles.label}>Correo electrónico</Text>
             <TextInput
@@ -369,25 +364,10 @@ export default function OnboardingScreen() {
               autoCapitalize="none"
             />
 
-            <Text style={styles.label}>Contraseña</Text>
-            <View style={styles.inputWrap}>
-              <TextInput
-                style={styles.input}
-                value={loginPassword}
-                onChangeText={setLoginPassword}
-                placeholder="••••••••"
-                placeholderTextColor={COLORS.textDim}
-                secureTextEntry={!showPass}
-              />
-              <TouchableOpacity onPress={() => setShowPass(p => !p)} style={styles.inputIcon}>
-                <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={18} color={COLORS.textMuted} />
-              </TouchableOpacity>
-            </View>
-
             <TouchableOpacity
               onPress={handleLogin}
-              disabled={!loginEmail || !loginPassword || loginLoading}
-              style={[styles.primaryBtn, styles.primaryBtnSpaced, (!loginEmail || !loginPassword || loginLoading) && styles.primaryBtnOff]}
+              disabled={!loginEmail || loginLoading}
+              style={[styles.primaryBtn, styles.primaryBtnSpaced, (!loginEmail || loginLoading) && styles.primaryBtnOff]}
             >
               <Text style={styles.primaryBtnText}>{loginLoading ? 'Verificando...' : 'Entrar'}</Text>
               {!loginLoading && <Ionicons name="arrow-forward" size={18} color="#fff" />}
@@ -496,47 +476,6 @@ export default function OnboardingScreen() {
               />
             )}
           </View>
-
-          {/* Contraseña */}
-          <Text style={styles.label}>Contraseña (mínimo 4 caracteres)</Text>
-          <View style={styles.inputWrap}>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              placeholderTextColor={COLORS.textDim}
-              secureTextEntry={!showPass}
-            />
-            <TouchableOpacity onPress={() => setShowPass(p => !p)} style={styles.inputIcon}>
-              <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={18} color={COLORS.textMuted} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Confirmar */}
-          <Text style={styles.label}>Confirmar contraseña</Text>
-          <View style={styles.inputWrap}>
-            <TextInput
-              style={[styles.input, confirm && confirm !== password && styles.inputError]}
-              value={confirm}
-              onChangeText={setConfirm}
-              placeholder="••••••••"
-              placeholderTextColor={COLORS.textDim}
-              secureTextEntry={!showPass}
-            />
-            {confirm.length > 0 && (
-              <Ionicons
-                name={confirm === password ? 'checkmark-circle' : 'close-circle'}
-                size={18}
-                color={confirm === password ? COLORS.debit : COLORS.credit}
-                style={styles.inputIcon}
-              />
-            )}
-          </View>
-
-          {confirm.length > 0 && confirm !== password && (
-            <Text style={styles.errorText}>Las contraseñas no coinciden</Text>
-          )}
 
           <Text style={styles.privacyNote}>
             🔒 Seguridad garantizada: tus datos se almacenan de forma local y privada en tu dispositivo.
