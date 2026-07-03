@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface CardEvent {
-  type: 'deposit' | 'pay';
+  type: 'deposit' | 'pay' | 'withdraw';
   amount: number;
   date: string;
   note?: string;
