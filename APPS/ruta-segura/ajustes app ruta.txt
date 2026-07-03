@@ -8,7 +8,6 @@
 ------------------------------------------------------------
 [PENDIENTE]
 ------------------------------------------------------------
-en la pantalla categoríaScreen.js la parte de arriba donde sale la hora y los iconos de notificaciones, arréglalo como en las demás pantallas. 
 
 ------------------------------------------------------------
 [EN PROGRESO]
