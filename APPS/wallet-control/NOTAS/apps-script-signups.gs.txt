@@ -1,0 +1,42 @@
+function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    ensureHeader_(sheet);
+
+    var body = (e && e.postData && e.postData.contents) ? e.postData.contents : '{}';
+    var data = JSON.parse(body);
+
+    var name        = typeof data.name === 'string' ? data.name.trim() : '';
+    var email       = typeof data.email === 'string' ? data.email.trim() : '';
+    var createdAt   = typeof data.createdAt === 'string' ? data.createdAt : '';
+    var isAnonymous = data.isAnonymous === true;
+
+    if (!isAnonymous && !name) {
+      return jsonResponse_({ ok: false, error: 'Falta el nombre' });
+    }
+
+    sheet.appendRow([
+      new Date(),   // A: fecha/hora en que el servidor recibió el POST
+      name,         // B: nombre
+      email,        // C: correo
+      createdAt,    // D: fecha de creación reportada por la app (ISO string)
+      isAnonymous,  // E: true/false - modo anónimo
+    ]);
+
+    return jsonResponse_({ ok: true });
+  } catch (err) {
+    return jsonResponse_({ ok: false, error: String(err) });
+  }
+}
+
+function ensureHeader_(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Recibido (servidor)', 'Nombre', 'Correo', 'Creado (app)', 'Anónimo']);
+  }
+}
+
+function jsonResponse_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
