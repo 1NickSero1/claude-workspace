@@ -34,6 +34,70 @@ PASOS DE LA RECETA (se van llenando conforme avanza el proyecto)
 [ ] Paso 8 - Estrategia de venta (Gumroad / Lemon Squeezy / Product Hunt)
 
 ----------------------------------------------------
+LECCIONES GENERALES — aplican a CUALQUIER app nueva
+----------------------------------------------------
+Extraidas de la auditoria completa de wallet-control (2026-07-02).
+Aplicar desde el Paso 0/1 de la receta, no al final del proyecto.
+
+[SEGURIDAD]
+- Nunca llamar APIs de terceros con API key (Anthropic, OpenAI, etc.)
+  directo desde el cliente usando variables EXPO_PUBLIC_* / NEXT_PUBLIC_*.
+  Esas variables quedan incrustadas en el bundle de produccion y son
+  extraibles descompilando el build. Si la app necesita IA real, la
+  llamada debe pasar por un backend/proxy propio (Cloudflare Worker,
+  Vercel/Supabase Edge Function) que guarde la key del lado servidor.
+  Mientras no exista ese proxy, usar un "modo demo" con respuestas
+  simuladas como modo publico por defecto.
+- No fingir seguridad: si una app guarda "password" pero no hay backend
+  real detras (todo el storage es local), ese campo no protege nada.
+  O se quita, o se usa expo-secure-store / Keychain / Keystore. Nunca
+  decirle al usuario en la UI que algo "es seguro" si no lo es.
+
+[SETUP TEMPRANO — evita bloquear el primer build]
+- Configurar bundleIdentifier (iOS) / package (Android) en app.json
+  desde el Paso 1 de setup, no cuando ya se quiere compartir la app.
+  Sin esto, EAS Build no puede generar credenciales.
+- Correr "eas build:configure" apenas se decide que la app movil se va
+  a compartir en algun momento — deja eas.json listo con anticipacion.
+- Cada vez que se instala una libreria que requiere plugin nativo
+  (expo-notifications, expo-camera, etc.), declararla en app.json
+  "plugins" en el mismo momento de instalarla, no despues.
+
+[ASSETS]
+- Exportar icon.png / splash.png ya limpios (sin guias de diseno:
+  circulos, lineas punteadas, marcas de referencia) antes de marcar el
+  diseno visual como terminado. Revisar visualmente el asset final, no
+  solo confirmar que el archivo existe.
+
+[EVITAR FEATURES A MEDIAS]
+- No dejar componentes construidos pero nunca montados en ninguna
+  pantalla (ej. una barra de progreso de presupuesto que existe en
+  codigo pero no aparece en ningun lado) ni promesas de "proximamente"
+  en la UI sin que esa feature este realmente en el backlog.
+- Antes de compartir cualquier build fuera del circulo de desarrollo,
+  correr un checklist rapido de auditoria (seguridad + capacidad real
+  de generar build + consistencia UI) en vez de asumir que "se ve
+  terminado" porque las pantallas principales funcionan.
+
+[ESTRUCTURA DE NOTAS]
+- Usar desde el inicio del proyecto la misma carpeta NOTAS/ estandar:
+  ACTUALIZACIONES.txt (changelog), "ajustes [app].txt" (bugs/tareas,
+  MEJORAX), "ideas [app].txt" (backlog priorizado), metricas.txt
+  (sistema visual fijo, NO MODIFICAR), palabras-clave.txt (comandos).
+  Evita tener que reorganizar archivos sueltos despues.
+
+[CAMINO DE LANZAMIENTO RECOMENDADO]
+1. Build APK con "eas build --profile preview" -> compartir con 5-10
+   personas de confianza (reemplaza depender de Expo Go + servidor).
+2. Beta cerrada 2-3 semanas: feedback especifico antes de audiencia
+   mas grande. En paralelo, subir a Google Play Internal Testing.
+3. Landing simple (skill PAKI) en paralelo, con 2-3 screenshots reales.
+4. Lanzamiento publico: Play Store / App Store + Product Hunt +
+   comunidades relevantes al nicho de la app.
+5. Ciclo continuo: usar el propio ACTUALIZACIONES.txt como base para
+   publicar novedades y mantener audiencia activa.
+
+----------------------------------------------------
 HISTORIAL DE CAMBIOS
 ----------------------------------------------------
 
@@ -61,6 +125,17 @@ HISTORIAL DE CAMBIOS
   Expo en el puerto 8082 (Start-Process powershell -NoExit -Command
   "cd wallet-control; npx expo start --port 8082"). Se ejecuto una vez
   para abrir el servidor ahora mismo.
+
+[2026-07-02] Lecciones generales desde auditoria de wallet-control
+- Se hizo una auditoria completa de wallet-control (codigo real, no solo
+  notas): seguridad (API key expuesta en bundle, password en texto
+  plano), bloqueantes de build (bundleIdentifier/package/eas.json
+  faltantes, plugin de notificaciones sin declarar, assets con guias de
+  diseno sin limpiar) y features a medias (componentes sin montar,
+  promesas de UI sin cumplir).
+- Se agrego la seccion "LECCIONES GENERALES" a este archivo con los
+  puntos que aplican a cualquier app nueva creada con PECAS, para
+  aplicarlos desde el Paso 0/1 en vez de descubrirlos al final.
 
 ----------------------------------------------------
 (las entradas nuevas se agregan debajo de esta linea)

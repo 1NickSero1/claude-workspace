@@ -73,6 +73,14 @@ ENTRENAMIENTO DE CLAUDE.md (raíz del sistema)
   → Cualquier otro cambio libre al archivo raíz
 
 ------------------------------------------------------------
+COMANDO DE ESTE PROYECTO
+------------------------------------------------------------
+
+MEJORAX
+  → Lee NOTAS/ajustes wallet-control.txt y resuelve todo lo
+    pendiente en la sección [PENDIENTE]
+
+------------------------------------------------------------
 HOOKS REALES ACTIVOS (.claude/settings.local.json)
 ------------------------------------------------------------
 
@@ -82,7 +90,7 @@ WALLET CONTROL / RUTA SEGURA → UserPromptSubmit → .claude/hooks/proyecto-swi
 [sin palabra clave, se disparan solos por evento]
   → PreToolUse Edit/Write: bloquea archivos *metricas*.txt (NO MODIFICAR)
   → PreToolUse Read/Edit/Write: bloquea .env y .env.*
-  → SessionStart: muestra [PENDIENTE] de los archivos de ajustes
+  → SessionStart: muestra [PENDIENTE] de NOTAS/ajustes wallet-control.txt
   → PostToolUse tras "git commit": avisa si quedó sin pushear
 
 ========================================

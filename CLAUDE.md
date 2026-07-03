@@ -181,21 +181,39 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 
 ---
 
-## Palabras Clave de Commit
+## Palabras Clave de Commit y Push
 
-> Estas palabras se usan en cualquier momento de la conversación para disparar un commit de git.
-> No son hooks de sistema (no requieren configuración en `settings.json`) — son instrucciones
-> de comportamiento que Claude sigue al detectarlas en el mensaje.
+> `TERMINAR` y `PAUSA` son instrucciones de comportamiento (Claude las sigue al leerlas, no hay
+> hook de sistema detrás). `SUBIR` sí tiene un hook real (`UserPromptSubmit`,
+> `.claude/hooks/subir-push.ps1`) que ejecuta `git push` automáticamente al detectar el mensaje
+> exacto "SUBIR" — esta entrada queda como respaldo documental por si el hook no llega a cargarse.
 
 | Palabra clave | Acción |
 |---|---|
 | `TERMINAR` | Commit general — agrega y confirma TODOS los cambios pendientes en el repo hasta ese momento, con un mensaje que resuma qué se hizo |
 | `PAUSA` | Commit específico — Claude pregunta primero cuál actualización/archivo se quiere confirmar, y hace commit solo de eso |
+| `SUBIR` | Push automático — ejecuta `git push` de inmediato, sin preguntar. Si falla (rama desactualizada, conflicto, etc.), Claude reporta el error tal cual y no intenta resolverlo solo |
 
 **Reglas:**
-- Nunca hacer commit sin que se indique una de estas dos palabras (o se pida explícitamente)
-- `TERMINAR` = todo lo pendiente. `PAUSA` = solo lo que el usuario confirme tras la pregunta
+- Nunca hacer commit ni push sin que se indique una de estas palabras (o se pida explícitamente)
+- `TERMINAR` = todo lo pendiente. `PAUSA` = solo lo que el usuario confirme tras la pregunta. `SUBIR` = push inmediato de lo ya commiteado
 - Se sigue siempre el protocolo de seguridad de git (sin `--force`, sin `--no-verify`, revisar que no haya secrets antes de agregar archivos)
+- Si `git push` falla por divergencia con el remoto, Claude no hace merge/rebase automático — informa el conflicto y espera instrucción
+
+---
+
+## Palabras Clave de Cambio de Proyecto
+
+> Hook real (`UserPromptSubmit`, `.claude/hooks/proyecto-switch.ps1`). Detecta el mensaje exacto
+> (mayúsculas o minúsculas) y le inyecta contexto a Claude para que arranque enfocado en ese
+> proyecto.
+
+| Palabra clave | Acción |
+|---|---|
+| `WALLET CONTROL` | Invoca la skill PECAS y saluda, recomendando al usuario correr `/clear` antes de seguir (contexto limpio), para trabajar específicamente en `APPS/wallet-control` |
+| `RUTA SEGURA` | Igual, pero enfocado en `APPS/ruta-segura` |
+
+**Nota:** Claude no puede borrar su propio contexto de conversación desde un hook — eso solo lo dispara el usuario con `/clear`. El hook recomienda hacerlo, no lo fuerza.
 
 ---
 
@@ -219,6 +237,8 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 | 2026-06-06 | Eliminado mi-finanzas; finance-ai renombrado a wallet-control; rutas corregidas a APPS/ |
 | 2026-06-20 | Lección 3 — conflicto de puertos Expo (8081 ocupado → usar 8082) |
 | 2026-07-02 | Agregadas palabras clave de commit: `TERMINAR` (commit general) y `PAUSA` (commit específico, pregunta antes) |
+| 2026-07-02 | Agregada palabra clave `SUBIR` (push automático) + 4 hooks reales en `.claude/hooks/`: protección de `metricas.txt`, bloqueo de `.env*`, recordatorio de pendientes al iniciar sesión, aviso de push pendiente tras commit |
+| 2026-07-02 | Agregadas palabras clave `WALLET CONTROL` y `RUTA SEGURA` (hook real) — invocan PECAS y recomiendan `/clear` para arrancar enfocados en ese proyecto específico |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise
