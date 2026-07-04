@@ -23,11 +23,18 @@ COMANDO RÁPIDO:
 [RESUELTO]
 ------------------------------------------------------------
 
-  ✓ Selector de emoji en la misma pantalla + solo emojis, default 💵 (MEJORAX)
-    → Grid de 10 emojis tocables (mismo patrón visual que CategoryFormModal)
-    → avatarEmoji ahora arranca en '💵' por defecto en vez de vacío
-    → El input manual de "o escribe otro" filtra con regex \p{Extended_Pictographic}
-      así que solo puede quedar un emoji, nunca texto normal
+  ✓ Selector de emoji simplificado: solo el círculo, sin grid (MEJORAX, ajuste posterior)
+    → Se eliminó el grid de 10 emojis y el input visible "o escribe otro"
+      (feedback del usuario: sobraban, quería solo el círculo)
+    → El círculo del avatar ahora es tocable — al tocarlo enfoca un TextInput
+      oculto (ref) que abre el teclado del celular de inmediato
+    → Limitación técnica real: React Native no tiene API para forzar que se
+      abra específicamente el panel de emojis del teclado nativo (eso lo
+      decide Gboard/iOS) — el usuario debe tocar el ícono 🙂 de su propio
+      teclado una vez que se abre, igual que en WhatsApp/Instagram
+    → El input oculto sigue filtrando con \p{Extended_Pictographic}, así que
+      solo puede quedar un emoji guardado, nunca texto normal
+    → avatarEmoji sigue arrancando en '💵' por defecto
 
   ✓ Login con correo o nombre de usuario (MEJORAX)
     → Se agregó columna `email` a la tabla `profiles` + función RPC
