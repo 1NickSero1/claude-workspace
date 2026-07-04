@@ -86,6 +86,20 @@ Aplicar desde el Paso 0/1 de la receta, no al final del proyecto.
   (sistema visual fijo, NO MODIFICAR), palabras-clave.txt (comandos).
   Evita tener que reorganizar archivos sueltos despues.
 
+[RESPONSIVE DESIGN]
+- Instalar y configurar useWindowDimensions (hook nativo de React
+  Native) desde el Paso 1 de setup en toda app movil nueva, no como
+  retrofit despues de que las pantallas ya tienen estilos fijos.
+  Preferir un hook propio sobre useWindowDimensions (reactivo a
+  rotacion/resize) en vez de librerias como react-native-size-matters,
+  que calculan Dimensions.get('window') una sola vez al importar el
+  modulo y no se actualizan. Definir desde el inicio un helper de
+  escalado (scale/verticalScale/moderateScale) y envolver los
+  StyleSheet.create de cada pantalla con el, en vez de escribir
+  fontSize/padding/width fijos en numeros sueltos. Detectado como
+  deuda tecnica en wallet-control: hubo que agregar esto de golpe a
+  ~10 pantallas ya maduras en vez de tenerlo desde el principio.
+
 [CAMINO DE LANZAMIENTO RECOMENDADO]
 1. Build APK con "eas build --profile preview" -> compartir con 5-10
    personas de confianza (reemplaza depender de Expo Go + servidor).
@@ -136,6 +150,17 @@ HISTORIAL DE CAMBIOS
 - Se agrego la seccion "LECCIONES GENERALES" a este archivo con los
   puntos que aplican a cualquier app nueva creada con PECAS, para
   aplicarlos desde el Paso 0/1 en vez de descubrirlos al final.
+
+[2026-07-04] Leccion de responsive design + aclaracion de archivo de recetas
+- Durante el trabajo de fase 1 de wallet-control se detecto que ninguna
+  app del workspace (ni wallet-control ni ruta-segura) tiene un sistema
+  real de responsive design (useWindowDimensions, scale/moderateScale,
+  etc.) — todos los tamanos estan fijos en StyleSheet.create.
+- Se agrego la seccion "RESPONSIVE DESIGN" a las lecciones generales de
+  este archivo para que las apps nuevas lo incluyan desde el Paso 1.
+- El usuario aclaro que, de ahora en adelante, cuando se refiera al
+  "archivo de recetas" es este archivo (RECETAS/receta-apps.txt), no
+  otro documento.
 
 ----------------------------------------------------
 (las entradas nuevas se agregan debajo de esta linea)
