@@ -10,6 +10,7 @@ import { getUserProfile, deleteUserProfile, saveUserProfile, UserProfile } from 
 import { supabase } from '@/lib/supabase';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors, useThemeInfo } from '@/constants/ThemeContext';
+import { useResponsive, scaledSheet } from '@/constants/responsive';
 import type { ThemeMode } from '@/lib/storage';
 
 const THEME_OPTIONS: { id: ThemeMode; label: string; icon: string }[] = [
@@ -20,6 +21,7 @@ const THEME_OPTIONS: { id: ThemeMode; label: string; icon: string }[] = [
 
 export default function PerfilScreen() {
   const COLORS = useColors();
+  const { moderateScale } = useResponsive();
   const { themeMode, setThemeMode } = useThemeInfo();
   const [profile, setProfile]       = useState<UserProfile | null>(null);
   const [editModal, setEditModal]   = useState(false);
