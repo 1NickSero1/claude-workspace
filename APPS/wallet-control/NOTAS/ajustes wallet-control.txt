@@ -13,6 +13,10 @@ COMANDO RÁPIDO:
 [PENDIENTE]
 ------------------------------------------------------------
 
+en la pantalla de crea tu cuenta bloquea que en la sección de elegir un emogi no lo pongas como o un emogi si no como obligatorio y utiliza los emojis del teclado del celular
+en esta misma pantalla quita el apartado de nombre completo y edita el siguiente de un () donde diga que es el nombre de usuario
+ajusta el responsive de la pantalla onboarding
+
 ------------------------------------------------------------
 [EN PROGRESO]
 ------------------------------------------------------------
