@@ -13,6 +13,7 @@ import { trackSignup } from '@/lib/userTracking';
 import { supabase } from '@/lib/supabase';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors, useThemeInfo } from '@/constants/ThemeContext';
+import { useResponsive, scaledSheet } from '@/constants/responsive';
 
 const AVATAR_COLORS = [
   '#6C5CE7', '#00C896', '#FF5C5C', '#FDCB6E',
@@ -133,8 +134,9 @@ export default function OnboardingScreen() {
   const COLORS = useColors();
   const { isDark, setThemeMode } = useThemeInfo();
   const toggleTheme = () => setThemeMode(isDark ? 'light' : 'dark');
+  const { moderateScale } = useResponsive();
 
-  const styles = useMemo(() => StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create(scaledSheet({
     safe: { flex: 1, backgroundColor: COLORS.bg },
     flex: { flex: 1 },
 
@@ -268,7 +270,7 @@ export default function OnboardingScreen() {
     primaryBtnSpaced: { marginTop: 20 },
     primaryBtnOff: { backgroundColor: COLORS.textDim, elevation: 0, shadowOpacity: 0 },
     primaryBtnText: { color: '#fff', fontWeight: '800', fontSize: FONT.base },
-  }), [COLORS]);
+  }, moderateScale)), [COLORS, moderateScale]);
 
   // ── WELCOME ─────────────────────────────────────────────────────────────────
   if (step === 'welcome') {

@@ -18,6 +18,7 @@ import CardView from '@/components/CardView';
 import CardFormModal from '@/components/CardFormModal';
 import { FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
+import { useResponsive, scaledSheet } from '@/constants/responsive';
 
 type SubTab = 'cuentas' | 'tarjetas';
 
