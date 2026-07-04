@@ -8,7 +8,8 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { COLORS, DARK_COLORS } from '@/constants/theme';
 import { ThemeProvider as ColorsProvider, useThemeInfo } from '@/constants/ThemeContext';
-import { getUserProfile } from '@/lib/storage';
+import { getUserProfile, saveUserProfile } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -69,11 +70,45 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!loaded) return;
-    getUserProfile().then(profile => {
+    (async () => {
+      const localProfile = await getUserProfile();
+      if (localProfile?.isAnonymous) {
+        setChecked(true);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        if (!localProfile || localProfile.id !== session.user.id) {
+          const { data: row } = await supabase.from('profiles')
+            .select('*').eq('id', session.user.id).single();
+          if (row) {
+            await saveUserProfile({
+              id: session.user.id,
+              name: row.name,
+              nickname: row.nickname,
+              email: session.user.email ?? '',
+              avatarColor: row.avatar_color,
+              avatarEmoji: row.avatar_emoji ?? undefined,
+              createdAt: row.created_at,
+            });
+          }
+        }
+        setChecked(true);
+        return;
+      }
+
       setChecked(true);
-      if (!profile) setTimeout(() => router.replace('/onboarding'), 0);
-    });
+      setTimeout(() => router.replace('/onboarding'), 0);
+    })();
   }, [loaded]);
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') router.replace('/onboarding');
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (loaded && checked) SplashScreen.hideAsync();

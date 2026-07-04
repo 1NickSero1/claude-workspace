@@ -385,7 +385,7 @@ export default function OnboardingScreen() {
             </TouchableOpacity>
 
             <Text style={styles.formTitle}>Inicia sesión</Text>
-            <Text style={styles.formSub}>Usa el correo de tu cuenta en este dispositivo</Text>
+            <Text style={styles.formSub}>Usa el correo y contraseña de tu cuenta</Text>
 
             <Text style={styles.label}>Correo electrónico</Text>
             <TextInput
@@ -398,10 +398,20 @@ export default function OnboardingScreen() {
               autoCapitalize="none"
             />
 
+            <Text style={styles.label}>Contraseña</Text>
+            <TextInput
+              style={styles.input}
+              value={loginPassword}
+              onChangeText={setLoginPassword}
+              placeholder="••••••••"
+              placeholderTextColor={COLORS.textDim}
+              secureTextEntry
+            />
+
             <TouchableOpacity
               onPress={handleLogin}
-              disabled={!loginEmail || loginLoading}
-              style={[styles.primaryBtn, styles.primaryBtnSpaced, (!loginEmail || loginLoading) && styles.primaryBtnOff]}
+              disabled={!loginEmail || !loginPassword || loginLoading}
+              style={[styles.primaryBtn, styles.primaryBtnSpaced, (!loginEmail || !loginPassword || loginLoading) && styles.primaryBtnOff]}
             >
               <Text style={styles.primaryBtnText}>{loginLoading ? 'Verificando...' : 'Entrar'}</Text>
               {!loginLoading && <Ionicons name="arrow-forward" size={18} color="#fff" />}
@@ -448,7 +458,7 @@ export default function OnboardingScreen() {
           </TouchableOpacity>
 
           <Text style={styles.formTitle}>Crea tu cuenta</Text>
-          <Text style={styles.formSub}>Tus datos se guardan solo en este dispositivo</Text>
+          <Text style={styles.formSub}>Úsala para entrar desde cualquier dispositivo</Text>
 
           {/* Avatar preview */}
           <View style={styles.avatarSection}>
@@ -489,6 +499,17 @@ export default function OnboardingScreen() {
             autoCapitalize="words"
           />
 
+          {/* Nickname */}
+          <Text style={styles.label}>¿Cómo quieres que te llame Finando?</Text>
+          <TextInput
+            style={styles.input}
+            value={nickname}
+            onChangeText={setNickname}
+            placeholder="Ej: Juanito"
+            placeholderTextColor={COLORS.textDim}
+            autoCapitalize="words"
+          />
+
           {/* Email */}
           <Text style={styles.label}>Correo electrónico</Text>
           <View style={styles.inputWrap}>
@@ -511,8 +532,19 @@ export default function OnboardingScreen() {
             )}
           </View>
 
+          {/* Password */}
+          <Text style={styles.label}>Contraseña</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Mínimo 6 caracteres"
+            placeholderTextColor={COLORS.textDim}
+            secureTextEntry
+          />
+
           <Text style={styles.privacyNote}>
-            🔒 Seguridad garantizada: tus datos se almacenan de forma local y privada en tu dispositivo.
+            🔒 Tu cuenta se guarda de forma segura en la nube. Tus gastos, tarjetas y metas siguen solo en este dispositivo.
           </Text>
 
           <TouchableOpacity

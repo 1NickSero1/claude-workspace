@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getUserProfile, deleteUserProfile, saveUserProfile, UserProfile } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors, useThemeInfo } from '@/constants/ThemeContext';
 import type { ThemeMode } from '@/lib/storage';
@@ -43,6 +44,7 @@ export default function PerfilScreen() {
           text: 'Cerrar sesión',
           style: 'destructive',
           onPress: async () => {
+            if (profile?.id) await supabase.auth.signOut();
             await deleteUserProfile();
             router.replace('/onboarding');
           },

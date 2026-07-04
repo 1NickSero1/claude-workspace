@@ -234,6 +234,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 - [ ] `.env*` en `.gitignore`
 - [ ] Build de producción sin errores
 - [ ] Deploy funcionando
+- [ ] Si la app maneja cuentas/datos personales: política de tratamiento de datos redactada y publicada (obligatoria para Play Store "Data safety form"; en Colombia aplica Ley 1581 de 2012 — Habeas Data)
 
 ---
 
