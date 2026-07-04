@@ -312,19 +312,19 @@ según la fecha en que los registres.</p>
 "Cambiar el celular". Cada aporte queda registrado con fecha para ver tu progreso.</p>
 
 <div class="warn">
-  Para usar el análisis de IA real, debes configurar tu API key de Anthropic en el
-  archivo .env de la app: EXPO_PUBLIC_ANTHROPIC_API_KEY=tu-clave-aquí
+  El análisis de IA real de Finando se activa automáticamente al crear una cuenta o iniciar
+  sesión — no necesitas configurar ninguna API key. En modo anónimo, Finando queda en modo demo.
 </div>
 
 <!-- ── PRIVACIDAD ── -->
 <h2>7. Privacidad y Seguridad</h2>
 <table>
   <tr><th>Pregunta</th><th>Respuesta</th></tr>
-  <tr><td>¿Mis datos van a la nube?</td><td>No. Todo queda en tu dispositivo (AsyncStorage)</td></tr>
-  <tr><td>¿Necesita internet?</td><td>Solo para el chat con IA. El resto funciona offline</td></tr>
-  <tr><td>¿Qué pasa si desinstalo la app?</td><td>Los datos se borran junto con la app</td></tr>
+  <tr><td>¿Mis datos van a la nube?</td><td>Tu perfil de cuenta sí, de forma segura. Tus tarjetas, gastos y metas quedan solo en este dispositivo (AsyncStorage)</td></tr>
+  <tr><td>¿Necesita internet?</td><td>Solo para el chat con IA y para iniciar sesión. El resto funciona offline</td></tr>
+  <tr><td>¿Qué pasa si desinstalo la app?</td><td>Tus tarjetas, gastos y metas se borran junto con la app. Tu cuenta (si creaste una) sigue disponible al reinstalar e iniciar sesión</td></tr>
   <tr><td>¿Puedo hacer backup?</td><td>Próximamente — exportar a Excel/CSV</td></tr>
-  <tr><td>¿Necesito una contraseña?</td><td>No. Wallet Control no usa contraseñas — todo tu historial vive únicamente en este dispositivo</td></tr>
+  <tr><td>¿Necesito una contraseña?</td><td>Solo si creas una cuenta (para poder entrar desde otro dispositivo). El modo anónimo no la pide</td></tr>
 </table>
 
 <div class="footer">

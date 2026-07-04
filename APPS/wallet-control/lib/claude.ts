@@ -1,8 +1,7 @@
-import { SYSTEM_PROMPT } from '@/constants/systemPrompt';
+import { buildSystemPrompt } from '@/constants/systemPrompt';
+import { supabase } from '@/lib/supabase';
 
-const API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL   = 'claude-sonnet-5';
-const PLACEHOLDER_KEY = 'your-api-key-here';
+const EDGE_FUNCTION_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/claude-proxy`;
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -87,34 +86,27 @@ function extractDemoExpenses(text: string) {
 
 // ── Real API ──────────────────────────────────────────────────────────────────
 
-export async function askAdvisor(history: ChatMessage[]): Promise<string> {
-  const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
+export async function askAdvisor(history: ChatMessage[], nickname?: string): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
 
-  if (!apiKey || apiKey === PLACEHOLDER_KEY) {
+  if (!session) {
     const last = history[history.length - 1]?.content ?? '';
     await new Promise(r => setTimeout(r, 700));
     return demoResponse(last);
   }
 
-  const response = await fetch(API_URL, {
+  const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-beta': 'prompt-caching-2024-07-31',
+      Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 1024,
-      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-      messages: history,
-    }),
+    body: JSON.stringify({ system: buildSystemPrompt(nickname), messages: history }),
   });
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error((err as any)?.error?.message ?? `Error ${response.status}`);
+    throw new Error((err as any)?.error ?? `Error ${response.status}`);
   }
 
   const data = await response.json();

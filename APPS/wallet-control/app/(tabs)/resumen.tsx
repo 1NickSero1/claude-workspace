@@ -21,11 +21,11 @@ import DonutChart, { DonutSlice } from '@/components/DonutChart';
 import QuickEntryModal from '@/components/QuickEntryModal';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
+import { useResponsive, scaledSheet } from '@/constants/responsive';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { buildFinancialReportHtml } from '@/lib/financialReport';
 
-const SCREEN_W = Dimensions.get('window').width;
 const GOAL_COLORS = ['#6C5CE7','#00C896','#FF5C5C','#FDCB6E','#0984E3','#A29BFE','#00B894','#E17055'];
 const INCOME_COLORS = ['#00C896','#0984E3','#6C5CE7','#FDCB6E','#00B894','#A29BFE','#E17055','#FF5C5C'];
 const fmtShort = (n: number) => n >= 1_000_000 ? `$${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `$${Math.round(n/1_000)}k` : formatCOP(n);
@@ -36,6 +36,7 @@ const GOAL_EMOJI_OPTIONS = [
 ];
 
 export default function ResumenScreen() {
+  const { width: SCREEN_W, moderateScale } = useResponsive();
   const [expenses, setExpenses]     = useState<Expense[]>([]);
   const [incomes, setIncomes]       = useState<Income[]>([]);
   const [categories, setCategories] = useState<CustomCategory[]>([]);
@@ -203,7 +204,7 @@ export default function ResumenScreen() {
   }));
 
   const COLORS = useColors();
-  const styles = useMemo(() => StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create(scaledSheet({
     safe: { flex: 1, backgroundColor: COLORS.bg },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 14, backgroundColor: COLORS.bg },
     headerTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.xl },
@@ -390,7 +391,7 @@ export default function ResumenScreen() {
       elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8,
     },
     fabLabel: { color: COLORS.primary, fontSize: 12, fontWeight: '800', letterSpacing: 0.3, backgroundColor: COLORS.primaryBg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.primary + '33' },
-  }), [COLORS]);
+  }, moderateScale)), [COLORS, moderateScale]);
 
   return (
     <SafeAreaView style={styles.safe}>

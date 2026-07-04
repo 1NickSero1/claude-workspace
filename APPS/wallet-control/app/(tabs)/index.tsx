@@ -44,6 +44,7 @@ export default function ChatScreen() {
   const [cards, setCards] = useState<Card[]>([]);
   const [categories, setCategories] = useState<CustomCategory[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [nickname, setNickname] = useState<string | undefined>(undefined);
   const [pendingExpenses, setPendingExpenses] = useState<{ msgId: string; expenses: Expense[] } | null>(null);
   const listRef = useRef<FlatList>(null);
   const monthKey = getCurrentMonthKey();
@@ -53,6 +54,7 @@ export default function ChatScreen() {
       setCards(c);
       setCategories(cats);
       setIsAnonymous(!!profile?.isAnonymous);
+      setNickname(profile?.nickname);
     });
   }, []));
 
@@ -165,7 +167,7 @@ export default function ChatScreen() {
     setLoading(true);
 
     try {
-      const rawText = await askAdvisor(buildHistory(next));
+      const rawText = await askAdvisor(buildHistory(next), nickname);
       const { message, expenses: rawExp, incomes: rawInc, askForCard } = parseClaudeResponse(rawText);
 
       const expenses = buildExpenses(rawExp, monthKey);
