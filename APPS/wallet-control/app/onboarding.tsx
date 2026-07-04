@@ -22,6 +22,8 @@ const AVATAR_COLORS = [
 
 const DEFAULT_AVATAR_EMOJI = '💵';
 
+const RECOMMENDED_EMOJIS = ['💵', '😀', '😎', '🚀', '🐱', '⭐', '🔥', '🎯'];
+
 const EMOJI_ONLY_REGEX = /\p{Extended_Pictographic}/gu;
 const filterEmojiOnly = (text: string) => (text.match(EMOJI_ONLY_REGEX) ?? []).join('');
 
@@ -34,6 +36,7 @@ export default function OnboardingScreen() {
   const [password, setPassword]   = useState('');
   const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
   const [avatarEmoji, setAvatarEmoji] = useState(DEFAULT_AVATAR_EMOJI);
+  const [showEmojiSuggestions, setShowEmojiSuggestions] = useState(false);
   const [loading, setLoading]     = useState(false);
   const emojiInputRef = useRef<TextInput>(null);
 
@@ -251,8 +254,16 @@ export default function OnboardingScreen() {
     colorPicker: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'center' },
     colorDot: { width: 28, height: 28, borderRadius: 14 },
     colorDotSelected: { borderWidth: 3, borderColor: COLORS.text },
-    emojiHint: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center' },
     hiddenEmojiInput: { height: 0, width: 0, opacity: 0 },
+    emojiSuggestRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+    emojiSuggestBtn: {
+      width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+      backgroundColor: COLORS.card2, borderWidth: 2, borderColor: 'transparent',
+    },
+    emojiSuggestBtnSelected: {
+      borderColor: COLORS.primary, backgroundColor: COLORS.primary + '22',
+    },
+    emojiSuggestText: { fontSize: 20 },
 
     // Inputs
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 6, marginTop: 14 },
@@ -476,15 +487,36 @@ export default function OnboardingScreen() {
           <Text style={styles.formTitle}>Crea tu cuenta</Text>
           <Text style={styles.formSub}>Úsala para entrar desde cualquier dispositivo</Text>
 
-          {/* Avatar preview — toca para elegir tu emoji desde el teclado */}
+          {/* Avatar preview — toca para ver recomendados o escribir el tuyo */}
           <View style={styles.avatarSection}>
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => emojiInputRef.current?.focus()}
+              onPress={() => setShowEmojiSuggestions(v => !v)}
               style={[styles.avatarPreview, { backgroundColor: avatarColor }]}
             >
               <Text style={styles.avatarInitials}>{avatarGlyph}</Text>
             </TouchableOpacity>
+
+            {showEmojiSuggestions && (
+              <View style={styles.emojiSuggestRow}>
+                {RECOMMENDED_EMOJIS.map(e => (
+                  <TouchableOpacity
+                    key={e}
+                    onPress={() => { setAvatarEmoji(e); setShowEmojiSuggestions(false); }}
+                    style={[styles.emojiSuggestBtn, avatarEmoji === e && styles.emojiSuggestBtnSelected]}
+                  >
+                    <Text style={styles.emojiSuggestText}>{e}</Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  onPress={() => { setShowEmojiSuggestions(false); emojiInputRef.current?.focus(); }}
+                  style={styles.emojiSuggestBtn}
+                >
+                  <Ionicons name="create-outline" size={20} color={COLORS.textMuted} />
+                </TouchableOpacity>
+              </View>
+            )}
+
             <TextInput
               ref={emojiInputRef}
               style={styles.hiddenEmojiInput}
@@ -492,7 +524,7 @@ export default function OnboardingScreen() {
               onChangeText={(t) => setAvatarEmoji(filterEmojiOnly(t))}
               maxLength={4}
             />
-            <Text style={styles.emojiHint}>Toca el círculo y elige tu emoji desde el teclado</Text>
+
             <View style={styles.colorPicker}>
               {AVATAR_COLORS.map(c => (
                 <TouchableOpacity
