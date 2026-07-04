@@ -24,7 +24,6 @@ type Step = 'welcome' | 'choice' | 'register' | 'login' | 'done';
 
 export default function OnboardingScreen() {
   const [step, setStep]           = useState<Step>('welcome');
-  const [name, setName]           = useState('');
   const [nickname, setNickname]   = useState('');
   const [email, setEmail]         = useState('');
   const [password, setPassword]   = useState('');
@@ -36,16 +35,13 @@ export default function OnboardingScreen() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading]   = useState(false);
 
-  const nameInitials = name.trim()
-    ? name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : '?';
-  const avatarGlyph = avatarEmoji.trim() || nameInitials;
+  const avatarGlyph = avatarEmoji.trim() || '🙂';
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const canRegister = name.trim().length >= 2
-    && nickname.trim().length >= 2
+  const canRegister = nickname.trim().length >= 2
     && emailValid
-    && password.length >= 6;
+    && password.length >= 6
+    && avatarEmoji.trim().length > 0;
 
   const handleRegister = async () => {
     if (!canRegister) return;
@@ -60,20 +56,20 @@ export default function OnboardingScreen() {
 
       const { error: profileError } = await supabase.from('profiles').insert({
         id: data.user.id,
-        name: name.trim(),
+        name: nickname.trim(),
         nickname: nickname.trim(),
         avatar_color: avatarColor,
-        avatar_emoji: avatarEmoji.trim() || null,
+        avatar_emoji: avatarEmoji.trim(),
       });
       if (profileError) throw profileError;
 
       const profile: UserProfile = {
         id:          data.user.id,
-        name:        name.trim(),
+        name:        nickname.trim(),
         nickname:    nickname.trim(),
         email:       email.trim().toLowerCase(),
         avatarColor,
-        avatarEmoji: avatarEmoji.trim() || undefined,
+        avatarEmoji: avatarEmoji.trim(),
         createdAt:   new Date().toISOString(),
       };
       await saveUserProfile(profile);
@@ -150,8 +146,9 @@ export default function OnboardingScreen() {
     },
 
     // Welcome
+    welcomeScroll: { flexGrow: 1 },
     welcomeContainer: {
-      flex: 1, paddingHorizontal: 28, paddingTop: 48, paddingBottom: 36,
+      flexGrow: 1, paddingHorizontal: 28, paddingTop: 48, paddingBottom: 36,
       alignItems: 'center', justifyContent: 'space-between',
     },
     topBlock: { width: '100%', alignItems: 'center' },
@@ -179,7 +176,7 @@ export default function OnboardingScreen() {
     featureText: { flex: 1, color: COLORS.text, fontSize: FONT.md, lineHeight: 20 },
 
     // Choice
-    choiceContainer: { flex: 1, paddingHorizontal: 24, paddingTop: 20, paddingBottom: 24 },
+    choiceContainer: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 20, paddingBottom: 24 },
     optionCard: {
       flexDirection: 'row', alignItems: 'center', gap: 14,
       backgroundColor: COLORS.card, borderRadius: 16, padding: 16,
@@ -280,6 +277,7 @@ export default function OnboardingScreen() {
           <Ionicons name={isDark ? 'sunny' : 'moon'} size={20} color={COLORS.primary} />
         </TouchableOpacity>
 
+        <ScrollView contentContainerStyle={styles.welcomeScroll} showsVerticalScrollIndicator={false}>
         <View style={styles.welcomeContainer}>
           <View style={styles.topBlock}>
             <LinearGradient
@@ -320,6 +318,7 @@ export default function OnboardingScreen() {
             </TouchableOpacity>
           </View>
         </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -328,7 +327,7 @@ export default function OnboardingScreen() {
   if (step === 'choice') {
     return (
       <SafeAreaView style={styles.safe}>
-        <View style={styles.choiceContainer}>
+        <ScrollView contentContainerStyle={styles.choiceContainer} showsVerticalScrollIndicator={false}>
           <TouchableOpacity onPress={() => setStep('welcome')} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={20} color={COLORS.text} />
           </TouchableOpacity>
@@ -368,7 +367,7 @@ export default function OnboardingScreen() {
             </View>
             <Ionicons name="chevron-forward" size={18} color={COLORS.textDim} />
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -432,7 +431,7 @@ export default function OnboardingScreen() {
           <View style={[styles.avatarLarge, { backgroundColor: avatarColor }]}>
             <Text style={styles.avatarInitialsLarge}>{avatarGlyph}</Text>
           </View>
-          <Text style={styles.doneTitle}>¡Listo, {name.split(' ')[0]}!</Text>
+          <Text style={styles.doneTitle}>¡Listo, {nickname.split(' ')[0]}!</Text>
           <Text style={styles.doneSub}>
             Tu cuenta está creada y guardada en este dispositivo.{'\n'}
             Empieza diciéndole a Finando tus gastos del mes.
@@ -478,7 +477,7 @@ export default function OnboardingScreen() {
               ))}
             </View>
             <View style={styles.emojiRow}>
-              <Text style={styles.emojiLabel}>o un emoji:</Text>
+              <Text style={styles.emojiLabel}>Elige un emoji (obligatorio):</Text>
               <TextInput
                 style={styles.emojiInput}
                 value={avatarEmoji}
@@ -490,19 +489,8 @@ export default function OnboardingScreen() {
             </View>
           </View>
 
-          {/* Nombre */}
-          <Text style={styles.label}>Nombre completo</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="Ej: Juan García"
-            placeholderTextColor={COLORS.textDim}
-            autoCapitalize="words"
-          />
-
-          {/* Nickname */}
-          <Text style={styles.label}>¿Cómo quieres que te llame Finando?</Text>
+          {/* Nickname / nombre de usuario */}
+          <Text style={styles.label}>¿Cómo quieres que te llame Finando? (tu nombre de usuario)</Text>
           <TextInput
             style={styles.input}
             value={nickname}
