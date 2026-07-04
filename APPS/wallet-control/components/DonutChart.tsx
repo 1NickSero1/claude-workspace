@@ -1,11 +1,10 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
+import { useResponsive, scaledSheet } from '@/constants/responsive';
 import { formatCOP } from '@/lib/expenseParser';
-
-const DEFAULT_SIZE = Math.min(Dimensions.get('window').width - 64, 220);
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -40,7 +39,8 @@ interface Props {
 
 export default function DonutChart({ data, total, size, centerLabel, centerValue, centerValueColor, emptyLabel, emptyHint }: Props) {
   const COLORS = useColors();
-  const styles = useMemo(() => StyleSheet.create({
+  const { width, moderateScale } = useResponsive();
+  const styles = useMemo(() => StyleSheet.create(scaledSheet({
     center: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
     totalAmt: { fontSize: FONT.xl, fontWeight: '700' },
     totalLabel: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
@@ -53,9 +53,10 @@ export default function DonutChart({ data, total, size, centerLabel, centerValue
     },
     emptyText: { color: COLORS.textMuted, fontSize: FONT.base, fontWeight: '600' },
     emptyHint: { color: COLORS.textDim, fontSize: FONT.sm, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 },
-  }), [COLORS]);
+  }, moderateScale)), [COLORS, moderateScale]);
 
-  const S = size ?? DEFAULT_SIZE;
+  const defaultSize = Math.min(width - 64, 220);
+  const S = size ?? defaultSize;
   const cx = S / 2;
   const cy = S / 2;
   const outerR = S / 2 - 4;

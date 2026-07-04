@@ -15,7 +15,7 @@ import {
 import { sumExpenses, formatCOP } from '@/lib/expenseParser';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
-import { useResponsive } from '@/constants/responsive';
+import { useResponsive, scaledSheet } from '@/constants/responsive';
 
 interface MonthSummary {
   key: string;
@@ -30,6 +30,7 @@ interface TrendPoint {
 }
 
 export default function HistoryScreen() {
+  const { width: SCREEN_W, moderateScale } = useResponsive();
   const [months, setMonths]         = useState<MonthSummary[]>([]);
   const [categories, setCategories] = useState<CustomCategory[]>([]);
   const [expanded, setExpanded]     = useState<string | null>(null);
@@ -72,7 +73,7 @@ export default function HistoryScreen() {
 
   const COLORS = useColors();
 
-  const styles = useMemo(() => StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create(scaledSheet({
     safe: { flex: 1, backgroundColor: COLORS.bg },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     header: {
@@ -150,7 +151,7 @@ export default function HistoryScreen() {
     trendLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     trendDot: { width: 10, height: 10, borderRadius: 5 },
     trendLegendText: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '600' },
-  }), [COLORS]);
+  }, moderateScale)), [COLORS, moderateScale]);
 
   const getCat = (id: string) => categories.find(c => c.id === id);
 

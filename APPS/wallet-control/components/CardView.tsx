@@ -1,12 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/lib/storage';
 import { formatCOP } from '@/lib/expenseParser';
 import { FONT } from '@/constants/theme';
-
-const CARD_W = Dimensions.get('window').width * 0.72;
-const CARD_H = CARD_W * 0.58;
+import { useResponsive, scaledSheet } from '@/constants/responsive';
 
 interface Props {
   card: Card;
@@ -18,6 +16,11 @@ interface Props {
 }
 
 export default function CardView({ card, totalSpent = 0, selected, onPress, onLongPress, compact }: Props) {
+  const { width, moderateScale } = useResponsive();
+  const CARD_W = width * 0.72;
+  const CARD_H = CARD_W * 0.58;
+  const styles = useMemo(() => StyleSheet.create(scaledSheet(RAW_STYLES, moderateScale)), [moderateScale]);
+
   const available = card.type === 'credit' && card.limit ? card.limit - totalSpent : null;
   const balanceLeft = card.type === 'debit' && card.balance != null ? card.balance - totalSpent : null;
 
@@ -98,7 +101,7 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
   );
 }
 
-const styles = StyleSheet.create({
+const RAW_STYLES = {
   card: {
     borderRadius: 18,
     padding: 18,
@@ -170,4 +173,4 @@ const styles = StyleSheet.create({
   compactChip: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
   compactText: { color: '#fff', fontSize: FONT.sm, fontWeight: '700', flex: 1 },
   compactLast: { color: 'rgba(255,255,255,0.7)', fontSize: 10, marginLeft: 4 },
-});
+};
