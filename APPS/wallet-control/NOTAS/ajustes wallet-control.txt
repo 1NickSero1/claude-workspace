@@ -12,7 +12,9 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE]
 ------------------------------------------------------------
-  — (vacío por ahora)
+ en la pantalla crea tu cuenta deja seleccionar el emogi desde ahí mismo, y que como predeterminado aparezca este "💵", que no deje escribir otro termino que no sea emogi, 
+
+en la pantalla iniciar sesión, modifica para también ingresar con correo electrónico o con nombre de usuario. 
 
 ------------------------------------------------------------
 [EN PROGRESO]
