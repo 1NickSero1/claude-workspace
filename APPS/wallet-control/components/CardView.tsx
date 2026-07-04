@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/lib/storage';
 import { formatCOP } from '@/lib/expenseParser';
@@ -101,7 +101,7 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
   );
 }
 
-const RAW_STYLES = {
+const RAW_STYLES: Record<string, ViewStyle | TextStyle> = {
   card: {
     borderRadius: 18,
     padding: 18,
