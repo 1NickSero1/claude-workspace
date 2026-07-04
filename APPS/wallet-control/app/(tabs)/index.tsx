@@ -20,6 +20,7 @@ import ExpenseExtractCard from '@/components/ExpenseExtractCard';
 import CardView from '@/components/CardView';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
+import { useResponsive, scaledSheet } from '@/constants/responsive';
 
 interface DisplayMessage {
   id: string;
@@ -59,8 +60,9 @@ export default function ChatScreen() {
   }, []));
 
   const COLORS = useColors();
+  const { moderateScale } = useResponsive();
 
-  const styles = useMemo(() => StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create(scaledSheet({
     safe: { flex: 1, backgroundColor: COLORS.bg },
     flex: { flex: 1 },
     topBar: {
@@ -150,7 +152,7 @@ export default function ChatScreen() {
     },
     lockedTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, textAlign: 'center' },
     lockedSub: { color: COLORS.textMuted, fontSize: FONT.base, textAlign: 'center', lineHeight: 22 },
-  }), [COLORS]);
+  }, moderateScale)), [COLORS, moderateScale]);
 
   const buildHistory = (msgs: DisplayMessage[]) =>
     msgs

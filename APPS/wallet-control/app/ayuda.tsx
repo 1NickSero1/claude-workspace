@@ -10,6 +10,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
+import { useResponsive, scaledSheet } from '@/constants/responsive';
 
 // ── PDF HTML content ──────────────────────────────────────────────────────────
 
@@ -401,7 +402,8 @@ export default function AyudaScreen() {
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const COLORS = useColors();
-  const styles = useMemo(() => StyleSheet.create({
+  const { moderateScale } = useResponsive();
+  const styles = useMemo(() => StyleSheet.create(scaledSheet({
     safe: { flex: 1, backgroundColor: COLORS.bg },
     scroll: { padding: 16, paddingBottom: 40 },
 
@@ -470,7 +472,7 @@ export default function AyudaScreen() {
       borderWidth: 1.5, borderColor: COLORS.primary, borderStyle: 'dashed',
     },
     pdfCtaText: { color: COLORS.primary, fontWeight: '700', fontSize: FONT.base },
-  }), [COLORS]);
+  }, moderateScale)), [COLORS, moderateScale]);
 
   const handleGeneratePDF = async () => {
     setGenerating(true);
