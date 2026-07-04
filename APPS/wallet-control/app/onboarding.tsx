@@ -20,6 +20,13 @@ const AVATAR_COLORS = [
   '#0984E3', '#E17055', '#A29BFE', '#00B894',
 ];
 
+const AVATAR_EMOJI_OPTIONS = [
+  '💵', '😀', '😎', '🚀', '🐱', '🐶', '⭐', '🔥', '🎯', '💜',
+];
+
+const EMOJI_ONLY_REGEX = /\p{Extended_Pictographic}/gu;
+const filterEmojiOnly = (text: string) => (text.match(EMOJI_ONLY_REGEX) ?? []).join('');
+
 type Step = 'welcome' | 'choice' | 'register' | 'login' | 'done';
 
 export default function OnboardingScreen() {
@@ -28,12 +35,12 @@ export default function OnboardingScreen() {
   const [email, setEmail]         = useState('');
   const [password, setPassword]   = useState('');
   const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
-  const [avatarEmoji, setAvatarEmoji] = useState('');
+  const [avatarEmoji, setAvatarEmoji] = useState(AVATAR_EMOJI_OPTIONS[0]);
   const [loading, setLoading]     = useState(false);
 
-  const [loginEmail, setLoginEmail]       = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginLoading, setLoginLoading]   = useState(false);
+  const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [loginPassword, setLoginPassword]     = useState('');
+  const [loginLoading, setLoginLoading]       = useState(false);
 
   const avatarGlyph = avatarEmoji.trim() || '🙂';
 
@@ -58,6 +65,7 @@ export default function OnboardingScreen() {
         id: data.user.id,
         name: nickname.trim(),
         nickname: nickname.trim(),
+        email: email.trim().toLowerCase(),
         avatar_color: avatarColor,
         avatar_emoji: avatarEmoji.trim(),
       });
@@ -85,8 +93,22 @@ export default function OnboardingScreen() {
   const handleLogin = async () => {
     setLoginLoading(true);
     try {
+      const identifier = loginIdentifier.trim();
+      let resolvedEmail = identifier.toLowerCase();
+
+      if (!identifier.includes('@')) {
+        const { data: foundEmail, error: lookupError } = await supabase
+          .rpc('get_email_by_nickname', { p_nickname: identifier });
+        if (lookupError || !foundEmail) {
+          Alert.alert('No encontramos tu cuenta', 'Revisa tu nombre de usuario o correo.');
+          setLoginLoading(false);
+          return;
+        }
+        resolvedEmail = foundEmail;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: loginEmail.trim().toLowerCase(),
+        email: resolvedEmail,
         password: loginPassword,
       });
       if (error) throw error;
@@ -230,6 +252,15 @@ export default function OnboardingScreen() {
     colorPicker: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'center' },
     colorDot: { width: 28, height: 28, borderRadius: 14 },
     colorDotSelected: { borderWidth: 3, borderColor: COLORS.text },
+    emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+    emojiBtn: {
+      width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+      backgroundColor: COLORS.card2, borderWidth: 2, borderColor: 'transparent',
+    },
+    emojiBtnSelected: {
+      borderColor: COLORS.primary, backgroundColor: COLORS.primary + '22',
+    },
+    emojiBtnText: { fontSize: 22 },
     emojiRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     emojiLabel: { color: COLORS.textMuted, fontSize: FONT.sm },
     emojiInput: {
@@ -386,16 +417,15 @@ export default function OnboardingScreen() {
             </TouchableOpacity>
 
             <Text style={styles.formTitle}>Inicia sesión</Text>
-            <Text style={styles.formSub}>Usa el correo y contraseña de tu cuenta</Text>
+            <Text style={styles.formSub}>Usa tu correo o tu nombre de usuario</Text>
 
-            <Text style={styles.label}>Correo electrónico</Text>
+            <Text style={styles.label}>Correo o nombre de usuario</Text>
             <TextInput
               style={styles.input}
-              value={loginEmail}
-              onChangeText={setLoginEmail}
-              placeholder="tu@correo.com"
+              value={loginIdentifier}
+              onChangeText={setLoginIdentifier}
+              placeholder="tu@correo.com o Juanito"
               placeholderTextColor={COLORS.textDim}
-              keyboardType="email-address"
               autoCapitalize="none"
             />
 
@@ -411,8 +441,8 @@ export default function OnboardingScreen() {
 
             <TouchableOpacity
               onPress={handleLogin}
-              disabled={!loginEmail || !loginPassword || loginLoading}
-              style={[styles.primaryBtn, styles.primaryBtnSpaced, (!loginEmail || !loginPassword || loginLoading) && styles.primaryBtnOff]}
+              disabled={!loginIdentifier || !loginPassword || loginLoading}
+              style={[styles.primaryBtn, styles.primaryBtnSpaced, (!loginIdentifier || !loginPassword || loginLoading) && styles.primaryBtnOff]}
             >
               <Text style={styles.primaryBtnText}>{loginLoading ? 'Verificando...' : 'Entrar'}</Text>
               {!loginLoading && <Ionicons name="arrow-forward" size={18} color="#fff" />}
@@ -476,15 +506,27 @@ export default function OnboardingScreen() {
                 />
               ))}
             </View>
+            <Text style={styles.emojiLabel}>Elige un emoji (obligatorio):</Text>
+            <View style={styles.emojiGrid}>
+              {AVATAR_EMOJI_OPTIONS.map(e => (
+                <TouchableOpacity
+                  key={e}
+                  onPress={() => setAvatarEmoji(e)}
+                  style={[styles.emojiBtn, avatarEmoji === e && styles.emojiBtnSelected]}
+                >
+                  <Text style={styles.emojiBtnText}>{e}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             <View style={styles.emojiRow}>
-              <Text style={styles.emojiLabel}>Elige un emoji (obligatorio):</Text>
+              <Text style={styles.emojiLabel}>o escribe otro:</Text>
               <TextInput
                 style={styles.emojiInput}
                 value={avatarEmoji}
-                onChangeText={setAvatarEmoji}
+                onChangeText={(t) => setAvatarEmoji(filterEmojiOnly(t))}
                 placeholder="😀"
                 placeholderTextColor={COLORS.textDim}
-                maxLength={8}
+                maxLength={4}
               />
             </View>
           </View>
