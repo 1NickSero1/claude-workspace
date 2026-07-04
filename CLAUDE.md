@@ -250,7 +250,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 | 2026-07-02 | Agregada palabra clave `SUBIR` (push automático) + 4 hooks reales en `.claude/hooks/`: protección de `metricas.txt`, bloqueo de `.env*`, recordatorio de pendientes al iniciar sesión, aviso de push pendiente tras commit |
 | 2026-07-02 | Agregadas palabras clave `WALLET CONTROL` y `RUTA SEGURA` (hook real) — invocan PECAS y recomiendan `/clear` para arrancar enfocados en ese proyecto específico |
 | 2026-07-03 | Creado `.claude/settings.json` (no existía) registrando los 6 hooks de `.claude/hooks/`, que hasta ahora estaban en disco pero nunca conectados; documentada la extensión de auto-sync externa (commits `Auto-sync: <fecha>`) compartida con la computadora del hermano del usuario |
-| 2026-07-04 | Lección 5 — instalar `useWindowDimensions`/responsive design desde el inicio en apps móviles nuevas, en vez de agregarlo después (surgió al retrofittear wallet-control) |
+| 2026-07-04 | Aclarado que "el archivo de recetas" = `RECETAS/receta-apps.txt`, no este `CLAUDE.md` — la lección de responsive design se movió ahí |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise
