@@ -56,6 +56,7 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 | 1 | Verificar estado real del directorio antes de asumir qué existe | Siempre |
 | 2 | Los `node_modules` de React Native tienen rutas demasiado largas para `Remove-Item` — usar `robocopy` + `rd /s /q` | PowerShell / limpieza |
 | 3 | Si el puerto 8081 está ocupado (otro proyecto Expo corriendo), usar `npx expo start --port 8082` | Expo / React Native |
+| 4 | Los commits `Auto-sync: <fecha>` en el historial de git vienen de una extensión externa instalada en esta máquina y en la del hermano del usuario, no de Claude Code — no confundirlos con acciones propias ni intentar revertirlos o desactivarlos sin que se pida | Git / control de versiones |
 
 ---
 
@@ -187,6 +188,14 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 > hook de sistema detrás). `SUBIR` sí tiene un hook real (`UserPromptSubmit`,
 > `.claude/hooks/subir-push.ps1`) que ejecuta `git push` automáticamente al detectar el mensaje
 > exacto "SUBIR" — esta entrada queda como respaldo documental por si el hook no llega a cargarse.
+>
+> **Auto-sync externo (no es Claude):** los commits con mensaje `Auto-sync: <fecha>` que aparecen
+> en `git log` NO los genera Claude Code ni estos hooks — los produce una extensión de Git
+> instalada tanto en esta máquina como en la del hermano del usuario, que hace commit + push
+> automático en segundo plano cada cierto tiempo, fuera del control de Claude. Si aparecen sin que
+> el usuario haya escrito `TERMINAR`/`PAUSA`/`SUBIR`, es esperado — no es una violación de la
+> política de abajo. Claude no debe intentar desactivar esa extensión ni investigarla por su
+> cuenta salvo que se le pida explícitamente.
 
 | Palabra clave | Acción |
 |---|---|
@@ -199,6 +208,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 - `TERMINAR` = todo lo pendiente. `PAUSA` = solo lo que el usuario confirme tras la pregunta. `SUBIR` = push inmediato de lo ya commiteado
 - Se sigue siempre el protocolo de seguridad de git (sin `--force`, sin `--no-verify`, revisar que no haya secrets antes de agregar archivos)
 - Si `git push` falla por divergencia con el remoto, Claude no hace merge/rebase automático — informa el conflicto y espera instrucción
+- Esta política gobierna únicamente las acciones de Claude — la extensión de auto-sync externa opera de forma independiente y no está sujeta a estas reglas
 
 ---
 
@@ -239,6 +249,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 | 2026-07-02 | Agregadas palabras clave de commit: `TERMINAR` (commit general) y `PAUSA` (commit específico, pregunta antes) |
 | 2026-07-02 | Agregada palabra clave `SUBIR` (push automático) + 4 hooks reales en `.claude/hooks/`: protección de `metricas.txt`, bloqueo de `.env*`, recordatorio de pendientes al iniciar sesión, aviso de push pendiente tras commit |
 | 2026-07-02 | Agregadas palabras clave `WALLET CONTROL` y `RUTA SEGURA` (hook real) — invocan PECAS y recomiendan `/clear` para arrancar enfocados en ese proyecto específico |
+| 2026-07-03 | Creado `.claude/settings.json` (no existía) registrando los 6 hooks de `.claude/hooks/`, que hasta ahora estaban en disco pero nunca conectados; documentada la extensión de auto-sync externa (commits `Auto-sync: <fecha>`) compartida con la computadora del hermano del usuario |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise
