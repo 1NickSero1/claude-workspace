@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/storage';
 import { trackSignup } from '@/lib/userTracking';
+import { supabase } from '@/lib/supabase';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors, useThemeInfo } from '@/constants/ThemeContext';
 
@@ -23,12 +24,15 @@ type Step = 'welcome' | 'choice' | 'register' | 'login' | 'done';
 export default function OnboardingScreen() {
   const [step, setStep]           = useState<Step>('welcome');
   const [name, setName]           = useState('');
+  const [nickname, setNickname]   = useState('');
   const [email, setEmail]         = useState('');
+  const [password, setPassword]   = useState('');
   const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
   const [avatarEmoji, setAvatarEmoji] = useState('');
   const [loading, setLoading]     = useState(false);
 
   const [loginEmail, setLoginEmail]       = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading]   = useState(false);
 
   const nameInitials = name.trim()
@@ -37,14 +41,35 @@ export default function OnboardingScreen() {
   const avatarGlyph = avatarEmoji.trim() || nameInitials;
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const canRegister = name.trim().length >= 2 && emailValid;
+  const canRegister = name.trim().length >= 2
+    && nickname.trim().length >= 2
+    && emailValid
+    && password.length >= 6;
 
   const handleRegister = async () => {
     if (!canRegister) return;
     setLoading(true);
     try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (error) throw error;
+      if (!data.user) throw new Error('No se pudo crear la sesión.');
+
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: data.user.id,
+        name: name.trim(),
+        nickname: nickname.trim(),
+        avatar_color: avatarColor,
+        avatar_emoji: avatarEmoji.trim() || null,
+      });
+      if (profileError) throw profileError;
+
       const profile: UserProfile = {
+        id:          data.user.id,
         name:        name.trim(),
+        nickname:    nickname.trim(),
         email:       email.trim().toLowerCase(),
         avatarColor,
         avatarEmoji: avatarEmoji.trim() || undefined,
@@ -53,8 +78,8 @@ export default function OnboardingScreen() {
       await saveUserProfile(profile);
       trackSignup(profile);
       setStep('done');
-    } catch {
-      Alert.alert('Error', 'No se pudo guardar el perfil. Intenta de nuevo.');
+    } catch (e: any) {
+      Alert.alert('Error', e?.message ?? 'No se pudo crear tu cuenta. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -63,20 +88,28 @@ export default function OnboardingScreen() {
   const handleLogin = async () => {
     setLoginLoading(true);
     try {
-      const profile = await getUserProfile();
-      const matches = !!profile
-        && !profile.isAnonymous
-        && profile.email === loginEmail.trim().toLowerCase();
-      if (matches) {
-        router.replace('/(tabs)');
-      } else {
-        Alert.alert(
-          'No encontramos tu cuenta',
-          'El correo no coincide con ninguna cuenta guardada en este dispositivo.',
-        );
-      }
-    } catch {
-      Alert.alert('Error', 'No se pudo verificar tu cuenta. Intenta de nuevo.');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail.trim().toLowerCase(),
+        password: loginPassword,
+      });
+      if (error) throw error;
+
+      const { data: profileRow, error: profileError } = await supabase
+        .from('profiles').select('*').eq('id', data.user.id).single();
+      if (profileError) throw profileError;
+
+      await saveUserProfile({
+        id:          data.user.id,
+        name:        profileRow.name,
+        nickname:    profileRow.nickname,
+        email:       data.user.email ?? '',
+        avatarColor: profileRow.avatar_color,
+        avatarEmoji: profileRow.avatar_emoji ?? undefined,
+        createdAt:   profileRow.created_at,
+      });
+      router.replace('/(tabs)');
+    } catch (e: any) {
+      Alert.alert('No pudimos iniciar sesión', e?.message ?? 'Revisa tu correo y contraseña.');
     } finally {
       setLoginLoading(false);
     }

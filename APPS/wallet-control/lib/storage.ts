@@ -76,7 +76,9 @@ export interface Goal {
 }
 
 export interface UserProfile {
+  id?: string;
   name: string;
+  nickname?: string;
   email: string;
   avatarColor: string;
   avatarEmoji?: string;
