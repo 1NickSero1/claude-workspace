@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, Dimensions,
-  StyleSheet, SafeAreaView, RefreshControl, Alert, Modal,
+  View, Text, ScrollView, TouchableOpacity,
+  StyleSheet, RefreshControl, Alert, Modal,
   TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {

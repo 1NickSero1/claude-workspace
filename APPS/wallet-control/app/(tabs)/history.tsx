@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, SafeAreaView, ActivityIndicator, Dimensions,
+  StyleSheet, ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
@@ -14,8 +15,7 @@ import {
 import { sumExpenses, formatCOP } from '@/lib/expenseParser';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
-
-const SCREEN_W = Dimensions.get('window').width;
+import { useResponsive } from '@/constants/responsive';
 
 interface MonthSummary {
   key: string;
