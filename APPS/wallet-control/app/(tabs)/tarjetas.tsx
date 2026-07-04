@@ -75,8 +75,9 @@ export default function TarjetasScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const COLORS = useColors();
+  const { moderateScale } = useResponsive();
 
-  const styles = useMemo(() => StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create(scaledSheet({
     safe: { flex: 1, backgroundColor: COLORS.bg },
     header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12, backgroundColor: COLORS.bg },
     headerTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.xl },
@@ -141,7 +142,7 @@ export default function TarjetasScreen() {
     },
     balanceFooterLabel: { color: COLORS.textMuted, fontSize: FONT.sm },
     balanceFooterAmount: { color: COLORS.debit, fontWeight: '800', fontSize: FONT.lg },
-  }), [COLORS]);
+  }, moderateScale)), [COLORS, moderateScale]);
 
   const actStyles = useMemo(() => StyleSheet.create({
     overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.55)' },
