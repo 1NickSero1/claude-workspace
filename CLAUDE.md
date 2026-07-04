@@ -57,7 +57,6 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 | 2 | Los `node_modules` de React Native tienen rutas demasiado largas para `Remove-Item` — usar `robocopy` + `rd /s /q` | PowerShell / limpieza |
 | 3 | Si el puerto 8081 está ocupado (otro proyecto Expo corriendo), usar `npx expo start --port 8082` | Expo / React Native |
 | 4 | Los commits `Auto-sync: <fecha>` en el historial de git vienen de una extensión externa instalada en esta máquina y en la del hermano del usuario, no de Claude Code — no confundirlos con acciones propias ni intentar revertirlos o desactivarlos sin que se pida | Git / control de versiones |
-| 5 | Instalar y configurar `useWindowDimensions` (o un sistema de escalado responsive basado en él) desde el inicio de cada app móvil nueva, no como retrofit después — evita tener que reescribir estilos fijos de todas las pantallas más adelante (pasó en wallet-control) | App móvil (React Native / Expo) |
 
 ---
 
