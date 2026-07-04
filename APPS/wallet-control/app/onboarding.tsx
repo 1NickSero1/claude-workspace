@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView,
@@ -20,9 +20,7 @@ const AVATAR_COLORS = [
   '#0984E3', '#E17055', '#A29BFE', '#00B894',
 ];
 
-const AVATAR_EMOJI_OPTIONS = [
-  '💵', '😀', '😎', '🚀', '🐱', '🐶', '⭐', '🔥', '🎯', '💜',
-];
+const DEFAULT_AVATAR_EMOJI = '💵';
 
 const EMOJI_ONLY_REGEX = /\p{Extended_Pictographic}/gu;
 const filterEmojiOnly = (text: string) => (text.match(EMOJI_ONLY_REGEX) ?? []).join('');
@@ -35,8 +33,9 @@ export default function OnboardingScreen() {
   const [email, setEmail]         = useState('');
   const [password, setPassword]   = useState('');
   const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
-  const [avatarEmoji, setAvatarEmoji] = useState(AVATAR_EMOJI_OPTIONS[0]);
+  const [avatarEmoji, setAvatarEmoji] = useState(DEFAULT_AVATAR_EMOJI);
   const [loading, setLoading]     = useState(false);
+  const emojiInputRef = useRef<TextInput>(null);
 
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword]     = useState('');
@@ -252,22 +251,8 @@ export default function OnboardingScreen() {
     colorPicker: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'center' },
     colorDot: { width: 28, height: 28, borderRadius: 14 },
     colorDotSelected: { borderWidth: 3, borderColor: COLORS.text },
-    emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-    emojiBtn: {
-      width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
-      backgroundColor: COLORS.card2, borderWidth: 2, borderColor: 'transparent',
-    },
-    emojiBtnSelected: {
-      borderColor: COLORS.primary, backgroundColor: COLORS.primary + '22',
-    },
-    emojiBtnText: { fontSize: 22 },
-    emojiRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    emojiLabel: { color: COLORS.textMuted, fontSize: FONT.sm },
-    emojiInput: {
-      width: 56, height: 44, borderRadius: 12,
-      backgroundColor: COLORS.card, borderWidth: 1.5, borderColor: COLORS.border,
-      textAlign: 'center', fontSize: 22, color: COLORS.text,
-    },
+    emojiHint: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center' },
+    hiddenEmojiInput: { height: 0, width: 0, opacity: 0 },
 
     // Inputs
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 6, marginTop: 14 },
@@ -491,11 +476,23 @@ export default function OnboardingScreen() {
           <Text style={styles.formTitle}>Crea tu cuenta</Text>
           <Text style={styles.formSub}>Úsala para entrar desde cualquier dispositivo</Text>
 
-          {/* Avatar preview */}
+          {/* Avatar preview — toca para elegir tu emoji desde el teclado */}
           <View style={styles.avatarSection}>
-            <View style={[styles.avatarPreview, { backgroundColor: avatarColor }]}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => emojiInputRef.current?.focus()}
+              style={[styles.avatarPreview, { backgroundColor: avatarColor }]}
+            >
               <Text style={styles.avatarInitials}>{avatarGlyph}</Text>
-            </View>
+            </TouchableOpacity>
+            <TextInput
+              ref={emojiInputRef}
+              style={styles.hiddenEmojiInput}
+              value={avatarEmoji}
+              onChangeText={(t) => setAvatarEmoji(filterEmojiOnly(t))}
+              maxLength={4}
+            />
+            <Text style={styles.emojiHint}>Toca el círculo y elige tu emoji desde el teclado</Text>
             <View style={styles.colorPicker}>
               {AVATAR_COLORS.map(c => (
                 <TouchableOpacity
@@ -505,29 +502,6 @@ export default function OnboardingScreen() {
                           avatarColor === c && styles.colorDotSelected]}
                 />
               ))}
-            </View>
-            <Text style={styles.emojiLabel}>Elige un emoji (obligatorio):</Text>
-            <View style={styles.emojiGrid}>
-              {AVATAR_EMOJI_OPTIONS.map(e => (
-                <TouchableOpacity
-                  key={e}
-                  onPress={() => setAvatarEmoji(e)}
-                  style={[styles.emojiBtn, avatarEmoji === e && styles.emojiBtnSelected]}
-                >
-                  <Text style={styles.emojiBtnText}>{e}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View style={styles.emojiRow}>
-              <Text style={styles.emojiLabel}>o escribe otro:</Text>
-              <TextInput
-                style={styles.emojiInput}
-                value={avatarEmoji}
-                onChangeText={(t) => setAvatarEmoji(filterEmojiOnly(t))}
-                placeholder="😀"
-                placeholderTextColor={COLORS.textDim}
-                maxLength={4}
-              />
             </View>
           </View>
 
