@@ -1,0 +1,64 @@
+PANTALLAS DE WALLET CONTROL
+Mapa de qué pantalla es cada archivo, para saber qué modificar.
+Actualizar este archivo cada vez que se agregue, renombre o elimine una pantalla.
+
+═══════════════════════════════════════════════════
+TABS PRINCIPALES (barra inferior)
+═══════════════════════════════════════════════════
+
+Orden real de la tab bar: Resumen → Tarjetas → Finando → Historial → Perfil
+
+1. RESUMEN
+   Archivo: app/(tabs)/resumen.tsx
+   Tab label: "Resumen" | Ícono: bar-chart
+   Qué es: pantalla principal de estadísticas — gastos por categoría, balance,
+   presupuesto, gráficos. La más grande del proyecto (~1600 líneas).
+
+2. TARJETAS
+   Archivo: app/(tabs)/tarjetas.tsx
+   Tab label: "Tarjetas" | Ícono: card
+   Qué es: gestión de tarjetas/cuentas (crédito, débito, efectivo, deuda),
+   eventos de cada tarjeta (depósito, pago, retiro).
+
+3. FINANDO (pantalla de inicio de la tab bar, archivo index)
+   Archivo: app/(tabs)/index.tsx
+   Tab label: "Finando" | Ícono: hardware-chip
+   Qué es: chat con el asesor de IA (Finando) — registrar gastos/ingresos por
+   texto, pedir análisis financiero. Es la pantalla "index" de las tabs pero
+   NO es la primera en el orden visual (ver arriba).
+
+4. HISTORIAL
+   Archivo: app/(tabs)/history.tsx
+   Tab label: "Historial" | Ícono: time
+   Qué es: historial de meses / movimientos pasados.
+
+5. PERFIL
+   Archivo: app/(tabs)/perfil.tsx
+   Tab label: "Perfil" | Ícono: person-circle
+   Qué es: datos del usuario, modo anónimo, versión de la app, ajustes de cuenta.
+
+Layout de las tabs: app/(tabs)/_layout.tsx (define orden, íconos y títulos)
+
+═══════════════════════════════════════════════════
+PANTALLAS FUERA DE LA TAB BAR
+═══════════════════════════════════════════════════
+
+ONBOARDING
+   Archivo: app/onboarding.tsx
+   Qué es: primera pantalla que ve el usuario — creación/inicio de perfil,
+   antes de entrar a las tabs.
+
+AYUDA
+   Archivo: app/ayuda.tsx
+   Qué es: pantalla de ayuda/FAQ de la app.
+
+═══════════════════════════════════════════════════
+ARCHIVOS TÉCNICOS (no son pantallas visibles)
+═══════════════════════════════════════════════════
+
+app/_layout.tsx      → layout raíz de toda la app (providers, tema, fuentes)
+app/+html.tsx        → configuración HTML para build web
+app/+not-found.tsx   → pantalla de error 404 / ruta no encontrada
+
+═══════════════════════════════════════════════════
+Última actualización: 2026-07-04
