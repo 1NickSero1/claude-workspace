@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { COLORS, DARK_COLORS } from '@/constants/theme';
 import { ThemeProvider as ColorsProvider, useThemeInfo } from '@/constants/ThemeContext';
 import { getUserProfile } from '@/lib/storage';
@@ -81,8 +82,10 @@ export default function RootLayout() {
   if (!loaded || !checked) return null;
 
   return (
-    <ColorsProvider>
-      <InnerLayout />
-    </ColorsProvider>
+    <SafeAreaProvider>
+      <ColorsProvider>
+        <InnerLayout />
+      </ColorsProvider>
+    </SafeAreaProvider>
   );
 }
