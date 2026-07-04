@@ -12,9 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE]
 ------------------------------------------------------------
- en la pantalla crea tu cuenta deja seleccionar el emogi desde ahí mismo, y que como predeterminado aparezca este "💵", que no deje escribir otro termino que no sea emogi, 
-
-en la pantalla iniciar sesión, modifica para también ingresar con correo electrónico o con nombre de usuario. 
+  — (vacío por ahora)
 
 ------------------------------------------------------------
 [EN PROGRESO]
@@ -24,6 +22,22 @@ en la pantalla iniciar sesión, modifica para también ingresar con correo elect
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ Selector de emoji en la misma pantalla + solo emojis, default 💵 (MEJORAX)
+    → Grid de 10 emojis tocables (mismo patrón visual que CategoryFormModal)
+    → avatarEmoji ahora arranca en '💵' por defecto en vez de vacío
+    → El input manual de "o escribe otro" filtra con regex \p{Extended_Pictographic}
+      así que solo puede quedar un emoji, nunca texto normal
+
+  ✓ Login con correo o nombre de usuario (MEJORAX)
+    → Se agregó columna `email` a la tabla `profiles` + función RPC
+      `get_email_by_nickname` (security definer) para resolver username→email
+      sin exponer el resto de la fila (RLS de profiles sigue intacta)
+    → handleRegister ahora guarda el email en profiles al crear la cuenta
+    → handleLogin detecta si el texto ingresado tiene "@" (correo) o no
+      (nombre de usuario) y resuelve el email real antes de llamar
+      signInWithPassword
+    → Input de login renombrado a "Correo o nombre de usuario"
 
   ✓ Emoji obligatorio en Crear cuenta (MEJORAX)
     → Eliminado el fallback a iniciales; avatarEmoji ahora es requerido en canRegister
