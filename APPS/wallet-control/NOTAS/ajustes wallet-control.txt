@@ -12,10 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE]
 ------------------------------------------------------------
-
-en la pantalla de crea tu cuenta bloquea que en la sección de elegir un emogi no lo pongas como o un emogi si no como obligatorio y utiliza los emojis del teclado del celular
-en esta misma pantalla quita el apartado de nombre completo y edita el siguiente de un () donde diga que es el nombre de usuario
-ajusta el responsive de la pantalla onboarding
+  — (vacío por ahora)
 
 ------------------------------------------------------------
 [EN PROGRESO]
@@ -25,6 +22,23 @@ ajusta el responsive de la pantalla onboarding
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ Emoji obligatorio en Crear cuenta (MEJORAX)
+    → Eliminado el fallback a iniciales; avatarEmoji ahora es requerido en canRegister
+    → Label cambiado a "Elige un emoji (obligatorio):" — sigue usando el teclado
+      nativo de emojis del celular vía TextInput simple, sin picker propio
+
+  ✓ Quitado "Nombre completo", nickname pasa a ser el nombre de usuario (MEJORAX)
+    → Eliminado el input y el state `name` de app/onboarding.tsx
+    → El campo nickname ahora se etiqueta "¿Cómo quieres que te llame Finando?
+      (tu nombre de usuario)" y se guarda tanto en `name` como en `nickname`
+      (perfiles de Supabase y perfil local)
+    → Pantalla "done" saluda con el nickname en vez del nombre completo
+
+  ✓ Responsive de onboarding — welcome y choice ahora scrollean (MEJORAX)
+    → Los pasos 'welcome' y 'choice' antes usaban View fijo (podían recortarse
+      en pantallas chicas); ahora están envueltos en ScrollView con
+      contentContainerStyle flexGrow:1, igual que register/login
 
   ✓ Pills Ingresos/Gastos con tipografía elegante (v1.12)
     → Rediseñadas como tarjetas verticales con fondo sólido (verde/rojo)
