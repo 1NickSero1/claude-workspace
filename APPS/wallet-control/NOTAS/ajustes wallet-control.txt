@@ -23,17 +23,16 @@ COMANDO RÁPIDO:
 [RESUELTO]
 ------------------------------------------------------------
 
-  ✓ Selector de emoji simplificado: solo el círculo, sin grid (MEJORAX, ajuste posterior)
-    → Se eliminó el grid de 10 emojis y el input visible "o escribe otro"
-      (feedback del usuario: sobraban, quería solo el círculo)
-    → El círculo del avatar ahora es tocable — al tocarlo enfoca un TextInput
-      oculto (ref) que abre el teclado del celular de inmediato
-    → Limitación técnica real: React Native no tiene API para forzar que se
-      abra específicamente el panel de emojis del teclado nativo (eso lo
-      decide Gboard/iOS) — el usuario debe tocar el ícono 🙂 de su propio
-      teclado una vez que se abre, igual que en WhatsApp/Instagram
-    → El input oculto sigue filtrando con \p{Extended_Pictographic}, así que
-      solo puede quedar un emoji guardado, nunca texto normal
+  ✓ Selector de emoji: recomendados al tocar el círculo (MEJORAX, 2do ajuste)
+    → Limitación confirmada con el usuario: no existe API en Android/iOS para
+      forzar que se abra el panel de emojis del teclado nativo directamente
+      (ni WhatsApp/Instagram pueden hacerlo) — se descartó esa ruta
+    → Solución acordada: tocar el círculo del avatar despliega una fila
+      compacta de 8 emojis recomendados (💵😀😎🚀🐱⭐🔥🎯), no un grid
+      permanente — aparece solo al tocar y se cierra al elegir uno
+    → Botón "lápiz" al final de la fila enfoca un TextInput oculto para
+      quien quiera escribir un emoji distinto desde su propio teclado
+      (sigue filtrado con \p{Extended_Pictographic}, solo acepta emoji)
     → avatarEmoji sigue arrancando en '💵' por defecto
 
   ✓ Login con correo o nombre de usuario (MEJORAX)
