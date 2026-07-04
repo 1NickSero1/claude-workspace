@@ -63,7 +63,7 @@ export default function PerfilScreen() {
     setEditModal(false);
   };
 
-  const styles = useMemo(() => StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create(scaledSheet({
     safe:        { flex: 1, backgroundColor: COLORS.bg },
     header:      { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16 },
     headerTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.xl },
@@ -149,7 +149,7 @@ export default function PerfilScreen() {
     cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
     saveBtn:    { flex: 1, padding: 14, borderRadius: 12, backgroundColor: COLORS.primary, alignItems: 'center' },
     saveText:   { color: '#fff', fontWeight: '700', fontSize: FONT.md },
-  }), [COLORS]);
+  }, moderateScale)), [COLORS, moderateScale]);
 
   return (
     <SafeAreaView style={styles.safe}>
