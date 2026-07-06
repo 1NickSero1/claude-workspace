@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { RecurrenceFrequency } from '@/lib/storage';
+import { formatCOP } from '@/lib/expenseParser';
 
 export async function requestNotificationPermission(): Promise<boolean> {
   const { status } = await Notifications.requestPermissionsAsync();
@@ -88,4 +89,26 @@ export async function scheduleRecurringReminder(
       minute: 0,
     },
   });
+}
+
+export const BALANCE_NOTIFICATION_ID = 'wc-balance';
+
+/** Crea o actualiza (in-place) la notificación fija de saldo. Requiere permiso. */
+export async function updateBalanceNotification(balance: number): Promise<void> {
+  if (!(await requestNotificationPermission())) return;
+  await Notifications.scheduleNotificationAsync({
+    identifier: BALANCE_NOTIFICATION_ID,
+    content: {
+      title: 'Saldo disponible',
+      body: `Patrimonio neto: ${formatCOP(balance)}`,
+      sound: false,
+      sticky: true,
+    },
+    trigger: null,
+  });
+}
+
+export async function cancelBalanceNotification(): Promise<void> {
+  await Notifications.dismissNotificationAsync(BALANCE_NOTIFICATION_ID).catch(() => {});
+  await Notifications.cancelScheduledNotificationAsync(BALANCE_NOTIFICATION_ID).catch(() => {});
 }

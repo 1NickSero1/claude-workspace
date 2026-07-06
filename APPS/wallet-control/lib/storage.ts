@@ -329,12 +329,85 @@ export async function getAllMonthKeys(): Promise<string[]> {
   } catch { return []; }
 }
 
+export function getPreviousMonthKey(monthKey: string): string {
+  const [yearStr, monthStr] = monthKey.split('-');
+  const year  = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10); // 1-12
+  if (month === 1) return `${year - 1}-12`;
+  return `${year}-${String(month - 1).padStart(2, '0')}`;
+}
+
 export function getCardTotalSpent(expenses: Expense[], cardId: string): number {
   return expenses.filter(e => e.cardId === cardId).reduce((s, e) => s + e.amount, 0);
 }
 
 export function sumIncomes(incomes: Income[]): number {
   return incomes.reduce((s, i) => s + i.amount, 0);
+}
+
+export function computeNetWorth(expenses: Expense[], cards: Card[]): {
+  totalActivos: number; totalPasivos: number; patrimonioNeto: number;
+} {
+  const cardTypeMap = new Map(cards.map(c => [c.id, c.type]));
+  let creditSpent = 0;
+  for (const e of expenses) {
+    const type = e.cardId ? cardTypeMap.get(e.cardId) : 'debit';
+    if (type === 'credit') creditSpent += e.amount;
+  }
+  const debitAvailable = cards.filter(c => c.type === 'debit' && c.balance != null)
+    .reduce((s, c) => s + Math.max(c.balance! - getCardTotalSpent(expenses, c.id), 0), 0);
+  const cashAvailable = cards.filter(c => c.type === 'cash')
+    .reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0), 0);
+  const debtTotal = cards.filter(c => c.type === 'debt').reduce((s, c) => s + (c.balance ?? 0), 0);
+  const totalActivos = debitAvailable + cashAvailable;
+  const totalPasivos = creditSpent + debtTotal;
+  return { totalActivos, totalPasivos, patrimonioNeto: totalActivos - totalPasivos };
+}
+
+export interface ExpenseSearchOptions {
+  query?: string;
+  categoryId?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export async function searchExpenses(
+  opts: ExpenseSearchOptions,
+): Promise<Expense[]> {
+  const keys = await getAllMonthKeys();
+  const allData = await Promise.all(keys.map(k => getMonthData(k)));
+
+  const q    = opts.query?.trim().toLowerCase();
+  const from = opts.fromDate ? new Date(opts.fromDate).getTime() : undefined;
+  const to   = opts.toDate   ? new Date(opts.toDate).getTime()   : undefined;
+
+  const results: Expense[] = [];
+  for (const data of allData) {
+    for (const e of data.expenses) {
+      if (q && !e.name.toLowerCase().includes(q)) continue;
+      if (opts.categoryId && e.categoryId !== opts.categoryId) continue;
+      const created = new Date(e.createdAt).getTime();
+      if (from !== undefined && created < from) continue;
+      if (to   !== undefined && created > to)   continue;
+      results.push(e);
+    }
+  }
+  return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+// ── Balance Notification Toggle ─────────────────────────────────────────────
+
+const K_SHOW_BALANCE_NOTIF = '@wc_show_balance_notification';
+
+export async function getShowBalanceNotification(): Promise<boolean> {
+  try {
+    const v = await AsyncStorage.getItem(K_SHOW_BALANCE_NOTIF);
+    return v === 'true';
+  } catch { return false; }
+}
+
+export async function saveShowBalanceNotification(value: boolean): Promise<void> {
+  await AsyncStorage.setItem(K_SHOW_BALANCE_NOTIF, value ? 'true' : 'false');
 }
 
 // ── Theme Mode ────────────────────────────────────────────────────────────────
