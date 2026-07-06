@@ -166,11 +166,10 @@ export default function ResumenScreen() {
 
   // Debit / Credit classification
   const cardTypeMap = new Map(cards.map(c => [c.id, c.type]));
-  let debitSpent = 0, creditSpent = 0;
+  let creditSpent = 0;
   for (const e of expenses) {
     const type = e.cardId ? cardTypeMap.get(e.cardId) : 'debit';
     if (type === 'credit') creditSpent += e.amount;
-    else debitSpent += e.amount;
   }
 
   const totalSpent  = sumExpenses(expenses);
@@ -181,10 +180,6 @@ export default function ResumenScreen() {
   const debitAvailable = cards
     .filter(c => c.type === 'debit' && c.balance != null)
     .reduce((s, c) => s + Math.max(c.balance! - getCardTotalSpent(expenses, c.id), 0), 0);
-  const creditLimit = cards.filter(c => c.type === 'credit' && c.limit != null)
-    .reduce((s, c) => s + c.limit!, 0);
-  const hasDebitCards  = cards.some(c => c.type === 'debit');
-  const hasCreditCards = cards.some(c => c.type === 'credit');
 
   // Balance General (patrimonio neto)
   const cashAvailable  = cards.filter(c => c.type === 'cash')
@@ -762,53 +757,6 @@ export default function ResumenScreen() {
             </View>
           );
         })()}
-
-        {/* ── Débito / Crédito ─────────────────────────── */}
-        <View style={styles.summaryRow}>
-          <TouchableOpacity
-            style={[styles.summaryCard, { backgroundColor: COLORS.debit }]}
-            onPress={() => router.push({ pathname: '/(tabs)/tarjetas', params: { tab: 'cuentas' } })}
-            activeOpacity={0.85}
-          >
-            <View style={styles.summaryCardTop}>
-              <View style={styles.summaryCardIcon}>
-                <Ionicons name="business" size={13} color={COLORS.debit} />
-              </View>
-              <Text style={styles.summaryCardType}>Débito</Text>
-            </View>
-            <Text style={styles.summaryLabel}>Gastado</Text>
-            <Text style={styles.summaryAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(debitSpent)}</Text>
-            <Text style={styles.summaryLabel2}>Disponible</Text>
-            <Text style={styles.summaryAvailable}>
-              {hasDebitCards ? formatCOP(Math.max(debitAvailable, 0)) : '—'}
-            </Text>
-            {!hasDebitCards && <Text style={styles.summaryHint}>Agrega cuentas en Balance</Text>}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.summaryCard, { backgroundColor: COLORS.credit }]}
-            onPress={() => router.push({ pathname: '/(tabs)/tarjetas', params: { tab: 'tarjetas' } })}
-            activeOpacity={0.85}
-          >
-            <View style={styles.summaryCardTop}>
-              <View style={styles.summaryCardIcon}>
-                <Ionicons name="card" size={13} color={COLORS.credit} />
-              </View>
-              <Text style={styles.summaryCardType}>Crédito</Text>
-            </View>
-            <Text style={styles.summaryLabel}>Gastado</Text>
-            <Text style={styles.summaryAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(creditSpent)}</Text>
-            <Text style={styles.summaryLabel2}>
-              {hasCreditCards && creditLimit > 0 ? 'Disponible' : 'Deuda total'}
-            </Text>
-            <Text style={styles.summaryAvailable}>
-              {hasCreditCards && creditLimit > 0
-                ? formatCOP(Math.max(creditLimit - creditSpent, 0))
-                : hasCreditCards ? formatCOP(creditSpent) : '—'}
-            </Text>
-            {!hasCreditCards && <Text style={styles.summaryHint}>Agrega tarjetas en Balance</Text>}
-          </TouchableOpacity>
-        </View>
 
         {/* ── Gastos (entra a la pantalla de categorías) ── */}
         <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/categorias')} style={styles.gastosCard}>
