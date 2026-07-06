@@ -36,6 +36,8 @@ export interface CustomCategory {
   emoji?: string;
 }
 
+export type RecurrenceFrequency = 'weekly' | 'monthly';
+
 export interface Expense {
   id: string;
   name: string;
@@ -45,6 +47,9 @@ export interface Expense {
   cardId?: string;
   createdAt: string;
   monthKey: string;
+  isRecurring?: boolean;
+  recurrenceFrequency?: RecurrenceFrequency;
+  notificationId?: string;
 }
 
 export interface Income {
@@ -91,6 +96,7 @@ export interface MonthData {
   expenses: Expense[];
   incomes: Income[];
   budget: number | null;
+  budgetNotified?: number;
 }
 
 // ── Keys ─────────────────────────────────────────────────────────────────────
@@ -254,6 +260,7 @@ export async function getMonthData(monthKey: string): Promise<MonthData> {
       expenses: data.expenses ?? [],
       incomes:  data.incomes  ?? [],
       budget:   data.budget   ?? null,
+      budgetNotified: data.budgetNotified ?? 0,
     };
   } catch { return { monthKey, expenses: [], incomes: [], budget: null }; }
 }
