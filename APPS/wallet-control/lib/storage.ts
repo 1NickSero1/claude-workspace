@@ -471,6 +471,31 @@ export async function searchExpenses(
   return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+export interface RecurringTemplate {
+  name: string;
+  categoryId: string;
+  amount: number;
+}
+
+// Gastos fijos/recurrentes que el usuario ha registrado alguna vez (onboarding
+// o toggle "Gasto recurrente" en QuickEntryModal), deduplicados por nombre
+// quedándose con la ocurrencia más reciente.
+export async function getRecurringTemplates(): Promise<RecurringTemplate[]> {
+  const keys = await getAllMonthKeys();
+  const allData = await Promise.all(keys.map(k => getMonthData(k)));
+
+  const byName = new Map<string, Expense>();
+  for (const data of allData) {
+    for (const e of data.expenses) {
+      if (!e.isRecurring) continue;
+      const key = e.name.trim().toLowerCase();
+      const existing = byName.get(key);
+      if (!existing || existing.createdAt < e.createdAt) byName.set(key, e);
+    }
+  }
+  return [...byName.values()].map(e => ({ name: e.name, categoryId: e.categoryId, amount: e.amount }));
+}
+
 // ── Balance Notification Toggle ─────────────────────────────────────────────
 
 const K_SHOW_BALANCE_NOTIF = '@wc_show_balance_notification';
