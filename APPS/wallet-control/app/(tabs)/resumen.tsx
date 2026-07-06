@@ -463,14 +463,14 @@ export default function ResumenScreen() {
                 <Ionicons name="arrow-up-circle" size={12} color="rgba(255,255,255,0.8)" />
                 <Text style={styles.pillLabel}>Ingresos</Text>
               </View>
-              <Text style={styles.pillValue}>{formatCOP(totalIncome)}</Text>
+              <Text style={styles.pillValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(totalIncome)}</Text>
             </View>
             <View style={[styles.pill, { backgroundColor: COLORS.credit }]}>
               <View style={styles.pillIconRow}>
                 <Ionicons name="arrow-down-circle" size={12} color="rgba(255,255,255,0.8)" />
                 <Text style={styles.pillLabel}>Gastos</Text>
               </View>
-              <Text style={styles.pillValue}>{formatCOP(totalSpent)}</Text>
+              <Text style={styles.pillValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(totalSpent)}</Text>
             </View>
           </View>
 
