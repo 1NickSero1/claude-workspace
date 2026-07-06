@@ -12,7 +12,15 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE]
 ------------------------------------------------------------
-  — (vacío por ahora)
+
+  — Iniciar sesión en Expo/EAS (eas login) para vincular el proyecto
+    (eas init → obtener extra.eas.projectId en app.json) y poder correr
+    "eas build --profile preview" y generar el APK real.
+    → Al arrancar "npx expo start" apareció un prompt pidiendo login de
+      Expo antes de levantar el servidor (2026-07-06); el usuario no
+      tiene cuenta creada todavía. No es necesario para desarrollo local
+      normal, solo para EAS build / vincular el proyecto — queda pendiente
+      para cuando se quiera generar el primer build instalable.
 
 ------------------------------------------------------------
 [EN PROGRESO]
