@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Alert, ScrollView, Modal, TextInput, KeyboardAvoidingView, Platform,
+  Alert, ScrollView, Modal, TextInput, KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { getUserProfile, deleteUserProfile, saveUserProfile, UserProfile } from '@/lib/storage';
+import {
+  getUserProfile, deleteUserProfile, saveUserProfile, UserProfile,
+  getShowBalanceNotification, saveShowBalanceNotification,
+} from '@/lib/storage';
+import { requestNotificationPermission, cancelBalanceNotification } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors, useThemeInfo } from '@/constants/ThemeContext';
@@ -27,10 +31,22 @@ export default function PerfilScreen() {
   const [profile, setProfile]       = useState<UserProfile | null>(null);
   const [editModal, setEditModal]   = useState(false);
   const [editName, setEditName]     = useState('');
+  const [showBalanceNotif, setShowBalanceNotif] = useState(false);
 
   useEffect(() => {
     getUserProfile().then(setProfile);
+    getShowBalanceNotification().then(setShowBalanceNotif);
   }, []);
+
+  const handleToggleBalanceNotif = async (value: boolean) => {
+    setShowBalanceNotif(value);
+    await saveShowBalanceNotification(value);
+    if (value) {
+      await requestNotificationPermission();
+    } else {
+      await cancelBalanceNotification();
+    }
+  };
 
   const initials = profile?.name
     ? profile.name.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -237,6 +253,23 @@ export default function PerfilScreen() {
             </View>
             <Text style={styles.rowLabel}>Datos guardados localmente</Text>
             <Ionicons name="checkmark-circle" size={18} color={COLORS.debit} />
+          </View>
+          <View style={[styles.row, styles.rowDivider]}>
+            <View style={[styles.rowIcon, { backgroundColor: COLORS.primaryBg }]}>
+              <Ionicons name="notifications-outline" size={18} color={COLORS.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowLabel}>Notificación de saldo</Text>
+              <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 2 }}>
+                Muestra tu patrimonio neto en una notificación fija
+              </Text>
+            </View>
+            <Switch
+              value={showBalanceNotif}
+              onValueChange={handleToggleBalanceNotif}
+              trackColor={{ false: COLORS.border, true: COLORS.primary + '88' }}
+              thumbColor={showBalanceNotif ? COLORS.primary : COLORS.textDim}
+            />
           </View>
         </View>
 
