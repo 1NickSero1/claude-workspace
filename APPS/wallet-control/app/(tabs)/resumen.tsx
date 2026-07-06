@@ -87,6 +87,7 @@ export default function ResumenScreen() {
   const [trendModal, setTrendModal]         = useState(false);
   const [activeDot, setActiveDot]           = useState(0);
   const [catView, setCatView]               = useState<'grid' | 'list'>('grid');
+  const [viewedQuincena, setViewedQuincena] = useState<1 | 2>(() => (new Date().getDate() <= 15 ? 1 : 2));
 
   const handleExportPDF = async () => {
     setExporting(true);
@@ -297,18 +298,29 @@ export default function ResumenScreen() {
   const mondayIndex = dow === 0 ? 6 : dow - 1;
   const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayIndex);
   const currentQuincena: 1 | 2 = day <= 15 ? 1 : 2;
+  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
   const period = profile?.budgetPeriod ?? 'biweekly';
-  const periodLabel = period === 'weekly' ? 'esta semana' : period === 'monthly' ? 'este mes' : `la quincena ${currentQuincena}`;
+  // Para quincenal, el popup de pendientes refleja la quincena que el
+  // usuario está mirando en el slider (no siempre la de hoy).
+  const periodLabel = period === 'weekly' ? 'esta semana' : period === 'monthly' ? 'este mes' : `la quincena ${viewedQuincena}`;
 
   const expensesInPeriodWindow = period === 'weekly'
     ? expenses.filter(e => new Date(e.createdAt).getTime() >= weekStart.getTime())
     : period === 'monthly'
     ? expenses
-    : expenses.filter(e => e.quincena === currentQuincena);
+    : expenses.filter(e => e.quincena === viewedQuincena);
 
   const loggedNames = new Set(expensesInPeriodWindow.map(e => e.name.trim().toLowerCase()));
   const pendingTemplates = recurringTemplates.filter(t => !loggedNames.has(t.name.trim().toLowerCase()));
+
+  // Progreso de fechas + gasto de cada quincena (para el slider Quincena 1/2)
+  const quincenaSpent = (q: 1 | 2) => expenses.filter(e => e.quincena === q).reduce((s, e) => s + e.amount, 0);
+  const quincenaProgress = (q: 1 | 2) => {
+    if (q === 1) return day > 15 ? 100 : (day / 15) * 100;
+    const span = lastDayOfMonth - 15;
+    return day <= 15 ? 0 : ((day - 15) / span) * 100;
+  };
 
   const COLORS = useColors();
   const styles = useMemo(() => StyleSheet.create(scaledSheet({
@@ -362,6 +374,19 @@ export default function ResumenScreen() {
     heroGoalsSaved: { color: COLORS.debit, fontSize: 11, fontWeight: '700' },
     heroGoalsOf: { color: COLORS.textMuted, fontSize: 11 },
     budgetWrap: { marginHorizontal: 16, marginBottom: 20 },
+    quincenaSlider: { marginHorizontal: -16 },
+    quincenaCardBox: {
+      marginHorizontal: 16,
+      backgroundColor: COLORS.card, borderRadius: 16, padding: 16,
+      borderWidth: 1, borderColor: COLORS.border,
+    },
+    quincenaCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+    quincenaCardLabel: { color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
+    quincenaBadge: { backgroundColor: COLORS.primaryBg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
+    quincenaBadgeText: { color: COLORS.primary, fontWeight: '700', fontSize: 10 },
+    quincenaCardSpent: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 8 },
+    quincenaCardTrack: { height: 8, backgroundColor: COLORS.border, borderRadius: 4, overflow: 'hidden' },
+    quincenaCardFill: { height: '100%', borderRadius: 4, backgroundColor: COLORS.primary },
     summaryRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 12, marginBottom: 24 },
     summaryCard: { flex: 1, borderRadius: 18, padding: 16, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6 },
     summaryCardTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
