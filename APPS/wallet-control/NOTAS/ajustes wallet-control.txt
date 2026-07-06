@@ -12,9 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
- modifica el tabs de finando desvincula toda relación con todo el Excel que le dimos de base y que tenga las bases personalizadas para cada usuario y cuenta
-modifica la palabra extracto bancario por extracto de tu cuenta, del pdf
-modifica para que se guarde la información en el usuario correspondiente para que cuando uno se salga y entre con otro correo le borre la información y traiga la del usuario correspondiente
+  — (vacío por ahora)
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
@@ -56,6 +54,36 @@ modifica para que se guarde la información en el usuario correspondiente para q
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX de pendientes "por MI", 2da ronda (PECAS, 2026-07-06)
+    → Finando ya no usa una base genérica compartida ("el Excel") para
+      todos los usuarios: constants/systemPrompt.ts ahora recibe la lista
+      real de categorías del usuario (buildSystemPrompt(nickname,
+      categories)) y arma el prompt con sus ids reales en vez de la lista
+      fija de categorías por defecto ("vivienda","comida",...). Se quitó
+      además el ejemplo con montos fijos (Arriendo 475.000, Spotify 30.000,
+      Sueldo 2.000.000) que era el mismo para toda cuenta — ahora la
+      instrucción pide montos reales sin copiar valores de ejemplo. Se
+      actualizó el call site en app/(tabs)/index.tsx para pasar
+      `categories` (ya se cargaba en ese screen) a askAdvisor() → lib/claude.ts.
+      El modo demo (usuarios anónimos sin sesión) queda igual a propósito,
+      ya que por definición no hay cuenta que personalizar.
+    → "Extracto bancario" renombrado a "Extracto de tu cuenta" en el botón
+      de Resumen, el FAQ de ayuda.tsx y los títulos/pie del PDF en
+      lib/financialReport.ts.
+    → Aislamiento de datos por cuenta: lib/storage.ts ahora resuelve un
+      namespace (profile.id, o 'anon' en modo anónimo) y lo agrega a las
+      claves de AsyncStorage de tarjetas/categorías/metas/gastos-ingresos
+      (getActiveNamespace() + K_CARDS/K_CATEGORIES/K_GOALS/K_EXP ya no son
+      claves fijas, son funciones que reciben el namespace). Se migran
+      (copian, sin borrar) los datos guardados antes de este cambio hacia
+      el namespace del perfil activo la primera vez que se detectan, una
+      sola vez por namespace (flag @wc_migrated_<ns>). Diseño deliberado:
+      no se borra nada al cambiar de cuenta — cada cuenta ve solo su propio
+      balde de datos en este dispositivo, y si se vuelve a esa cuenta más
+      adelante su información sigue ahí intacta. El perfil de autenticación
+      (wc_profile) sigue siendo una sola clave global, sin namespace (solo
+      hay un perfil activo a la vez).
 
   ✓ Fase 3: saldo, búsqueda, comparativa + fix de responsive (PECAS, 2026-07-06)
     → Widget de saldo rápido: se confirmó que un widget nativo real de
