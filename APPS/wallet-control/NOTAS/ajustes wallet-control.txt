@@ -12,7 +12,12 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-  — (vacío por ahora)
+has un balance general de ls gastos por mes y muestralos en un pop up cuando le de click a gastos del mes
+cambia la leyenda de balance por cuenta por balance por tarjeta y muestra el balance en un diagrama de torta para las tarjetas
+en el circulo de la torta de metas de ahorro muestra completo el numero dentro del circulo
+en cada balance general pon en el titulo el mes correspondiente
+por ultimo donde dice julio 2026 quiero que generes un desplazable con los meses anteriores regstrados
+
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
