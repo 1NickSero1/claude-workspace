@@ -302,7 +302,7 @@ export default function PerfilScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.rowLabel}>Notificación de saldo</Text>
               <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 2 }}>
-                Muestra tu patrimonio neto en una notificación fija
+                Muestra tu balance general en una notificación fija
               </Text>
             </View>
             <Switch

@@ -85,6 +85,7 @@ export default function ResumenScreen() {
   const [pendingModal, setPendingModal]     = useState(false);
   const [trendModal, setTrendModal]         = useState(false);
   const [activeDot, setActiveDot]           = useState(0);
+  const [balanceDot, setBalanceDot]         = useState(0);
   const [catView, setCatView]               = useState<'grid' | 'list'>('grid');
   const [viewedQuincena, setViewedQuincena] = useState<1 | 2>(() => (new Date().getDate() <= 15 ? 1 : 2));
 
@@ -207,7 +208,7 @@ export default function ResumenScreen() {
   const hasDebitCards  = cards.some(c => c.type === 'debit');
   const hasCreditCards = cards.some(c => c.type === 'credit');
 
-  // Patrimonio Neto
+  // Balance General (patrimonio neto)
   const cashAvailable  = cards.filter(c => c.type === 'cash')
     .reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0), 0);
   const debtTotal      = cards.filter(c => c.type === 'debt')
@@ -215,6 +216,11 @@ export default function ResumenScreen() {
   const totalActivos   = debitAvailable + cashAvailable;
   const totalPasivos   = creditSpent + debtTotal;
   const patrimonioNeto = totalActivos - totalPasivos;
+
+  // Aproximación del mes anterior: mismas cuentas/saldos actuales, gastos de
+  // ese mes (cards.balance/limit no guardan historial, solo el estado actual).
+  const { totalActivos: prevTotalActivos, totalPasivos: prevTotalPasivos, patrimonioNeto: prevPatrimonioNeto } =
+    computeNetWorth(prevExpenses, cards);
 
   const prevTotalSpent = sumExpenses(prevExpenses);
   const hasPrevData    = prevTotalSpent > 0;
@@ -373,7 +379,9 @@ export default function ResumenScreen() {
     heroGoalsSaved: { color: COLORS.debit, fontSize: 11, fontWeight: '700' },
     heroGoalsOf: { color: COLORS.textMuted, fontSize: 11 },
     budgetWrap: { marginHorizontal: 16, marginBottom: 20 },
+    heroBudgetWrap: { width: '100%', marginTop: 14 },
     quincenaSlider: { marginHorizontal: -16 },
+    balanceSlider: { marginHorizontal: -16 },
     quincenaCardBox: {
       marginHorizontal: 16,
       backgroundColor: COLORS.card, borderRadius: 16, padding: 16,
@@ -658,6 +666,20 @@ export default function ResumenScreen() {
             <View style={[styles.dot, activeDot === 0 && styles.dotActive]} />
             <View style={[styles.dot, activeDot === 1 && styles.dotActive]} />
             <View style={[styles.dot, activeDot === 2 && styles.dotActive]} />
+          </View>
+
+          {/* ── Presupuesto mensual ──────────────────────── */}
+          <View style={styles.heroBudgetWrap}>
+            {budget && budget > 0 ? (
+              <TouchableOpacity activeOpacity={0.85} onPress={() => setBudgetModal(true)}>
+                <BudgetProgressBar budget={budget} spent={totalSpent} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={() => setBudgetModal(true)} style={styles.emptyGoal}>
+                <Ionicons name="wallet-outline" size={28} color={COLORS.textDim} />
+                <Text style={styles.emptyGoalText}>Configura tu presupuesto mensual</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 

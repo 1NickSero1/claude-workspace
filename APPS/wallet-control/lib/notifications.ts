@@ -100,7 +100,7 @@ export async function updateBalanceNotification(balance: number): Promise<void> 
     identifier: BALANCE_NOTIFICATION_ID,
     content: {
       title: 'Saldo disponible',
-      body: `Patrimonio neto: ${formatCOP(balance)}`,
+      body: `Balance general: ${formatCOP(balance)}`,
       sound: false,
       sticky: true,
     },
