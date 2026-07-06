@@ -12,7 +12,8 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-  — (vacío por ahora)
+mueve el pills de presupuesto mensual para la seccion de los diagrama de torta
+en el pill de patrimonio neto cambia el nombree por "balance general" y has el desplazable hacia la derecha donde muestre el balance general del mes anterior reemplazalo la pills de vs mes anterior
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
