@@ -385,6 +385,15 @@ export default function ResumenScreen() {
     patrimonioNetRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     patrimonioNetLabel: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base },
     patrimonioNetVal: { fontWeight: '800', fontSize: FONT.xl },
+    compareCard: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      marginHorizontal: 16, marginBottom: 20,
+      backgroundColor: COLORS.card, borderRadius: 16, padding: 14,
+      borderLeftWidth: 4,
+      elevation: 2, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 1, shadowRadius: 4,
+    },
+    compareLabel: { color: COLORS.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+    compareValue: { fontWeight: '800', fontSize: FONT.base, marginTop: 2 },
     goalsTotalBox: {
       backgroundColor: COLORS.primaryBg, borderRadius: 14, padding: 14,
       marginBottom: 14, borderWidth: 1, borderColor: COLORS.primary + '33',
@@ -628,6 +637,23 @@ export default function ResumenScreen() {
               </View>
               <Text style={{ color: COLORS.textDim, fontSize: 10, marginTop: 6, textAlign: 'right' }}>Toca para ver detalle →</Text>
             </TouchableOpacity>
+          );
+        })()}
+
+        {/* ── Comparativa mes a mes ────────────────────── */}
+        {hasPrevData && (() => {
+          const spentLess = totalSpent <= prevTotalSpent;
+          const compColor = spentLess ? COLORS.debit : COLORS.danger;
+          return (
+            <View style={[styles.compareCard, { borderLeftColor: compColor, backgroundColor: compColor + '0D' }]}>
+              <Ionicons name={spentLess ? 'arrow-down' : 'arrow-up'} size={20} color={compColor} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.compareLabel}>vs. {formatMonthLabel(prevMonthKey)}</Text>
+                <Text style={[styles.compareValue, { color: compColor }]}>
+                  {spentDiffPct! > 0 ? '+' : ''}{spentDiffPct}% {spentLess ? 'menos gastado' : 'más gastado'}
+                </Text>
+              </View>
+            </View>
           );
         })()}
 
