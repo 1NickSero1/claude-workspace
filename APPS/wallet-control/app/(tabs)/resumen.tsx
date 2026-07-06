@@ -8,9 +8,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  getMonthData, getCategories, getCards, saveCategory, deleteCategory,
+  getMonthData, getCategories, getCards,
   getGoals, saveGoal, deleteGoal, addGoalDeposit, deleteGoalDeposit,
-  addExpenses, updateExpense, deleteExpense, saveBudget, saveBudgetNotified,
+  saveBudget, saveBudgetNotified,
   getCurrentMonthKey, formatMonthLabel, getUserProfile,
   getPreviousMonthKey, getShowBalanceNotification, computeNetWorth,
   getRecurringTemplates, RecurringTemplate,
@@ -18,8 +18,7 @@ import {
   getCardTotalSpent, sumIncomes,
 } from '@/lib/storage';
 import { sumExpenses, formatCOP, formatThousands } from '@/lib/expenseParser';
-import { checkBudgetThreshold, cancelNotification, updateBalanceNotification } from '@/lib/notifications';
-import CategoryFormModal from '@/components/CategoryFormModal';
+import { checkBudgetThreshold, updateBalanceNotification } from '@/lib/notifications';
 import DonutChart, { DonutSlice } from '@/components/DonutChart';
 import QuickEntryModal from '@/components/QuickEntryModal';
 import BudgetProgressBar from '@/components/BudgetProgressBar';
@@ -915,29 +914,11 @@ export default function ResumenScreen() {
         </View>
       </ScrollView>
 
-      <CategoryFormModal
-        visible={catModal}
-        category={editingCat}
-        onSave={handleSaveCat}
-        onClose={() => { setCatModal(false); setEditingCat(null); }}
-      />
-
       <GoalFormModal
         visible={goalModal}
         goal={editingGoal}
         onSave={handleSaveGoal}
         onClose={() => { setGoalModal(false); setEditingGoal(null); }}
-      />
-
-      <CategoryDetailModal
-        visible={detailVisible}
-        cat={detailCat}
-        expenses={expenses.filter(e => detailCat ? e.categoryId === detailCat.id : false)}
-        cards={cards}
-        categories={categories}
-        monthKey={monthKey}
-        onRefresh={load}
-        onClose={() => setDetailVisible(false)}
       />
 
       <GoalDetailModal
