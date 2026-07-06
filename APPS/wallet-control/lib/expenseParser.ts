@@ -64,6 +64,14 @@ export function formatCOP(amount: number): string {
   return '$' + Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
+/** Formatea dígitos sueltos (string o number) con "." de miles, sin símbolo de moneda. */
+export function formatThousands(value: string | number): string {
+  const digits = typeof value === 'number' ? String(Math.round(value)) : value.replace(/\D/g, '');
+  const n = Number(digits);
+  if (!digits || !n) return '';
+  return n.toLocaleString('es-CO');
+}
+
 export function sumExpenses(expenses: Expense[]): number {
   return expenses.reduce((s, e) => s + e.amount, 0);
 }

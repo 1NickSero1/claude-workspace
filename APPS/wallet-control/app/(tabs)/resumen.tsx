@@ -15,7 +15,7 @@ import {
   CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile,
   getCardTotalSpent, sumIncomes,
 } from '@/lib/storage';
-import { sumExpenses, formatCOP } from '@/lib/expenseParser';
+import { sumExpenses, formatCOP, formatThousands } from '@/lib/expenseParser';
 import { checkBudgetThreshold, cancelNotification } from '@/lib/notifications';
 import CategoryFormModal from '@/components/CategoryFormModal';
 import DonutChart, { DonutSlice } from '@/components/DonutChart';
@@ -1308,7 +1308,7 @@ function CategoryDetailModal({ visible, cat, expenses, cards, monthKey, onRefres
               <Text style={dStyles.label}>Monto (COP)</Text>
               <TextInput
                 style={dStyles.input}
-                value={amount}
+                value={formatThousands(amount)}
                 onChangeText={v => setAmount(v.replace(/\D/g, ''))}
                 placeholder="0"
                 placeholderTextColor={COLORS.textDim}
@@ -1535,7 +1535,7 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
               <Text style={gdStyles.label}>Monto (COP)</Text>
               <TextInput
                 style={gdStyles.input}
-                value={amount}
+                value={formatThousands(amount)}
                 onChangeText={v => setAmount(v.replace(/\D/g, ''))}
                 placeholder="0"
                 placeholderTextColor={COLORS.textDim}

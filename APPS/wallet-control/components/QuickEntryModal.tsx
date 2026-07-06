@@ -11,6 +11,7 @@ import {
   getCurrentMonthKey, addExpenses, addIncomes,
 } from '@/lib/storage';
 import { scheduleRecurringReminder } from '@/lib/notifications';
+import { formatThousands } from '@/lib/expenseParser';
 
 interface Props {
   visible: boolean;
@@ -143,10 +144,6 @@ export default function QuickEntryModal({ visible, categories, onSave, onClose }
       flex: 1, fontSize: FONT.xxl * 1.4, fontWeight: '800',
       textAlign: 'center', paddingVertical: 4,
     },
-    amountFormatted: {
-      fontSize: FONT.sm, fontWeight: '600',
-      position: 'absolute', bottom: 6, right: 16,
-    },
     descInput: {
       backgroundColor: COLORS.bg, borderRadius: 12, padding: 12,
       color: COLORS.text, fontSize: FONT.md,
@@ -241,18 +238,13 @@ export default function QuickEntryModal({ visible, categories, onSave, onClose }
             <Text style={styles.currencySymbol}>$</Text>
             <TextInput
               style={[styles.amountInput, { color: activeColor }]}
-              value={amount}
+              value={formatThousands(amount)}
               onChangeText={handleAmountChange}
               placeholder="0"
               placeholderTextColor={activeColor + '60'}
               keyboardType="number-pad"
               autoFocus={visible}
             />
-            {amount.length > 0 && (
-              <Text style={[styles.amountFormatted, { color: activeColor + '80' }]}>
-                {parseInt(amount, 10).toLocaleString('es-CO')}
-              </Text>
-            )}
           </View>
 
           {/* Description */}

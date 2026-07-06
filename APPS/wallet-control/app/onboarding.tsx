@@ -13,6 +13,7 @@ import {
   addIncomes, addExpenses, getCurrentMonthKey,
 } from '@/lib/storage';
 import { scheduleRecurringReminder } from '@/lib/notifications';
+import { formatThousands } from '@/lib/expenseParser';
 import { trackSignup } from '@/lib/userTracking';
 import { supabase } from '@/lib/supabase';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
@@ -586,7 +587,7 @@ export default function OnboardingScreen() {
             <Text style={styles.label}>Monto mensual (COP, opcional)</Text>
             <TextInput
               style={styles.input}
-              value={fixedIncomeAmount}
+              value={formatThousands(fixedIncomeAmount)}
               onChangeText={v => setFixedIncomeAmount(v.replace(/\D/g, ''))}
               placeholder="Ej: 2.500.000"
               placeholderTextColor={COLORS.textDim}
