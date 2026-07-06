@@ -41,6 +41,23 @@ COMANDO RÁPIDO:
 [RESUELTO]
 ------------------------------------------------------------
 
+  ✓ Categorías movidas a pantalla independiente (PECAS, 2026-07-06)
+    → Pedido en vivo (no venía del archivo): unificar la sección "Categorías"
+      de Resumen, que ocupaba mucho espacio con el grid/list completo.
+    → Se creó app/categorias.tsx (pantalla nueva, empujada, con su propio
+      header y botón atrás — mismo patrón que app/busqueda.tsx) con todo el
+      grid/list de categorías, el botón "+" para crear, editar/eliminar por
+      long-press, y el detalle de gastos por categoría. Registrada la ruta
+      en app/_layout.tsx.
+    → components/CategoryDetailModal.tsx extraído a su propio archivo
+      (antes vivía inline al final de resumen.tsx) para poder reutilizarlo
+      en la nueva pantalla sin duplicar ~250 líneas de código.
+    → En Resumen, toda esa sección se reemplazó por una sola card compacta
+      "Gastos" (ícono + total del mes + cantidad de categorías) que al
+      tocarla navega a /categorias. catRows/catBreakdown se quedan en
+      resumen.tsx porque el popup de "Resumen del mes" (donut de Gastos)
+      todavía los necesita para su propio desglose por categoría.
+
   ✓ MEJORAX de pendientes "por MI", 5ta ronda (PECAS, 2026-07-06)
     → "Presupuesto mensual" se movió de su propia tarjeta a dentro del
       heroCard (sección de los diagramas de torta), justo debajo de los
