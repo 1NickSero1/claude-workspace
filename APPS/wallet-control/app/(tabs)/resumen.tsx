@@ -57,6 +57,8 @@ export default function ResumenScreen() {
   const [budgetModal, setBudgetModal] = useState(false);
   const [profile, setProfile]       = useState<UserProfile | null>(null);
   const [prevExpenses, setPrevExpenses] = useState<Expense[]>([]);
+  const [prevIncomes, setPrevIncomes]   = useState<Income[]>([]);
+  const [recurringTemplates, setRecurringTemplates] = useState<RecurringTemplate[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [catModal, setCatModal]     = useState(false);
   const [editingCat, setEditingCat] = useState<CustomCategory | null>(null);
@@ -79,6 +81,10 @@ export default function ResumenScreen() {
   const [registrarSheet, setRegistrarSheet] = useState(false);
   const [helpSheet, setHelpSheet]           = useState(false);
   const [patrimonioModal, setPatrimonioModal] = useState(false);
+  const [metasModal, setMetasModal]         = useState(false);
+  const [ingresosModal, setIngresosModal]   = useState(false);
+  const [pendingModal, setPendingModal]     = useState(false);
+  const [trendModal, setTrendModal]         = useState(false);
   const [activeDot, setActiveDot]           = useState(0);
   const [catView, setCatView]               = useState<'grid' | 'list'>('grid');
 
@@ -122,9 +128,9 @@ export default function ResumenScreen() {
   const prevMonthKey = getPreviousMonthKey(monthKey);
 
   const load = useCallback(async () => {
-    const [d, cats, c, gs, p, prevData] = await Promise.all([
+    const [d, cats, c, gs, p, prevData, recurring] = await Promise.all([
       getMonthData(monthKey), getCategories(), getCards(), getGoals(), getUserProfile(),
-      getMonthData(prevMonthKey),
+      getMonthData(prevMonthKey), getRecurringTemplates(),
     ]);
     setExpenses(d.expenses);
     setIncomes(d.incomes);
@@ -134,6 +140,8 @@ export default function ResumenScreen() {
     setProfile(p);
     setBudget(d.budget);
     setPrevExpenses(prevData.expenses);
+    setPrevIncomes(prevData.incomes);
+    setRecurringTemplates(recurring);
 
     if (d.budget && d.budget > 0) {
       const notified = d.budgetNotified ?? 0;
@@ -262,6 +270,45 @@ export default function ResumenScreen() {
   const incomesDonutData: DonutSlice[] = incomes.map((inc, i) => ({
     id: inc.id, color: INCOME_COLORS[i % INCOME_COLORS.length], amount: inc.amount,
   }));
+
+  // ── Tendencia últimos 2 meses (popup de "vs. mes anterior") ───────────────
+  const prevTotalIncome = sumIncomes(prevIncomes);
+  const trendPoints = [
+    {
+      label: shortMonthLabel(prevMonthKey),
+      ingresos: Math.round(prevTotalIncome / 1000),
+      gastos: Math.round(prevTotalSpent / 1000),
+      ahorro: Math.max(0, Math.round((prevTotalIncome - prevTotalSpent) / 1000)),
+    },
+    {
+      label: shortMonthLabel(monthKey),
+      ingresos: Math.round(totalIncome / 1000),
+      gastos: Math.round(totalSpent / 1000),
+      ahorro: Math.max(0, Math.round(savings / 1000)),
+    },
+  ];
+
+  // ── Categorías fijas pendientes por pagar en el periodo activo ────────────
+  // Se compara contra los gastos recurrentes ya registrados alguna vez
+  // (onboarding o toggle "Gasto recurrente"), no contra un umbral inventado.
+  const today = new Date();
+  const day = today.getDate();
+  const dow = today.getDay();
+  const mondayIndex = dow === 0 ? 6 : dow - 1;
+  const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayIndex);
+  const currentQuincena: 1 | 2 = day <= 15 ? 1 : 2;
+
+  const period = profile?.budgetPeriod ?? 'biweekly';
+  const periodLabel = period === 'weekly' ? 'esta semana' : period === 'monthly' ? 'este mes' : `la quincena ${currentQuincena}`;
+
+  const expensesInPeriodWindow = period === 'weekly'
+    ? expenses.filter(e => new Date(e.createdAt).getTime() >= weekStart.getTime())
+    : period === 'monthly'
+    ? expenses
+    : expenses.filter(e => e.quincena === currentQuincena);
+
+  const loggedNames = new Set(expensesInPeriodWindow.map(e => e.name.trim().toLowerCase()));
+  const pendingTemplates = recurringTemplates.filter(t => !loggedNames.has(t.name.trim().toLowerCase()));
 
   const COLORS = useColors();
   const styles = useMemo(() => StyleSheet.create(scaledSheet({
@@ -526,16 +573,18 @@ export default function ResumenScreen() {
 
             {/* Slide 2 — Metas */}
             <View style={[styles.donutSlide, { width: cardWidth }]}>
-              <DonutChart
-                data={goalsDonutData}
-                total={totalTarget || 1}
-                size={donutSize}
-                centerValue={goals.length > 0 ? fmtShort(totalSaved) : ''}
-                centerLabel={goals.length > 0 ? `de ${fmtShort(totalTarget)}` : 'Sin metas'}
-                centerValueColor={COLORS.primary}
-                emptyLabel="Sin metas aún"
-                emptyHint="Toca + para crear tu primera meta de ahorro"
-              />
+              <TouchableOpacity onPress={() => goals.length > 0 && setMetasModal(true)} activeOpacity={0.85} style={styles.donutTap}>
+                <DonutChart
+                  data={goalsDonutData}
+                  total={totalTarget || 1}
+                  size={donutSize}
+                  centerValue={goals.length > 0 ? fmtShort(totalSaved) : ''}
+                  centerLabel={goals.length > 0 ? `de ${fmtShort(totalTarget)}` : 'Sin metas'}
+                  centerValueColor={COLORS.primary}
+                  emptyLabel="Sin metas aún"
+                  emptyHint="Toca + para crear tu primera meta de ahorro"
+                />
+              </TouchableOpacity>
               {/* Emoji legend por meta */}
               {goals.length > 0 && (
                 <View style={styles.goalsEmojiLegend}>
@@ -552,16 +601,18 @@ export default function ResumenScreen() {
 
             {/* Slide 3 — Ingresos */}
             <View style={[styles.donutSlide, { width: cardWidth }]}>
-              <DonutChart
-                data={incomesDonutData}
-                total={totalIncome || 1}
-                size={donutSize}
-                centerValue={formatCOP(totalIncome)}
-                centerLabel="Total ingresos"
-                centerValueColor={COLORS.debit}
-                emptyLabel="Sin ingresos"
-                emptyHint="Toca + para registrar un ingreso"
-              />
+              <TouchableOpacity onPress={() => incomes.length > 0 && setIngresosModal(true)} activeOpacity={0.85} style={styles.donutTap}>
+                <DonutChart
+                  data={incomesDonutData}
+                  total={totalIncome || 1}
+                  size={donutSize}
+                  centerValue={formatCOP(totalIncome)}
+                  centerLabel="Total ingresos"
+                  centerValueColor={COLORS.debit}
+                  emptyLabel="Sin ingresos"
+                  emptyHint="Toca + para registrar un ingreso"
+                />
+              </TouchableOpacity>
               {/* Leyenda de ingresos */}
               {incomes.length > 0 && (
                 <View style={styles.incomeLegend}>
@@ -587,11 +638,11 @@ export default function ResumenScreen() {
         </View>
 
         {/* ── Tarjeta de periodo (semanal/quincenal/mensual) ── */}
-        <View style={styles.budgetWrap}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => setPendingModal(true)} style={styles.budgetWrap}>
           {profile?.budgetPeriod === 'weekly' ? <SemanaCard /> :
            profile?.budgetPeriod === 'monthly' ? <MesCard /> :
            <QuincenaCard />}
-        </View>
+        </TouchableOpacity>
 
         {/* ── Presupuesto mensual ──────────────────────── */}
         <View style={styles.budgetWrap}>
@@ -649,7 +700,11 @@ export default function ResumenScreen() {
           const spentLess = totalSpent <= prevTotalSpent;
           const compColor = spentLess ? COLORS.debit : COLORS.danger;
           return (
-            <View style={[styles.compareCard, { borderLeftColor: compColor, backgroundColor: compColor + '0D' }]}>
+            <TouchableOpacity
+              activeOpacity={0.82}
+              onPress={() => setTrendModal(true)}
+              style={[styles.compareCard, { borderLeftColor: compColor, backgroundColor: compColor + '0D' }]}
+            >
               <Ionicons name={spentLess ? 'arrow-down' : 'arrow-up'} size={20} color={compColor} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.compareLabel}>vs. {formatMonthLabel(prevMonthKey)}</Text>
@@ -657,7 +712,8 @@ export default function ResumenScreen() {
                   {spentDiffPct! > 0 ? '+' : ''}{spentDiffPct}% {spentLess ? 'menos gastado' : 'más gastado'}
                 </Text>
               </View>
-            </View>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.textDim} />
+            </TouchableOpacity>
           );
         })()}
 
