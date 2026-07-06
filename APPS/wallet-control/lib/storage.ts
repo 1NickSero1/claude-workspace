@@ -304,6 +304,13 @@ export async function updateExpense(monthKey: string, updated: Partial<Expense> 
 export async function saveBudget(monthKey: string, budget: number): Promise<void> {
   const data = await getMonthData(monthKey);
   data.budget = budget;
+  data.budgetNotified = 0;
+  await AsyncStorage.setItem(K_EXP(monthKey), JSON.stringify(data));
+}
+
+export async function saveBudgetNotified(monthKey: string, threshold: number): Promise<void> {
+  const data = await getMonthData(monthKey);
+  data.budgetNotified = threshold;
   await AsyncStorage.setItem(K_EXP(monthKey), JSON.stringify(data));
 }
 

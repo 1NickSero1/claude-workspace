@@ -10,15 +10,18 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   getMonthData, getCategories, getCards, saveCategory, deleteCategory,
   getGoals, saveGoal, deleteGoal, addGoalDeposit, deleteGoalDeposit,
-  addExpenses, updateExpense, deleteExpense,
+  addExpenses, updateExpense, deleteExpense, saveBudget, saveBudgetNotified,
   getCurrentMonthKey, formatMonthLabel,
   CustomCategory, Expense, Card, Goal, GoalDeposit, Income,
   getCardTotalSpent, sumIncomes,
 } from '@/lib/storage';
 import { sumExpenses, formatCOP } from '@/lib/expenseParser';
+import { checkBudgetThreshold, cancelNotification } from '@/lib/notifications';
 import CategoryFormModal from '@/components/CategoryFormModal';
 import DonutChart, { DonutSlice } from '@/components/DonutChart';
 import QuickEntryModal from '@/components/QuickEntryModal';
+import BudgetProgressBar from '@/components/BudgetProgressBar';
+import BudgetFormModal from '@/components/BudgetFormModal';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
