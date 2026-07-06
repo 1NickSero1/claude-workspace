@@ -15,7 +15,7 @@ import {
   getPreviousMonthKey, getShowBalanceNotification, computeNetWorth,
   getRecurringTemplates, RecurringTemplate,
   syncCardBalanceSnapshot, getCardBalanceSnapshot,
-  CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile,
+  CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile, MonthData,
   getCardTotalSpent, sumIncomes,
 } from '@/lib/storage';
 import { sumExpenses, formatCOP, formatThousands } from '@/lib/expenseParser';
@@ -38,6 +38,7 @@ const INCOME_COLORS = ['#00C896','#0984E3','#6C5CE7','#FDCB6E','#00B894','#A29BF
 const MONTH_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const shortMonthLabel = (monthKey: string) => MONTH_SHORT[parseInt(monthKey.split('-')[1], 10) - 1];
 const fmtShort = (n: number) => n >= 1_000_000 ? `$${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `$${Math.round(n/1_000)}k` : formatCOP(n);
+const MONTH_SWIPE_WIDTH = 170;
 const GOAL_EMOJI_OPTIONS = [
   '🎯','✈️','🏠','🚗','💍','📱','💻','🎓','🏋️','🌴',
   '🐕','👶','💰','🎸','🏄','🎮','🌎','🏆','💎','🎁',
@@ -514,9 +515,25 @@ export default function ResumenScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>{formatMonthLabel(monthKey)}</Text>
-        </View>
+        <ScrollView
+          key={availableMonths.length > 0 ? 'ready' : 'loading'}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          style={{ width: MONTH_SWIPE_WIDTH }}
+          contentOffset={{ x: Math.max(0, availableMonths.indexOf(selectedMonthKey)) * MONTH_SWIPE_WIDTH, y: 0 }}
+          onMomentumScrollEnd={e => {
+            const idx = Math.round(e.nativeEvent.contentOffset.x / MONTH_SWIPE_WIDTH);
+            const key = availableMonths[idx];
+            if (key) setSelectedMonthKey(key);
+          }}
+        >
+          {availableMonths.map(mk => (
+            <View key={mk} style={{ width: MONTH_SWIPE_WIDTH, justifyContent: 'center' }}>
+              <Text style={styles.headerTitle}>{formatMonthLabel(mk)}</Text>
+            </View>
+          ))}
+        </ScrollView>
         <View style={styles.headerRight}>
           <TouchableOpacity onPress={() => setHelpSheet(true)} style={styles.headerBtn}>
             <Text style={styles.headerBtnEmoji}>❓</Text>
@@ -1013,6 +1030,28 @@ export default function ResumenScreen() {
                 <Text style={{ color: COLORS.textMuted, textAlign: 'center', paddingVertical: 24, fontSize: FONT.sm }}>
                   Sin movimientos registrados este mes
                 </Text>
+              )}
+
+              {/* Balance general por mes */}
+              {monthlyBalances.length > 1 && (
+                <>
+                  <View style={[styles.summarySectionHeader, { marginTop: 16 }]}>
+                    <Text style={styles.summarySectionTitle}>📅 Balance general por mes</Text>
+                  </View>
+                  {monthlyBalances.map(m => (
+                    <View key={m.monthKey} style={styles.summaryExpItemRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.summaryIncomeName} style={[styles.summaryIncomeName, { textTransform: 'capitalize' }]}>{formatMonthLabel(m.monthKey)}</Text>
+                        <Text style={styles.summaryExpItemMeta}>
+                          <Text style={{ color: COLORS.debit }}>{formatCOP(m.ingreso)}</Text> ingresos · <Text style={{ color: COLORS.credit }}>{formatCOP(m.gasto)}</Text> gastos
+                        </Text>
+                      </View>
+                      <Text style={[styles.summaryExpItemAmt, { color: m.balance >= 0 ? COLORS.debit : COLORS.danger }]}>
+                        {m.balance >= 0 ? '+' : ''}{formatCOP(m.balance)}
+                      </Text>
+                    </View>
+                  ))}
+                </>
               )}
             </ScrollView>
 
