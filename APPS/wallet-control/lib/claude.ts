@@ -1,5 +1,6 @@
 import { buildSystemPrompt } from '@/constants/systemPrompt';
 import { supabase } from '@/lib/supabase';
+import { CustomCategory } from '@/lib/storage';
 
 const EDGE_FUNCTION_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/claude-proxy`;
 
@@ -86,7 +87,11 @@ function extractDemoExpenses(text: string) {
 
 // ── Real API ──────────────────────────────────────────────────────────────────
 
-export async function askAdvisor(history: ChatMessage[], nickname?: string): Promise<string> {
+export async function askAdvisor(
+  history: ChatMessage[],
+  nickname?: string,
+  categories?: CustomCategory[],
+): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
@@ -101,7 +106,7 @@ export async function askAdvisor(history: ChatMessage[], nickname?: string): Pro
       'Content-Type': 'application/json',
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({ system: buildSystemPrompt(nickname), messages: history }),
+    body: JSON.stringify({ system: buildSystemPrompt(nickname, categories), messages: history }),
   });
 
   if (!response.ok) {

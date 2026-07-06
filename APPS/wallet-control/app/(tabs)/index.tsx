@@ -169,7 +169,7 @@ export default function ChatScreen() {
     setLoading(true);
 
     try {
-      const rawText = await askAdvisor(buildHistory(next), nickname);
+      const rawText = await askAdvisor(buildHistory(next), nickname, categories);
       const { message, expenses: rawExp, incomes: rawInc, askForCard } = parseClaudeResponse(rawText);
 
       const expenses = buildExpenses(rawExp, monthKey);
