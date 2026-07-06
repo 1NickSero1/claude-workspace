@@ -8,7 +8,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/storage';
+import {
+  saveUserProfile, UserProfile, BudgetPeriod,
+  addIncomes, addExpenses, getCurrentMonthKey,
+} from '@/lib/storage';
+import { scheduleRecurringReminder } from '@/lib/notifications';
 import { trackSignup } from '@/lib/userTracking';
 import { supabase } from '@/lib/supabase';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
@@ -27,7 +31,13 @@ const RECOMMENDED_EMOJIS = ['💵', '😀', '😎', '🚀', '🐱', '⭐', '🔥
 const EMOJI_ONLY_REGEX = /\p{Extended_Pictographic}/gu;
 const filterEmojiOnly = (text: string) => (text.match(EMOJI_ONLY_REGEX) ?? []).join('');
 
-type Step = 'welcome' | 'choice' | 'register' | 'login' | 'done';
+type Step = 'welcome' | 'choice' | 'register' | 'login' | 'periodicity' | 'fixedIncome' | 'fixedExpense' | 'done';
+
+const PERIOD_OPTIONS: { value: BudgetPeriod; label: string; caption: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { value: 'weekly',   label: 'Semanal',   caption: 'Manejo mi plata semana a semana',        icon: 'calendar-outline' },
+  { value: 'biweekly', label: 'Quincenal', caption: 'Me pagan o presupuesto cada 15 días',     icon: 'calendar-number-outline' },
+  { value: 'monthly',  label: 'Mensual',   caption: 'Prefiero ver todo el mes de una vez',      icon: 'calendar-clear-outline' },
+];
 
 export default function OnboardingScreen() {
   const [step, setStep]           = useState<Step>('welcome');
@@ -43,6 +53,14 @@ export default function OnboardingScreen() {
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword]     = useState('');
   const [loginLoading, setLoginLoading]       = useState(false);
+
+  // Setup posterior a la creación de cuenta (periodicidad + ingreso/gasto fijo)
+  const [createdProfile, setCreatedProfile]   = useState<UserProfile | null>(null);
+  const [pendingAnonymous, setPendingAnonymous] = useState(false);
+  const [budgetPeriod, setBudgetPeriod]       = useState<BudgetPeriod>('biweekly');
+  const [fixedIncomeAmount, setFixedIncomeAmount] = useState('');
+  const [fixedExpenseAmount, setFixedExpenseAmount] = useState('');
+  const [setupSaving, setSetupSaving]         = useState(false);
 
   const avatarGlyph = avatarEmoji.trim() || '🙂';
 
@@ -84,7 +102,8 @@ export default function OnboardingScreen() {
       };
       await saveUserProfile(profile);
       trackSignup(profile);
-      setStep('done');
+      setCreatedProfile(profile);
+      setStep('periodicity');
     } catch (e: any) {
       Alert.alert('Error', e?.message ?? 'No se pudo crear tu cuenta. Intenta de nuevo.');
     } finally {
@@ -146,10 +165,79 @@ export default function OnboardingScreen() {
     };
     await saveUserProfile(profile);
     trackSignup(profile);
-    router.replace('/(tabs)');
+    setCreatedProfile(profile);
+    setPendingAnonymous(true);
+    setStep('periodicity');
   };
 
   const goToApp = () => router.replace('/(tabs)');
+
+  const handlePeriodicityContinue = async () => {
+    if (!createdProfile) return;
+    const updated: UserProfile = { ...createdProfile, budgetPeriod };
+    await saveUserProfile(updated);
+    setCreatedProfile(updated);
+    setStep('fixedIncome');
+  };
+
+  const handleFixedIncomeContinue = async (skip: boolean) => {
+    setSetupSaving(true);
+    try {
+      const amount = Number(fixedIncomeAmount.replace(/\D/g, ''));
+      if (!skip && amount > 0) {
+        const monthKey = getCurrentMonthKey();
+        const day = new Date().getDate();
+        const quincena: 1 | 2 = day <= 15 ? 1 : 2;
+        const notificationId = await scheduleRecurringReminder('Ingreso fijo mensual', 'monthly', new Date());
+        await addIncomes(monthKey, [{
+          id: `inc_${Date.now()}`,
+          description: 'Ingreso fijo mensual',
+          amount,
+          quincena,
+          createdAt: new Date().toISOString(),
+          monthKey,
+          isRecurring: true,
+          recurrenceFrequency: 'monthly',
+          notificationId,
+        }]);
+      }
+      setStep('fixedExpense');
+    } finally {
+      setSetupSaving(false);
+    }
+  };
+
+  const handleFixedExpenseFinish = async (skip: boolean) => {
+    setSetupSaving(true);
+    try {
+      const amount = Number(fixedExpenseAmount.replace(/\D/g, ''));
+      if (!skip && amount > 0) {
+        const monthKey = getCurrentMonthKey();
+        const day = new Date().getDate();
+        const quincena: 1 | 2 = day <= 15 ? 1 : 2;
+        const notificationId = await scheduleRecurringReminder('Gastos fijos mensuales', 'monthly', new Date());
+        await addExpenses(monthKey, [{
+          id: `exp_${Date.now()}`,
+          name: 'Gastos fijos mensuales',
+          amount,
+          categoryId: 'otro',
+          quincena,
+          createdAt: new Date().toISOString(),
+          monthKey,
+          isRecurring: true,
+          recurrenceFrequency: 'monthly',
+          notificationId,
+        }]);
+      }
+      if (pendingAnonymous) {
+        goToApp();
+      } else {
+        setStep('done');
+      }
+    } finally {
+      setSetupSaving(false);
+    }
+  };
 
   const COLORS = useColors();
   const { isDark, setThemeMode } = useThemeInfo();
@@ -442,6 +530,115 @@ export default function OnboardingScreen() {
             >
               <Text style={styles.primaryBtnText}>{loginLoading ? 'Verificando...' : 'Entrar'}</Text>
               {!loginLoading && <Ionicons name="arrow-forward" size={18} color="#fff" />}
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── PERIODICIDAD ────────────────────────────────────────────────────────────
+  if (step === 'periodicity') {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.choiceContainer} showsVerticalScrollIndicator={false}>
+          <Text style={styles.formTitle}>¿Cómo manejas tu dinero?</Text>
+          <Text style={styles.formSub}>Así te mostramos la información en el periodo que prefieras</Text>
+
+          {PERIOD_OPTIONS.map(opt => {
+            const active = budgetPeriod === opt.value;
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                onPress={() => setBudgetPeriod(opt.value)}
+                style={[styles.optionCard, active && { borderColor: COLORS.primary, backgroundColor: COLORS.primaryBg }]}
+              >
+                <View style={[styles.optionIcon, { backgroundColor: active ? COLORS.primary : COLORS.card2 }]}>
+                  <Ionicons name={opt.icon} size={22} color={active ? '#fff' : COLORS.textMuted} />
+                </View>
+                <View style={styles.optionTextWrap}>
+                  <Text style={styles.optionTitle}>{opt.label}</Text>
+                  <Text style={styles.optionSub}>{opt.caption}</Text>
+                </View>
+                {active && <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />}
+              </TouchableOpacity>
+            );
+          })}
+
+          <TouchableOpacity onPress={handlePeriodicityContinue} style={[styles.primaryBtn, styles.primaryBtnSpaced]}>
+            <Text style={styles.primaryBtnText}>Continuar</Text>
+            <Ionicons name="arrow-forward" size={18} color="#fff" />
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── INGRESO FIJO ─────────────────────────────────────────────────────────────
+  if (step === 'fixedIncome') {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
+            <Text style={styles.formTitle}>¿Tienes un ingreso fijo mensual?</Text>
+            <Text style={styles.formSub}>Por ejemplo tu salario. Lo registramos automáticamente cada mes — puedes omitir este paso</Text>
+
+            <Text style={styles.label}>Monto mensual (COP, opcional)</Text>
+            <TextInput
+              style={styles.input}
+              value={fixedIncomeAmount}
+              onChangeText={v => setFixedIncomeAmount(v.replace(/\D/g, ''))}
+              placeholder="Ej: 2.500.000"
+              placeholderTextColor={COLORS.textDim}
+              keyboardType="number-pad"
+            />
+
+            <TouchableOpacity
+              onPress={() => handleFixedIncomeContinue(false)}
+              disabled={setupSaving}
+              style={[styles.primaryBtn, styles.primaryBtnSpaced, setupSaving && styles.primaryBtnOff]}
+            >
+              <Text style={styles.primaryBtnText}>{setupSaving ? 'Guardando...' : 'Continuar'}</Text>
+              {!setupSaving && <Ionicons name="arrow-forward" size={18} color="#fff" />}
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleFixedIncomeContinue(true)} disabled={setupSaving} style={{ marginTop: 14, alignItems: 'center' }}>
+              <Text style={{ color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm }}>Omitir</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── GASTO FIJO ───────────────────────────────────────────────────────────────
+  if (step === 'fixedExpense') {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
+            <Text style={styles.formTitle}>¿Cuánto gastas en cosas fijas al mes?</Text>
+            <Text style={styles.formSub}>Arriendo, servicios, suscripciones, etc. — todo junto está bien, puedes omitir este paso</Text>
+
+            <Text style={styles.label}>Monto mensual (COP, opcional)</Text>
+            <TextInput
+              style={styles.input}
+              value={fixedExpenseAmount}
+              onChangeText={v => setFixedExpenseAmount(v.replace(/\D/g, ''))}
+              placeholder="Ej: 1.200.000"
+              placeholderTextColor={COLORS.textDim}
+              keyboardType="number-pad"
+            />
+
+            <TouchableOpacity
+              onPress={() => handleFixedExpenseFinish(false)}
+              disabled={setupSaving}
+              style={[styles.primaryBtn, styles.primaryBtnSpaced, setupSaving && styles.primaryBtnOff]}
+            >
+              <Text style={styles.primaryBtnText}>{setupSaving ? 'Guardando...' : 'Finalizar'}</Text>
+              {!setupSaving && <Ionicons name="checkmark" size={18} color="#fff" />}
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleFixedExpenseFinish(true)} disabled={setupSaving} style={{ marginTop: 14, alignItems: 'center' }}>
+              <Text style={{ color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm }}>Omitir</Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>

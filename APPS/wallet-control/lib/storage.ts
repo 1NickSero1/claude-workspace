@@ -83,6 +83,8 @@ export interface Goal {
   deposits?: GoalDeposit[];
 }
 
+export type BudgetPeriod = 'weekly' | 'biweekly' | 'monthly';
+
 export interface UserProfile {
   id?: string;
   name: string;
@@ -92,6 +94,7 @@ export interface UserProfile {
   avatarEmoji?: string;
   isAnonymous?: boolean;
   createdAt: string;
+  budgetPeriod?: BudgetPeriod;
 }
 
 export interface MonthData {
