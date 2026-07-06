@@ -12,11 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-invierte los lugares del balance general por mes y bloquea la vista del mes actual
-elimina las cards de las tarjetas y haz el balance en un diargrama de torta, ubicalo allí en la sección correspondiente
-haz que las tarjetas guarden gastos mes a mes para ponerlos también en el balance general de cada mes 
-cuando toque en la torta de los gastos del mes quiero que allí me muestres todos los gastos que ha registrado el usuario y cuando tqoue donde diga presupuesto mensual allí me lleve al pop up del resumen del mes y mueve en la tabs de perfil la modifcacion del valor del presupuesto mensual
-
+  — (vacío por ahora)
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
@@ -44,6 +40,36 @@ cuando toque en la torta de los gastos del mes quiero que allí me muestres todo
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX de pendientes "por MI", 6ta ronda (PECAS, 2026-07-06)
+    → Balance General: se invirtió el orden de los slides (mes anterior
+      primero, mes actual segundo) pero la vista inicial queda "bloqueada"
+      en mes actual vía contentOffset del ScrollView — al abrir Resumen se
+      ve el mes actual igual que antes, y ahora hay que deslizar hacia la
+      IZQUIERDA para ver el mes anterior (antes era al revés).
+    → Se eliminaron las 2 cards de Débito/Crédito (el resumen gastado/
+      disponible que estaba debajo del Balance General). En su lugar se
+      agregó un 4to slide "Balance por cuenta" en el carrusel de diagramas
+      de torta del hero: un donut con una porción por cada cuenta (débito/
+      efectivo = disponible, crédito/deuda = gastado), coloreado con el
+      color real de cada tarjeta (Card.color), con leyenda debajo y toque
+      para abrir el mismo modal de detalle de Balance General.
+    → Nuevo: lib/storage.ts guarda ahora un snapshot del estado de las
+      tarjetas (saldo/límite) por cada mes (syncCardBalanceSnapshot /
+      getCardBalanceSnapshot) — se sobreescribe mientras ese mes sigue
+      siendo el actual y se "congela" solo cuando el mes cambia. El
+      Balance General del "mes anterior" ahora usa ese snapshot en vez de
+      los saldos actuales cuando existe; si no existe (meses previos a
+      este cambio), cae de vuelta a la aproximación de antes.
+    → El popup "Resumen del mes" (se abre al tocar la torta de Gastos)
+      ahora incluye una sección nueva "🧾 Todos los gastos" con cada gasto
+      individual del mes (no solo agrupado por categoría), ordenados del
+      más reciente al más antiguo.
+    → "Presupuesto mensual" en Resumen (dentro del hero, junto a los
+      donuts) pasó a ser de solo lectura: tocarlo ahora abre el popup
+      "Resumen del mes" en vez del formulario de edición. La edición del
+      monto del presupuesto se movió a Perfil (nueva sección "Presupuesto
+      mensual", mismo patrón que Periodicidad de cuenta).
 
   ✓ Categorías movidas a pantalla independiente (PECAS, 2026-07-06)
     → Pedido en vivo (no venía del archivo): unificar la sección "Categorías"
