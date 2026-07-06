@@ -12,7 +12,10 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-  — (vacío por ahora)
+invierte los lugares del balance general por mes y bloquea la vista del mes actual
+elimina las cards de las tarjetas y haz el balance en un diargrama de torta, ubicalo allí en la sección correspondiente
+haz que las tarjetas guarden gastos mes a mes para ponerlos también en el balance general de cada mes 
+
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
