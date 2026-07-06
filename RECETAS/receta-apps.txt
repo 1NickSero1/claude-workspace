@@ -162,6 +162,58 @@ HISTORIAL DE CAMBIOS
   "archivo de recetas" es este archivo (RECETAS/receta-apps.txt), no
   otro documento.
 
+[2026-07-06] Sesion larga: cierre Fase 1, Fase 2, Fase 3 y 2 rondas de MEJORAX en wallet-control
+- Fase 1 (bloqueantes de build): se genero un icono/splash real por codigo
+  (reemplazando el default literal de la plantilla de Expo) y se creo
+  eas.json con los perfiles de build. Quedo pendiente el "eas login" /
+  "eas init" (requiere cuenta propia del usuario) — anotado en
+  ajustes wallet-control.txt bajo [PENDIENTE] por MAQUINA.
+- Fase 2 (pulido): exportacion a PDF tipo "extracto bancario" reemplazando
+  la promesa incumplida de Excel/CSV; parser de markdown propio (sin
+  libreria nueva) para el chat de Finando; preferencia de periodicidad de
+  cuenta (mensual/quincenal/semanal) elegida en el onboarding, conectada a
+  QuincenaCard/SemanaCard/MesCard; version de la app sincronizada con
+  expo-constants; notificaciones de presupuesto (80%/100%) y gastos
+  recurrentes con expo-notifications; primera idea "MIA" del backlog:
+  2 preguntas de onboarding para ingreso/gastos fijos que crean
+  Income/Expense recurrentes reales (no solo referencia).
+- Fase 3 (roadmap): investigado un widget nativo real de saldo en pantalla
+  de inicio — no viable sin salir de Expo Go (requeriria
+  react-native-android-widget + expo prebuild + build nativo real);
+  reemplazado por notificacion local opt-in de saldo (toggle en Perfil).
+  Se agrego busqueda de gastos (pantalla nueva app/busqueda.tsx, filtro por
+  nombre/categoria/fecha) y comparativa de gasto mes a mes en Resumen.
+- Bugs reales resueltos en vivo: cache de Metro con bundle viejo (fix:
+  matar el proceso del puerto 8082 + "npx expo start --clear"); error de
+  Supabase "columna email no encontrada" (migracion SQL existente en el
+  repo nunca se habia corrido contra el proyecto real); error de RLS al
+  registrar cuenta con correo real, causado por "Confirm email" de
+  Supabase + insercion en profiles antes de tener sesion confirmada —
+  mitigado temporalmente desactivando "Confirm email", con el fix de
+  codigo correcto anotado como pendiente para antes del lanzamiento
+  publico; overflow de texto en montos grandes en pantallas/fuentes
+  distintas — fix con adjustsFontSizeToFit + numberOfLines={1} en todos
+  los Text de montos grandes de la app.
+- MEJORAX rondas 1 y 2 (pendientes que el usuario fue anotando el mismo en
+  ajustes wallet-control.txt): formato de miles automatico en todos los
+  inputs numericos; rediseno del step de gastos fijos del onboarding a
+  lista con chips + multiples items; ojo mostrar/ocultar contraseña +
+  medidor de fuerza en el onboarding; Finando personalizado por cuenta
+  (ya no usa una lista de categorias ni ejemplo con montos fijos
+  compartido para todos los usuarios, ahora usa las categorias reales de
+  cada cuenta); renombrado "extracto bancario" a "extracto de tu cuenta"
+  en toda la UI y el PDF; aislamiento de datos local por cuenta en
+  lib/storage.ts (namespacing de claves de AsyncStorage por profile.id,
+  con migracion no-destructiva de los datos previos al namespace activo).
+- Se establecio una convencion nueva con el usuario: de ahora en adelante
+  "actualiza el plan" (para wallet-control) significa regenerar
+  PDF/wallet-control-avance.pdf (via Puppeteer, con el sistema visual ya
+  fijo de la app), no el plan interno de Claude Code.
+- Auditoria final de Fase 3: quedan 2 hallazgos reales sin resolver (aviso
+  de permiso de notificaciones denegado en CardFormModal.tsx, y falta de
+  accessibilityLabel/Role en toda la app) — documentados en el PDF junto
+  con el plan final de publicacion a Play Store.
+
 ----------------------------------------------------
 (las entradas nuevas se agregan debajo de esta linea)
 ----------------------------------------------------
