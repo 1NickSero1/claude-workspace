@@ -106,12 +106,66 @@ export interface MonthData {
 }
 
 // ── Keys ─────────────────────────────────────────────────────────────────────
+// Los datos financieros (tarjetas, categorías, metas, gastos/ingresos) se
+// aíslan por cuenta con un namespace (profile.id, o 'anon' en modo anónimo)
+// para que cambiar de cuenta en el mismo dispositivo no mezcle información
+// entre usuarios. El perfil de auth no lleva namespace (solo hay uno activo).
 
-const K_CARDS      = 'wc_cards';
-const K_CATEGORIES = 'wc_categories';
-const K_GOALS      = 'wc_goals';
 const K_PROFILE    = 'wc_profile';
-const K_EXP        = (m: string) => `wc_exp_${m}`;
+const K_CARDS      = (ns: string) => `wc_cards_${ns}`;
+const K_CATEGORIES = (ns: string) => `wc_categories_${ns}`;
+const K_GOALS      = (ns: string) => `wc_goals_${ns}`;
+const K_EXP        = (ns: string, m: string) => `wc_exp_${ns}_${m}`;
+
+const migratedNamespaces = new Set<string>();
+
+async function getActiveNamespace(): Promise<string> {
+  const profile = await getUserProfile();
+  const ns = profile?.id ?? 'anon';
+  if (!migratedNamespaces.has(ns)) {
+    migratedNamespaces.add(ns);
+    await migrateLegacyNamespaceData(ns);
+  }
+  return ns;
+}
+
+/**
+ * Copia (sin borrar) los datos guardados antes de introducir el namespace por
+ * cuenta hacia el bucket del namespace activo, una sola vez por namespace.
+ * No destructivo: las claves viejas quedan huérfanas pero intactas.
+ */
+async function migrateLegacyNamespaceData(ns: string): Promise<void> {
+  try {
+    const flagKey = `@wc_migrated_${ns}`;
+    if (await AsyncStorage.getItem(flagKey)) return;
+
+    const pairs: [string, string][] = [
+      ['wc_cards', K_CARDS(ns)],
+      ['wc_categories', K_CATEGORIES(ns)],
+      ['wc_goals', K_GOALS(ns)],
+    ];
+    for (const [legacyKey, newKey] of pairs) {
+      if (await AsyncStorage.getItem(newKey)) continue;
+      const legacyValue = await AsyncStorage.getItem(legacyKey);
+      if (legacyValue) await AsyncStorage.setItem(newKey, legacyValue);
+    }
+
+    const allKeys = await AsyncStorage.getAllKeys();
+    const legacyExpKeys = allKeys.filter(k => /^wc_exp_\d{4}-\d{2}$/.test(k));
+    for (const legacyKey of legacyExpKeys) {
+      const monthKey = legacyKey.replace('wc_exp_', '');
+      const newKey = K_EXP(ns, monthKey);
+      if (await AsyncStorage.getItem(newKey)) continue;
+      const legacyValue = await AsyncStorage.getItem(legacyKey);
+      if (legacyValue) await AsyncStorage.setItem(newKey, legacyValue);
+    }
+
+    await AsyncStorage.setItem(flagKey, 'true');
+  } catch {
+    // Migración best-effort: si falla, el usuario simplemente arranca en blanco
+    // para este namespace en vez de crashear la app.
+  }
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -148,29 +202,33 @@ export async function deleteUserProfile(): Promise<void> {
 
 export async function getCards(): Promise<Card[]> {
   try {
-    const raw = await AsyncStorage.getItem(K_CARDS);
+    const ns = await getActiveNamespace();
+    const raw = await AsyncStorage.getItem(K_CARDS(ns));
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
 export async function saveCard(card: Card): Promise<void> {
+  const ns = await getActiveNamespace();
   const cards = await getCards();
   const idx = cards.findIndex(c => c.id === card.id);
   if (idx >= 0) cards[idx] = card; else cards.push(card);
-  await AsyncStorage.setItem(K_CARDS, JSON.stringify(cards));
+  await AsyncStorage.setItem(K_CARDS(ns), JSON.stringify(cards));
 }
 
 export async function deleteCard(id: string): Promise<void> {
+  const ns = await getActiveNamespace();
   const cards = await getCards();
-  await AsyncStorage.setItem(K_CARDS, JSON.stringify(cards.filter(c => c.id !== id)));
+  await AsyncStorage.setItem(K_CARDS(ns), JSON.stringify(cards.filter(c => c.id !== id)));
 }
 
 export async function appendCardEvent(cardId: string, event: CardEvent): Promise<void> {
+  const ns = await getActiveNamespace();
   const cards = await getCards();
   const idx = cards.findIndex(c => c.id === cardId);
   if (idx < 0) return;
   cards[idx] = { ...cards[idx], events: [...(cards[idx].events ?? []), event] };
-  await AsyncStorage.setItem(K_CARDS, JSON.stringify(cards));
+  await AsyncStorage.setItem(K_CARDS(ns), JSON.stringify(cards));
 }
 
 // ── Categories ────────────────────────────────────────────────────────────────
@@ -190,9 +248,10 @@ export const DEFAULT_CATEGORIES: CustomCategory[] = [
 
 export async function getCategories(): Promise<CustomCategory[]> {
   try {
-    const raw = await AsyncStorage.getItem(K_CATEGORIES);
+    const ns = await getActiveNamespace();
+    const raw = await AsyncStorage.getItem(K_CATEGORIES(ns));
     if (!raw) {
-      await AsyncStorage.setItem(K_CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
+      await AsyncStorage.setItem(K_CATEGORIES(ns), JSON.stringify(DEFAULT_CATEGORIES));
       return DEFAULT_CATEGORIES;
     }
     return JSON.parse(raw);
@@ -200,39 +259,45 @@ export async function getCategories(): Promise<CustomCategory[]> {
 }
 
 export async function saveCategory(cat: CustomCategory): Promise<void> {
+  const ns = await getActiveNamespace();
   const cats = await getCategories();
   const idx = cats.findIndex(c => c.id === cat.id);
   if (idx >= 0) cats[idx] = cat; else cats.push(cat);
-  await AsyncStorage.setItem(K_CATEGORIES, JSON.stringify(cats));
+  await AsyncStorage.setItem(K_CATEGORIES(ns), JSON.stringify(cats));
 }
 
 export async function deleteCategory(id: string): Promise<void> {
+  const ns = await getActiveNamespace();
   const cats = await getCategories();
-  await AsyncStorage.setItem(K_CATEGORIES, JSON.stringify(cats.filter(c => c.id !== id)));
+  await AsyncStorage.setItem(K_CATEGORIES(ns), JSON.stringify(cats.filter(c => c.id !== id)));
 }
 
 // ── Goals ─────────────────────────────────────────────────────────────────────
 
 export async function getGoals(): Promise<Goal[]> {
   try {
-    const raw = await AsyncStorage.getItem(K_GOALS);
+    const ns = await getActiveNamespace();
+    const raw = await AsyncStorage.getItem(K_GOALS(ns));
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
 export async function saveGoal(goal: Goal): Promise<void> {
+  const ns = await getActiveNamespace();
   const goals = await getGoals();
   const idx = goals.findIndex(g => g.id === goal.id);
   if (idx >= 0) goals[idx] = goal; else goals.push(goal);
-  await AsyncStorage.setItem(K_GOALS, JSON.stringify(goals));
+  await AsyncStorage.setItem(K_GOALS(ns), JSON.stringify(goals));
 }
 
 export async function deleteGoal(id: string): Promise<void> {
+  const ns = await getActiveNamespace();
   const goals = await getGoals();
-  await AsyncStorage.setItem(K_GOALS, JSON.stringify(goals.filter(g => g.id !== id)));
+  await AsyncStorage.setItem(K_GOALS(ns), JSON.stringify(goals.filter(g => g.id !== id)));
 }
 
 export async function addGoalDeposit(goalId: string, deposit: Omit<GoalDeposit, 'id'>): Promise<void> {
+  const ns = await getActiveNamespace();
   const goals = await getGoals();
   const idx = goals.findIndex(g => g.id === goalId);
   if (idx < 0) return;
@@ -240,24 +305,26 @@ export async function addGoalDeposit(goalId: string, deposit: Omit<GoalDeposit, 
   const newDeposit: GoalDeposit = { ...deposit, id: `dep_${Date.now()}` };
   const deposits = [...(goal.deposits ?? []), newDeposit];
   goals[idx] = { ...goal, deposits, savedAmount: deposits.reduce((s, d) => s + d.amount, 0) };
-  await AsyncStorage.setItem(K_GOALS, JSON.stringify(goals));
+  await AsyncStorage.setItem(K_GOALS(ns), JSON.stringify(goals));
 }
 
 export async function deleteGoalDeposit(goalId: string, depositId: string): Promise<void> {
+  const ns = await getActiveNamespace();
   const goals = await getGoals();
   const idx = goals.findIndex(g => g.id === goalId);
   if (idx < 0) return;
   const goal = goals[idx];
   const deposits = (goal.deposits ?? []).filter(d => d.id !== depositId);
   goals[idx] = { ...goal, deposits, savedAmount: deposits.reduce((s, d) => s + d.amount, 0) };
-  await AsyncStorage.setItem(K_GOALS, JSON.stringify(goals));
+  await AsyncStorage.setItem(K_GOALS(ns), JSON.stringify(goals));
 }
 
 // ── Expenses & Incomes ────────────────────────────────────────────────────────
 
 export async function getMonthData(monthKey: string): Promise<MonthData> {
   try {
-    const raw = await AsyncStorage.getItem(K_EXP(monthKey));
+    const ns = await getActiveNamespace();
+    const raw = await AsyncStorage.getItem(K_EXP(ns, monthKey));
     if (!raw) return { monthKey, expenses: [], incomes: [], budget: null };
     const data = JSON.parse(raw);
     // backward-compat: old data might not have incomes
@@ -272,15 +339,17 @@ export async function getMonthData(monthKey: string): Promise<MonthData> {
 }
 
 export async function addExpenses(monthKey: string, expenses: Expense[]): Promise<void> {
+  const ns = await getActiveNamespace();
   const data = await getMonthData(monthKey);
   data.expenses = [...data.expenses, ...expenses];
-  await AsyncStorage.setItem(K_EXP(monthKey), JSON.stringify(data));
+  await AsyncStorage.setItem(K_EXP(ns, monthKey), JSON.stringify(data));
 }
 
 export async function addIncomes(monthKey: string, incomes: Income[]): Promise<void> {
+  const ns = await getActiveNamespace();
   const data = await getMonthData(monthKey);
   data.incomes = [...data.incomes, ...incomes];
-  await AsyncStorage.setItem(K_EXP(monthKey), JSON.stringify(data));
+  await AsyncStorage.setItem(K_EXP(ns, monthKey), JSON.stringify(data));
 }
 
 export async function assignCardToExpenses(
@@ -288,43 +357,50 @@ export async function assignCardToExpenses(
   expenseIds: string[],
   cardId: string,
 ): Promise<void> {
+  const ns = await getActiveNamespace();
   const data = await getMonthData(monthKey);
   data.expenses = data.expenses.map(e =>
     expenseIds.includes(e.id) ? { ...e, cardId } : e,
   );
-  await AsyncStorage.setItem(K_EXP(monthKey), JSON.stringify(data));
+  await AsyncStorage.setItem(K_EXP(ns, monthKey), JSON.stringify(data));
 }
 
 export async function deleteExpense(monthKey: string, id: string): Promise<void> {
+  const ns = await getActiveNamespace();
   const data = await getMonthData(monthKey);
   data.expenses = data.expenses.filter(e => e.id !== id);
-  await AsyncStorage.setItem(K_EXP(monthKey), JSON.stringify(data));
+  await AsyncStorage.setItem(K_EXP(ns, monthKey), JSON.stringify(data));
 }
 
 export async function updateExpense(monthKey: string, updated: Partial<Expense> & { id: string }): Promise<void> {
+  const ns = await getActiveNamespace();
   const data = await getMonthData(monthKey);
   data.expenses = data.expenses.map(e => e.id === updated.id ? { ...e, ...updated } : e);
-  await AsyncStorage.setItem(K_EXP(monthKey), JSON.stringify(data));
+  await AsyncStorage.setItem(K_EXP(ns, monthKey), JSON.stringify(data));
 }
 
 export async function saveBudget(monthKey: string, budget: number): Promise<void> {
+  const ns = await getActiveNamespace();
   const data = await getMonthData(monthKey);
   data.budget = budget;
   data.budgetNotified = 0;
-  await AsyncStorage.setItem(K_EXP(monthKey), JSON.stringify(data));
+  await AsyncStorage.setItem(K_EXP(ns, monthKey), JSON.stringify(data));
 }
 
 export async function saveBudgetNotified(monthKey: string, threshold: number): Promise<void> {
+  const ns = await getActiveNamespace();
   const data = await getMonthData(monthKey);
   data.budgetNotified = threshold;
-  await AsyncStorage.setItem(K_EXP(monthKey), JSON.stringify(data));
+  await AsyncStorage.setItem(K_EXP(ns, monthKey), JSON.stringify(data));
 }
 
 export async function getAllMonthKeys(): Promise<string[]> {
   try {
+    const ns = await getActiveNamespace();
+    const prefix = `wc_exp_${ns}_`;
     const keys = await AsyncStorage.getAllKeys();
-    return keys.filter(k => k.startsWith('wc_exp_'))
-               .map(k => k.replace('wc_exp_', ''))
+    return keys.filter(k => k.startsWith(prefix))
+               .map(k => k.replace(prefix, ''))
                .sort().reverse();
   } catch { return []; }
 }
