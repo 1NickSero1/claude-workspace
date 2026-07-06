@@ -12,12 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-has un balance general de ls gastos por mes y muestralos en un pop up cuando le de click a gastos del mes
-cambia la leyenda de balance por cuenta por balance por tarjeta y muestra el balance en un diagrama de torta para las tarjetas
-en el circulo de la torta de metas de ahorro muestra completo el numero dentro del circulo
-en cada balance general pon en el titulo el mes correspondiente
-por ultimo donde dice julio 2026 quiero que generes un desplazable con los meses anteriores regstrados
-
+  — (vacío por ahora)
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
@@ -45,6 +40,25 @@ por ultimo donde dice julio 2026 quiero que generes un desplazable con los meses
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX de pendientes "por MI", 7ma ronda (PECAS, 2026-07-06)
+    → Resumen ahora deja ver meses anteriores: el título "Julio 2026" del
+      header es un slider deslizable (mismo patrón de los otros sliders)
+      con todos los meses que tienen datos registrados + el mes actual.
+      Deslizar cambia monthKey/prevMonthKey de toda la pantalla. Los
+      efectos secundarios (snapshot de tarjetas, notificación de saldo,
+      aviso de presupuesto 80/100%) quedaron protegidos con un chequeo
+      isCurrentMonth para que NO se disparen al navegar por meses pasados.
+    → Popup "Resumen del mes": nueva sección "📅 Balance general por mes"
+      al final, con el neto (ingresos - gastos) de cada mes registrado.
+    → Donut de "Balance por tarjeta" renombrado a "Billetera general" +
+      chips de filtro (Todos/Débito/Crédito/Efectivo) arriba de la leyenda
+      para ver solo un tipo de cuenta a la vez en el donut.
+    → Donut de Metas de ahorro: el número del centro ya no se abrevia
+      (fmtShort → formatCOP), muestra el monto completo — el propio
+      DonutChart ya reduce el tamaño de fuente automáticamente si no cabe.
+    → Cada tarjeta/modal de "Balance General" ahora incluye el mes
+      correspondiente en el título (antes solo la del mes anterior lo tenía).
 
   ✓ MEJORAX de pendientes "por MI", 6ta ronda (PECAS, 2026-07-06)
     → Balance General: se invirtió el orden de los slides (mes anterior
