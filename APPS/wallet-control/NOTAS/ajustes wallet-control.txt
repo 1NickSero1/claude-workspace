@@ -26,25 +26,11 @@ COMANDO RÁPIDO:
       normal, solo para EAS build / vincular el proyecto — queda pendiente
       para cuando se quiera generar el primer build instalable.
 
-  — Manejar bien el registro cuando la confirmación de correo esté activada
-    (RLS de profiles + Supabase Auth)
-    → 2026-07-06: al crear una cuenta con correo real apareció "new row
-      violates row-level security policy for table profiles". Causa: con
-      "Confirm email" activado en Supabase, signUp() no deja sesión activa
-      hasta que el usuario confirma el correo; el código de handleRegister
-      (app/onboarding.tsx) intenta insertar en profiles justo después del
-      signUp sin revisar si hay sesión, así que la inserción llega sin
-      auth.uid() y la política RLS "insert own profile" la rechaza.
-    → Solución temporal aplicada: se desactivó "Confirm email" en el
-      dashboard de Supabase (Authentication → Providers → Email) — válido
-      mientras se prueba en local / con la beta cerrada de 5-10 personas.
-    → Antes del lanzamiento público en Play Store: reactivar "Confirm
-      email" y ajustar el código para que (1) si signUp() no devuelve
-      sesión, se le avise al usuario que revise su correo en vez de
-      intentar crear el perfil de una vez, y (2) el registro en la tabla
-      profiles se cree recién cuando el usuario confirma el correo e
-      inicia sesión por primera vez (ahí sí hay auth.uid() real y la
-      política RLS lo permite).
+  — Reactivar "Confirm email" en el dashboard de Supabase
+    (Authentication → Providers → Email) antes del lanzamiento público.
+    → El código ya está listo para esto (ver RESUELTO más abajo, ronda
+      2026-07-06): solo falta el toggle en el dashboard, que hoy sigue
+      desactivado a propósito mientras se prueba en local / beta cerrada.
 
 ------------------------------------------------------------
 [EN PROGRESO]
@@ -54,6 +40,23 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ Fix de código para "Confirm email" de Supabase (PECAS, 2026-07-06)
+    → app/onboarding.tsx handleRegister: signUp() ahora manda nickname/
+      avatar_color/avatar_emoji en options.data (user_metadata de Supabase
+      Auth, disponible desde el signUp aunque el correo no esté confirmado
+      todavía). Si signUp() no devuelve sesión (correo sin confirmar), ya
+      NO intenta insertar en profiles (eso era lo que disparaba el error de
+      RLS) — en cambio avisa "Confirma tu correo" y manda a la pantalla de
+      login.
+    → handleLogin: la consulta a profiles cambió de .single() a
+      .maybeSingle(). Si no existe fila (primer login tras confirmar el
+      correo), la crea recién ahí usando los datos guardados en
+      user_metadata — en ese punto ya hay sesión real con auth.uid()
+      válido, así que la política RLS "insert own profile" la permite.
+    → Con esto ya se puede reactivar "Confirm email" en el dashboard de
+      Supabase cuando se quiera (ver pendiente "por MAQUINA" arriba, es
+      solo un toggle, no requiere más código).
 
   ✓ MEJORAX de pendientes "por MI", 2da ronda (PECAS, 2026-07-06)
     → Finando ya no usa una base genérica compartida ("el Excel") para

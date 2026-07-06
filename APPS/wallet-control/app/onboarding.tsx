@@ -99,9 +99,25 @@ export default function OnboardingScreen() {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
+        options: {
+          data: {
+            nickname: nickname.trim(),
+            avatar_color: avatarColor,
+            avatar_emoji: avatarEmoji.trim(),
+          },
+        },
       });
       if (error) throw error;
-      if (!data.user) throw new Error('No se pudo crear la sesión.');
+      if (!data.user) throw new Error('No se pudo crear la cuenta.');
+
+      if (!data.session) {
+        Alert.alert(
+          'Confirma tu correo',
+          'Te enviamos un enlace de confirmación a tu correo. Ábrelo y luego vuelve aquí para iniciar sesión.',
+        );
+        setStep('login');
+        return;
+      }
 
       const { error: profileError } = await supabase.from('profiles').insert({
         id: data.user.id,
@@ -156,9 +172,32 @@ export default function OnboardingScreen() {
       });
       if (error) throw error;
 
-      const { data: profileRow, error: profileError } = await supabase
-        .from('profiles').select('*').eq('id', data.user.id).single();
+      let { data: profileRow, error: profileError } = await supabase
+        .from('profiles').select('*').eq('id', data.user.id).maybeSingle();
       if (profileError) throw profileError;
+
+      if (!profileRow) {
+        // Primera vez que inicia sesión tras confirmar el correo: el signUp
+        // original no pudo insertar en profiles (sin sesión aún, RLS lo
+        // bloquea), así que se crea recién ahora con los datos guardados
+        // en user_metadata desde el registro.
+        const meta = data.user.user_metadata ?? {};
+        const nickFromMeta = meta.nickname ?? data.user.email?.split('@')[0] ?? 'Usuario';
+        const { data: inserted, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            name: nickFromMeta,
+            nickname: nickFromMeta,
+            email: data.user.email ?? '',
+            avatar_color: meta.avatar_color ?? AVATAR_COLORS[0],
+            avatar_emoji: meta.avatar_emoji ?? DEFAULT_AVATAR_EMOJI,
+          })
+          .select()
+          .single();
+        if (insertError) throw insertError;
+        profileRow = inserted;
+      }
 
       await saveUserProfile({
         id:          data.user.id,
