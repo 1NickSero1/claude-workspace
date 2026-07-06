@@ -12,6 +12,7 @@ import { parseClaudeResponse, buildExpenses, buildIncomes, formatCOP } from '@/l
 import {
   addExpenses, addIncomes, assignCardToExpenses, getCurrentMonthKey,
   getCards, getCategories, getMonthData, getUserProfile, sumIncomes,
+  getRecurringTemplates, RecurringTemplate,
   Expense, Income, Card, CustomCategory,
 } from '@/lib/storage';
 import { sumExpenses } from '@/lib/expenseParser';
@@ -35,7 +36,7 @@ interface DisplayMessage {
 const WELCOME: DisplayMessage = {
   id: 'welcome',
   role: 'assistant',
-  content: '¡Hola! Soy Finando, tu asesor financiero 💳\n\nPuedo registrar tus gastos, ingresos y analizar tus finanzas.\n\nEjemplos:\n• "Pagué arriendo $475.000 y Spotify $30.000"\n• "Me pagaron el sueldo $2.000.000"\n• "Analiza mis finanzas del mes"',
+  content: '¡Hola! Soy Finando, tu asesor financiero 💳\n\nPuedo registrar tus gastos, ingresos y analizar tus finanzas.\n\nCuéntame un gasto o ingreso tuyo para empezar.',
 };
 
 export default function ChatScreen() {
@@ -46,18 +47,61 @@ export default function ChatScreen() {
   const [categories, setCategories] = useState<CustomCategory[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [nickname, setNickname] = useState<string | undefined>(undefined);
+  const [recurringExpenses, setRecurringExpenses] = useState<RecurringTemplate[]>([]);
+  const [recurringIncomeAmount, setRecurringIncomeAmount] = useState<number | null>(null);
   const [pendingExpenses, setPendingExpenses] = useState<{ msgId: string; expenses: Expense[] } | null>(null);
   const listRef = useRef<FlatList>(null);
   const monthKey = getCurrentMonthKey();
 
   useFocusEffect(useCallback(() => {
-    Promise.all([getCards(), getCategories(), getUserProfile()]).then(([c, cats, profile]) => {
+    Promise.all([
+      getCards(), getCategories(), getUserProfile(), getRecurringTemplates(), getMonthData(monthKey),
+    ]).then(([c, cats, profile, recurring, monthData]) => {
       setCards(c);
       setCategories(cats);
       setIsAnonymous(!!profile?.isAnonymous);
       setNickname(profile?.nickname);
+      setRecurringExpenses(recurring);
+      const recurringIncome = monthData.incomes.find(i => i.isRecurring);
+      setRecurringIncomeAmount(recurringIncome?.amount ?? null);
     });
-  }, []));
+  }, [monthKey]));
+
+  // Ejemplos de bienvenida y chips personalizados con los datos reales de
+  // esta cuenta (gastos/ingreso fijo del onboarding, categorías propias) en
+  // vez de una data ficticia (475.000, sueldo 2.000.000) igual para todos.
+  const firstName = nickname?.split(' ')[0];
+
+  const welcomeContent = useMemo(() => {
+    const greeting = firstName ? `¡Hola ${firstName}! ` : '¡Hola! ';
+    const expenseLine = recurringExpenses[0]
+      ? `"Pagué ${recurringExpenses[0].name.toLowerCase()} ${formatCOP(recurringExpenses[0].amount)}"`
+      : '"Pagué arriendo y Spotify este mes"';
+    const incomeLine = recurringIncomeAmount
+      ? `"Me pagaron el sueldo ${formatCOP(recurringIncomeAmount)}"`
+      : '"Me pagaron el sueldo"';
+    return `${greeting}Soy Finando, tu asesor financiero 💳\n\nPuedo registrar tus gastos, ingresos y analizar tus finanzas.\n\nEjemplos:\n• ${expenseLine}\n• ${incomeLine}\n• "Analiza mis finanzas del mes"`;
+  }, [firstName, recurringExpenses, recurringIncomeAmount]);
+
+  const suggestionChips = useMemo(() => {
+    const expenseChip = recurringExpenses[0]
+      ? `Pagué ${recurringExpenses[0].name.toLowerCase()} ${formatCOP(recurringExpenses[0].amount)}`
+      : categories[0] ? `Gasto en ${categories[0].name.toLowerCase()}` : 'Registra un gasto';
+    const incomeChip = recurringIncomeAmount
+      ? `Me pagaron el sueldo ${formatCOP(recurringIncomeAmount)}`
+      : 'Me pagaron el sueldo';
+    return [expenseChip, incomeChip, 'Analiza mis finanzas'];
+  }, [recurringExpenses, recurringIncomeAmount, categories]);
+
+  // Personaliza el saludo inicial una vez llegan los datos reales de la
+  // cuenta, solo si el usuario aún no empezó a chatear.
+  React.useEffect(() => {
+    setMessages(prev =>
+      prev.length === 1 && prev[0].id === 'welcome' && prev[0].content !== welcomeContent
+        ? [{ ...prev[0], content: welcomeContent }]
+        : prev,
+    );
+  }, [welcomeContent]);
 
   const COLORS = useColors();
   const { moderateScale } = useResponsive();
@@ -344,11 +388,7 @@ export default function ChatScreen() {
         {/* Quick action chips */}
         {messages.length <= 1 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chips}>
-            {[
-              'Pagué arriendo $475.000',
-              'Me pagaron el sueldo',
-              'Analiza mis finanzas',
-            ].map(chip => (
+            {suggestionChips.map(chip => (
               <TouchableOpacity
                 key={chip}
                 onPress={() => sendMessage(chip)}
