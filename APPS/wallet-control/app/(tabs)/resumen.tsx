@@ -13,6 +13,7 @@ import {
   addExpenses, updateExpense, deleteExpense, saveBudget, saveBudgetNotified,
   getCurrentMonthKey, formatMonthLabel, getUserProfile,
   getPreviousMonthKey, getShowBalanceNotification, computeNetWorth,
+  getRecurringTemplates, RecurringTemplate,
   CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile,
   getCardTotalSpent, sumIncomes,
 } from '@/lib/storage';
@@ -32,9 +33,12 @@ import { useResponsive, scaledSheet } from '@/constants/responsive';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { buildFinancialReportHtml, buildBankStatementHtml } from '@/lib/financialReport';
+import { LineChart } from 'react-native-chart-kit';
 
 const GOAL_COLORS = ['#6C5CE7','#00C896','#FF5C5C','#FDCB6E','#0984E3','#A29BFE','#00B894','#E17055'];
 const INCOME_COLORS = ['#00C896','#0984E3','#6C5CE7','#FDCB6E','#00B894','#A29BFE','#E17055','#FF5C5C'];
+const MONTH_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const shortMonthLabel = (monthKey: string) => MONTH_SHORT[parseInt(monthKey.split('-')[1], 10) - 1];
 const fmtShort = (n: number) => n >= 1_000_000 ? `$${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `$${Math.round(n/1_000)}k` : formatCOP(n);
 const GOAL_EMOJI_OPTIONS = [
   '🎯','✈️','🏠','🚗','💍','📱','💻','🎓','🏋️','🌴',
