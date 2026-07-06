@@ -49,6 +49,7 @@ export default function ChatScreen() {
   const [nickname, setNickname] = useState<string | undefined>(undefined);
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringTemplate[]>([]);
   const [recurringIncomeAmount, setRecurringIncomeAmount] = useState<number | null>(null);
+  const [recentExpense, setRecentExpense] = useState<RecurringTemplate | null>(null);
   const [pendingExpenses, setPendingExpenses] = useState<{ msgId: string; expenses: Expense[] } | null>(null);
   const listRef = useRef<FlatList>(null);
   const monthKey = getCurrentMonthKey();
@@ -64,34 +65,39 @@ export default function ChatScreen() {
       setRecurringExpenses(recurring);
       const recurringIncome = monthData.incomes.find(i => i.isRecurring);
       setRecurringIncomeAmount(recurringIncome?.amount ?? null);
+      const lastExpense = [...monthData.expenses].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+      setRecentExpense(lastExpense
+        ? { name: lastExpense.name, categoryId: lastExpense.categoryId, amount: lastExpense.amount }
+        : null);
     });
   }, [monthKey]));
 
   // Ejemplos de bienvenida y chips personalizados con los datos reales de
-  // esta cuenta (gastos/ingreso fijo del onboarding, categorías propias) en
+  // esta cuenta (gastos fijos/recurrentes o el último gasto que registró) en
   // vez de una data ficticia (475.000, sueldo 2.000.000) igual para todos.
   const firstName = nickname?.split(' ')[0];
+  const exampleExpense = recurringExpenses[0] ?? recentExpense;
 
   const welcomeContent = useMemo(() => {
     const greeting = firstName ? `¡Hola ${firstName}! ` : '¡Hola! ';
-    const expenseLine = recurringExpenses[0]
-      ? `"Pagué ${recurringExpenses[0].name.toLowerCase()} ${formatCOP(recurringExpenses[0].amount)}"`
+    const expenseLine = exampleExpense
+      ? `"Pagué ${exampleExpense.name.toLowerCase()} ${formatCOP(exampleExpense.amount)}"`
       : '"Pagué arriendo y Spotify este mes"';
     const incomeLine = recurringIncomeAmount
       ? `"Me pagaron el sueldo ${formatCOP(recurringIncomeAmount)}"`
       : '"Me pagaron el sueldo"';
     return `${greeting}Soy Finando, tu asesor financiero 💳\n\nPuedo registrar tus gastos, ingresos y analizar tus finanzas.\n\nEjemplos:\n• ${expenseLine}\n• ${incomeLine}\n• "Analiza mis finanzas del mes"`;
-  }, [firstName, recurringExpenses, recurringIncomeAmount]);
+  }, [firstName, exampleExpense, recurringIncomeAmount]);
 
   const suggestionChips = useMemo(() => {
-    const expenseChip = recurringExpenses[0]
-      ? `Pagué ${recurringExpenses[0].name.toLowerCase()} ${formatCOP(recurringExpenses[0].amount)}`
+    const expenseChip = exampleExpense
+      ? `Pagué ${exampleExpense.name.toLowerCase()} ${formatCOP(exampleExpense.amount)}`
       : categories[0] ? `Gasto en ${categories[0].name.toLowerCase()}` : 'Registra un gasto';
     const incomeChip = recurringIncomeAmount
       ? `Me pagaron el sueldo ${formatCOP(recurringIncomeAmount)}`
       : 'Me pagaron el sueldo';
     return [expenseChip, incomeChip, 'Analiza mis finanzas'];
-  }, [recurringExpenses, recurringIncomeAmount, categories]);
+  }, [exampleExpense, recurringIncomeAmount, categories]);
 
   // Personaliza el saludo inicial una vez llegan los datos reales de la
   // cuenta, solo si el usuario aún no empezó a chatear.

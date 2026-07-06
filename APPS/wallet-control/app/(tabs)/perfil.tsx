@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import {
   getUserProfile, deleteUserProfile, saveUserProfile, UserProfile,
-  getShowBalanceNotification, saveShowBalanceNotification,
+  getShowBalanceNotification, saveShowBalanceNotification, BudgetPeriod,
 } from '@/lib/storage';
 import { requestNotificationPermission, cancelBalanceNotification } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
@@ -22,6 +22,12 @@ const THEME_OPTIONS: { id: ThemeMode; label: string; icon: string }[] = [
   { id: 'system', label: 'Sistema', icon: '⚙️' },
   { id: 'light',  label: 'Claro',   icon: '☀️' },
   { id: 'dark',   label: 'Oscuro',  icon: '🌙' },
+];
+
+const PERIOD_OPTIONS: { id: BudgetPeriod; label: string; icon: string }[] = [
+  { id: 'weekly',   label: 'Semanal',   icon: '📆' },
+  { id: 'biweekly', label: 'Quincenal', icon: '🗓️' },
+  { id: 'monthly',  label: 'Mensual',   icon: '📅' },
 ];
 
 export default function PerfilScreen() {
@@ -37,6 +43,13 @@ export default function PerfilScreen() {
     getUserProfile().then(setProfile);
     getShowBalanceNotification().then(setShowBalanceNotif);
   }, []);
+
+  const handleChangePeriod = async (period: BudgetPeriod) => {
+    if (!profile) return;
+    const updated = { ...profile, budgetPeriod: period };
+    await saveUserProfile(updated);
+    setProfile(updated);
+  };
 
   const handleToggleBalanceNotif = async (value: boolean) => {
     setShowBalanceNotif(value);
@@ -221,6 +234,34 @@ export default function PerfilScreen() {
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+          </View>
+        </View>
+
+        {/* ── Periodicidad de cuenta ───────────────────── */}
+        <Text style={styles.sectionLabel}>Periodicidad de cuenta</Text>
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <View style={[styles.rowIcon, { backgroundColor: COLORS.primaryBg }]}>
+              <Ionicons name="calendar-outline" size={18} color={COLORS.primary} />
+            </View>
+            <Text style={styles.rowLabel}>Cómo manejas tu dinero</Text>
+          </View>
+          <View style={[styles.row, styles.rowDivider, { paddingTop: 8 }]}>
+            <View style={styles.themeRow}>
+              {PERIOD_OPTIONS.map(opt => {
+                const active = (profile?.budgetPeriod ?? 'biweekly') === opt.id;
+                return (
+                  <TouchableOpacity
+                    key={opt.id}
+                    onPress={() => handleChangePeriod(opt.id)}
+                    style={[styles.themeBtn, active && styles.themeBtnActive]}
+                  >
+                    <Text style={styles.themeBtnEmoji}>{opt.icon}</Text>
+                    <Text style={[styles.themeBtnText, active && styles.themeBtnTextActive]}>{opt.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         </View>

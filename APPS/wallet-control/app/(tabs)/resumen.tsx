@@ -24,7 +24,6 @@ import DonutChart, { DonutSlice } from '@/components/DonutChart';
 import QuickEntryModal from '@/components/QuickEntryModal';
 import BudgetProgressBar from '@/components/BudgetProgressBar';
 import BudgetFormModal from '@/components/BudgetFormModal';
-import QuincenaCard from '@/components/QuincenaCard';
 import SemanaCard from '@/components/SemanaCard';
 import MesCard from '@/components/MesCard';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
@@ -663,11 +662,56 @@ export default function ResumenScreen() {
         </View>
 
         {/* ── Tarjeta de periodo (semanal/quincenal/mensual) ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => setPendingModal(true)} style={styles.budgetWrap}>
-          {profile?.budgetPeriod === 'weekly' ? <SemanaCard /> :
-           profile?.budgetPeriod === 'monthly' ? <MesCard /> :
-           <QuincenaCard />}
-        </TouchableOpacity>
+        {profile?.budgetPeriod === 'weekly' ? (
+          <TouchableOpacity activeOpacity={0.85} onPress={() => setPendingModal(true)} style={styles.budgetWrap}>
+            <SemanaCard />
+          </TouchableOpacity>
+        ) : profile?.budgetPeriod === 'monthly' ? (
+          <TouchableOpacity activeOpacity={0.85} onPress={() => setPendingModal(true)} style={styles.budgetWrap}>
+            <MesCard />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.budgetWrap}>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              style={styles.quincenaSlider}
+              onMomentumScrollEnd={e => setViewedQuincena(Math.round(e.nativeEvent.contentOffset.x / cardWidth) === 0 ? 1 : 2)}
+            >
+              {([1, 2] as const).map(q => {
+                const pct = Math.max(0, Math.min(quincenaProgress(q), 100));
+                return (
+                  <TouchableOpacity
+                    key={q}
+                    activeOpacity={0.85}
+                    onPress={() => { setViewedQuincena(q); setPendingModal(true); }}
+                    style={{ width: cardWidth }}
+                  >
+                    <View style={styles.quincenaCardBox}>
+                      <View style={styles.quincenaCardHeader}>
+                        <Text style={styles.quincenaCardLabel}>Quincena {q}</Text>
+                        {q === currentQuincena && (
+                          <View style={styles.quincenaBadge}>
+                            <Text style={styles.quincenaBadgeText}>ACTIVA</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.quincenaCardSpent}>{formatCOP(quincenaSpent(q))} gastado</Text>
+                      <View style={styles.quincenaCardTrack}>
+                        <View style={[styles.quincenaCardFill, { width: `${pct}%` }]} />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.dotRow}>
+              <View style={[styles.dot, viewedQuincena === 1 && styles.dotActive]} />
+              <View style={[styles.dot, viewedQuincena === 2 && styles.dotActive]} />
+            </View>
+          </View>
+        )}
 
         {/* ── Presupuesto mensual ──────────────────────── */}
         <View style={styles.budgetWrap}>
