@@ -10,9 +10,12 @@ import Constants from 'expo-constants';
 import {
   getUserProfile, deleteUserProfile, saveUserProfile, UserProfile,
   getShowBalanceNotification, saveShowBalanceNotification, BudgetPeriod,
+  getMonthData, getCurrentMonthKey, saveBudget,
 } from '@/lib/storage';
 import { requestNotificationPermission, cancelBalanceNotification } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
+import { formatCOP } from '@/lib/expenseParser';
+import BudgetFormModal from '@/components/BudgetFormModal';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors, useThemeInfo } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
@@ -38,17 +41,27 @@ export default function PerfilScreen() {
   const [editModal, setEditModal]   = useState(false);
   const [editName, setEditName]     = useState('');
   const [showBalanceNotif, setShowBalanceNotif] = useState(false);
+  const [budget, setBudget]         = useState<number | null>(null);
+  const [budgetModal, setBudgetModal] = useState(false);
+  const monthKey = getCurrentMonthKey();
 
   useEffect(() => {
     getUserProfile().then(setProfile);
     getShowBalanceNotification().then(setShowBalanceNotif);
-  }, []);
+    getMonthData(monthKey).then(d => setBudget(d.budget));
+  }, [monthKey]);
 
   const handleChangePeriod = async (period: BudgetPeriod) => {
     if (!profile) return;
     const updated = { ...profile, budgetPeriod: period };
     await saveUserProfile(updated);
     setProfile(updated);
+  };
+
+  const handleSaveBudget = async (amount: number) => {
+    await saveBudget(monthKey, amount);
+    setBudget(amount);
+    setBudgetModal(false);
   };
 
   const handleToggleBalanceNotif = async (value: boolean) => {
@@ -266,6 +279,20 @@ export default function PerfilScreen() {
           </View>
         </View>
 
+        {/* ── Presupuesto mensual ───────────────────────── */}
+        <Text style={styles.sectionLabel}>Presupuesto mensual</Text>
+        <TouchableOpacity style={styles.section} onPress={() => setBudgetModal(true)}>
+          <View style={styles.row}>
+            <View style={[styles.rowIcon, { backgroundColor: COLORS.primaryBg }]}>
+              <Ionicons name="wallet-outline" size={18} color={COLORS.primary} />
+            </View>
+            <Text style={styles.rowLabel}>
+              {budget && budget > 0 ? formatCOP(budget) : 'Sin configurar'}
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textDim} />
+          </View>
+        </TouchableOpacity>
+
         {/* ── Idioma ───────────────────────────────────── */}
         <Text style={styles.sectionLabel}>Idioma</Text>
         <View style={styles.section}>
@@ -352,6 +379,13 @@ export default function PerfilScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <BudgetFormModal
+        visible={budgetModal}
+        budget={budget}
+        onSave={handleSaveBudget}
+        onClose={() => setBudgetModal(false)}
+      />
     </SafeAreaView>
   );
 }
