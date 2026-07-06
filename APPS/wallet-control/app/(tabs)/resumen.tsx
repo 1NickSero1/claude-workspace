@@ -10,10 +10,11 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   getMonthData, getCategories, getCards,
   getGoals, saveGoal, deleteGoal, addGoalDeposit, deleteGoalDeposit,
-  saveBudget, saveBudgetNotified,
+  saveBudgetNotified,
   getCurrentMonthKey, formatMonthLabel, getUserProfile,
   getPreviousMonthKey, getShowBalanceNotification, computeNetWorth,
   getRecurringTemplates, RecurringTemplate,
+  syncCardBalanceSnapshot, getCardBalanceSnapshot,
   CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile,
   getCardTotalSpent, sumIncomes,
 } from '@/lib/storage';
@@ -22,7 +23,6 @@ import { checkBudgetThreshold, updateBalanceNotification } from '@/lib/notificat
 import DonutChart, { DonutSlice } from '@/components/DonutChart';
 import QuickEntryModal from '@/components/QuickEntryModal';
 import BudgetProgressBar from '@/components/BudgetProgressBar';
-import BudgetFormModal from '@/components/BudgetFormModal';
 import SemanaCard from '@/components/SemanaCard';
 import MesCard from '@/components/MesCard';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
@@ -52,10 +52,10 @@ export default function ResumenScreen() {
   const [cards, setCards]           = useState<Card[]>([]);
   const [goals, setGoals]           = useState<Goal[]>([]);
   const [budget, setBudget]         = useState<number | null>(null);
-  const [budgetModal, setBudgetModal] = useState(false);
   const [profile, setProfile]       = useState<UserProfile | null>(null);
   const [prevExpenses, setPrevExpenses] = useState<Expense[]>([]);
   const [prevIncomes, setPrevIncomes]   = useState<Income[]>([]);
+  const [prevCards, setPrevCards]       = useState<Card[] | null>(null);
   const [recurringTemplates, setRecurringTemplates] = useState<RecurringTemplate[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [goalModal, setGoalModal]   = useState(false);
@@ -121,9 +121,9 @@ export default function ResumenScreen() {
   const prevMonthKey = getPreviousMonthKey(monthKey);
 
   const load = useCallback(async () => {
-    const [d, cats, c, gs, p, prevData, recurring] = await Promise.all([
+    const [d, cats, c, gs, p, prevData, recurring, prevSnapshot] = await Promise.all([
       getMonthData(monthKey), getCategories(), getCards(), getGoals(), getUserProfile(),
-      getMonthData(prevMonthKey), getRecurringTemplates(),
+      getMonthData(prevMonthKey), getRecurringTemplates(), getCardBalanceSnapshot(prevMonthKey),
     ]);
     setExpenses(d.expenses);
     setIncomes(d.incomes);
@@ -135,6 +135,8 @@ export default function ResumenScreen() {
     setPrevExpenses(prevData.expenses);
     setPrevIncomes(prevData.incomes);
     setRecurringTemplates(recurring);
+    setPrevCards(prevSnapshot);
+    await syncCardBalanceSnapshot(monthKey, c);
 
     if (d.budget && d.budget > 0) {
       const notified = d.budgetNotified ?? 0;
@@ -147,12 +149,6 @@ export default function ResumenScreen() {
       await updateBalanceNotification(patrimonioNeto);
     }
   }, [monthKey, prevMonthKey]);
-
-  const handleSaveBudget = async (amount: number) => {
-    await saveBudget(monthKey, amount);
-    setBudgetModal(false);
-    await load();
-  };
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
