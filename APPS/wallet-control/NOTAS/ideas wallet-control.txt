@@ -6,9 +6,6 @@
 -----------------------------------------------------------------
 MIAS
 
-	con ayuda de finando cuando se cree una cuenta nueva hacer un test de preguntas para hacer un filtro de información y quizá algunos campos fijos para que el usuario pueda poner sus ingresos fijos o algunos gastos fijos y la app los vaya implementando con ayuda de finando, 
-
-
 plan piloto de hacer un apartado de inversionista donde allí se le puedan dar consejos premium financieros según su perfil financiero
 
 
@@ -29,10 +26,6 @@ ALTA PRIORIDAD (versión 1.0)
 ------------------------------------------------------------
 MEDIA PRIORIDAD (v1.1)
 ------------------------------------------------------------
-
-[ ] Modo quincena inteligente
-    — Detectar automáticamente en qué quincena está el usuario
-    — Mostrar cuántos días quedan en la quincena actual
 
 [ ] Búsqueda de gastos
     — Buscador por nombre/descripción en historial
@@ -76,7 +69,6 @@ MEJORAS DE UX
 [ ] Long press para editar gasto directamente
 [ ] Tema morado más intenso en dark mode
 [ ] Onboarding con tutorial rápido (3 slides)
-[ ] Icono de app personalizado (no el de Expo)
 
 ------------------------------------------------------------
 FINANDO IA — IDEAS

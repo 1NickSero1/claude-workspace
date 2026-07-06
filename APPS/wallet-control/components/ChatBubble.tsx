@@ -1,11 +1,57 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TextStyle, StyleProp } from 'react-native';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 
 interface Props {
   role: 'user' | 'assistant';
   content: string;
+}
+
+// ── Markdown mínimo: **bold** / *bold*, líneas con • o - como viñeta ──────────
+
+function parseBoldSegments(line: string): { text: string; bold: boolean }[] {
+  const regex = /\*\*(.+?)\*\*|\*(.+?)\*/g;
+  const segments: { text: string; bold: boolean }[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(line)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ text: line.slice(lastIndex, match.index), bold: false });
+    }
+    segments.push({ text: match[1] ?? match[2] ?? '', bold: true });
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < line.length) {
+    segments.push({ text: line.slice(lastIndex), bold: false });
+  }
+  return segments.length > 0 ? segments : [{ text: line, bold: false }];
+}
+
+function renderMarkdownText(
+  content: string,
+  baseStyle: StyleProp<TextStyle>,
+  boldStyle: TextStyle,
+): React.ReactNode {
+  const lines = content.split('\n');
+
+  return lines.map((line, i) => {
+    const bulletMatch = line.match(/^[•-]\s+(.*)$/);
+    const isBullet = !!bulletMatch;
+    const lineContent = isBullet ? bulletMatch![1] : line;
+    const segments = parseBoldSegments(lineContent);
+
+    return (
+      <Text key={i} style={baseStyle}>
+        {isBullet ? '•  ' : ''}
+        {segments.map((seg, j) => (
+          <Text key={j} style={seg.bold ? boldStyle : undefined}>{seg.text}</Text>
+        ))}
+        {i < lines.length - 1 ? '\n' : ''}
+      </Text>
+    );
+  });
 }
 
 export default function ChatBubble({ role, content }: Props) {
@@ -64,7 +110,11 @@ export default function ChatBubble({ role, content }: Props) {
         </View>
       )}
       <View style={[styles.bubble, isUser ? styles.userBubble : styles.aiBubble]}>
-        <Text style={[styles.text, isUser ? styles.userText : styles.aiText]}>{content}</Text>
+        {renderMarkdownText(
+          content,
+          [styles.text, isUser ? styles.userText : styles.aiText],
+          { fontWeight: '700' },
+        )}
       </View>
     </View>
   );

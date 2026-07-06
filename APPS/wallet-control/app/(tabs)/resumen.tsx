@@ -11,8 +11,8 @@ import {
   getMonthData, getCategories, getCards, saveCategory, deleteCategory,
   getGoals, saveGoal, deleteGoal, addGoalDeposit, deleteGoalDeposit,
   addExpenses, updateExpense, deleteExpense, saveBudget, saveBudgetNotified,
-  getCurrentMonthKey, formatMonthLabel,
-  CustomCategory, Expense, Card, Goal, GoalDeposit, Income,
+  getCurrentMonthKey, formatMonthLabel, getUserProfile,
+  CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile,
   getCardTotalSpent, sumIncomes,
 } from '@/lib/storage';
 import { sumExpenses, formatCOP } from '@/lib/expenseParser';
@@ -22,6 +22,9 @@ import DonutChart, { DonutSlice } from '@/components/DonutChart';
 import QuickEntryModal from '@/components/QuickEntryModal';
 import BudgetProgressBar from '@/components/BudgetProgressBar';
 import BudgetFormModal from '@/components/BudgetFormModal';
+import QuincenaCard from '@/components/QuincenaCard';
+import SemanaCard from '@/components/SemanaCard';
+import MesCard from '@/components/MesCard';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
@@ -47,6 +50,7 @@ export default function ResumenScreen() {
   const [goals, setGoals]           = useState<Goal[]>([]);
   const [budget, setBudget]         = useState<number | null>(null);
   const [budgetModal, setBudgetModal] = useState(false);
+  const [profile, setProfile]       = useState<UserProfile | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [catModal, setCatModal]     = useState(false);
   const [editingCat, setEditingCat] = useState<CustomCategory | null>(null);
@@ -111,14 +115,15 @@ export default function ResumenScreen() {
   const monthKey = getCurrentMonthKey();
 
   const load = useCallback(async () => {
-    const [d, cats, c, gs] = await Promise.all([
-      getMonthData(monthKey), getCategories(), getCards(), getGoals(),
+    const [d, cats, c, gs, p] = await Promise.all([
+      getMonthData(monthKey), getCategories(), getCards(), getGoals(), getUserProfile(),
     ]);
     setExpenses(d.expenses);
     setIncomes(d.incomes);
     setCategories(cats);
     setCards(c);
     setGoals(gs);
+    setProfile(p);
     setBudget(d.budget);
 
     if (d.budget && d.budget > 0) {
@@ -552,6 +557,13 @@ export default function ResumenScreen() {
             <View style={[styles.dot, activeDot === 1 && styles.dotActive]} />
             <View style={[styles.dot, activeDot === 2 && styles.dotActive]} />
           </View>
+        </View>
+
+        {/* ── Tarjeta de periodo (semanal/quincenal/mensual) ── */}
+        <View style={styles.budgetWrap}>
+          {profile?.budgetPeriod === 'weekly' ? <SemanaCard /> :
+           profile?.budgetPeriod === 'monthly' ? <MesCard /> :
+           <QuincenaCard />}
         </View>
 
         {/* ── Presupuesto mensual ──────────────────────── */}

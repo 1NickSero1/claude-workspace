@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { getUserProfile, deleteUserProfile, saveUserProfile, UserProfile } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
@@ -228,7 +229,7 @@ export default function PerfilScreen() {
               <Ionicons name="information-circle-outline" size={18} color={COLORS.debit} />
             </View>
             <Text style={styles.rowLabel}>Versión</Text>
-            <Text style={styles.rowValue}>v0.6.0</Text>
+            <Text style={styles.rowValue}>v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
           </View>
           <View style={[styles.row, styles.rowDivider]}>
             <View style={[styles.rowIcon, { backgroundColor: COLORS.card2 }]}>
