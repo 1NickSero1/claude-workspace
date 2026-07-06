@@ -75,6 +75,7 @@ export default function ResumenScreen() {
   // Quick entry modal
   const [quickEntry, setQuickEntry]         = useState(false);
   const [summaryModal, setSummaryModal]     = useState(false);
+  const [expensesModal, setExpensesModal]   = useState(false);
   const [exporting, setExporting]           = useState(false);
   const [exportingStatement, setExportingStatement] = useState(false);
   const [registrarSheet, setRegistrarSheet] = useState(false);
@@ -589,7 +590,7 @@ export default function ResumenScreen() {
           >
             {/* Slide 1 — Gastos */}
             <View style={[styles.donutSlide, { width: cardWidth }]}>
-              <TouchableOpacity onPress={() => setSummaryModal(true)} activeOpacity={0.85} style={styles.donutTap}>
+              <TouchableOpacity onPress={() => setExpensesModal(true)} activeOpacity={0.85} style={styles.donutTap}>
                 <DonutChart
                   data={donutData}
                   total={totalSpent || 1}
@@ -1009,33 +1010,6 @@ export default function ResumenScreen() {
                       </View>
                     );
                   })}
-                </>
-              )}
-
-              {/* Todos los gastos (itemizado, no agrupado por categoría) */}
-              {expenses.length > 0 && (
-                <>
-                  <View style={[styles.summarySectionHeader, { marginTop: 16 }]}>
-                    <Text style={styles.summarySectionTitle}>🧾 Todos los gastos</Text>
-                    <Text style={styles.summarySectionTotal}>{expenses.length}</Text>
-                  </View>
-                  {[...expenses]
-                    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-                    .map(e => {
-                      const cat = categories.find(c => c.id === e.categoryId);
-                      return (
-                        <View key={e.id} style={styles.summaryExpItemRow}>
-                          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: cat?.color ?? COLORS.textDim }} />
-                          <View style={{ flex: 1 }}>
-                            <Text style={styles.summaryIncomeName} numberOfLines={1}>{e.name}</Text>
-                            <Text style={styles.summaryExpItemMeta}>
-                              {cat?.emoji ? `${cat.emoji} ` : ''}{cat?.name ?? 'Sin categoría'} · {e.quincena === 1 ? '1ª Quincena' : '2ª Quincena'}
-                            </Text>
-                          </View>
-                          <Text style={[styles.summaryExpItemAmt, { color: cat?.color ?? COLORS.text }]}>{formatCOP(e.amount)}</Text>
-                        </View>
-                      );
-                    })}
                 </>
               )}
 
