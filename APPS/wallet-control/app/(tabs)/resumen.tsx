@@ -631,7 +631,7 @@ export default function ResumenScreen() {
               <Text style={styles.summaryCardType}>Débito</Text>
             </View>
             <Text style={styles.summaryLabel}>Gastado</Text>
-            <Text style={styles.summaryAmount}>{formatCOP(debitSpent)}</Text>
+            <Text style={styles.summaryAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(debitSpent)}</Text>
             <Text style={styles.summaryLabel2}>Disponible</Text>
             <Text style={styles.summaryAvailable}>
               {hasDebitCards ? formatCOP(Math.max(debitAvailable, 0)) : '—'}
@@ -651,7 +651,7 @@ export default function ResumenScreen() {
               <Text style={styles.summaryCardType}>Crédito</Text>
             </View>
             <Text style={styles.summaryLabel}>Gastado</Text>
-            <Text style={styles.summaryAmount}>{formatCOP(creditSpent)}</Text>
+            <Text style={styles.summaryAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(creditSpent)}</Text>
             <Text style={styles.summaryLabel2}>
               {hasCreditCards && creditLimit > 0 ? 'Disponible' : 'Deuda total'}
             </Text>
@@ -797,7 +797,7 @@ export default function ResumenScreen() {
               {totalTarget > 0 && (
                 <View style={styles.goalsTotalBox}>
                   <View style={styles.goalsTotalAmtRow}>
-                    <Text style={styles.goalsTotalSaved}>{formatCOP(totalSaved)}</Text>
+                    <Text style={styles.goalsTotalSaved} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(totalSaved)}</Text>
                     <Text style={styles.goalsTotalOf}>de {formatCOP(totalTarget)} · {Math.round(globalGoalPct)}%</Text>
                   </View>
                   <View style={styles.goalsTotalBar}>
@@ -895,17 +895,17 @@ export default function ResumenScreen() {
               <View style={[styles.summaryStatBox, { backgroundColor: COLORS.debit }]}>
                 <Text style={styles.summaryStatEmoji}>💰</Text>
                 <Text style={styles.summaryStatLabel}>Ingresos</Text>
-                <Text style={styles.summaryStatVal}>{formatCOP(totalIncome)}</Text>
+                <Text style={styles.summaryStatVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(totalIncome)}</Text>
               </View>
               <View style={[styles.summaryStatBox, { backgroundColor: COLORS.credit }]}>
                 <Text style={styles.summaryStatEmoji}>💸</Text>
                 <Text style={styles.summaryStatLabel}>Gastos</Text>
-                <Text style={styles.summaryStatVal}>{formatCOP(totalSpent)}</Text>
+                <Text style={styles.summaryStatVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(totalSpent)}</Text>
               </View>
               <View style={[styles.summaryStatBox, { backgroundColor: savings >= 0 ? COLORS.primary : COLORS.danger }]}>
                 <Text style={styles.summaryStatEmoji}>{savings >= 0 ? '📈' : '📉'}</Text>
                 <Text style={styles.summaryStatLabel}>Balance</Text>
-                <Text style={styles.summaryStatVal}>{formatCOP(Math.abs(savings))}</Text>
+                <Text style={styles.summaryStatVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(Math.abs(savings))}</Text>
               </View>
             </View>
 
@@ -1075,7 +1075,7 @@ export default function ResumenScreen() {
               {/* Neto */}
               <View style={[styles.patNetBox, { backgroundColor: patrimonioNeto >= 0 ? COLORS.debit : COLORS.danger }]}>
                 <Text style={styles.patNetLabel}>Patrimonio Neto</Text>
-                <Text style={styles.patNetVal}>{patrimonioNeto >= 0 ? '+' : ''}{formatCOP(patrimonioNeto)}</Text>
+                <Text style={styles.patNetVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{patrimonioNeto >= 0 ? '+' : ''}{formatCOP(patrimonioNeto)}</Text>
               </View>
             </ScrollView>
           </View>
