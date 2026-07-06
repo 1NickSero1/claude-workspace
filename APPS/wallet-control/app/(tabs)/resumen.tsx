@@ -11,7 +11,7 @@ import {
   getMonthData, getCategories, getCards,
   getGoals, saveGoal, deleteGoal, addGoalDeposit, deleteGoalDeposit,
   saveBudgetNotified,
-  getCurrentMonthKey, formatMonthLabel, getUserProfile,
+  getCurrentMonthKey, formatMonthLabel, getUserProfile, getAllMonthKeys,
   getPreviousMonthKey, getShowBalanceNotification, computeNetWorth,
   getRecurringTemplates, RecurringTemplate,
   syncCardBalanceSnapshot, getCardBalanceSnapshot,
@@ -80,6 +80,9 @@ export default function ResumenScreen() {
   const [activeDot, setActiveDot]           = useState(0);
   const [balanceDot, setBalanceDot]         = useState(1);
   const [viewedQuincena, setViewedQuincena] = useState<1 | 2>(() => (new Date().getDate() <= 15 ? 1 : 2));
+  const [selectedMonthKey, setSelectedMonthKey] = useState(() => getCurrentMonthKey());
+  const [availableMonths, setAvailableMonths]   = useState<string[]>([]);
+  const [monthlyBalances, setMonthlyBalances]   = useState<{ monthKey: string; gasto: number; ingreso: number; balance: number }[]>([]);
 
   const handleExportPDF = async () => {
     setExporting(true);
@@ -117,13 +120,15 @@ export default function ResumenScreen() {
     }
   };
 
-  const monthKey = getCurrentMonthKey();
+  const monthKey = selectedMonthKey;
   const prevMonthKey = getPreviousMonthKey(monthKey);
+  const isCurrentMonth = monthKey === getCurrentMonthKey();
 
   const load = useCallback(async () => {
-    const [d, cats, c, gs, p, prevData, recurring, prevSnapshot] = await Promise.all([
+    const [d, cats, c, gs, p, prevData, recurring, prevSnapshot, allKeys] = await Promise.all([
       getMonthData(monthKey), getCategories(), getCards(), getGoals(), getUserProfile(),
       getMonthData(prevMonthKey), getRecurringTemplates(), getCardBalanceSnapshot(prevMonthKey),
+      getAllMonthKeys(),
     ]);
     setExpenses(d.expenses);
     setIncomes(d.incomes);
@@ -136,19 +141,34 @@ export default function ResumenScreen() {
     setPrevIncomes(prevData.incomes);
     setRecurringTemplates(recurring);
     setPrevCards(prevSnapshot);
-    await syncCardBalanceSnapshot(monthKey, c);
 
-    if (d.budget && d.budget > 0) {
-      const notified = d.budgetNotified ?? 0;
-      const newNotified = await checkBudgetThreshold(sumExpenses(d.expenses), d.budget, notified);
-      if (newNotified !== notified) await saveBudgetNotified(monthKey, newNotified);
-    }
+    const months = [...new Set([...allKeys, getCurrentMonthKey()])].sort();
+    setAvailableMonths(months);
 
-    if (await getShowBalanceNotification()) {
-      const { patrimonioNeto } = computeNetWorth(d.expenses, c);
-      await updateBalanceNotification(patrimonioNeto);
+    const cachedByKey: Record<string, MonthData> = { [monthKey]: d, [prevMonthKey]: prevData };
+    const balances = await Promise.all(months.map(async mk => {
+      const data = cachedByKey[mk] ?? await getMonthData(mk);
+      const gasto = sumExpenses(data.expenses);
+      const ingreso = sumIncomes(data.incomes);
+      return { monthKey: mk, gasto, ingreso, balance: ingreso - gasto };
+    }));
+    setMonthlyBalances(balances.sort((a, b) => b.monthKey.localeCompare(a.monthKey)));
+
+    if (isCurrentMonth) {
+      await syncCardBalanceSnapshot(monthKey, c);
+
+      if (d.budget && d.budget > 0) {
+        const notified = d.budgetNotified ?? 0;
+        const newNotified = await checkBudgetThreshold(sumExpenses(d.expenses), d.budget, notified);
+        if (newNotified !== notified) await saveBudgetNotified(monthKey, newNotified);
+      }
+
+      if (await getShowBalanceNotification()) {
+        const { patrimonioNeto } = computeNetWorth(d.expenses, c);
+        await updateBalanceNotification(patrimonioNeto);
+      }
     }
-  }, [monthKey, prevMonthKey]);
+  }, [monthKey, prevMonthKey, isCurrentMonth]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
