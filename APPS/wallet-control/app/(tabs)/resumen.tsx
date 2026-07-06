@@ -39,6 +39,12 @@ const MONTH_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct'
 const shortMonthLabel = (monthKey: string) => MONTH_SHORT[parseInt(monthKey.split('-')[1], 10) - 1];
 const fmtShort = (n: number) => n >= 1_000_000 ? `$${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `$${Math.round(n/1_000)}k` : formatCOP(n);
 const MONTH_SWIPE_WIDTH = 170;
+const BALANCE_FILTER_OPTIONS: { id: 'all' | 'debit' | 'credit' | 'cash'; label: string }[] = [
+  { id: 'all',    label: 'Todos' },
+  { id: 'debit',  label: 'Débito' },
+  { id: 'credit', label: 'Crédito' },
+  { id: 'cash',   label: 'Efectivo' },
+];
 const GOAL_EMOJI_OPTIONS = [
   '🎯','✈️','🏠','🚗','💍','📱','💻','🎓','🏋️','🌴',
   '🐕','👶','💰','🎸','🏄','🎮','🌎','🏆','💎','🎁',
@@ -84,6 +90,7 @@ export default function ResumenScreen() {
   const [selectedMonthKey, setSelectedMonthKey] = useState(() => getCurrentMonthKey());
   const [availableMonths, setAvailableMonths]   = useState<string[]>([]);
   const [monthlyBalances, setMonthlyBalances]   = useState<{ monthKey: string; gasto: number; ingreso: number; balance: number }[]>([]);
+  const [balanceFilter, setBalanceFilter] = useState<'all' | 'debit' | 'credit' | 'cash'>('all');
 
   const handleExportPDF = async () => {
     setExporting(true);
@@ -249,12 +256,12 @@ export default function ResumenScreen() {
   const cardWidth = SCREEN_W - 32;
 
   const activoItems = [
-    ...cards.filter(c => c.type === 'debit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '🏦', color: c.color, value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
-    ...cards.filter(c => c.type === 'cash').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💵', color: c.color, value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
+    ...cards.filter(c => c.type === 'debit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '🏦', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
+    ...cards.filter(c => c.type === 'cash').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💵', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
   ];
   const pasivoItems = [
-    ...cards.filter(c => c.type === 'credit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💳', color: c.color, value: getCardTotalSpent(expenses, c.id) })),
-    ...cards.filter(c => c.type === 'debt').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💸', color: c.color, value: c.balance ?? 0 })),
+    ...cards.filter(c => c.type === 'credit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💳', color: c.color, type: c.type, value: getCardTotalSpent(expenses, c.id) })),
+    ...cards.filter(c => c.type === 'debt').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💸', color: c.color, type: c.type, value: c.balance ?? 0 })),
   ];
 
   const goalsDonutData: DonutSlice[] = goals
@@ -266,7 +273,8 @@ export default function ResumenScreen() {
   }));
 
   // ── Balance (donut de cuentas, reemplaza las cards Débito/Crédito) ───────
-  const balanceItems = [...activoItems, ...pasivoItems].filter(it => it.value > 0);
+  const balanceItemsAll = [...activoItems, ...pasivoItems].filter(it => it.value > 0);
+  const balanceItems = balanceFilter === 'all' ? balanceItemsAll : balanceItemsAll.filter(it => it.type === balanceFilter);
   const balanceDonutData: DonutSlice[] = balanceItems.map(it => ({ id: it.id, color: it.color, amount: it.value }));
   const totalBalance = balanceItems.reduce((s, it) => s + it.value, 0);
 
@@ -356,6 +364,11 @@ export default function ResumenScreen() {
     goalsEmojiItem: { alignItems: 'center', gap: 4 },
     goalsEmojiChar: { fontSize: 18 },
     goalsEmojiBar: { width: 12, height: 3, borderRadius: 2 },
+    balanceFilterRow: { flexDirection: 'row', gap: 8, marginTop: 10, justifyContent: 'center', flexWrap: 'wrap' },
+    balanceFilterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: COLORS.card2, borderWidth: 1, borderColor: COLORS.border },
+    balanceFilterChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+    balanceFilterChipText: { color: COLORS.textMuted, fontWeight: '600', fontSize: 11 },
+    balanceFilterChipTextActive: { color: '#fff' },
     incomeLegend: { width: '100%', paddingHorizontal: 20, marginTop: 10, gap: 4 },
     incomeLegendRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     incomeLegendDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
@@ -660,10 +673,26 @@ export default function ResumenScreen() {
                   emptyHint="Agrega tarjetas o efectivo en Balance"
                 />
               </TouchableOpacity>
+              {/* Filtro débito / crédito / efectivo */}
+              {balanceItemsAll.length > 0 && (
+                <View style={styles.balanceFilterRow}>
+                  {BALANCE_FILTER_OPTIONS.map(opt => (
+                    <TouchableOpacity
+                      key={opt.id}
+                      onPress={() => setBalanceFilter(opt.id)}
+                      style={[styles.balanceFilterChip, balanceFilter === opt.id && styles.balanceFilterChipActive]}
+                    >
+                      <Text style={[styles.balanceFilterChipText, balanceFilter === opt.id && styles.balanceFilterChipTextActive]}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
               {/* Leyenda por cuenta */}
               {balanceItems.length > 0 && (
                 <View style={styles.incomeLegend}>
-                  {balanceItems.slice(0, 4).map(it => (
+                  {balanceItems.slice(0, 6).map(it => (
                     <View key={it.id} style={styles.incomeLegendRow}>
                       <View style={[styles.incomeLegendDot, { backgroundColor: it.color }]} />
                       <Text style={styles.incomeLegendName} numberOfLines={1}>{it.emoji} {it.name}</Text>
@@ -672,7 +701,7 @@ export default function ResumenScreen() {
                   ))}
                 </View>
               )}
-              <Text style={styles.heroDonutLabel}>Balance por tarjeta</Text>
+              <Text style={styles.heroDonutLabel}>Billetera general</Text>
             </View>
           </ScrollView>
 
