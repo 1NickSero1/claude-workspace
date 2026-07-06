@@ -24,6 +24,48 @@ function groupByCategory(
     .sort((a, b) => b.total - a.total);
 }
 
+// ── Estilos compartidos entre reportes PDF (reporte financiero + extracto) ──
+const SHARED_REPORT_STYLES = `
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#fff; color:#1A1A2E; padding:36px; font-size:13px; line-height:1.5; }
+  .cover { text-align:center; padding:40px 20px 32px; border-bottom:3px solid #6C5CE7; margin-bottom:36px; }
+  .cover .logo { font-size:48px; margin-bottom:10px; }
+  .cover h1 { font-size:30px; font-weight:900; color:#6C5CE7; }
+  .cover .period { font-size:18px; color:#1A1A2E; font-weight:700; margin:6px 0 4px; }
+  .cover .meta { font-size:12px; color:#B0B7C3; }
+  h2 { font-size:16px; font-weight:800; color:#6C5CE7; margin:28px 0 12px; padding-bottom:6px; border-bottom:2px solid #EDE9FF; }
+  .kpi-row { display:flex; gap:12px; margin-bottom:8px; }
+  .kpi { flex:1; background:#F9FAFB; border-radius:10px; padding:14px 16px; border:1px solid #E4E7EF; text-align:center; }
+  .kpi .label { font-size:11px; color:#6B7280; margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+  .kpi .val { font-size:20px; font-weight:900; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:middle; }
+  table { width:100%; border-collapse:collapse; margin-bottom:4px; }
+  th { background:#EDE9FF; color:#6C5CE7; padding:9px 12px; text-align:left; font-size:12px; }
+  td { padding:8px 12px; border-bottom:1px solid #F3F4F6; font-size:12px; vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  .footer { margin-top:48px; padding-top:16px; border-top:1px solid #E4E7EF; text-align:center; color:#B0B7C3; font-size:11px; }
+  .page-break { page-break-before:always; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700; }
+  .mov-inc { color:#00C896; font-weight:700; }
+  .mov-exp { color:#FF5C5C; font-weight:700; }
+  .balance { font-weight:800; color:#1A1A2E; }
+  .balance-neg { color:#FF5C5C; }
+`;
+
+function renderCoverHeader(title: string, monthLabel: string, generatedAt: string): string {
+  return `
+<div class="cover">
+  <div class="logo">💼</div>
+  <h1>Wallet Control</h1>
+  <div class="period">${title} — ${monthLabel}</div>
+  <div class="meta">Generado el ${generatedAt}</div>
+</div>`;
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 export function buildFinancialReportHtml(
   monthKey: string,
   expenses: Expense[],
@@ -85,37 +127,11 @@ export function buildFinancialReportHtml(
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#fff; color:#1A1A2E; padding:36px; font-size:13px; line-height:1.5; }
-  .cover { text-align:center; padding:40px 20px 32px; border-bottom:3px solid #6C5CE7; margin-bottom:36px; }
-  .cover .logo { font-size:48px; margin-bottom:10px; }
-  .cover h1 { font-size:30px; font-weight:900; color:#6C5CE7; }
-  .cover .period { font-size:18px; color:#1A1A2E; font-weight:700; margin:6px 0 4px; }
-  .cover .meta { font-size:12px; color:#B0B7C3; }
-  h2 { font-size:16px; font-weight:800; color:#6C5CE7; margin:28px 0 12px; padding-bottom:6px; border-bottom:2px solid #EDE9FF; }
-  .kpi-row { display:flex; gap:12px; margin-bottom:8px; }
-  .kpi { flex:1; background:#F9FAFB; border-radius:10px; padding:14px 16px; border:1px solid #E4E7EF; text-align:center; }
-  .kpi .label { font-size:11px; color:#6B7280; margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
-  .kpi .val { font-size:20px; font-weight:900; }
-  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:middle; }
-  table { width:100%; border-collapse:collapse; margin-bottom:4px; }
-  th { background:#EDE9FF; color:#6C5CE7; padding:9px 12px; text-align:left; font-size:12px; }
-  td { padding:8px 12px; border-bottom:1px solid #F3F4F6; font-size:12px; vertical-align:middle; }
-  tr:last-child td { border-bottom:none; }
-  .footer { margin-top:48px; padding-top:16px; border-top:1px solid #E4E7EF; text-align:center; color:#B0B7C3; font-size:11px; }
-  .page-break { page-break-before:always; }
-  .badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700; }
-</style>
+<style>${SHARED_REPORT_STYLES}</style>
 </head>
 <body>
 
-<div class="cover">
-  <div class="logo">💼</div>
-  <h1>Wallet Control</h1>
-  <div class="period">Reporte Financiero — ${monthLabel}</div>
-  <div class="meta">Generado el ${generatedAt}</div>
-</div>
+${renderCoverHeader('Reporte Financiero', monthLabel, generatedAt)}
 
 <h2>Resumen del mes</h2>
 <div class="kpi-row">
