@@ -59,6 +59,9 @@ export interface Income {
   quincena: 1 | 2;
   createdAt: string;
   monthKey: string;
+  isRecurring?: boolean;
+  recurrenceFrequency?: RecurrenceFrequency;
+  notificationId?: string;
 }
 
 export interface GoalDeposit {
