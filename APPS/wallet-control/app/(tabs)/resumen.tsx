@@ -78,7 +78,7 @@ export default function ResumenScreen() {
   const [pendingModal, setPendingModal]     = useState(false);
   const [trendModal, setTrendModal]         = useState(false);
   const [activeDot, setActiveDot]           = useState(0);
-  const [balanceDot, setBalanceDot]         = useState(0);
+  const [balanceDot, setBalanceDot]         = useState(1);
   const [viewedQuincena, setViewedQuincena] = useState<1 | 2>(() => (new Date().getDate() <= 15 ? 1 : 2));
 
   const handleExportPDF = async () => {
@@ -605,6 +605,35 @@ export default function ResumenScreen() {
               )}
               <Text style={styles.heroDonutLabel}>Fuentes de ingreso</Text>
             </View>
+
+            {/* Slide 4 — Balance (débito/crédito/efectivo/deudas) */}
+            <View style={[styles.donutSlide, { width: cardWidth }]}>
+              <TouchableOpacity onPress={() => balanceItems.length > 0 && setPatrimonioModal(true)} activeOpacity={0.85} style={styles.donutTap}>
+                <DonutChart
+                  data={balanceDonutData}
+                  total={totalBalance || 1}
+                  size={donutSize}
+                  centerValue={balanceItems.length > 0 ? fmtShort(totalBalance) : ''}
+                  centerLabel={balanceItems.length > 0 ? 'toca para ver' : 'Sin cuentas'}
+                  centerValueColor={COLORS.primary}
+                  emptyLabel="Sin cuentas"
+                  emptyHint="Agrega tarjetas o efectivo en Balance"
+                />
+              </TouchableOpacity>
+              {/* Leyenda por cuenta */}
+              {balanceItems.length > 0 && (
+                <View style={styles.incomeLegend}>
+                  {balanceItems.slice(0, 4).map(it => (
+                    <View key={it.id} style={styles.incomeLegendRow}>
+                      <View style={[styles.incomeLegendDot, { backgroundColor: it.color }]} />
+                      <Text style={styles.incomeLegendName} numberOfLines={1}>{it.emoji} {it.name}</Text>
+                      <Text style={styles.incomeLegendAmt}>{formatCOP(it.value)}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              <Text style={styles.heroDonutLabel}>Balance por cuenta</Text>
+            </View>
           </ScrollView>
 
           {/* Pagination dots */}
@@ -612,18 +641,20 @@ export default function ResumenScreen() {
             <View style={[styles.dot, activeDot === 0 && styles.dotActive]} />
             <View style={[styles.dot, activeDot === 1 && styles.dotActive]} />
             <View style={[styles.dot, activeDot === 2 && styles.dotActive]} />
+            <View style={[styles.dot, activeDot === 3 && styles.dotActive]} />
           </View>
 
           {/* ── Presupuesto mensual ──────────────────────── */}
+          {/* Solo lectura: el monto se configura desde Perfil. Tocar aquí abre el resumen del mes. */}
           <View style={styles.heroBudgetWrap}>
             {budget && budget > 0 ? (
-              <TouchableOpacity activeOpacity={0.85} onPress={() => setBudgetModal(true)}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => setSummaryModal(true)}>
                 <BudgetProgressBar budget={budget} spent={totalSpent} />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity onPress={() => setBudgetModal(true)} style={styles.emptyGoal}>
+              <TouchableOpacity onPress={() => setSummaryModal(true)} style={styles.emptyGoal}>
                 <Ionicons name="wallet-outline" size={28} color={COLORS.textDim} />
-                <Text style={styles.emptyGoalText}>Configura tu presupuesto mensual</Text>
+                <Text style={styles.emptyGoalText}>Configura tu presupuesto mensual en Perfil</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -692,37 +723,10 @@ export default function ResumenScreen() {
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 style={styles.balanceSlider}
+                contentOffset={{ x: cardWidth, y: 0 }}
                 onMomentumScrollEnd={e => setBalanceDot(Math.round(e.nativeEvent.contentOffset.x / cardWidth))}
               >
-                {/* Slide 1 — mes actual */}
-                <TouchableOpacity activeOpacity={0.82} onPress={() => setPatrimonioModal(true)} style={{ width: cardWidth }}>
-                  <View style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: netoColor, backgroundColor: netoColor + '0D' }]}>
-                    <View style={styles.patrimonioHeader}>
-                      <Ionicons name={patrimonioNeto >= 0 ? 'trending-up' : 'trending-down'} size={18} color={netoColor} />
-                      <Text style={styles.patrimonioTitle}>Balance General</Text>
-                    </View>
-                    <View style={styles.patrimonioColumns}>
-                      <View>
-                        <Text style={styles.patrimonioLabel}>↑ Activos</Text>
-                        <Text style={[styles.patrimonioVal, { color: COLORS.debit }]}>{formatCOP(totalActivos)}</Text>
-                      </View>
-                      <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={styles.patrimonioLabel}>↓ Pasivos</Text>
-                        <Text style={[styles.patrimonioVal, { color: COLORS.credit }]}>{formatCOP(totalPasivos)}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.patrimonioDivider} />
-                    <View style={styles.patrimonioNetRow}>
-                      <Text style={styles.patrimonioNetLabel}>Neto</Text>
-                      <Text style={[styles.patrimonioNetVal, { color: netoColor }]}>
-                        {patrimonioNeto >= 0 ? '+' : ''}{formatCOP(patrimonioNeto)}
-                      </Text>
-                    </View>
-                    <Text style={{ color: COLORS.textDim, fontSize: 10, marginTop: 6, textAlign: 'right' }}>Toca para ver detalle →</Text>
-                  </View>
-                </TouchableOpacity>
-
-                {/* Slide 2 — mes anterior */}
+                {/* Slide 1 — mes anterior */}
                 <TouchableOpacity activeOpacity={0.82} onPress={() => setTrendModal(true)} style={{ width: cardWidth }}>
                   <View style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: prevNetoColor, backgroundColor: prevNetoColor + '0D' }]}>
                     <View style={styles.patrimonioHeader}>
@@ -747,6 +751,34 @@ export default function ResumenScreen() {
                       </Text>
                     </View>
                     <Text style={{ color: COLORS.textDim, fontSize: 10, marginTop: 6, textAlign: 'right' }}>Toca para ver tendencia →</Text>
+                  </View>
+                </TouchableOpacity>
+
+                {/* Slide 2 — mes actual (vista inicial "bloqueada" vía contentOffset) */}
+                <TouchableOpacity activeOpacity={0.82} onPress={() => setPatrimonioModal(true)} style={{ width: cardWidth }}>
+                  <View style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: netoColor, backgroundColor: netoColor + '0D' }]}>
+                    <View style={styles.patrimonioHeader}>
+                      <Ionicons name={patrimonioNeto >= 0 ? 'trending-up' : 'trending-down'} size={18} color={netoColor} />
+                      <Text style={styles.patrimonioTitle}>Balance General</Text>
+                    </View>
+                    <View style={styles.patrimonioColumns}>
+                      <View>
+                        <Text style={styles.patrimonioLabel}>↑ Activos</Text>
+                        <Text style={[styles.patrimonioVal, { color: COLORS.debit }]}>{formatCOP(totalActivos)}</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={styles.patrimonioLabel}>↓ Pasivos</Text>
+                        <Text style={[styles.patrimonioVal, { color: COLORS.credit }]}>{formatCOP(totalPasivos)}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.patrimonioDivider} />
+                    <View style={styles.patrimonioNetRow}>
+                      <Text style={styles.patrimonioNetLabel}>Neto</Text>
+                      <Text style={[styles.patrimonioNetVal, { color: netoColor }]}>
+                        {patrimonioNeto >= 0 ? '+' : ''}{formatCOP(patrimonioNeto)}
+                      </Text>
+                    </View>
+                    <Text style={{ color: COLORS.textDim, fontSize: 10, marginTop: 6, textAlign: 'right' }}>Toca para ver detalle →</Text>
                   </View>
                 </TouchableOpacity>
               </ScrollView>
@@ -1226,13 +1258,6 @@ export default function ResumenScreen() {
         categories={categories}
         onSave={() => { setQuickEntry(false); load(); }}
         onClose={() => setQuickEntry(false)}
-      />
-
-      <BudgetFormModal
-        visible={budgetModal}
-        budget={budget}
-        onSave={handleSaveBudget}
-        onClose={() => setBudgetModal(false)}
       />
 
       {/* FAB */}
