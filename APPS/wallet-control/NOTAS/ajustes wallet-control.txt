@@ -12,9 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-	en todas las opciones donde escriba  un numero para anotar algún valor, quiero que pongas el "." de los miles automáticamente, en todo el código
-	en la pantalla de "cuanto gastas en cosas fijas" quiero que dejes apartados para crear desde allí los gastos recurrentes desde un inicio, que recomiende opciones y deje añadir varias
-	en el apartado para crear la contraseña genera un visual de si la contraseña es segura o no y que tenga un ojito para verla contraseña
+  — (vacío por ahora)
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
@@ -56,6 +54,30 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX de pendientes "por MI" (PECAS, 2026-07-06)
+    → Formato de miles automático en todos los inputs numéricos de la app:
+      nuevo helper formatThousands() en lib/expenseParser.ts, aplicado en
+      QuickEntryModal (monto principal, se quitó el preview duplicado que
+      ya no hacía falta), CategoryDetailModal y GoalDetailModal (resumen.tsx),
+      y los campos de ingreso/gasto fijo del onboarding. Los inputs que ya
+      formateaban (CardFormModal, BudgetFormModal, GoalFormModal, tarjetas.tsx)
+      quedaron intactos.
+    → Step "¿Cuánto gastas en cosas fijas?" del onboarding rediseñado: en vez
+      de un solo monto, ahora es una lista — chips de sugerencias (Arriendo,
+      Servicios, Internet/Celular, Suscripciones, Transporte, Seguro), campo
+      de nombre + monto y botón "+" para ir agregando varios gastos fijos,
+      cada uno con su propia tarjeta (nombre, monto, botón de eliminar). Al
+      finalizar, cada ítem de la lista se crea como Expense recurrente
+      mensual independiente (con su propio recordatorio), no un solo gasto
+      combinado como antes.
+    → Contraseña en onboarding: ojito para mostrar/ocultar en los campos de
+      login y de crear cuenta (Ionicons eye-outline/eye-off-outline dentro
+      de un TouchableOpacity, reutilizando el patrón inputWrap/inputIcon ya
+      usado para el check del email). En el campo de crear cuenta se agregó
+      además un medidor visual de fuerza (Débil/Media/Fuerte, barra de color
+      rojo/dorado/verde) vía getPasswordStrength() — heurística simple por
+      longitud + mayúsculas + números + símbolos, sin librería externa.
 
   ✓ Notificaciones de presupuesto + gastos recurrentes (PECAS, 2026-07-06)
     → lib/notifications.ts: helpers centralizados de expo-notifications
