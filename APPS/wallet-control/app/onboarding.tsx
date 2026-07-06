@@ -34,6 +34,10 @@ const filterEmojiOnly = (text: string) => (text.match(EMOJI_ONLY_REGEX) ?? []).j
 
 type Step = 'welcome' | 'choice' | 'register' | 'login' | 'periodicity' | 'fixedIncome' | 'fixedExpense' | 'done';
 
+const SUGGESTED_FIXED_EXPENSES = [
+  'Arriendo', 'Servicios (luz/agua/gas)', 'Internet / Celular', 'Suscripciones', 'Transporte', 'Seguro',
+];
+
 const PERIOD_OPTIONS: { value: BudgetPeriod; label: string; caption: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { value: 'weekly',   label: 'Semanal',   caption: 'Manejo mi plata semana a semana',        icon: 'calendar-outline' },
   { value: 'biweekly', label: 'Quincenal', caption: 'Me pagan o presupuesto cada 15 días',     icon: 'calendar-number-outline' },
@@ -60,7 +64,9 @@ export default function OnboardingScreen() {
   const [pendingAnonymous, setPendingAnonymous] = useState(false);
   const [budgetPeriod, setBudgetPeriod]       = useState<BudgetPeriod>('biweekly');
   const [fixedIncomeAmount, setFixedIncomeAmount] = useState('');
-  const [fixedExpenseAmount, setFixedExpenseAmount] = useState('');
+  const [fixedExpenseItems, setFixedExpenseItems] = useState<{ name: string; amount: number }[]>([]);
+  const [newExpenseName, setNewExpenseName]   = useState('');
+  const [newExpenseAmount, setNewExpenseAmount] = useState('');
   const [setupSaving, setSetupSaving]         = useState(false);
 
   const avatarGlyph = avatarEmoji.trim() || '🙂';
@@ -208,27 +214,42 @@ export default function OnboardingScreen() {
     }
   };
 
+  const addFixedExpenseItem = () => {
+    const amount = Number(newExpenseAmount.replace(/\D/g, ''));
+    const name = newExpenseName.trim();
+    if (!name || amount <= 0) return;
+    setFixedExpenseItems(items => [...items, { name, amount }]);
+    setNewExpenseName('');
+    setNewExpenseAmount('');
+  };
+
+  const removeFixedExpenseItem = (index: number) => {
+    setFixedExpenseItems(items => items.filter((_, i) => i !== index));
+  };
+
   const handleFixedExpenseFinish = async (skip: boolean) => {
     setSetupSaving(true);
     try {
-      const amount = Number(fixedExpenseAmount.replace(/\D/g, ''));
-      if (!skip && amount > 0) {
+      if (!skip && fixedExpenseItems.length > 0) {
         const monthKey = getCurrentMonthKey();
         const day = new Date().getDate();
         const quincena: 1 | 2 = day <= 15 ? 1 : 2;
-        const notificationId = await scheduleRecurringReminder('Gastos fijos mensuales', 'monthly', new Date());
-        await addExpenses(monthKey, [{
-          id: `exp_${Date.now()}`,
-          name: 'Gastos fijos mensuales',
-          amount,
-          categoryId: 'otro',
-          quincena,
-          createdAt: new Date().toISOString(),
-          monthKey,
-          isRecurring: true,
-          recurrenceFrequency: 'monthly',
-          notificationId,
-        }]);
+        const expenses = await Promise.all(fixedExpenseItems.map(async (item, i) => {
+          const notificationId = await scheduleRecurringReminder(item.name, 'monthly', new Date());
+          return {
+            id: `exp_${Date.now()}_${i}`,
+            name: item.name,
+            amount: item.amount,
+            categoryId: 'otro',
+            quincena,
+            createdAt: new Date().toISOString(),
+            monthKey,
+            isRecurring: true,
+            recurrenceFrequency: 'monthly' as const,
+            notificationId,
+          };
+        }));
+        await addExpenses(monthKey, expenses);
       }
       if (pendingAnonymous) {
         goToApp();
