@@ -14,6 +14,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
  modifica el tabs de finando desvincula toda relación con todo el Excel que le dimos de base y que tenga las bases personalizadas para cada usuario y cuenta
 modifica la palabra extracto bancario por extracto de tu cuenta, del pdf
+modifica para que se guarde la información en el usuario correspondiente para que cuando uno se salga y entre con otro correo le borre la información y traiga la del usuario correspondiente
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
