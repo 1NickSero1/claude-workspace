@@ -14,6 +14,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 	en todas las opciones donde escriba  un numero para anotar algún valor, quiero que pongas el "." de los miles automáticamente, en todo el código
 	en la pantalla de "cuanto gastas en cosas fijas" quiero que dejes apartados para crear desde allí los gastos recurrentes desde un inicio, que recomiende opciones y deje añadir varias
+	en el apartado para crear la contraseña genera un visual de si la contraseña es segura o no y que tenga un ojito para verla contraseña
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
