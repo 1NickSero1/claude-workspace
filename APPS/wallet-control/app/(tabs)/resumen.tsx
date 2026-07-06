@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, RefreshControl, Alert, Modal,
@@ -92,6 +92,8 @@ export default function ResumenScreen() {
   const [availableMonths, setAvailableMonths]   = useState<string[]>([]);
   const [monthlyBalances, setMonthlyBalances]   = useState<{ monthKey: string; gasto: number; ingreso: number; balance: number }[]>([]);
   const [balanceFilter, setBalanceFilter] = useState<'all' | 'debit' | 'credit' | 'cash'>('all');
+  const monthScrollRef = useRef<ScrollView>(null);
+  const monthScrollSynced = useRef(false);
 
   const handleExportPDF = async () => {
     setExporting(true);
@@ -180,6 +182,18 @@ export default function ResumenScreen() {
   }, [monthKey, prevMonthKey, isCurrentMonth]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  // Ubica el slider de meses en el mes seleccionado una sola vez, apenas
+  // llega la lista real de meses (evita pelear con el swipe del usuario en
+  // recargas posteriores, que solo cambian la referencia del array).
+  useEffect(() => {
+    if (monthScrollSynced.current || availableMonths.length === 0) return;
+    monthScrollSynced.current = true;
+    const idx = Math.max(0, availableMonths.indexOf(selectedMonthKey));
+    requestAnimationFrame(() => {
+      monthScrollRef.current?.scrollTo({ x: idx * MONTH_SWIPE_WIDTH, animated: false });
+    });
+  }, [availableMonths, selectedMonthKey]);
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
@@ -541,21 +555,22 @@ export default function ResumenScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <ScrollView
-          key={availableMonths.length > 0 ? 'ready' : 'loading'}
+          ref={monthScrollRef}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          style={{ width: MONTH_SWIPE_WIDTH }}
-          contentOffset={{ x: Math.max(0, availableMonths.indexOf(selectedMonthKey)) * MONTH_SWIPE_WIDTH, y: 0 }}
+          style={{ width: MONTH_SWIPE_WIDTH, overflow: 'hidden' }}
           onMomentumScrollEnd={e => {
             const idx = Math.round(e.nativeEvent.contentOffset.x / MONTH_SWIPE_WIDTH);
             const key = availableMonths[idx];
-            if (key) setSelectedMonthKey(key);
+            if (key && key !== selectedMonthKey) setSelectedMonthKey(key);
           }}
         >
           {availableMonths.map(mk => (
-            <View key={mk} style={{ width: MONTH_SWIPE_WIDTH, justifyContent: 'center' }}>
-              <Text style={styles.headerTitle}>{formatMonthLabel(mk)}</Text>
+            <View key={mk} style={{ width: MONTH_SWIPE_WIDTH, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                {formatMonthLabel(mk)}
+              </Text>
             </View>
           ))}
         </ScrollView>
