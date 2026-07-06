@@ -12,7 +12,10 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-  — (vacío por ahora)
+en los ejemplos de finando pon ejemplos relacionados con los gastos que registro o a registrado como recurrentes
+en el pills de quincena que genere un desplazable a los lados para los gastos de la quincena 2
+has un  filtro según el usuario para ver si sus gastos son mensuales quincenales o semanales, para que se puedan ver en el pills de quincena según el usuario lo modifique
+
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
