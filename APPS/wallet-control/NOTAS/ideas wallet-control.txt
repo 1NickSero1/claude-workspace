@@ -30,10 +30,6 @@ ALTA PRIORIDAD (versión 1.0)
 MEDIA PRIORIDAD (v1.1)
 ------------------------------------------------------------
 
-[ ] Exportar datos a Excel / CSV
-    — Todos los gastos del mes en tabla
-    — Compatible con Google Sheets y Excel
-
 [ ] Modo quincena inteligente
     — Detectar automáticamente en qué quincena está el usuario
     — Mostrar cuántos días quedan en la quincena actual
