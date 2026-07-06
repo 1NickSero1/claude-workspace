@@ -453,6 +453,9 @@ export default function ResumenScreen() {
     summaryIncomeRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, gap: 8, borderBottomWidth: 1, borderBottomColor: COLORS.border + '88' },
     summaryIncomeName: { flex: 1, color: COLORS.text, fontSize: FONT.sm, fontWeight: '600' },
     summaryIncomeAmt: { color: COLORS.debit, fontWeight: '700', fontSize: FONT.sm },
+    summaryExpItemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, gap: 8, borderBottomWidth: 1, borderBottomColor: COLORS.border + '88' },
+    summaryExpItemMeta: { color: COLORS.textMuted, fontSize: 11, marginTop: 1 },
+    summaryExpItemAmt: { fontWeight: '700', fontSize: FONT.sm },
     summaryCloseBtn: { marginTop: 16, backgroundColor: COLORS.primary, borderRadius: 14, padding: 14, alignItems: 'center' },
     summaryCloseBtnText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     sheetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
@@ -940,6 +943,33 @@ export default function ResumenScreen() {
                       </View>
                     );
                   })}
+                </>
+              )}
+
+              {/* Todos los gastos (itemizado, no agrupado por categoría) */}
+              {expenses.length > 0 && (
+                <>
+                  <View style={[styles.summarySectionHeader, { marginTop: 16 }]}>
+                    <Text style={styles.summarySectionTitle}>🧾 Todos los gastos</Text>
+                    <Text style={styles.summarySectionTotal}>{expenses.length}</Text>
+                  </View>
+                  {[...expenses]
+                    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+                    .map(e => {
+                      const cat = categories.find(c => c.id === e.categoryId);
+                      return (
+                        <View key={e.id} style={styles.summaryExpItemRow}>
+                          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: cat?.color ?? COLORS.textDim }} />
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.summaryIncomeName} numberOfLines={1}>{e.name}</Text>
+                            <Text style={styles.summaryExpItemMeta}>
+                              {cat?.emoji ? `${cat.emoji} ` : ''}{cat?.name ?? 'Sin categoría'} · {e.quincena === 1 ? '1ª Quincena' : '2ª Quincena'}
+                            </Text>
+                          </View>
+                          <Text style={[styles.summaryExpItemAmt, { color: cat?.color ?? COLORS.text }]}>{formatCOP(e.amount)}</Text>
+                        </View>
+                      );
+                    })}
                 </>
               )}
 
