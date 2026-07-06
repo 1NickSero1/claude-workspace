@@ -22,6 +22,26 @@ COMANDO RÁPIDO:
       normal, solo para EAS build / vincular el proyecto — queda pendiente
       para cuando se quiera generar el primer build instalable.
 
+  — Manejar bien el registro cuando la confirmación de correo esté activada
+    (RLS de profiles + Supabase Auth)
+    → 2026-07-06: al crear una cuenta con correo real apareció "new row
+      violates row-level security policy for table profiles". Causa: con
+      "Confirm email" activado en Supabase, signUp() no deja sesión activa
+      hasta que el usuario confirma el correo; el código de handleRegister
+      (app/onboarding.tsx) intenta insertar en profiles justo después del
+      signUp sin revisar si hay sesión, así que la inserción llega sin
+      auth.uid() y la política RLS "insert own profile" la rechaza.
+    → Solución temporal aplicada: se desactivó "Confirm email" en el
+      dashboard de Supabase (Authentication → Providers → Email) — válido
+      mientras se prueba en local / con la beta cerrada de 5-10 personas.
+    → Antes del lanzamiento público en Play Store: reactivar "Confirm
+      email" y ajustar el código para que (1) si signUp() no devuelve
+      sesión, se le avise al usuario que revise su correo en vez de
+      intentar crear el perfil de una vez, y (2) el registro en la tabla
+      profiles se cree recién cuando el usuario confirma el correo e
+      inicia sesión por primera vez (ahí sí hay auth.uid() real y la
+      política RLS lo permite).
+
 ------------------------------------------------------------
 [EN PROGRESO]
 ------------------------------------------------------------
