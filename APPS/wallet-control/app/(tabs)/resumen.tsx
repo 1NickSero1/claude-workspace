@@ -491,6 +491,17 @@ export default function ResumenScreen() {
     summaryExpItemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, gap: 8, borderBottomWidth: 1, borderBottomColor: COLORS.border + '88' },
     summaryExpItemMeta: { color: COLORS.textMuted, fontSize: 11, marginTop: 1 },
     summaryExpItemAmt: { fontWeight: '700', fontSize: FONT.sm },
+    expModalHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+    expModalTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg },
+    expModalSub: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
+    expCard: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      backgroundColor: COLORS.card2, borderRadius: 14, padding: 12, marginBottom: 10,
+    },
+    expCardIcon: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
+    expCardName: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base },
+    expCardMeta: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+    expCardAmt: { fontWeight: '800', fontSize: FONT.md, maxWidth: 110 },
     summaryCloseBtn: { marginTop: 16, backgroundColor: COLORS.primary, borderRadius: 14, padding: 14, alignItems: 'center' },
     summaryCloseBtnText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     sheetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
@@ -1059,6 +1070,59 @@ export default function ResumenScreen() {
             </ScrollView>
 
             <TouchableOpacity style={styles.summaryCloseBtn} onPress={() => setSummaryModal(false)}>
+              <Text style={styles.summaryCloseBtnText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Gastos del mes (independiente, tap en donut de Gastos) ── */}
+      <Modal visible={expensesModal} animationType="slide" transparent onRequestClose={() => setExpensesModal(false)}>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setExpensesModal(false)} />
+          <View style={[styles.regSheet, { maxHeight: '85%' }]}>
+            <View style={styles.summaryHandle} />
+            <View style={styles.expModalHeader}>
+              <Text style={{ fontSize: 22 }}>💸</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.expModalTitle}>Gastos del mes</Text>
+                <Text style={styles.expModalSub}>{expenses.length} movimientos · {formatCOP(totalSpent)}</Text>
+              </View>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {expenses.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="receipt-outline" size={40} color={COLORS.textDim} />
+                  <Text style={styles.emptyText}>Sin gastos este mes</Text>
+                </View>
+              ) : (
+                [...expenses]
+                  .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+                  .map(e => {
+                    const cat = categories.find(c => c.id === e.categoryId);
+                    const card = cards.find(c => c.id === e.cardId);
+                    return (
+                      <View key={e.id} style={styles.expCard}>
+                        <View style={[styles.expCardIcon, { backgroundColor: (cat?.color ?? COLORS.textDim) + '22' }]}>
+                          {cat?.emoji
+                            ? <Text style={{ fontSize: 20 }}>{cat.emoji}</Text>
+                            : <Ionicons name={(cat?.icon ?? 'pricetag') as any} size={20} color={cat?.color ?? COLORS.textMuted} />}
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.expCardName} numberOfLines={1}>{e.name}</Text>
+                          <Text style={styles.expCardMeta}>
+                            {cat?.name ?? 'Sin categoría'} · {e.quincena === 1 ? '1ª Quincena' : '2ª Quincena'}{card ? ` · ${card.name}` : ''}
+                          </Text>
+                        </View>
+                        <Text style={[styles.expCardAmt, { color: cat?.color ?? COLORS.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                          {formatCOP(e.amount)}
+                        </Text>
+                      </View>
+                    );
+                  })
+              )}
+            </ScrollView>
+            <TouchableOpacity style={styles.summaryCloseBtn} onPress={() => setExpensesModal(false)}>
               <Text style={styles.summaryCloseBtnText}>Cerrar</Text>
             </TouchableOpacity>
           </View>
