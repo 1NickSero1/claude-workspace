@@ -228,11 +228,6 @@ export default function ResumenScreen() {
     .filter(r => r.total > 0 || !r.cat.isDefault)
     .sort((a, b) => b.total - a.total);
 
-  const openDetail = (cat: CustomCategory) => {
-    setDetailCat(cat);
-    setDetailVisible(true);
-  };
-
   // Donut chart slices: one per category with expenses
   const donutData: DonutSlice[] = catRows
     .filter(r => r.total > 0)
