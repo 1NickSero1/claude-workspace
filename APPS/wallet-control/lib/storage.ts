@@ -116,6 +116,7 @@ const K_CARDS      = (ns: string) => `wc_cards_${ns}`;
 const K_CATEGORIES = (ns: string) => `wc_categories_${ns}`;
 const K_GOALS      = (ns: string) => `wc_goals_${ns}`;
 const K_EXP        = (ns: string, m: string) => `wc_exp_${ns}_${m}`;
+const K_CARD_SNAP  = (ns: string, m: string) => `wc_card_snap_${ns}_${m}`;
 
 const migratedNamespaces = new Set<string>();
 
@@ -229,6 +230,27 @@ export async function appendCardEvent(cardId: string, event: CardEvent): Promise
   if (idx < 0) return;
   cards[idx] = { ...cards[idx], events: [...(cards[idx].events ?? []), event] };
   await AsyncStorage.setItem(K_CARDS(ns), JSON.stringify(cards));
+}
+
+// Guarda el estado de las tarjetas (saldo/límite) bajo la clave del mes
+// activo cada vez que se llama — mientras ese mes sigue siendo el actual esto
+// se sobreescribe con el saldo más reciente; en cuanto el mes cambia, se deja
+// de tocar esa clave y queda como "último saldo conocido" de ese mes, sin
+// necesidad de un mecanismo de cierre de mes explícito.
+export async function syncCardBalanceSnapshot(monthKey: string, cards: Card[]): Promise<void> {
+  const ns = await getActiveNamespace();
+  await AsyncStorage.setItem(K_CARD_SNAP(ns, monthKey), JSON.stringify(cards));
+}
+
+// Devuelve el snapshot de tarjetas de ese mes si existe (meses anteriores a
+// que se agregara esta función no tendrán snapshot — null, para que el
+// caller decida el fallback).
+export async function getCardBalanceSnapshot(monthKey: string): Promise<Card[] | null> {
+  try {
+    const ns = await getActiveNamespace();
+    const raw = await AsyncStorage.getItem(K_CARD_SNAP(ns, monthKey));
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
 }
 
 // ── Categories ────────────────────────────────────────────────────────────────
