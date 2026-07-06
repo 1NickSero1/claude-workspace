@@ -38,6 +38,19 @@ const SUGGESTED_FIXED_EXPENSES = [
   'Arriendo', 'Servicios (luz/agua/gas)', 'Internet / Celular', 'Suscripciones', 'Transporte', 'Seguro',
 ];
 
+function getPasswordStrength(pw: string): { label: string; pct: number; color: 'danger' | 'gold' | 'debit' } {
+  let score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+  if (score <= 1) return { label: 'Débil', pct: 33, color: 'danger' };
+  if (score <= 3) return { label: 'Media', pct: 66, color: 'gold' };
+  return { label: 'Fuerte', pct: 100, color: 'debit' };
+}
+
 const PERIOD_OPTIONS: { value: BudgetPeriod; label: string; caption: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { value: 'weekly',   label: 'Semanal',   caption: 'Manejo mi plata semana a semana',        icon: 'calendar-outline' },
   { value: 'biweekly', label: 'Quincenal', caption: 'Me pagan o presupuesto cada 15 días',     icon: 'calendar-number-outline' },
@@ -58,6 +71,8 @@ export default function OnboardingScreen() {
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword]     = useState('');
   const [loginLoading, setLoginLoading]       = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showPassword, setShowPassword]       = useState(false);
 
   // Setup posterior a la creación de cuenta (periodicidad + ingreso/gasto fijo)
   const [createdProfile, setCreatedProfile]   = useState<UserProfile | null>(null);
@@ -404,6 +419,35 @@ export default function OnboardingScreen() {
     primaryBtnSpaced: { marginTop: 20 },
     primaryBtnOff: { backgroundColor: COLORS.textDim, elevation: 0, shadowOpacity: 0 },
     primaryBtnText: { color: '#fff', fontWeight: '800', fontSize: FONT.base },
+
+    // Gastos fijos (onboarding)
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
+    chip: {
+      paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
+      backgroundColor: COLORS.card2, borderWidth: 1, borderColor: COLORS.border,
+    },
+    chipText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
+    addRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+    addBtn: {
+      width: 48, height: 48, borderRadius: 12, backgroundColor: COLORS.primary,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    expenseItemRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      backgroundColor: COLORS.card, borderRadius: 12, padding: 12, marginBottom: 8,
+      borderWidth: 1, borderColor: COLORS.border,
+    },
+    expenseItemName: { color: COLORS.text, fontWeight: '700', fontSize: FONT.md },
+    expenseItemAmount: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
+    expenseItemDelete: {
+      width: 32, height: 32, borderRadius: 8, backgroundColor: COLORS.creditBg,
+      alignItems: 'center', justifyContent: 'center',
+    },
+
+    // Password
+    strengthTrack: { height: 6, backgroundColor: COLORS.border, borderRadius: 3, overflow: 'hidden', marginTop: 8 },
+    strengthFill: { height: '100%', borderRadius: 3 },
+    strengthLabel: { fontSize: FONT.sm, fontWeight: '700', marginTop: 6 },
   }, moderateScale)), [COLORS, moderateScale]);
 
   // ── WELCOME ─────────────────────────────────────────────────────────────────
@@ -536,14 +580,19 @@ export default function OnboardingScreen() {
             />
 
             <Text style={styles.label}>Contraseña</Text>
-            <TextInput
-              style={styles.input}
-              value={loginPassword}
-              onChangeText={setLoginPassword}
-              placeholder="••••••••"
-              placeholderTextColor={COLORS.textDim}
-              secureTextEntry
-            />
+            <View style={styles.inputWrap}>
+              <TextInput
+                style={styles.input}
+                value={loginPassword}
+                onChangeText={setLoginPassword}
+                placeholder="••••••••"
+                placeholderTextColor={COLORS.textDim}
+                secureTextEntry={!showLoginPassword}
+              />
+              <TouchableOpacity onPress={() => setShowLoginPassword(v => !v)} style={styles.inputIcon}>
+                <Ionicons name={showLoginPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               onPress={handleLogin}
@@ -639,17 +688,56 @@ export default function OnboardingScreen() {
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <ScrollView contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
             <Text style={styles.formTitle}>¿Cuánto gastas en cosas fijas al mes?</Text>
-            <Text style={styles.formSub}>Arriendo, servicios, suscripciones, etc. — todo junto está bien, puedes omitir este paso</Text>
+            <Text style={styles.formSub}>Arriendo, servicios, suscripciones, etc. — agrega los que quieras, puedes omitir este paso</Text>
 
-            <Text style={styles.label}>Monto mensual (COP, opcional)</Text>
+            <Text style={styles.label}>Sugerencias</Text>
+            <View style={styles.chipRow}>
+              {SUGGESTED_FIXED_EXPENSES.map(label => (
+                <TouchableOpacity key={label} onPress={() => setNewExpenseName(label)} style={styles.chip}>
+                  <Text style={styles.chipText}>{label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.label}>Nombre del gasto fijo</Text>
             <TextInput
               style={styles.input}
-              value={fixedExpenseAmount}
-              onChangeText={v => setFixedExpenseAmount(v.replace(/\D/g, ''))}
-              placeholder="Ej: 1.200.000"
+              value={newExpenseName}
+              onChangeText={setNewExpenseName}
+              placeholder="Ej: Arriendo"
               placeholderTextColor={COLORS.textDim}
-              keyboardType="number-pad"
             />
+
+            <Text style={styles.label}>Monto mensual (COP)</Text>
+            <View style={styles.addRow}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={formatThousands(newExpenseAmount)}
+                onChangeText={v => setNewExpenseAmount(v.replace(/\D/g, ''))}
+                placeholder="Ej: 1.200.000"
+                placeholderTextColor={COLORS.textDim}
+                keyboardType="number-pad"
+              />
+              <TouchableOpacity onPress={addFixedExpenseItem} style={styles.addBtn}>
+                <Ionicons name="add" size={22} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            {fixedExpenseItems.length > 0 && (
+              <View style={{ marginTop: 18 }}>
+                {fixedExpenseItems.map((item, i) => (
+                  <View key={`${item.name}_${i}`} style={styles.expenseItemRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.expenseItemName}>{item.name}</Text>
+                      <Text style={styles.expenseItemAmount}>${formatThousands(item.amount)} COP/mes</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => removeFixedExpenseItem(i)} style={styles.expenseItemDelete}>
+                      <Ionicons name="trash-outline" size={16} color={COLORS.credit} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
 
             <TouchableOpacity
               onPress={() => handleFixedExpenseFinish(false)}
@@ -791,14 +879,30 @@ export default function OnboardingScreen() {
 
           {/* Password */}
           <Text style={styles.label}>Contraseña</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Mínimo 6 caracteres"
-            placeholderTextColor={COLORS.textDim}
-            secureTextEntry
-          />
+          <View style={styles.inputWrap}>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Mínimo 6 caracteres"
+              placeholderTextColor={COLORS.textDim}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(v => !v)} style={styles.inputIcon}>
+              <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={COLORS.textMuted} />
+            </TouchableOpacity>
+          </View>
+          {password.length > 0 && (() => {
+            const strength = getPasswordStrength(password);
+            return (
+              <>
+                <View style={styles.strengthTrack}>
+                  <View style={[styles.strengthFill, { width: `${strength.pct}%`, backgroundColor: COLORS[strength.color] }]} />
+                </View>
+                <Text style={[styles.strengthLabel, { color: COLORS[strength.color] }]}>{strength.label}</Text>
+              </>
+            );
+          })()}
 
           <Text style={styles.privacyNote}>
             🔒 Tu cuenta se guarda de forma segura en la nube. Tus gastos, tarjetas y metas siguen solo en este dispositivo.
