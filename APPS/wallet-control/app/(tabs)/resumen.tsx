@@ -1182,6 +1182,170 @@ export default function ResumenScreen() {
         </View>
       </Modal>
 
+      {/* ── Metas detail modal (donut de metas) ───── */}
+      <Modal visible={metasModal} animationType="slide" transparent onRequestClose={() => setMetasModal(false)}>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setMetasModal(false)} />
+          <View style={[styles.regSheet, { maxHeight: '80%' }]}>
+            <View style={styles.summaryHandle} />
+            <View style={styles.patModalHeader}>
+              <Ionicons name="flag" size={20} color={COLORS.primary} />
+              <Text style={styles.patModalTitle}>Metas de ahorro</Text>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.patSection}>
+                {goals.map(g => {
+                  const pct = g.targetAmount > 0 ? Math.min((g.savedAmount / g.targetAmount) * 100, 100) : 0;
+                  return (
+                    <View key={g.id} style={styles.patRow}>
+                      <Text style={styles.patRowEmoji}>{g.emoji ?? '🎯'}</Text>
+                      <Text style={styles.patRowName}>{g.name}</Text>
+                      <Text style={[styles.patRowVal, { color: g.color }]} numberOfLines={1}>
+                        {formatCOP(g.savedAmount)} / {formatCOP(g.targetAmount)} · {Math.round(pct)}%
+                      </Text>
+                    </View>
+                  );
+                })}
+                <View style={styles.patTotal}>
+                  <Text style={styles.patTotalLabel}>Total ahorrado</Text>
+                  <Text style={[styles.patTotalVal, { color: COLORS.primary }]}>
+                    {formatCOP(totalSaved)} de {formatCOP(totalTarget)}
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Ingresos detail modal (donut de ingresos) ── */}
+      <Modal visible={ingresosModal} animationType="slide" transparent onRequestClose={() => setIngresosModal(false)}>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setIngresosModal(false)} />
+          <View style={[styles.regSheet, { maxHeight: '80%' }]}>
+            <View style={styles.summaryHandle} />
+            <View style={styles.patModalHeader}>
+              <Ionicons name="cash" size={20} color={COLORS.debit} />
+              <Text style={styles.patModalTitle}>Fuentes de ingreso</Text>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.patSection}>
+                {incomes.map(inc => (
+                  <View key={inc.id} style={styles.patRow}>
+                    <Text style={styles.patRowEmoji}>💰</Text>
+                    <Text style={styles.patRowName}>{inc.description || 'Ingreso'}</Text>
+                    <Text style={[styles.patRowVal, { color: COLORS.debit }]}>{formatCOP(inc.amount)}</Text>
+                  </View>
+                ))}
+                <View style={styles.patTotal}>
+                  <Text style={styles.patTotalLabel}>Total ingresos</Text>
+                  <Text style={[styles.patTotalVal, { color: COLORS.debit }]}>{formatCOP(totalIncome)}</Text>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Pendientes por pagar (tarjeta de periodo) ── */}
+      <Modal visible={pendingModal} animationType="slide" transparent onRequestClose={() => setPendingModal(false)}>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setPendingModal(false)} />
+          <View style={[styles.regSheet, { maxHeight: '80%' }]}>
+            <View style={styles.summaryHandle} />
+            <View style={styles.patModalHeader}>
+              <Ionicons name="alert-circle-outline" size={20} color={COLORS.warning} />
+              <Text style={styles.patModalTitle}>Pendientes por pagar</Text>
+            </View>
+            <Text style={{ color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 14 }}>
+              Gastos fijos que aún no registras en {periodLabel}
+            </Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {recurringTemplates.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="pricetags-outline" size={36} color={COLORS.textDim} />
+                  <Text style={styles.emptyText}>Sin gastos fijos configurados</Text>
+                  <Text style={styles.emptyHint}>Actívalos con el toggle "Gasto recurrente" al registrar un gasto</Text>
+                </View>
+              ) : pendingTemplates.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="checkmark-circle-outline" size={36} color={COLORS.debit} />
+                  <Text style={styles.emptyText}>¡Al día!</Text>
+                  <Text style={styles.emptyHint}>No tienes gastos fijos pendientes en {periodLabel}</Text>
+                </View>
+              ) : (
+                <View style={styles.patSection}>
+                  {pendingTemplates.map(t => {
+                    const cat = categories.find(c => c.id === t.categoryId);
+                    return (
+                      <View key={t.name} style={styles.patRow}>
+                        <Text style={styles.patRowEmoji}>{cat?.emoji ?? '💸'}</Text>
+                        <Text style={styles.patRowName}>{t.name}</Text>
+                        <Text style={[styles.patRowVal, { color: cat?.color ?? COLORS.credit }]}>{formatCOP(t.amount)}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Tendencia últimos 2 meses (vs. mes anterior) ── */}
+      <Modal visible={trendModal} animationType="slide" transparent onRequestClose={() => setTrendModal(false)}>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setTrendModal(false)} />
+          <View style={styles.regSheet}>
+            <View style={styles.summaryHandle} />
+            <View style={styles.patModalHeader}>
+              <Ionicons name="stats-chart" size={20} color={COLORS.primary} />
+              <Text style={styles.patModalTitle}>Tendencia · últimos 2 meses</Text>
+            </View>
+            <LineChart
+              data={{
+                labels: trendPoints.map(t => t.label),
+                datasets: [
+                  { data: trendPoints.map(t => t.ingresos), color: () => COLORS.debit, strokeWidth: 2 },
+                  { data: trendPoints.map(t => t.gastos),   color: () => COLORS.credit, strokeWidth: 2 },
+                  { data: trendPoints.map(t => t.ahorro),   color: () => COLORS.primary, strokeWidth: 2 },
+                ],
+                legend: ['Ingresos', 'Gastos', 'Ahorro'],
+              }}
+              width={SCREEN_W - 40}
+              height={180}
+              chartConfig={{
+                backgroundColor: COLORS.card,
+                backgroundGradientFrom: COLORS.card,
+                backgroundGradientTo: COLORS.card,
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(108,92,231,${opacity})`,
+                labelColor: () => COLORS.textMuted,
+                propsForDots: { r: '3' },
+                propsForBackgroundLines: { stroke: COLORS.border },
+              }}
+              bezier
+              withInnerLines
+              withOuterLines={false}
+              style={{ borderRadius: 12, alignSelf: 'center', marginTop: 8 }}
+              formatYLabel={v => `$${v}k`}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, paddingVertical: 10 }}>
+              {[
+                { label: 'Ingresos', color: COLORS.debit },
+                { label: 'Gastos', color: COLORS.credit },
+                { label: 'Ahorro', color: COLORS.primary },
+              ].map(item => (
+                <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: item.color }} />
+                  <Text style={{ color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '600' }}>{item.label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <QuickEntryModal
         visible={quickEntry}
         categories={categories}
