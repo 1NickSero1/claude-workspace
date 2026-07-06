@@ -27,7 +27,7 @@ import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { buildFinancialReportHtml } from '@/lib/financialReport';
+import { buildFinancialReportHtml, buildBankStatementHtml } from '@/lib/financialReport';
 
 const GOAL_COLORS = ['#6C5CE7','#00C896','#FF5C5C','#FDCB6E','#0984E3','#A29BFE','#00B894','#E17055'];
 const INCOME_COLORS = ['#00C896','#0984E3','#6C5CE7','#FDCB6E','#00B894','#A29BFE','#E17055','#FF5C5C'];
@@ -65,6 +65,7 @@ export default function ResumenScreen() {
   const [quickEntry, setQuickEntry]         = useState(false);
   const [summaryModal, setSummaryModal]     = useState(false);
   const [exporting, setExporting]           = useState(false);
+  const [exportingStatement, setExportingStatement] = useState(false);
   const [registrarSheet, setRegistrarSheet] = useState(false);
   const [helpSheet, setHelpSheet]           = useState(false);
   const [patrimonioModal, setPatrimonioModal] = useState(false);
@@ -86,6 +87,24 @@ export default function ResumenScreen() {
       Alert.alert('Error', 'No se pudo generar el PDF.');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleExportBankStatement = async () => {
+    setExportingStatement(true);
+    try {
+      const html = buildBankStatementHtml(monthKey, expenses, incomes, categories);
+      const { uri } = await Print.printToFileAsync({ html, base64: false });
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Extracto Wallet Control', UTI: 'com.adobe.pdf' });
+      } else {
+        Alert.alert('PDF Generado', `Guardado en:\n${uri}`);
+      }
+    } catch {
+      Alert.alert('Error', 'No se pudo generar el extracto.');
+    } finally {
+      setExportingStatement(false);
     }
   };
 
@@ -976,6 +995,14 @@ export default function ResumenScreen() {
                 <Text style={styles.regOptionSub}>Reporte financiero del mes actual</Text>
               </View>
               {exporting && <ActivityIndicator size={16} color={COLORS.primary} />}
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.helpOption, { backgroundColor: COLORS.debitBg }]} onPress={() => { setHelpSheet(false); handleExportBankStatement(); }}>
+              <Text style={{ fontSize: 24 }}>🧾</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.regOptionTitle, { color: COLORS.debit }]}>Extracto bancario</Text>
+                <Text style={styles.regOptionSub}>Movimientos del mes, tipo estado de cuenta (PDF)</Text>
+              </View>
+              {exportingStatement && <ActivityIndicator size={16} color={COLORS.debit} />}
             </TouchableOpacity>
             <TouchableOpacity style={[styles.helpOption, { backgroundColor: COLORS.card2 }]} onPress={() => { setHelpSheet(false); router.push('/ayuda'); }}>
               <Text style={{ fontSize: 24 }}>❓</Text>

@@ -204,3 +204,119 @@ ${byCat.length > 0 ? `
 </body>
 </html>`;
 }
+
+// ── Extracto bancario ─────────────────────────────────────────────────────────
+
+interface Movement {
+  date: Date;
+  description: string;
+  categoryLabel: string;
+  amount: number;
+  isIncome: boolean;
+}
+
+function buildMovements(
+  expenses: Expense[],
+  incomes: Income[],
+  categories: CustomCategory[],
+): Movement[] {
+  const catName = (id: string) => categories.find(c => c.id === id)?.name ?? id;
+
+  const expMovs: Movement[] = expenses.map(e => ({
+    date: new Date(e.createdAt),
+    description: e.name,
+    categoryLabel: catName(e.categoryId),
+    amount: e.amount,
+    isIncome: false,
+  }));
+
+  const incMovs: Movement[] = incomes.map(i => ({
+    date: new Date(i.createdAt),
+    description: i.description,
+    categoryLabel: 'Ingreso',
+    amount: i.amount,
+    isIncome: true,
+  }));
+
+  return [...expMovs, ...incMovs].sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+function formatMovDate(d: Date): string {
+  return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }).replace('.', '');
+}
+
+export function buildBankStatementHtml(
+  monthKey: string,
+  expenses: Expense[],
+  incomes: Income[],
+  categories: CustomCategory[],
+): string {
+  const monthLabel  = formatMonthLabel(monthKey);
+  const totalExp    = sumExpenses(expenses);
+  const totalInc    = sumIncomesList(incomes);
+  const generatedAt = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  const movements = buildMovements(expenses, incomes, categories);
+
+  let running = 0;
+  const rows = movements.map(m => {
+    running += m.isIncome ? m.amount : -m.amount;
+    return `
+      <tr>
+        <td>${formatMovDate(m.date)}</td>
+        <td>${escapeHtml(m.description)}</td>
+        <td style="color:#6B7280">${escapeHtml(m.categoryLabel)}</td>
+        <td style="text-align:right" class="${m.isIncome ? 'mov-inc' : 'mov-exp'}">${m.isIncome ? '+' : '-'}${formatCOP(m.amount)}</td>
+        <td style="text-align:right" class="${running < 0 ? 'balance-neg' : 'balance'}">${formatCOP(running)}</td>
+      </tr>`;
+  }).join('') || `<tr><td colspan="5" style="color:#B0B7C3;text-align:center">Sin movimientos registrados este mes</td></tr>`;
+
+  const saldoFinal = totalInc - totalExp;
+  const saldoColor = saldoFinal >= 0 ? '#00C896' : '#FF5C5C';
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>${SHARED_REPORT_STYLES}</style>
+</head>
+<body>
+
+${renderCoverHeader('Extracto Bancario', monthLabel, generatedAt)}
+
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="label">Ingresos</div>
+    <div class="val" style="color:#00C896">${formatCOP(totalInc)}</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Gastos</div>
+    <div class="val" style="color:#FF5C5C">${formatCOP(totalExp)}</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Saldo final</div>
+    <div class="val" style="color:${saldoColor}">${formatCOP(saldoFinal)}</div>
+  </div>
+</div>
+
+<h2>Movimientos del mes (${movements.length})</h2>
+<table>
+  <tr>
+    <th>Fecha</th>
+    <th>Descripción</th>
+    <th>Categoría</th>
+    <th style="text-align:right">Monto</th>
+    <th style="text-align:right">Saldo</th>
+  </tr>
+  ${rows}
+</table>
+
+<div class="footer">
+  <p>Wallet Control · Extracto Bancario · ${monthLabel}</p>
+  <p>Datos almacenados localmente en tu dispositivo</p>
+</div>
+
+</body>
+</html>`;
+}
