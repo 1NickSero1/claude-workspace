@@ -91,9 +91,9 @@ export default function DonutChart({ data, total, size, centerLabel, centerValue
         ))}
         <Circle cx={cx} cy={cy} r={innerR - 2} fill={COLORS.bg} />
       </Svg>
-      <View style={styles.center} pointerEvents="none">
-        <Text style={[styles.totalAmt, { color: valueColor }]}>{displayValue}</Text>
-        <Text style={styles.totalLabel}>{displayLabel}</Text>
+      <View style={[styles.center, { maxWidth: innerR * 1.7 }]} pointerEvents="none">
+        <Text style={[styles.totalAmt, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{displayValue}</Text>
+        <Text style={styles.totalLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{displayLabel}</Text>
       </View>
     </View>
   );
