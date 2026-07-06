@@ -12,9 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-has funcional cada diagrama de torta del resumen, un pop up de un resumen similar al de gastos
-en el pill de quincena 1 quiero que ahí hagas un pop up con las categorías que faltan por pagar en la quincena, también que dependa del perfil del usuario semanal/quincenal/mensual
-en el pill de vs del mes anterior quiero que generes un pop up con un grafico similar al de historial, de tendencia de los ultimos 2 meses 
+  — (vacío por ahora)
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
@@ -42,6 +40,33 @@ en el pill de vs del mes anterior quiero que generes un pop up con un grafico si
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX de pendientes "por MI", 3ra ronda (PECAS, 2026-07-06)
+    → Donuts de Metas e Ingresos ahora son tappables igual que el de Gastos
+      (resumen.tsx): cada uno abre su propio popup — metasModal lista cada
+      meta con ahorrado/objetivo/%, ingresosModal lista cada fuente de
+      ingreso con su monto. Reutilizan los estilos pat*/regSheet que ya
+      existían para el modal de Patrimonio Neto.
+    → Tarjeta de periodo (Quincena/Semana/Mes, según profile.budgetPeriod)
+      ahora es tappable y abre "Pendientes por pagar": compara los gastos
+      recurrentes que el usuario ha registrado alguna vez (nueva función
+      getRecurringTemplates() en storage.ts, dedupe por nombre) contra los
+      gastos ya registrados en la ventana del periodo activo (quincena 1/2
+      por el campo quincena, semana actual por createdAt >= lunes, o todo
+      el mes si es mensual) — lista los que faltan por registrar. Si el
+      usuario no tiene gastos fijos configurados, o si ya está al día, lo
+      indica explícitamente en vez de mostrar una lista vacía sin contexto.
+    → Card "vs. mes anterior" ahora es tappable y abre un popup con
+      LineChart (react-native-chart-kit, misma librería y estilo que el
+      gráfico de tendencia de Historial) mostrando ingresos/gastos/ahorro
+      de los últimos 2 meses (mes actual + anterior).
+    → De paso (pedido en el mismo momento, mismo tema de "excel de base"):
+      en app/(tabs)/index.tsx, el mensaje de bienvenida y los 3 chips de
+      sugerencia del chat de Finando ya no muestran el ejemplo fijo
+      "$475.000"/sueldo "$2.000.000" igual para todas las cuentas — ahora
+      se arman con los datos reales de esta cuenta (gasto/ingreso fijo del
+      onboarding vía getRecurringTemplates(), o la primera categoría propia
+      si aún no configuró ninguno) y saludan por el nickname si existe.
 
   ✓ Fix de código para "Confirm email" de Supabase (PECAS, 2026-07-06)
     → app/onboarding.tsx handleRegister: signUp() ahora manda nickname/
