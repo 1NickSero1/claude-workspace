@@ -559,8 +559,8 @@ export default function ResumenScreen() {
                   data={goalsDonutData}
                   total={totalTarget || 1}
                   size={donutSize}
-                  centerValue={goals.length > 0 ? fmtShort(totalSaved) : ''}
-                  centerLabel={goals.length > 0 ? `de ${fmtShort(totalTarget)}` : 'Sin metas'}
+                  centerValue={goals.length > 0 ? formatCOP(totalSaved) : ''}
+                  centerLabel={goals.length > 0 ? `de ${formatCOP(totalTarget)}` : 'Sin metas'}
                   centerValueColor={COLORS.primary}
                   emptyLabel="Sin metas aún"
                   emptyHint="Toca + para crear tu primera meta de ahorro"
@@ -635,7 +635,7 @@ export default function ResumenScreen() {
                   ))}
                 </View>
               )}
-              <Text style={styles.heroDonutLabel}>Balance por cuenta</Text>
+              <Text style={styles.heroDonutLabel}>Balance por tarjeta</Text>
             </View>
           </ScrollView>
 
@@ -762,7 +762,7 @@ export default function ResumenScreen() {
                   <View style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: netoColor, backgroundColor: netoColor + '0D' }]}>
                     <View style={styles.patrimonioHeader}>
                       <Ionicons name={patrimonioNeto >= 0 ? 'trending-up' : 'trending-down'} size={18} color={netoColor} />
-                      <Text style={styles.patrimonioTitle}>Balance General</Text>
+                      <Text style={styles.patrimonioTitle}>Balance General · {formatMonthLabel(monthKey)}</Text>
                     </View>
                     <View style={styles.patrimonioColumns}>
                       <View>
