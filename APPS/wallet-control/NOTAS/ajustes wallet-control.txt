@@ -12,10 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-en los ejemplos de finando pon ejemplos relacionados con los gastos que registro o a registrado como recurrentes
-en el pills de quincena que genere un desplazable a los lados para los gastos de la quincena 2
-has un  filtro según el usuario para ver si sus gastos son mensuales quincenales o semanales, para que se puedan ver en el pills de quincena según el usuario lo modifique
-
+  — (vacío por ahora)
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
@@ -43,6 +40,27 @@ has un  filtro según el usuario para ver si sus gastos son mensuales quincenale
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX de pendientes "por MI", 4ta ronda (PECAS, 2026-07-06)
+    → Ejemplos de Finando (app/(tabs)/index.tsx) ahora priorizan el gasto
+      fijo/recurrente del usuario y, si no tiene ninguno, el último gasto
+      real que registró este mes (nuevo estado recentExpense, derivado de
+      getMonthData ya cargado en el mismo useFocusEffect) — antes del
+      último ajuste solo se fijaba en gastos recurrentes, dejando el
+      ejemplo genérico para cualquiera que no hubiera usado ese toggle.
+    → Tarjeta de periodo quincenal ahora es un slider (igual patrón que el
+      de los donuts): Quincena 1 y Quincena 2 como slides deslizables, cada
+      una mostrando su propio gasto acumulado y badge "ACTIVA" en la que
+      corresponde a hoy. Semanal y mensual siguen con tarjeta única (no
+      aplica el concepto de "quincena 2"). El popup de "Pendientes por
+      pagar" ahora responde a la quincena que se está mirando en el
+      slider (viewedQuincena), no siempre a la de hoy.
+    → Nueva sección "Periodicidad de cuenta" en Perfil (mismo patrón visual
+      que el selector de Tema): el usuario ya puede cambiar entre
+      semanal/quincenal/mensual en cualquier momento, no solo una vez en
+      el onboarding — Resumen recarga el perfil cada vez que la pantalla
+      gana foco, así que el cambio se refleja de inmediato al volver a esa
+      pestaña.
 
   ✓ MEJORAX de pendientes "por MI", 3ra ronda (PECAS, 2026-07-06)
     → Donuts de Metas e Ingresos ahora son tappables igual que el de Gastos
