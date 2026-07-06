@@ -41,6 +41,21 @@ COMANDO RÁPIDO:
 [RESUELTO]
 ------------------------------------------------------------
 
+  ✓ Ajustes en vivo tras la 7ma ronda (PECAS, 2026-07-06)
+    → "Gastos del mes" (tap en el donut de Gastos) dejó de abrir el popup
+      combinado "Resumen del mes" — ahora abre uno propio e independiente
+      con solo el listado de gastos del mes, en tarjetas (ícono de la
+      categoría + nombre + quincena/tarjeta + monto), no en filas de lista
+      plana. El popup "Resumen del mes" (sigue accesible desde "Presupuesto
+      mensual") ya no repite ese listado.
+    → Fix del slider de meses del header ("Julio 2026"): el contentOffset
+      + remount por key causaba un parpadeo/glitch al cargar. Se reemplazó
+      por un ScrollView con ref + scrollTo(), sincronizado UNA sola vez
+      cuando llega la lista real de meses (useEffect con guard), sin pelear
+      con el swipe del usuario en recargas posteriores. También se agregó
+      numberOfLines+adjustsFontSizeToFit al texto del mes por si el nombre
+      es más largo que el ancho fijo del slide (ej. "Septiembre 2026").
+
   ✓ MEJORAX de pendientes "por MI", 7ma ronda (PECAS, 2026-07-06)
     → Resumen ahora deja ver meses anteriores: el título "Julio 2026" del
       header es un slider deslizable (mismo patrón de los otros sliders)
