@@ -195,10 +195,11 @@ export default function ResumenScreen() {
   const totalPasivos   = creditSpent + debtTotal;
   const patrimonioNeto = totalActivos - totalPasivos;
 
-  // Aproximación del mes anterior: mismas cuentas/saldos actuales, gastos de
-  // ese mes (cards.balance/limit no guardan historial, solo el estado actual).
+  // Mes anterior: usa el snapshot de saldos guardado ese mes (syncCardBalanceSnapshot
+  // en load()); si no existe (meses previos a que existiera esta función), cae
+  // de vuelta a los saldos actuales como aproximación.
   const { totalActivos: prevTotalActivos, totalPasivos: prevTotalPasivos, patrimonioNeto: prevPatrimonioNeto } =
-    computeNetWorth(prevExpenses, cards);
+    computeNetWorth(prevExpenses, prevCards ?? cards);
 
   const prevTotalSpent = sumExpenses(prevExpenses);
 
@@ -232,12 +233,12 @@ export default function ResumenScreen() {
   const cardWidth = SCREEN_W - 32;
 
   const activoItems = [
-    ...cards.filter(c => c.type === 'debit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '🏦', value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
-    ...cards.filter(c => c.type === 'cash').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💵', value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
+    ...cards.filter(c => c.type === 'debit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '🏦', color: c.color, value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
+    ...cards.filter(c => c.type === 'cash').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💵', color: c.color, value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
   ];
   const pasivoItems = [
-    ...cards.filter(c => c.type === 'credit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💳', value: getCardTotalSpent(expenses, c.id) })),
-    ...cards.filter(c => c.type === 'debt').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💸', value: c.balance ?? 0 })),
+    ...cards.filter(c => c.type === 'credit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💳', color: c.color, value: getCardTotalSpent(expenses, c.id) })),
+    ...cards.filter(c => c.type === 'debt').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💸', color: c.color, value: c.balance ?? 0 })),
   ];
 
   const goalsDonutData: DonutSlice[] = goals
@@ -247,6 +248,11 @@ export default function ResumenScreen() {
   const incomesDonutData: DonutSlice[] = incomes.map((inc, i) => ({
     id: inc.id, color: INCOME_COLORS[i % INCOME_COLORS.length], amount: inc.amount,
   }));
+
+  // ── Balance (donut de cuentas, reemplaza las cards Débito/Crédito) ───────
+  const balanceItems = [...activoItems, ...pasivoItems].filter(it => it.value > 0);
+  const balanceDonutData: DonutSlice[] = balanceItems.map(it => ({ id: it.id, color: it.color, amount: it.value }));
+  const totalBalance = balanceItems.reduce((s, it) => s + it.value, 0);
 
   // ── Tendencia últimos 2 meses (popup de "vs. mes anterior") ───────────────
   const prevTotalIncome = sumIncomes(prevIncomes);
