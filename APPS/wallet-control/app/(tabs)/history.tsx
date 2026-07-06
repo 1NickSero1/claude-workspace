@@ -4,7 +4,7 @@ import {
   StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
 import {
@@ -77,11 +77,13 @@ export default function HistoryScreen() {
     safe: { flex: 1, backgroundColor: COLORS.bg },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     header: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
       paddingHorizontal: 20, paddingTop: 20, paddingBottom: 14,
       backgroundColor: COLORS.bg,
     },
     headerTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.xl },
     headerSub: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
+    searchBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
     scroll: { paddingHorizontal: 16, paddingBottom: 40 },
     emptyState: { alignItems: 'center', paddingVertical: 80, gap: 10 },
     emptyText: { color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
@@ -168,8 +170,13 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Historial</Text>
-        <Text style={styles.headerSub}>Todos tus meses</Text>
+        <View>
+          <Text style={styles.headerTitle}>Historial</Text>
+          <Text style={styles.headerSub}>Todos tus meses</Text>
+        </View>
+        <TouchableOpacity onPress={() => router.push('/busqueda')} style={styles.searchBtn}>
+          <Ionicons name="search" size={18} color={COLORS.primary} />
+        </TouchableOpacity>
       </View>
 
       {trend.length >= 2 && (
