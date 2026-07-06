@@ -13,6 +13,7 @@ COMANDO RÁPIDO:
 [PENDIENTE] por MI
 ------------------------------------------------------------
  modifica el tabs de finando desvincula toda relación con todo el Excel que le dimos de base y que tenga las bases personalizadas para cada usuario y cuenta
+modifica la palabra extracto bancario por extracto de tu cuenta, del pdf
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
@@ -54,6 +55,31 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ Fase 3: saldo, búsqueda, comparativa + fix de responsive (PECAS, 2026-07-06)
+    → Widget de saldo rápido: se confirmó que un widget nativo real de
+      pantalla de inicio no es viable sin salir de Expo Go (requeriría
+      react-native-android-widget + expo prebuild + un build nativo real).
+      Se reemplazó por una notificación local opt-in (toggle en Perfil,
+      apagado por defecto): lib/storage.ts (getShowBalanceNotification/
+      saveShowBalanceNotification, computeNetWorth), lib/notifications.ts
+      (updateBalanceNotification con identifier fijo 'wc-balance' para
+      actualizar in-place en vez de apilar, cancelBalanceNotification).
+    → Búsqueda de gastos: searchExpenses() en storage.ts (nombre, categoría,
+      rango de fechas sobre todos los meses); pantalla nueva app/busqueda.tsx
+      accesible desde la lupa en Historial.
+    → Comparativa mes a mes: getPreviousMonthKey() en storage.ts; nueva card
+      "vs. mes anterior" en Resumen (flecha + % de diferencia), oculta si
+      el mes anterior no tiene gastos registrados.
+    → Fix de responsive reportado por el usuario (celular del hermano):
+      los montos grandes (pills Ingresos/Gastos, donut central, Débito/
+      Crédito, Patrimonio Neto, popup de resumen, resultados de búsqueda)
+      se partían en dos líneas en pantallas/fuentes distintas — se agregó
+      adjustsFontSizeToFit + numberOfLines={1} a todos esos Text.
+    → Auditoría final: quedan 2 hallazgos reales pendientes (aviso de
+      permiso de notificaciones denegado en CardFormModal.tsx, y falta de
+      accessibilityLabel/Role en toda la app) — documentados en el PDF
+      actualizado junto con el plan final de publicación.
 
   ✓ MEJORAX de pendientes "por MI" (PECAS, 2026-07-06)
     → Formato de miles automático en todos los inputs numéricos de la app:

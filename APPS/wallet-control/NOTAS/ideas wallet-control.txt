@@ -19,21 +19,10 @@ ALTA PRIORIDAD (versión 1.0)
     — Generar APK con EAS Build para no depender de Expo Go
     — Compartir sin servidor de desarrollo
 
-[ ] Widget de saldo rápido
-    — Widget de pantalla de inicio con saldo disponible
-    — Actualizado cada vez que se abre la app
-
 ------------------------------------------------------------
 MEDIA PRIORIDAD (v1.1)
 ------------------------------------------------------------
-
-[ ] Búsqueda de gastos
-    — Buscador por nombre/descripción en historial
-    — Filtro por categoría y rango de fechas
-
-[ ] Comparativa mes a mes
-    — Card en Resumen con "vs mes anterior"
-    — Flecha arriba/abajo con diferencia en %
+  — (vacío por ahora)
 
 ------------------------------------------------------------
 BAJA PRIORIDAD / FUTURO (v2.0)
