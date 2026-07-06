@@ -1041,7 +1041,7 @@ export default function ResumenScreen() {
                   {monthlyBalances.map(m => (
                     <View key={m.monthKey} style={styles.summaryExpItemRow}>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.summaryIncomeName} style={[styles.summaryIncomeName, { textTransform: 'capitalize' }]}>{formatMonthLabel(m.monthKey)}</Text>
+                        <Text style={[styles.summaryIncomeName, { textTransform: 'capitalize' }]}>{formatMonthLabel(m.monthKey)}</Text>
                         <Text style={styles.summaryExpItemMeta}>
                           <Text style={{ color: COLORS.debit }}>{formatCOP(m.ingreso)}</Text> ingresos · <Text style={{ color: COLORS.credit }}>{formatCOP(m.gasto)}</Text> gastos
                         </Text>
