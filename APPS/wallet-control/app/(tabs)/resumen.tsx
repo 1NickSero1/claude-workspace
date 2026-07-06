@@ -1072,7 +1072,7 @@ export default function ResumenScreen() {
             <View style={styles.summaryHandle} />
             <View style={styles.patModalHeader}>
               <Ionicons name={patrimonioNeto >= 0 ? 'trending-up' : 'trending-down'} size={22} color={patrimonioNeto >= 0 ? COLORS.debit : COLORS.danger} />
-              <Text style={styles.patModalTitle}>Balance General</Text>
+              <Text style={styles.patModalTitle}>Balance General · {formatMonthLabel(monthKey)}</Text>
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Activos */}
