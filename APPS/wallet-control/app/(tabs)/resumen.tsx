@@ -80,7 +80,6 @@ export default function ResumenScreen() {
   const [trendModal, setTrendModal]         = useState(false);
   const [activeDot, setActiveDot]           = useState(0);
   const [balanceDot, setBalanceDot]         = useState(0);
-  const [catView, setCatView]               = useState<'grid' | 'list'>('grid');
   const [viewedQuincena, setViewedQuincena] = useState<1 | 2>(() => (new Date().getDate() <= 15 ? 1 : 2));
 
   const handleExportPDF = async () => {
@@ -159,16 +158,6 @@ export default function ResumenScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
-
-  const handleSaveCat = async (cat: CustomCategory) => {
-    await saveCategory(cat); setCatModal(false); setEditingCat(null); await load();
-  };
-  const handleDeleteCat = (cat: CustomCategory) =>
-    Alert.alert('Eliminar categoría', `¿Eliminar "${cat.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive',
-        onPress: async () => { await deleteCategory(cat.id); await load(); } },
-    ]);
 
   const handleSaveGoal = async (goal: Goal) => {
     await saveGoal(goal); setGoalModal(false); setEditingGoal(null); await load();
