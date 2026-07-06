@@ -10,7 +10,12 @@ COMANDO RÁPIDO:
 ========================================
 
 ------------------------------------------------------------
-[PENDIENTE]
+[PENDIENTE] por MI
+------------------------------------------------------------
+	en todas las opciones donde escriba  un numero para anotar algún valor, quiero que pongas el "." de los miles automáticamente, en todo el código
+	en la pantalla de "cuanto gastas en cosas fijas" quiero que dejes apartados para crear desde allí los gastos recurrentes desde un inicio, que recomiende opciones y deje añadir varias
+------------------------------------------------------------
+[PENDIENTE] por MAQUINA
 ------------------------------------------------------------
 
   — Iniciar sesión en Expo/EAS (eas login) para vincular el proyecto
