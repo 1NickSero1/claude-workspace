@@ -15,6 +15,7 @@ COMANDO RÁPIDO:
 invierte los lugares del balance general por mes y bloquea la vista del mes actual
 elimina las cards de las tarjetas y haz el balance en un diargrama de torta, ubicalo allí en la sección correspondiente
 haz que las tarjetas guarden gastos mes a mes para ponerlos también en el balance general de cada mes 
+cuando toque en la torta de los gastos del mes quiero que allí me muestres todos los gastos que ha registrado el usuario y cuando tqoue donde diga presupuesto mensual allí me lleve al pop up del resumen del mes y mueve en la tabs de perfil la modifcacion del valor del presupuesto mensual
 
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
