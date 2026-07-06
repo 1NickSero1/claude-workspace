@@ -223,8 +223,6 @@ export default function ResumenScreen() {
     computeNetWorth(prevExpenses, cards);
 
   const prevTotalSpent = sumExpenses(prevExpenses);
-  const hasPrevData    = prevTotalSpent > 0;
-  const spentDiffPct   = hasPrevData ? Math.round(((totalSpent - prevTotalSpent) / prevTotalSpent) * 100) : null;
 
   const totalSaved     = goals.reduce((s, g) => s + g.savedAmount, 0);
   const totalTarget    = goals.reduce((s, g) => s + g.targetAmount, 0);
