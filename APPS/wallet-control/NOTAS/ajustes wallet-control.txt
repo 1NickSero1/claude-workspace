@@ -12,7 +12,9 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-  — (vacío por ahora)
+has funcional cada diagrama de torta del resumen, un pop up de un resumen similar al de gastos
+en el pill de quincena 1 quiero que ahí hagas un pop up con las categorías que faltan por pagar en la quincena, también que dependa del perfil del usuario semanal/quincenal/mensual
+en el pill de vs del mes anterior quiero que generes un pop up con un grafico similar al de historial, de tendencia de los ultimos 2 meses 
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
