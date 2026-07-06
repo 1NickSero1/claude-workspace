@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Modal, View, Text, TextInput, TouchableOpacity,
-  ScrollView, StyleSheet, KeyboardAvoidingView, Platform,
+  ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import {
-  CustomCategory, Expense, Income,
+  CustomCategory, Expense, Income, RecurrenceFrequency,
   getCurrentMonthKey, addExpenses, addIncomes,
 } from '@/lib/storage';
+import { scheduleRecurringReminder } from '@/lib/notifications';
 
 interface Props {
   visible: boolean;
@@ -26,6 +27,8 @@ export default function QuickEntryModal({ visible, categories, onSave, onClose }
   const [description, setDescription] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<RecurrenceFrequency>('monthly');
 
   useEffect(() => {
     if (!visible) {
@@ -34,6 +37,8 @@ export default function QuickEntryModal({ visible, categories, onSave, onClose }
       setDescription('');
       setSelectedCategoryId(null);
       setSaving(false);
+      setIsRecurring(false);
+      setFrequency('monthly');
     }
   }, [visible]);
 
@@ -59,14 +64,21 @@ export default function QuickEntryModal({ visible, categories, onSave, onClose }
     try {
       if (type === 'gasto') {
         const catName = categories.find(c => c.id === selectedCategoryId)?.name ?? 'Gasto';
+        const expenseName = description.trim() || catName;
+        const notificationId = isRecurring
+          ? await scheduleRecurringReminder(expenseName, frequency, new Date())
+          : undefined;
         const expense: Expense = {
           id: `exp_${Date.now()}`,
-          name: description.trim() || catName,
+          name: expenseName,
           amount: finalAmount,
           categoryId: selectedCategoryId!,
           quincena,
           createdAt: now,
           monthKey,
+          isRecurring: isRecurring || undefined,
+          recurrenceFrequency: isRecurring ? frequency : undefined,
+          notificationId,
         };
         await addExpenses(monthKey, [expense]);
       } else {
@@ -165,6 +177,21 @@ export default function QuickEntryModal({ visible, categories, onSave, onClose }
       borderRadius: 16, alignItems: 'center',
     },
     saveBtnText: { color: '#fff', fontWeight: '800', fontSize: FONT.base },
+    recurringRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4, marginBottom: 14,
+      backgroundColor: COLORS.card2, borderRadius: 12, padding: 12,
+      borderWidth: 1, borderColor: COLORS.border,
+    },
+    recurringLabel: { color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
+    recurringCaption: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+    freqRow: { flexDirection: 'row', gap: 8, marginTop: -6, marginBottom: 14 },
+    freqBtn: {
+      flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center',
+      borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,
+    },
+    freqBtnActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryBg },
+    freqBtnText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
+    freqBtnTextActive: { color: COLORS.primary },
   }), [COLORS]);
 
   const isGasto = type === 'gasto';
@@ -237,6 +264,39 @@ export default function QuickEntryModal({ visible, categories, onSave, onClose }
             placeholderTextColor={COLORS.textDim}
             returnKeyType="done"
           />
+
+          {/* Gasto recurrente */}
+          {isGasto && (
+            <>
+              <View style={styles.recurringRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.recurringLabel}>Gasto recurrente</Text>
+                  <Text style={styles.recurringCaption}>Recibirás un recordatorio automático</Text>
+                </View>
+                <Switch
+                  value={isRecurring}
+                  onValueChange={setIsRecurring}
+                  trackColor={{ false: COLORS.border, true: COLORS.primary + '88' }}
+                  thumbColor={isRecurring ? COLORS.primary : COLORS.textDim}
+                />
+              </View>
+              {isRecurring && (
+                <View style={styles.freqRow}>
+                  {(['weekly', 'monthly'] as const).map(f => (
+                    <TouchableOpacity
+                      key={f}
+                      onPress={() => setFrequency(f)}
+                      style={[styles.freqBtn, frequency === f && styles.freqBtnActive]}
+                    >
+                      <Text style={[styles.freqBtnText, frequency === f && styles.freqBtnTextActive]}>
+                        {f === 'weekly' ? 'Semanal' : 'Mensual'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </>
+          )}
 
           {/* Category grid */}
           {isGasto && (

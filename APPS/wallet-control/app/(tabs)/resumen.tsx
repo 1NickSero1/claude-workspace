@@ -45,6 +45,8 @@ export default function ResumenScreen() {
   const [categories, setCategories] = useState<CustomCategory[]>([]);
   const [cards, setCards]           = useState<Card[]>([]);
   const [goals, setGoals]           = useState<Goal[]>([]);
+  const [budget, setBudget]         = useState<number | null>(null);
+  const [budgetModal, setBudgetModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [catModal, setCatModal]     = useState(false);
   const [editingCat, setEditingCat] = useState<CustomCategory | null>(null);
@@ -98,7 +100,20 @@ export default function ResumenScreen() {
     setCategories(cats);
     setCards(c);
     setGoals(gs);
+    setBudget(d.budget);
+
+    if (d.budget && d.budget > 0) {
+      const notified = d.budgetNotified ?? 0;
+      const newNotified = await checkBudgetThreshold(sumExpenses(d.expenses), d.budget, notified);
+      if (newNotified !== notified) await saveBudgetNotified(monthKey, newNotified);
+    }
   }, [monthKey]);
+
+  const handleSaveBudget = async (amount: number) => {
+    await saveBudget(monthKey, amount);
+    setBudgetModal(false);
+    await load();
+  };
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -257,6 +272,7 @@ export default function ResumenScreen() {
     heroGoalsStats: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 5, paddingLeft: 64 },
     heroGoalsSaved: { color: COLORS.debit, fontSize: 11, fontWeight: '700' },
     heroGoalsOf: { color: COLORS.textMuted, fontSize: 11 },
+    budgetWrap: { marginHorizontal: 16, marginBottom: 20 },
     summaryRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 12, marginBottom: 24 },
     summaryCard: { flex: 1, borderRadius: 18, padding: 16, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6 },
     summaryCardTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
@@ -517,6 +533,20 @@ export default function ResumenScreen() {
             <View style={[styles.dot, activeDot === 1 && styles.dotActive]} />
             <View style={[styles.dot, activeDot === 2 && styles.dotActive]} />
           </View>
+        </View>
+
+        {/* ── Presupuesto mensual ──────────────────────── */}
+        <View style={styles.budgetWrap}>
+          {budget && budget > 0 ? (
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setBudgetModal(true)}>
+              <BudgetProgressBar budget={budget} spent={totalSpent} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => setBudgetModal(true)} style={styles.emptyGoal}>
+              <Ionicons name="wallet-outline" size={28} color={COLORS.textDim} />
+              <Text style={styles.emptyGoalText}>Configura tu presupuesto mensual</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ── Patrimonio Neto ──────────────────────────── */}
@@ -1020,6 +1050,13 @@ export default function ResumenScreen() {
         onClose={() => setQuickEntry(false)}
       />
 
+      <BudgetFormModal
+        visible={budgetModal}
+        budget={budget}
+        onSave={handleSaveBudget}
+        onClose={() => setBudgetModal(false)}
+      />
+
       {/* FAB */}
       <View style={styles.fabContainer}>
         <TouchableOpacity style={styles.fab} onPress={() => setRegistrarSheet(true)} activeOpacity={0.85}>
@@ -1134,6 +1171,7 @@ function CategoryDetailModal({ visible, cat, expenses, cards, monthKey, onRefres
     Alert.alert('Eliminar gasto', `¿Eliminar "${e.name}"?`, [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Eliminar', style: 'destructive', onPress: async () => {
+        await cancelNotification(e.notificationId);
         await deleteExpense(monthKey, e.id);
         await onRefresh();
       }},
