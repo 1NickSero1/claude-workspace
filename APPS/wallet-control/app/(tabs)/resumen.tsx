@@ -12,11 +12,12 @@ import {
   getGoals, saveGoal, deleteGoal, addGoalDeposit, deleteGoalDeposit,
   addExpenses, updateExpense, deleteExpense, saveBudget, saveBudgetNotified,
   getCurrentMonthKey, formatMonthLabel, getUserProfile,
+  getPreviousMonthKey, getShowBalanceNotification, computeNetWorth,
   CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile,
   getCardTotalSpent, sumIncomes,
 } from '@/lib/storage';
 import { sumExpenses, formatCOP, formatThousands } from '@/lib/expenseParser';
-import { checkBudgetThreshold, cancelNotification } from '@/lib/notifications';
+import { checkBudgetThreshold, cancelNotification, updateBalanceNotification } from '@/lib/notifications';
 import CategoryFormModal from '@/components/CategoryFormModal';
 import DonutChart, { DonutSlice } from '@/components/DonutChart';
 import QuickEntryModal from '@/components/QuickEntryModal';
@@ -51,6 +52,7 @@ export default function ResumenScreen() {
   const [budget, setBudget]         = useState<number | null>(null);
   const [budgetModal, setBudgetModal] = useState(false);
   const [profile, setProfile]       = useState<UserProfile | null>(null);
+  const [prevExpenses, setPrevExpenses] = useState<Expense[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [catModal, setCatModal]     = useState(false);
   const [editingCat, setEditingCat] = useState<CustomCategory | null>(null);
@@ -113,10 +115,12 @@ export default function ResumenScreen() {
   };
 
   const monthKey = getCurrentMonthKey();
+  const prevMonthKey = getPreviousMonthKey(monthKey);
 
   const load = useCallback(async () => {
-    const [d, cats, c, gs, p] = await Promise.all([
+    const [d, cats, c, gs, p, prevData] = await Promise.all([
       getMonthData(monthKey), getCategories(), getCards(), getGoals(), getUserProfile(),
+      getMonthData(prevMonthKey),
     ]);
     setExpenses(d.expenses);
     setIncomes(d.incomes);
@@ -125,13 +129,19 @@ export default function ResumenScreen() {
     setGoals(gs);
     setProfile(p);
     setBudget(d.budget);
+    setPrevExpenses(prevData.expenses);
 
     if (d.budget && d.budget > 0) {
       const notified = d.budgetNotified ?? 0;
       const newNotified = await checkBudgetThreshold(sumExpenses(d.expenses), d.budget, notified);
       if (newNotified !== notified) await saveBudgetNotified(monthKey, newNotified);
     }
-  }, [monthKey]);
+
+    if (await getShowBalanceNotification()) {
+      const { patrimonioNeto } = computeNetWorth(d.expenses, c);
+      await updateBalanceNotification(patrimonioNeto);
+    }
+  }, [monthKey, prevMonthKey]);
 
   const handleSaveBudget = async (amount: number) => {
     await saveBudget(monthKey, amount);
@@ -193,6 +203,10 @@ export default function ResumenScreen() {
   const totalActivos   = debitAvailable + cashAvailable;
   const totalPasivos   = creditSpent + debtTotal;
   const patrimonioNeto = totalActivos - totalPasivos;
+
+  const prevTotalSpent = sumExpenses(prevExpenses);
+  const hasPrevData    = prevTotalSpent > 0;
+  const spentDiffPct   = hasPrevData ? Math.round(((totalSpent - prevTotalSpent) / prevTotalSpent) * 100) : null;
 
   const totalSaved     = goals.reduce((s, g) => s + g.savedAmount, 0);
   const totalTarget    = goals.reduce((s, g) => s + g.targetAmount, 0);
