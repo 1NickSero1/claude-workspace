@@ -12,8 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-mueve el pills de presupuesto mensual para la seccion de los diagrama de torta
-en el pill de patrimonio neto cambia el nombree por "balance general" y has el desplazable hacia la derecha donde muestre el balance general del mes anterior reemplazalo la pills de vs mes anterior
+  — (vacío por ahora)
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
@@ -41,6 +40,21 @@ en el pill de patrimonio neto cambia el nombree por "balance general" y has el d
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX de pendientes "por MI", 5ta ronda (PECAS, 2026-07-06)
+    → "Presupuesto mensual" se movió de su propia tarjeta a dentro del
+      heroCard (sección de los diagramas de torta), justo debajo de los
+      puntos de paginación del slider de donuts.
+    → "Patrimonio Neto" renombrado a "Balance General" en toda la app
+      (card de Resumen, modal de detalle, notificación de saldo en
+      Perfil/lib/notifications.ts). La card ahora es un slider de 2
+      slides: mes actual (toca → modal de detalle de activos/pasivos,
+      como antes) y mes anterior (toca → popup de tendencia), reemplazando
+      la tarjeta separada "vs. mes anterior" que existía debajo. El mes
+      anterior es una aproximación: usa los gastos de ese mes contra los
+      saldos ACTUALES de las cuentas, porque Card.balance/limit no guarda
+      historial mes a mes — está bien para ver la tendencia, no es un
+      corte contable exacto de cómo estaban las cuentas en ese momento.
 
   ✓ MEJORAX de pendientes "por MI", 4ta ronda (PECAS, 2026-07-06)
     → Ejemplos de Finando (app/(tabs)/index.tsx) ahora priorizan el gasto
