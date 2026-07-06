@@ -370,6 +370,15 @@ export default function ResumenScreen() {
     quincenaCardSpent: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 8 },
     quincenaCardTrack: { height: 8, backgroundColor: COLORS.border, borderRadius: 4, overflow: 'hidden' },
     quincenaCardFill: { height: '100%', borderRadius: 4, backgroundColor: COLORS.primary },
+    gastosCard: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      marginHorizontal: 16, marginBottom: 24,
+      backgroundColor: COLORS.card, borderRadius: 16, padding: 16,
+      borderWidth: 1, borderColor: COLORS.border,
+    },
+    gastosCardIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: COLORS.creditBg, alignItems: 'center', justifyContent: 'center' },
+    gastosCardTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg },
+    gastosCardSub: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
     summaryRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 12, marginBottom: 24 },
     summaryCard: { flex: 1, borderRadius: 18, padding: 16, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6 },
     summaryCardTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
@@ -826,120 +835,19 @@ export default function ResumenScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── Categorías (grid estilo Monefy) ──────────── */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Categorías</Text>
-            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-              <View style={styles.viewToggle}>
-                <TouchableOpacity onPress={() => setCatView('grid')} style={[styles.viewToggleBtn, catView === 'grid' && styles.viewToggleBtnActive]}>
-                  <Ionicons name="grid" size={13} color={catView === 'grid' ? '#fff' : COLORS.textMuted} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setCatView('list')} style={[styles.viewToggleBtn, catView === 'list' && styles.viewToggleBtnActive]}>
-                  <Ionicons name="menu" size={13} color={catView === 'list' ? '#fff' : COLORS.textMuted} />
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity onPress={() => { setEditingCat(null); setCatModal(true); }} style={styles.sectionAddBtn}>
-                <Ionicons name="add" size={16} color={COLORS.primary} />
-              </TouchableOpacity>
-            </View>
+        {/* ── Gastos (entra a la pantalla de categorías) ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/categorias')} style={styles.gastosCard}>
+          <View style={styles.gastosCardIcon}>
+            <Ionicons name="pricetags" size={22} color={COLORS.credit} />
           </View>
-
-          {catRows.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="apps-outline" size={40} color={COLORS.textDim} />
-              <Text style={styles.emptyText}>Sin gastos este mes</Text>
-              <Text style={styles.emptyHint}>Toca + para registrar un gasto</Text>
-            </View>
-          ) : catView === 'grid' ? (
-            <View style={styles.catGrid}>
-              {catRows.map(({ cat, total: catTotal }) => {
-                const budget = cat.budget ?? 0;
-                const overBudget = budget > 0 && catTotal > budget;
-                return (
-                  <TouchableOpacity
-                    key={cat.id}
-                    style={[styles.catCell, overBudget && styles.catCellWarning]}
-                    onPress={() => openDetail(cat)}
-                    onLongPress={() =>
-                      Alert.alert(cat.name, '', [
-                        { text: 'Editar categoría', onPress: () => { setEditingCat(cat); setCatModal(true); } },
-                        ...(!cat.isDefault ? [{
-                          text: 'Eliminar', style: 'destructive' as const,
-                          onPress: () => handleDeleteCat(cat),
-                        }] : []),
-                        { text: 'Cancelar', style: 'cancel' },
-                      ])
-                    }
-                    activeOpacity={0.75}
-                  >
-                    <View style={[styles.catCellIcon, { backgroundColor: cat.color + '22' }]}>
-                      {cat.emoji
-                        ? <Text style={{ fontSize: 26 }}>{cat.emoji}</Text>
-                        : <Ionicons name={cat.icon as any} size={26} color={cat.color} />}
-                    </View>
-                    <Text style={styles.catCellName} numberOfLines={1}>{cat.name}</Text>
-                    <Text style={[styles.catCellAmt, { color: catTotal > 0 ? cat.color : COLORS.textDim }]}>
-                      {catTotal > 0 ? formatCOP(catTotal) : '$0'}
-                    </Text>
-                    {overBudget && (
-                      <View style={styles.catCellBadge}>
-                        <Ionicons name="warning" size={10} color="#fff" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          ) : (
-            <View style={styles.catList}>
-              {catRows.map(({ cat, total: catTotal }) => {
-                const budget = cat.budget ?? 0;
-                const overBudget = budget > 0 && catTotal > budget;
-                const pct = totalSpent > 0 ? Math.min((catTotal / totalSpent) * 100, 100) : 0;
-                return (
-                  <TouchableOpacity
-                    key={cat.id}
-                    style={[styles.catListRow, overBudget && styles.catCellWarning]}
-                    onPress={() => openDetail(cat)}
-                    onLongPress={() =>
-                      Alert.alert(cat.name, '', [
-                        { text: 'Editar categoría', onPress: () => { setEditingCat(cat); setCatModal(true); } },
-                        ...(!cat.isDefault ? [{
-                          text: 'Eliminar', style: 'destructive' as const,
-                          onPress: () => handleDeleteCat(cat),
-                        }] : []),
-                        { text: 'Cancelar', style: 'cancel' },
-                      ])
-                    }
-                    activeOpacity={0.78}
-                  >
-                    <View style={[styles.catListIcon, { backgroundColor: cat.color + '22' }]}>
-                      {cat.emoji
-                        ? <Text style={{ fontSize: 20 }}>{cat.emoji}</Text>
-                        : <Ionicons name={cat.icon as any} size={20} color={cat.color} />}
-                    </View>
-                    <View style={styles.catListBody}>
-                      <View style={styles.catListTopRow}>
-                        <Text style={styles.catListName} numberOfLines={1}>{cat.name}</Text>
-                        <Text style={[styles.catListAmt, { color: catTotal > 0 ? cat.color : COLORS.textDim }]}>
-                          {catTotal > 0 ? formatCOP(catTotal) : '$0'}
-                        </Text>
-                      </View>
-                      <View style={styles.catListTrack}>
-                        <View style={[styles.catListFill, { width: `${pct}%`, backgroundColor: cat.color }]} />
-                      </View>
-                      <Text style={styles.catListPct}>{Math.round(pct)}% del gasto total</Text>
-                    </View>
-                    {overBudget && (
-                      <Ionicons name="warning" size={14} color={COLORS.warning} style={{ marginLeft: 8 }} />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-        </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.gastosCardTitle}>Gastos</Text>
+            <Text style={styles.gastosCardSub}>
+              {catRows.filter(r => r.total > 0).length} categorías · {formatCOP(totalSpent)}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.textDim} />
+        </TouchableOpacity>
 
         {/* ── Metas de ahorro ───────────────────────────── */}
         <View style={[styles.section, { marginTop: 8 }]}>
