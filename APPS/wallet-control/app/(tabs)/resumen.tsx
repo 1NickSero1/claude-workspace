@@ -1051,7 +1051,7 @@ export default function ResumenScreen() {
             <TouchableOpacity style={[styles.helpOption, { backgroundColor: COLORS.debitBg }]} onPress={() => { setHelpSheet(false); handleExportBankStatement(); }}>
               <Text style={{ fontSize: 24 }}>🧾</Text>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.regOptionTitle, { color: COLORS.debit }]}>Extracto bancario</Text>
+                <Text style={[styles.regOptionTitle, { color: COLORS.debit }]}>Extracto de tu cuenta</Text>
                 <Text style={styles.regOptionSub}>Movimientos del mes, tipo estado de cuenta (PDF)</Text>
               </View>
               {exportingStatement && <ActivityIndicator size={16} color={COLORS.debit} />}

@@ -205,7 +205,7 @@ ${byCat.length > 0 ? `
 </html>`;
 }
 
-// ── Extracto bancario ─────────────────────────────────────────────────────────
+// ── Extracto de tu cuenta ────────────────────────────────────────────────────
 
 interface Movement {
   date: Date;
@@ -283,7 +283,7 @@ export function buildBankStatementHtml(
 </head>
 <body>
 
-${renderCoverHeader('Extracto Bancario', monthLabel, generatedAt)}
+${renderCoverHeader('Extracto de tu cuenta', monthLabel, generatedAt)}
 
 <div class="kpi-row">
   <div class="kpi">
@@ -313,7 +313,7 @@ ${renderCoverHeader('Extracto Bancario', monthLabel, generatedAt)}
 </table>
 
 <div class="footer">
-  <p>Wallet Control · Extracto Bancario · ${monthLabel}</p>
+  <p>Wallet Control · Extracto de tu cuenta · ${monthLabel}</p>
   <p>Datos almacenados localmente en tu dispositivo</p>
 </div>
 

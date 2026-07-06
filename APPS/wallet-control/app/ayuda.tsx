@@ -324,7 +324,7 @@ según la fecha en que los registres.</p>
   <tr><td>¿Mis datos van a la nube?</td><td>Tu perfil de cuenta sí, de forma segura. Tus tarjetas, gastos y metas quedan solo en este dispositivo (AsyncStorage)</td></tr>
   <tr><td>¿Necesita internet?</td><td>Solo para el chat con IA y para iniciar sesión. El resto funciona offline</td></tr>
   <tr><td>¿Qué pasa si desinstalo la app?</td><td>Tus tarjetas, gastos y metas se borran junto con la app. Tu cuenta (si creaste una) sigue disponible al reinstalar e iniciar sesión</td></tr>
-  <tr><td>¿Puedo hacer backup?</td><td>Sí — desde Resumen puedes exportar un extracto bancario en PDF con todos tus movimientos del mes, y un reporte financiero con tus gastos por categoría</td></tr>
+  <tr><td>¿Puedo hacer backup?</td><td>Sí — desde Resumen puedes exportar un extracto de tu cuenta en PDF con todos tus movimientos del mes, y un reporte financiero con tus gastos por categoría</td></tr>
   <tr><td>¿Necesito una contraseña?</td><td>Solo si creas una cuenta (para poder entrar desde otro dispositivo). El modo anónimo no la pide</td></tr>
 </table>
 
