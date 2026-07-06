@@ -31,6 +31,20 @@ COMANDO RÁPIDO:
 [RESUELTO]
 ------------------------------------------------------------
 
+  ✓ Notificaciones de presupuesto + gastos recurrentes (PECAS, 2026-07-06)
+    → lib/notifications.ts: helpers centralizados de expo-notifications
+      (checkBudgetThreshold, scheduleRecurringReminder, cancelNotification)
+    → storage.ts: Expense gana isRecurring/recurrenceFrequency/notificationId;
+      MonthData gana budgetNotified (watermark 0/80/100 para no repetir alertas)
+    → resumen.tsx: BudgetProgressBar montado (antes existía huérfano, sin usar)
+      + BudgetFormModal nuevo para fijar el presupuesto mensual; al tocar la
+      barra o el estado vacío se abre el modal; load() revisa el umbral en
+      cada carga y dispara notificación local al 80% y al 100%
+    → QuickEntryModal: toggle "Gasto recurrente" (semanal/mensual) al
+      registrar un gasto; agenda recordatorio a las 9AM con trigger WEEKLY/
+      MONTHLY de expo-notifications; se cancela automáticamente al borrar
+      el gasto desde CategoryDetailModal
+
   ✓ Selector de emoji: recomendados al tocar el círculo (MEJORAX, 2do ajuste)
     → Limitación confirmada con el usuario: no existe API en Android/iOS para
       forzar que se abra el panel de emojis del teclado nativo directamente

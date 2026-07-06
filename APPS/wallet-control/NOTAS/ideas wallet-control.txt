@@ -22,11 +22,6 @@ ALTA PRIORIDAD (versión 1.0)
     — Generar APK con EAS Build para no depender de Expo Go
     — Compartir sin servidor de desarrollo
 
-[ ] Notificaciones de presupuesto
-    — Alerta al 80% del presupuesto mensual
-    — Alerta al 100% (presupuesto agotado)
-    — Usar expo-notifications (local, sin servidor)
-
 [ ] Widget de saldo rápido
     — Widget de pantalla de inicio con saldo disponible
     — Actualizado cada vez que se abre la app
@@ -46,10 +41,6 @@ MEDIA PRIORIDAD (v1.1)
 [ ] Búsqueda de gastos
     — Buscador por nombre/descripción en historial
     — Filtro por categoría y rango de fechas
-
-[ ] Gastos recurrentes
-    — Marcar un gasto como recurrente (mensual, semanal)
-    — Recordatorio automático cuando se acerca la fecha
 
 [ ] Comparativa mes a mes
     — Card en Resumen con "vs mes anterior"
