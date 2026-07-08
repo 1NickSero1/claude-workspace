@@ -127,6 +127,8 @@ export default function CategoryFormModal({ visible, category, onSave, onClose }
                   key={e}
                   onPress={() => setEmoji(e)}
                   style={[styles.emojiBtn, emoji === e && styles.emojiBtnSelected]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Elegir emoji ${e}`}
                 >
                   <Text style={styles.emojiText}>{e}</Text>
                 </TouchableOpacity>

@@ -418,6 +418,8 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
                   onPress={() => set('color', c)}
                   style={[styles.colorDot, { backgroundColor: c },
                           form.color === c && styles.colorDotSelected]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Elegir color de tarjeta"
                 />
               ))}
             </View>

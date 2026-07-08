@@ -493,7 +493,12 @@ export default function OnboardingScreen() {
   if (step === 'welcome') {
     return (
       <SafeAreaView style={styles.safe}>
-        <TouchableOpacity onPress={toggleTheme} style={styles.themeToggleBtn}>
+        <TouchableOpacity
+          onPress={toggleTheme}
+          style={styles.themeToggleBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Cambiar tema"
+        >
           <Ionicons name={isDark ? 'sunny' : 'moon'} size={20} color={COLORS.primary} />
         </TouchableOpacity>
 
@@ -548,7 +553,12 @@ export default function OnboardingScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.choiceContainer} showsVerticalScrollIndicator={false}>
-          <TouchableOpacity onPress={() => setStep('welcome')} style={styles.backBtn}>
+          <TouchableOpacity
+            onPress={() => setStep('welcome')}
+            style={styles.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
+          >
             <Ionicons name="arrow-back" size={20} color={COLORS.text} />
           </TouchableOpacity>
 
@@ -601,7 +611,12 @@ export default function OnboardingScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <ScrollView contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
-            <TouchableOpacity onPress={() => setStep('choice')} style={styles.backBtn}>
+            <TouchableOpacity
+              onPress={() => setStep('choice')}
+              style={styles.backBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Volver"
+            >
               <Ionicons name="arrow-back" size={20} color={COLORS.text} />
             </TouchableOpacity>
 
@@ -628,7 +643,12 @@ export default function OnboardingScreen() {
                 placeholderTextColor={COLORS.textDim}
                 secureTextEntry={!showLoginPassword}
               />
-              <TouchableOpacity onPress={() => setShowLoginPassword(v => !v)} style={styles.inputIcon}>
+              <TouchableOpacity
+                onPress={() => setShowLoginPassword(v => !v)}
+                style={styles.inputIcon}
+                accessibilityRole="button"
+                accessibilityLabel={showLoginPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
                 <Ionicons name={showLoginPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={COLORS.textMuted} />
               </TouchableOpacity>
             </View>
@@ -757,7 +777,12 @@ export default function OnboardingScreen() {
                 placeholderTextColor={COLORS.textDim}
                 keyboardType="number-pad"
               />
-              <TouchableOpacity onPress={addFixedExpenseItem} style={styles.addBtn}>
+              <TouchableOpacity
+                onPress={addFixedExpenseItem}
+                style={styles.addBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Agregar gasto fijo"
+              >
                 <Ionicons name="add" size={22} color="#fff" />
               </TouchableOpacity>
             </View>
@@ -770,7 +795,12 @@ export default function OnboardingScreen() {
                       <Text style={styles.expenseItemName}>{item.name}</Text>
                       <Text style={styles.expenseItemAmount}>${formatThousands(item.amount)} COP/mes</Text>
                     </View>
-                    <TouchableOpacity onPress={() => removeFixedExpenseItem(i)} style={styles.expenseItemDelete}>
+                    <TouchableOpacity
+                      onPress={() => removeFixedExpenseItem(i)}
+                      style={styles.expenseItemDelete}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Eliminar ${item.name}`}
+                    >
                       <Ionicons name="trash-outline" size={16} color={COLORS.credit} />
                     </TouchableOpacity>
                   </View>
@@ -826,7 +856,12 @@ export default function OnboardingScreen() {
       >
         <ScrollView contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
           {/* Back */}
-          <TouchableOpacity onPress={() => setStep('choice')} style={styles.backBtn}>
+          <TouchableOpacity
+            onPress={() => setStep('choice')}
+            style={styles.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
+          >
             <Ionicons name="arrow-back" size={20} color={COLORS.text} />
           </TouchableOpacity>
 
@@ -839,6 +874,8 @@ export default function OnboardingScreen() {
               activeOpacity={0.8}
               onPress={() => setShowEmojiSuggestions(v => !v)}
               style={[styles.avatarPreview, { backgroundColor: avatarColor }]}
+              accessibilityRole="button"
+              accessibilityLabel="Cambiar avatar"
             >
               <Text style={styles.avatarInitials}>{avatarGlyph}</Text>
             </TouchableOpacity>
@@ -850,6 +887,8 @@ export default function OnboardingScreen() {
                     key={e}
                     onPress={() => { setAvatarEmoji(e); setShowEmojiSuggestions(false); }}
                     style={[styles.emojiSuggestBtn, avatarEmoji === e && styles.emojiSuggestBtnSelected]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Elegir avatar ${e}`}
                   >
                     <Text style={styles.emojiSuggestText}>{e}</Text>
                   </TouchableOpacity>
@@ -857,6 +896,8 @@ export default function OnboardingScreen() {
                 <TouchableOpacity
                   onPress={() => { setShowEmojiSuggestions(false); emojiInputRef.current?.focus(); }}
                   style={styles.emojiSuggestBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Escribir emoji personalizado"
                 >
                   <Ionicons name="create-outline" size={20} color={COLORS.textMuted} />
                 </TouchableOpacity>
@@ -878,6 +919,8 @@ export default function OnboardingScreen() {
                   onPress={() => setAvatarColor(c)}
                   style={[styles.colorDot, { backgroundColor: c },
                           avatarColor === c && styles.colorDotSelected]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Elegir color de avatar"
                 />
               ))}
             </View>
@@ -927,7 +970,12 @@ export default function OnboardingScreen() {
               placeholderTextColor={COLORS.textDim}
               secureTextEntry={!showPassword}
             />
-            <TouchableOpacity onPress={() => setShowPassword(v => !v)} style={styles.inputIcon}>
+            <TouchableOpacity
+              onPress={() => setShowPassword(v => !v)}
+              style={styles.inputIcon}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            >
               <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={COLORS.textMuted} />
             </TouchableOpacity>
           </View>

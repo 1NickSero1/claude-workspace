@@ -364,7 +364,12 @@ export default function ChatScreen() {
           <Ionicons name="analytics-outline" size={16} color={COLORS.primary} />
           <Text style={styles.analysisBtnText}>Analizar</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/ayuda')} style={styles.helpBtn}>
+        <TouchableOpacity
+          onPress={() => router.push('/ayuda')}
+          style={styles.helpBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Ayuda"
+        >
           <Ionicons name="help-circle-outline" size={22} color={COLORS.textMuted} />
         </TouchableOpacity>
       </View>
@@ -421,6 +426,8 @@ export default function ChatScreen() {
             disabled={loading || !input.trim()}
             style={[styles.sendBtn, (!input.trim() || loading) && styles.sendOff]}
             activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel="Enviar mensaje"
           >
             <Ionicons name="arrow-up" size={18} color="#fff" />
           </TouchableOpacity>

@@ -130,7 +130,12 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
           {/* Header */}
           <View style={dStyles.header}>
             {mode !== 'list' ? (
-              <TouchableOpacity onPress={reset} style={dStyles.backBtn}>
+              <TouchableOpacity
+                onPress={reset}
+                style={dStyles.backBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Volver"
+              >
                 <Ionicons name="arrow-back" size={20} color={COLORS.text} />
               </TouchableOpacity>
             ) : (
@@ -146,7 +151,12 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
               {mode === 'add' && <Text style={dStyles.catTotal}>Agregar gasto</Text>}
               {mode === 'edit' && <Text style={dStyles.catTotal}>Editar gasto</Text>}
             </View>
-            <TouchableOpacity onPress={() => { reset(); onClose(); }} style={dStyles.closeBtn}>
+            <TouchableOpacity
+              onPress={() => { reset(); onClose(); }}
+              style={dStyles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar"
+            >
               <Ionicons name="close" size={20} color={COLORS.textMuted} />
             </TouchableOpacity>
           </View>
@@ -173,10 +183,20 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
                           </Text>
                         </View>
                         <Text style={dStyles.expAmt}>{formatCOP(e.amount)}</Text>
-                        <TouchableOpacity onPress={() => startEdit(e)} style={dStyles.editBtn}>
+                        <TouchableOpacity
+                          onPress={() => startEdit(e)}
+                          style={dStyles.editBtn}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Editar ${e.name}`}
+                        >
                           <Ionicons name="pencil" size={14} color={COLORS.primary} />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleDelete(e)} style={dStyles.deleteBtn}>
+                        <TouchableOpacity
+                          onPress={() => handleDelete(e)}
+                          style={dStyles.deleteBtn}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Eliminar ${e.name}`}
+                        >
                           <Ionicons name="trash-outline" size={14} color={COLORS.danger} />
                         </TouchableOpacity>
                       </View>

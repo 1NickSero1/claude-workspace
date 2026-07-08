@@ -208,7 +208,12 @@ export default function QuickEntryModal({ visible, categories, onSave, onClose }
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Registrar</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar"
+            >
               <Ionicons name="close" size={20} color={COLORS.textMuted} />
             </TouchableOpacity>
           </View>

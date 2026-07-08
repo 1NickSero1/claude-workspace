@@ -566,7 +566,12 @@ export default function ResumenScreen() {
           ))}
         </ScrollView>
         <View style={styles.headerRight}>
-          <TouchableOpacity onPress={() => setHelpSheet(true)} style={styles.headerBtn}>
+          <TouchableOpacity
+            onPress={() => setHelpSheet(true)}
+            style={styles.headerBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Ayuda"
+          >
             <Text style={styles.headerBtnEmoji}>❓</Text>
           </TouchableOpacity>
         </View>
@@ -895,7 +900,12 @@ export default function ResumenScreen() {
         <View style={[styles.section, { marginTop: 8 }]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Metas de ahorro</Text>
-            <TouchableOpacity onPress={() => { setEditingGoal(null); setGoalModal(true); }} style={styles.sectionAddBtn}>
+            <TouchableOpacity
+              onPress={() => { setEditingGoal(null); setGoalModal(true); }}
+              style={styles.sectionAddBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Agregar meta de ahorro"
+            >
               <Ionicons name="add" size={16} color={COLORS.primary} />
             </TouchableOpacity>
           </View>
@@ -1425,7 +1435,13 @@ export default function ResumenScreen() {
 
       {/* FAB */}
       <View style={styles.fabContainer}>
-        <TouchableOpacity style={styles.fab} onPress={() => setRegistrarSheet(true)} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setRegistrarSheet(true)}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Registrar gasto o ingreso"
+        >
           <Ionicons name="add" size={30} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.fabLabel}>Registrar</Text>
@@ -1540,7 +1556,12 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
                 {formatCOP(goal?.savedAmount ?? 0)} de {formatCOP(goal?.targetAmount ?? 0)}
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={gdStyles.closeBtn}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={gdStyles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar"
+            >
               <Text style={{ fontSize: 18 }}>✕</Text>
             </TouchableOpacity>
           </View>

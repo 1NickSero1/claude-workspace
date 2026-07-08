@@ -107,20 +107,40 @@ export default function CategoriasScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+        >
           <Ionicons name="arrow-back" size={20} color={COLORS.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Categorías</Text>
         <View style={styles.headerRight}>
           <View style={styles.viewToggle}>
-            <TouchableOpacity onPress={() => setCatView('grid')} style={[styles.viewToggleBtn, catView === 'grid' && styles.viewToggleBtnActive]}>
+            <TouchableOpacity
+              onPress={() => setCatView('grid')}
+              style={[styles.viewToggleBtn, catView === 'grid' && styles.viewToggleBtnActive]}
+              accessibilityRole="button"
+              accessibilityLabel="Ver como cuadrícula"
+            >
               <Ionicons name="grid" size={14} color={catView === 'grid' ? '#fff' : COLORS.textMuted} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setCatView('list')} style={[styles.viewToggleBtn, catView === 'list' && styles.viewToggleBtnActive]}>
+            <TouchableOpacity
+              onPress={() => setCatView('list')}
+              style={[styles.viewToggleBtn, catView === 'list' && styles.viewToggleBtnActive]}
+              accessibilityRole="button"
+              accessibilityLabel="Ver como lista"
+            >
               <Ionicons name="menu" size={14} color={catView === 'list' ? '#fff' : COLORS.textMuted} />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => { setEditingCat(null); setCatModal(true); }} style={styles.addBtn}>
+          <TouchableOpacity
+            onPress={() => { setEditingCat(null); setCatModal(true); }}
+            style={styles.addBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Agregar categoría"
+          >
             <Ionicons name="add" size={18} color={COLORS.primary} />
           </TouchableOpacity>
         </View>

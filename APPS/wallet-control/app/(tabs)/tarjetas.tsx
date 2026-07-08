@@ -767,7 +767,13 @@ export default function TarjetasScreen() {
                             </View>
                           ))}
                           {actionExpenses.map(e => (
-                            <TouchableOpacity key={`exp-${e.id}`} style={actStyles.histRow} onPress={() => openExpenseEdit(e)}>
+                            <TouchableOpacity
+                              key={`exp-${e.id}`}
+                              style={actStyles.histRow}
+                              onPress={() => openExpenseEdit(e)}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Editar gasto ${e.name}`}
+                            >
                               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: getCatColor(e.categoryId) }} />
                               <Text style={actStyles.histLabel}>{e.name}</Text>
                               <Text style={[actStyles.histAmt, { color: getCatColor(e.categoryId) }]}>

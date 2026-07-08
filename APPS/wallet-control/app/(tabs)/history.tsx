@@ -174,7 +174,12 @@ export default function HistoryScreen() {
           <Text style={styles.headerTitle}>Historial</Text>
           <Text style={styles.headerSub}>Todos tus meses</Text>
         </View>
-        <TouchableOpacity onPress={() => router.push('/busqueda')} style={styles.searchBtn}>
+        <TouchableOpacity
+          onPress={() => router.push('/busqueda')}
+          style={styles.searchBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Buscar"
+        >
           <Ionicons name="search" size={18} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
