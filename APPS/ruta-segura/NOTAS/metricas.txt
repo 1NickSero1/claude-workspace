@@ -324,3 +324,20 @@ MÉTRICAS DE USO / KPIs
   - Estado con más usuarios
 
 ========================================
+  COPYRIGHT / AUTORÍA DEL CÓDIGO (2026-07-08)
+========================================
+
+→ Todo el código de esta app fue desarrollado y auditado por Nicolas Seguro (nickname: NickSero).
+→ Regla: mantener una atribución sutil de autoría en el código fuente, sin interferir con la
+  marca visible de la app (que siempre es Ana Laverde / Ana's Immigration Solutions).
+
+Dónde debe vivir esta atribución:
+  1. package.json → campo "author": "Nicolas Seguro (NickSero)"
+  2. Comentario de cabecera en App.js:
+     // ruta-segura — desarrollado y auditado por Nicolas Seguro (@NickSero) · © 2026
+  3. Marca visual sutil en la app: un indicador "N" pequeño (círculo ~14px, opacidad baja
+     ~0.3-0.4) en la esquina opuesta al watermark de Ana Laverde — nunca reemplazando ni
+     modificando su marca, solo como firma discreta adicional.
+
+
+
