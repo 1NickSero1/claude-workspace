@@ -305,7 +305,7 @@ EMOJIS CON SIGNIFICADO FIJO — NO CAMBIAR
   🎀  →  Emergencias / Violencia de género
   ⚖️  →  Legal
   👥  →  Comunidad
-  🍽️  →  Alimentación
+  👨‍⚖️  →  Alimentación
   📖  →  Social
   🆘  →  Botón SOS
   📍  →  Estado / ubicación
