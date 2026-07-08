@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Modal, View, Text, TextInput, TouchableOpacity,
-  ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Switch,
+  ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Switch, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
@@ -101,6 +101,11 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
             },
             trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueDate },
           });
+        } else {
+          Alert.alert(
+            'Notificaciones desactivadas',
+            'No podremos recordarte el vencimiento porque las notificaciones están desactivadas para Wallet Control. Actívalas desde los ajustes del sistema para que el recordatorio funcione.',
+          );
         }
       }
     }
