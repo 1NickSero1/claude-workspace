@@ -2,7 +2,7 @@
   "expo": {
     "name": "Ruta Segura",
     "slug": "ruta-segura",
-    "version": "1.0.0",
+    "version": "0.9.0",
     "scheme": "rutasegura",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,7 +20,6 @@
     },
     "android": {
       "package": "com.rutasegura.app",
-      "minSdkVersion": 24,
       "adaptiveIcon": {
         "backgroundColor": "#4A0E6E",
         "foregroundImage": "./assets/android-icon-foreground.png",

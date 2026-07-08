@@ -1,6 +1,6 @@
 {
   "name": "ruta-segura",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "main": "index.js",
   "dependencies": {
     "@expo/ngrok": "^4.1.0",
