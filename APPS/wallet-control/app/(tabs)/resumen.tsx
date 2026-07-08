@@ -84,7 +84,7 @@ export default function ResumenScreen() {
   const [metasModal, setMetasModal]         = useState(false);
   const [ingresosModal, setIngresosModal]   = useState(false);
   const [pendingModal, setPendingModal]     = useState(false);
-  const [trendModal, setTrendModal]         = useState(false);
+  const [prevPatrimonioModal, setPrevPatrimonioModal] = useState(false);
   const [activeDot, setActiveDot]           = useState(0);
   const [balanceDot, setBalanceDot]         = useState(1);
   const [viewedQuincena, setViewedQuincena] = useState<1 | 2>(() => (new Date().getDate() <= 15 ? 1 : 2));
@@ -279,6 +279,17 @@ export default function ResumenScreen() {
     ...cards.filter(c => c.type === 'debt').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💸', color: c.color, type: c.type, value: c.balance ?? 0 })),
   ];
 
+  // Mismo desglose que activoItems/pasivoItems, pero con el snapshot del mes anterior.
+  const prevCardsForBreakdown = prevCards ?? cards;
+  const prevActivoItems = [
+    ...prevCardsForBreakdown.filter(c => c.type === 'debit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '🏦', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardTotalSpent(prevExpenses, c.id), 0) })),
+    ...prevCardsForBreakdown.filter(c => c.type === 'cash').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💵', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardTotalSpent(prevExpenses, c.id), 0) })),
+  ];
+  const prevPasivoItems = [
+    ...prevCardsForBreakdown.filter(c => c.type === 'credit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💳', color: c.color, type: c.type, value: getCardTotalSpent(prevExpenses, c.id) })),
+    ...prevCardsForBreakdown.filter(c => c.type === 'debt').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💸', color: c.color, type: c.type, value: c.balance ?? 0 })),
+  ];
+
   const goalsDonutData: DonutSlice[] = goals
     .filter(g => g.savedAmount > 0 && g.targetAmount > 0)
     .map(g => ({ id: g.id, color: g.color, amount: g.savedAmount }));
@@ -292,23 +303,6 @@ export default function ResumenScreen() {
   const balanceItems = balanceFilter === 'all' ? balanceItemsAll : balanceItemsAll.filter(it => it.type === balanceFilter);
   const balanceDonutData: DonutSlice[] = balanceItems.map(it => ({ id: it.id, color: it.color, amount: it.value }));
   const totalBalance = balanceItems.reduce((s, it) => s + it.value, 0);
-
-  // ── Tendencia últimos 2 meses (popup de "vs. mes anterior") ───────────────
-  const prevTotalIncome = sumIncomes(prevIncomes);
-  const trendPoints = [
-    {
-      label: shortMonthLabel(prevMonthKey),
-      ingresos: Math.round(prevTotalIncome / 1000),
-      gastos: Math.round(prevTotalSpent / 1000),
-      ahorro: Math.max(0, Math.round((prevTotalIncome - prevTotalSpent) / 1000)),
-    },
-    {
-      label: shortMonthLabel(monthKey),
-      ingresos: Math.round(totalIncome / 1000),
-      gastos: Math.round(totalSpent / 1000),
-      ahorro: Math.max(0, Math.round(savings / 1000)),
-    },
-  ];
 
   // ── Categorías fijas pendientes por pagar en el periodo activo ────────────
   // Se compara contra los gastos recurrentes ya registrados alguna vez

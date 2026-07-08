@@ -493,6 +493,16 @@ export async function searchExpenses(
   return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+export async function getCategoryIdsWithExpenses(): Promise<Set<string>> {
+  const keys = await getAllMonthKeys();
+  const allData = await Promise.all(keys.map(k => getMonthData(k)));
+  const ids = new Set<string>();
+  for (const data of allData) {
+    for (const e of data.expenses) ids.add(e.categoryId);
+  }
+  return ids;
+}
+
 export interface RecurringTemplate {
   name: string;
   categoryId: string;

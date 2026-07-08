@@ -2,6 +2,7 @@ import { useFonts } from 'expo-font';
 import { Stack, router } from 'expo-router';
 import { DefaultTheme, DarkTheme, ThemeProvider } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
@@ -18,6 +19,17 @@ export const unstable_settings = {
 };
 
 SplashScreen.preventAutoHideAsync();
+
+// Sin esto, expo-notifications no muestra notificaciones locales mientras la
+// app está en primer plano (p. ej. al activar el toggle de saldo y entrar a Resumen).
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 const LightNavTheme = {
   ...DefaultTheme,

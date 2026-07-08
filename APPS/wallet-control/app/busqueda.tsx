@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { getCategories, searchExpenses, CustomCategory, Expense } from '@/lib/storage';
+import { getCategories, getCategoryIdsWithExpenses, searchExpenses, CustomCategory, Expense } from '@/lib/storage';
 import { formatCOP } from '@/lib/expenseParser';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
@@ -34,7 +34,11 @@ export default function BusquedaScreen() {
   const [results, setResults]       = useState<Expense[]>([]);
   const [loading, setLoading]       = useState(false);
 
-  useEffect(() => { getCategories().then(setCategories); }, []);
+  useEffect(() => {
+    Promise.all([getCategories(), getCategoryIdsWithExpenses()]).then(([cats, usedIds]) => {
+      setCategories(cats.filter(c => usedIds.has(c.id)));
+    });
+  }, []);
 
   const runSearch = useCallback(async () => {
     setLoading(true);
