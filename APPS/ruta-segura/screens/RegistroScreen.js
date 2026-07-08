@@ -290,6 +290,7 @@ const styles = StyleSheet.create({
   },
   inputText: { fontSize: 16, color: '#1a1a2e' },
   placeholder: { fontSize: 16, color: '#aaa' },
+  errorText: { color: '#c0392b', fontSize: 12, marginTop: 6 },
   dropdown: {
     borderWidth: 1.5,
     borderColor: '#e0e0e0',
