@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
 const PAISES = ['México', 'Guatemala', 'Honduras', 'El Salvador', 'Colombia', 'Venezuela', 'Otro'];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegistroScreen({ navigation, route }) {
   const idioma = route?.params?.idioma || 'es';
@@ -15,8 +16,9 @@ export default function RegistroScreen({ navigation, route }) {
   const [paisOpen, setPaisOpen] = useState(false);
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
-  const puedeRegistrar = form.nombre && form.correo && form.pais && form.contrasena;
-  const puedeLogin = form.correo && form.contrasena;
+  const correoValido = EMAIL_REGEX.test(form.correo);
+  const puedeRegistrar = form.nombre && correoValido && form.pais && form.contrasena;
+  const puedeLogin = correoValido && form.contrasena;
 
   const irASiguiente = (nombre) => navigation.navigate('Estado', { nombre, idioma });
 
@@ -142,6 +144,11 @@ export default function RegistroScreen({ navigation, route }) {
             value={form.correo}
             onChangeText={v => update('correo', v)}
           />
+          {form.correo.length > 0 && !correoValido && (
+            <Text style={styles.errorText}>
+              {es ? 'Ingresa un correo válido' : 'Enter a valid email'}
+            </Text>
+          )}
 
           {/* País — solo en registro */}
           {vista === 'registro' && (
