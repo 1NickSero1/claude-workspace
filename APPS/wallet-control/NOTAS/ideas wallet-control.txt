@@ -22,7 +22,11 @@ ALTA PRIORIDAD (versión 1.0)
 ------------------------------------------------------------
 MEDIA PRIORIDAD (v1.1)
 ------------------------------------------------------------
-  — (vacío por ahora)
+
+[ ] Mejorar notificación de saldo
+    — Confirmada funcionando (2026-07-07) pero se ve muy básica
+    — Explorar: ícono/color propio, formato más rico del cuerpo,
+      quizás desglose corto de activos/pasivos en vez de solo el neto
 
 ------------------------------------------------------------
 BAJA PRIORIDAD / FUTURO (v2.0)
