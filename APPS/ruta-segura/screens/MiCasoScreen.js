@@ -75,19 +75,6 @@ export default function MiCasoScreen({ navigation, route }) {
             textAlignVertical="top"
           />
 
-          {/* Adjuntos */}
-          <View style={styles.adjuntos}>
-            <TouchableOpacity style={styles.adjuntoBtn}>
-              <Text style={styles.adjuntoBtnText}>📷 Foto</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.adjuntoBtn}>
-              <Text style={styles.adjuntoBtnText}>🎤 Audio</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.adjuntoBtn}>
-              <Text style={styles.adjuntoBtnText}>📎 Archivo</Text>
-            </TouchableOpacity>
-          </View>
-
           {/* Toggle anónimo */}
           <View style={styles.anonimoRow}>
             <View style={{ flex: 1 }}>

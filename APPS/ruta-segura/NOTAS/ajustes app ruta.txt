@@ -14,6 +14,7 @@ quiero que lo complementes con el resumen que siempre das de la app, esta bueno 
 ya me dio el logo para poner de marca de agua entonces me dices para adjuntarlo y que lo cambies por la marca de agua pero sin quitar el nombre de ella
 en el screen de elige tu estado, en el apartado "otros estados" quiero que elimines los estados de arizona y colorado y agregues o rectifiques si estan: washinton, las vegas,boston y que unifiques carolina del sur y carolina del norte por CAROLINAS
 
+
 ------------------------------------------------------------
 [EN PROGRESO]
 ------------------------------------------------------------
