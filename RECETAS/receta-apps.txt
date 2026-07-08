@@ -63,6 +63,17 @@ Aplicar desde el Paso 0/1 de la receta, no al final del proyecto.
   (expo-notifications, expo-camera, etc.), declararla en app.json
   "plugins" en el mismo momento de instalarla, no despues.
 
+[NOTIFICACIONES]
+- Al usar expo-notifications, configurar Notifications.setNotificationHandler
+  desde el Paso 1 de setup (en el _layout raiz, a nivel de modulo, no dentro
+  de un componente). Sin este handler, las notificaciones locales
+  (scheduleNotificationAsync) no se muestran mientras la app esta en primer
+  plano — el sintoma es "activo la notificacion pero no pasa nada" al probar
+  dentro de la app misma. Detectado en wallet-control: la notificacion de
+  saldo (toggle en Perfil) no se veia porque nunca se habia registrado este
+  handler, pese a que el resto del flujo (permiso, scheduleNotificationAsync)
+  estaba bien implementado.
+
 [ASSETS]
 - Exportar icon.png / splash.png ya limpios (sin guias de diseno:
   circulos, lineas punteadas, marcas de referencia) antes de marcar el
@@ -213,6 +224,21 @@ HISTORIAL DE CAMBIOS
   de permiso de notificaciones denegado en CardFormModal.tsx, y falta de
   accessibilityLabel/Role en toda la app) — documentados en el PDF junto
   con el plan final de publicacion a Play Store.
+
+[2026-07-07] Fix de notificacion de saldo + leccion de setNotificationHandler
+- Se probo en dispositivo la Fase 3 de wallet-control: la notificacion de
+  saldo (toggle en Perfil) no se disparaba al entrar a Resumen. Causa: nunca
+  se habia configurado Notifications.setNotificationHandler, por lo que
+  expo-notifications no muestra notificaciones locales con la app en
+  primer plano. Se agrego el handler en app/_layout.tsx.
+- Se agrego la seccion "NOTIFICACIONES" a las lecciones generales de este
+  archivo para configurar el handler desde el Paso 1 en cualquier app nueva
+  que use expo-notifications.
+- Otros 2 ajustes de la misma ronda de pruebas (especificos de wallet-control,
+  no lecciones generales): filtro de categorias en busqueda de gastos ahora
+  solo muestra categorias con gastos reales; la card de "mes anterior" en
+  Resumen ahora abre el mismo detalle de activos/pasivos que el mes actual
+  en vez de una grafica de tendencia.
 
 ----------------------------------------------------
 (las entradas nuevas se agregan debajo de esta linea)
