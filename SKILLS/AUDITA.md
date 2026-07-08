@@ -53,6 +53,10 @@ después de leer el informe, ahí se activa PECAS (o FIXA si es un bug puntual) 
 9. Al terminar, preguntar si quiere el informe solo en el chat o también en PDF. Si pide PDF: usar
    Puppeteer (Node.js) y **preguntar primero dónde guardarlo** antes de generarlo.
 10. No modificar ningún archivo del proyecto auditado durante la auditoría.
+11. **Atajo `PDF AUDITA`:** si el usuario dispara esta palabra clave (hook real en
+    `.claude/hooks/pdf-audita.ps1`), saltarse el paso 9 tal cual — no preguntar si quiere PDF ni
+    dónde guardarlo. Ir directo: preguntar solo el proyecto (paso 1), correr la auditoría completa,
+    y generar el PDF automáticamente en `APPS/<proyecto>/AUDITORIAS/auditoria-<fecha>.pdf`.
 
 ---
 
@@ -117,3 +121,4 @@ APPS/
 - "AUDITA, dame el informe en PDF"
 - "AUDITA, enfócate solo en el login/pagos de [proyecto]"
 - "AUDITA, ¿qué tan cerca está [proyecto] de estar listo para publicar?"
+- "PDF AUDITA" (palabra clave con hook real — pregunta solo el proyecto y entrega el PDF completo directo, sin preguntas extra)
