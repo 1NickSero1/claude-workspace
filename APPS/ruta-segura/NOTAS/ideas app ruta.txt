@@ -41,3 +41,9 @@ Para cuando quieras un demo permanente (sin necesitar el servidor corriendo), lo
      no un dato real — se quitó de MenuPrincipalScreen.js por riesgo de credibilidad.
    → A futuro, si se quiere traer de vuelta: debe ser un dato funcional real (ej. conteo
      de sesiones anónimas activas desde el backend), nunca simulado.
+
+8. CORREO DE CONTACTO UNIFICADO (2026-07-08)
+   → Regla pedida por Nicolas: cualquier contacto por correo relacionado con ayuda o con
+     la app debe usar siempre help@anasimmigration.com.
+   → Hoy el código no usa ningún correo (solo WhatsApp wa.me), así que no hay nada que
+     corregir todavía — aplicar esta regla la próxima vez que se agregue un contacto por email.
