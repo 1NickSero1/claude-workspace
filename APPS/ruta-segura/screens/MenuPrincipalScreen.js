@@ -47,13 +47,6 @@ const CATEGORIAS = [
 
 export default function MenuPrincipalScreen({ navigation, route }) {
   const { nombre, idioma, estado } = route?.params || {};
-  const [mujeres, setMujeres] = useState(() => Math.floor(Math.random() * 15) + 8);
-
-  useFocusEffect(
-    useCallback(() => {
-      setMujeres(Math.floor(Math.random() * 15) + 8);
-    }, [])
-  );
 
   return (
     <SafeAreaView style={styles.container}>
