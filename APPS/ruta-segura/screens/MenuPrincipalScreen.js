@@ -1,8 +1,6 @@
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useState, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
 
 const CATEGORIAS = [
   {
