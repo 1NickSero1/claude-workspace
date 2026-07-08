@@ -35,3 +35,9 @@ Para cuando quieras un demo permanente (sin necesitar el servidor corriendo), lo
    → Reemplazar "PLACEHOLDER_NUMERO" con el número real de Ana Laverde en:
       screens/OnboardingScreen.js (línea del Linking.openURL)
       screens/CategoriaScreen.js (línea del Linking.openURL en card esAna)
+
+7. CONTADOR "MUJERES EN LÍNEA" — MEJORA FUTURA (2026-07-08)
+   → La auditoría técnica detectó que el contador era un número aleatorio (Math.random),
+     no un dato real — se quitó de MenuPrincipalScreen.js por riesgo de credibilidad.
+   → A futuro, si se quiere traer de vuelta: debe ser un dato funcional real (ej. conteo
+     de sesiones anónimas activas desde el backend), nunca simulado.
