@@ -150,17 +150,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
     minHeight: 120,
   },
-  adjuntos: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  adjuntoBtn: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderColor: '#e0e0e0',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: '#fafafa',
-  },
-  adjuntoBtnText: { fontSize: 14, color: '#555' },
   anonimoRow: {
     flexDirection: 'row',
     alignItems: 'center',
