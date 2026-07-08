@@ -57,6 +57,7 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 | 2 | Los `node_modules` de React Native tienen rutas demasiado largas para `Remove-Item` — usar `robocopy` + `rd /s /q` | PowerShell / limpieza |
 | 3 | Si el puerto 8081 está ocupado (otro proyecto Expo corriendo), usar `npx expo start --port 8082` | Expo / React Native |
 | 4 | Los commits `Auto-sync: <fecha>` en el historial de git vienen de una extensión externa instalada en esta máquina y en la del hermano del usuario, no de Claude Code — no confundirlos con acciones propias ni intentar revertirlos o desactivarlos sin que se pida | Git / control de versiones |
+| 5 | Antes de empezar a trabajar en el repo, correr `git pull` primero — hay más de una máquina (la del usuario y la de su hermano) pusheando al mismo repo, y sin este paso se puede trabajar desincronizado o generar conflictos | Git / control de versiones |
 
 ---
 
@@ -270,6 +271,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 | 2026-07-04 | Aclarado que "el archivo de recetas" = `RECETAS/receta-apps.txt`, no este `CLAUDE.md` — la lección de responsive design se movió ahí |
 | 2026-07-08 | Creada skill `AUDITA` (generada vía KILLER) — auditoría profesional de proyectos en `APPS/`, apoyada en los criterios de PECAS; siempre pregunta primero cuál proyecto auditar y entrega el informe en lenguaje simple, separando bugs / eliminaciones / mejoras / lo que ya funciona |
 | 2026-07-08 | Agregada palabra clave `PDF AUDITA` (hook real `.claude/hooks/pdf-audita.ps1`) — corre AUDITA con una sola pregunta (proyecto) y genera el informe completo en PDF automáticamente en `APPS/<proyecto>/AUDITORIAS/` |
+| 2026-07-08 | Agregada Lección 5 — correr `git pull` antes de empezar a trabajar en el repo, ya que hay más de una máquina (usuario y hermano) pusheando al mismo repo |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise
