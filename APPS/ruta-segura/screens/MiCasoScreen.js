@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ScrollView, Switch, KeyboardAvoidingView, Platform,
+  ScrollView, Switch, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -112,8 +112,8 @@ export default function MiCasoScreen({ navigation, route }) {
       </KeyboardAvoidingView>
 
       <View style={styles.watermark}>
-        <View style={styles.watermarkCircle}>
-          <Text style={styles.watermarkInitials}>AL</Text>
+        <View style={styles.watermarkLogoWrap}>
+          <Image source={require('../assets/ana-laverde-logo.png')} style={styles.watermarkLogo} />
         </View>
         <Text style={styles.watermarkName}>Ana Laverde</Text>
       </View>
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   exitoTitulo: { fontSize: 28, fontWeight: '800', color: '#1a1a2e', marginBottom: 12 },
   exitoTexto: { fontSize: 16, color: '#666', textAlign: 'center', lineHeight: 24, marginBottom: 40 },
   watermark: { position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.6 },
-  watermarkCircle: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#C850C0', alignItems: 'center', justifyContent: 'center' },
-  watermarkInitials: { color: '#fff', fontSize: 9, fontWeight: '800' },
+  watermarkLogoWrap: { width: 26, height: 26, borderRadius: 8, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
+  watermarkLogo: { width: '100%', height: '100%', resizeMode: 'contain' },
   watermarkName: { fontSize: 10, color: '#888' },
 });
