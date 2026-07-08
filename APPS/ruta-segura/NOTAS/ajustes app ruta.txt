@@ -9,24 +9,47 @@
 [PENDIENTE]
 ------------------------------------------------------------
 
-ana laverde quiere trazar como el objetivo principal de la app "MIGRAR CON PROPOSITO", quiero que lo tengas en cuenta y que lo lleves reflejado a cualquier pdf que extraigas sobre la aplicacion
-quiero que lo complementes con el resumen que siempre das de la app, esta bueno pero complementalo con el proposito que quiere Ana
-ya me dio el logo para poner de marca de agua entonces me dices para adjuntarlo y que lo cambies por la marca de agua pero sin quitar el nombre de ella
-en el screen de elige tu estado, en el apartado "otros estados" quiero que elimines los estados de arizona y colorado y agregues o rectifiques si estan: washinton, las vegas,boston y que unifiques carolina del sur y carolina del norte por CAROLINAS
-no recuerdo en que pantalla pero donde aparece la informacion de contacto quiero que cambies el titulo de asesora por consultora
-pon una metrica que todo lo que sea relacionado con algun correo de ayuda o sobre la app que se comunique siempre a este correo "help@anasimmigration.com"
-quiero que me ayudes poniendo una marca de agua en todo el codigo sutil, dame ideas para poner mi nombre Nicolas Seguro o mi nickname NickSero en el codigo para que todo el que lo intente ver o editar sepa que ese es mi copyright, tambien quiero que generes algo sutil en la aplicacion simplemente con una N o algo en ajustes para que tambien sepan que es de mi auditoria, ojo no modifiques la imagen de la app que siempre va a ser ANA LAVERDE, todo esto ponlo en las metricas
-POR ultimo quiero que me expliques o generes un pdf simple de como podria monetizar esta app de manera correcta
 
 ------------------------------------------------------------
 [EN PROGRESO]
 ------------------------------------------------------------
 
+🔶 2026-07-08 — Logo real de Ana Laverde para watermark
+   • Pide reemplazar el círculo "AL" por su logo real, sin quitar su nombre
+   • BLOQUEADO: falta el archivo del logo — falta que Nicolas indique dónde está o lo adjunte
+     en assets/ (ej. assets/ana-laverde-logo.png) para poder hacer el reemplazo
+
+🔶 2026-07-08 — Marca de agua sutil de copyright (Nicolas Seguro / NickSero)
+   • Pide watermark sutil en el código + algo discreto en la app (ej. una "N" en ajustes),
+     sin tocar la imagen de marca (que siempre es Ana Laverde), documentado en las métricas
+   • BLOQUEADO: NOTAS/metricas.txt está protegido de lectura/escritura por
+     .claude/hooks/block-notas-readonly.ps1 — no se puede escribir ahí directamente.
+     Falta decidir: ¿dónde documentarlo en su lugar, y qué forma debe tener el detalle en la app?
+
+🔶 2026-07-08 — PDF de estrategia de monetización
+   • Pide explicación o PDF simple de cómo monetizar la app correctamente
+   • Falta confirmar formato (solo chat vs. PDF) antes de generarlo
 
 
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+✅ 2026-07-08 — 2 ajustes de contenido pedidos por Ana Laverde — MEJORAX
+   • CategoriaScreen: título "Asesora de inmigración" → "Consultora de inmigración"
+   • EstadoScreen (OTROS_ESTADOS): eliminados Arizona y Colorado; "North Carolina" unificado
+     en "Carolinas" (Charlotte · Raleigh · Columbia); Washington, Las Vegas (bajo Nevada) y
+     Boston (bajo New York) confirmados — ya existían
+
+✅ 2026-07-08 — Regla de contacto: correo de ayuda unificado — MEJORAX
+   • Documentado en NOTAS/ideas app ruta.txt: cualquier contacto por correo debe usar
+     help@anasimmigration.com (hoy el código no usa ningún correo, solo WhatsApp — no había
+     nada que corregir, queda como convención para cuando se agregue)
+   • No se pudo escribir en metricas.txt (protegido por hook) — documentado ahí en su lugar
+
+✅ 2026-07-08 — Posicionamiento "MIGRAR CON PROPÓSITO" — MEJORAX
+   • Guardado como contexto de proyecto: Ana Laverde quiere este objetivo/tagline reflejado
+     en futuros PDFs y resúmenes que se generen de la app
 
 ✅ 2026-06-26 — EstadoScreen: teclado cubre el TextInput — MEJORAX
    • Causa: Modal sin KeyboardAvoidingView → el panel no subía al aparecer el teclado
