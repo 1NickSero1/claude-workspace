@@ -31,12 +31,9 @@ import { useResponsive, scaledSheet } from '@/constants/responsive';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { buildFinancialReportHtml, buildBankStatementHtml } from '@/lib/financialReport';
-import { LineChart } from 'react-native-chart-kit';
 
 const GOAL_COLORS = ['#6C5CE7','#00C896','#FF5C5C','#FDCB6E','#0984E3','#A29BFE','#00B894','#E17055'];
 const INCOME_COLORS = ['#00C896','#0984E3','#6C5CE7','#FDCB6E','#00B894','#A29BFE','#E17055','#FF5C5C'];
-const MONTH_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-const shortMonthLabel = (monthKey: string) => MONTH_SHORT[parseInt(monthKey.split('-')[1], 10) - 1];
 const fmtShort = (n: number) => n >= 1_000_000 ? `$${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `$${Math.round(n/1_000)}k` : formatCOP(n);
 const MONTH_SWIPE_WIDTH = 170;
 const BALANCE_FILTER_OPTIONS: { id: 'all' | 'debit' | 'credit' | 'cash'; label: string }[] = [
@@ -817,7 +814,7 @@ export default function ResumenScreen() {
                 onMomentumScrollEnd={e => setBalanceDot(Math.round(e.nativeEvent.contentOffset.x / cardWidth))}
               >
                 {/* Slide 1 — mes anterior */}
-                <TouchableOpacity activeOpacity={0.82} onPress={() => setTrendModal(true)} style={{ width: cardWidth }}>
+                <TouchableOpacity activeOpacity={0.82} onPress={() => setPrevPatrimonioModal(true)} style={{ width: cardWidth }}>
                   <View style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: prevNetoColor, backgroundColor: prevNetoColor + '0D' }]}>
                     <View style={styles.patrimonioHeader}>
                       <Ionicons name={prevPatrimonioNeto >= 0 ? 'trending-up' : 'trending-down'} size={18} color={prevNetoColor} />
@@ -840,7 +837,7 @@ export default function ResumenScreen() {
                         {prevPatrimonioNeto >= 0 ? '+' : ''}{formatCOP(prevPatrimonioNeto)}
                       </Text>
                     </View>
-                    <Text style={{ color: COLORS.textDim, fontSize: 10, marginTop: 6, textAlign: 'right' }}>Toca para ver tendencia →</Text>
+                    <Text style={{ color: COLORS.textDim, fontSize: 10, marginTop: 6, textAlign: 'right' }}>Toca para ver detalle →</Text>
                   </View>
                 </TouchableOpacity>
 
@@ -1364,56 +1361,57 @@ export default function ResumenScreen() {
         </View>
       </Modal>
 
-      {/* ── Tendencia últimos 2 meses (vs. mes anterior) ── */}
-      <Modal visible={trendModal} animationType="slide" transparent onRequestClose={() => setTrendModal(false)}>
+      {/* ── Patrimonio detail modal (mes anterior) ── */}
+      <Modal visible={prevPatrimonioModal} animationType="slide" transparent onRequestClose={() => setPrevPatrimonioModal(false)}>
         <View style={styles.sheetOverlay}>
-          <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setTrendModal(false)} />
-          <View style={styles.regSheet}>
+          <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setPrevPatrimonioModal(false)} />
+          <View style={[styles.regSheet, { maxHeight: '80%' }]}>
             <View style={styles.summaryHandle} />
             <View style={styles.patModalHeader}>
-              <Ionicons name="stats-chart" size={20} color={COLORS.primary} />
-              <Text style={styles.patModalTitle}>Tendencia · últimos 2 meses</Text>
+              <Ionicons name={prevPatrimonioNeto >= 0 ? 'trending-up' : 'trending-down'} size={22} color={prevPatrimonioNeto >= 0 ? COLORS.debit : COLORS.danger} />
+              <Text style={styles.patModalTitle}>Balance General · {formatMonthLabel(prevMonthKey)}</Text>
             </View>
-            <LineChart
-              data={{
-                labels: trendPoints.map(t => t.label),
-                datasets: [
-                  { data: trendPoints.map(t => t.ingresos), color: () => COLORS.debit, strokeWidth: 2 },
-                  { data: trendPoints.map(t => t.gastos),   color: () => COLORS.credit, strokeWidth: 2 },
-                  { data: trendPoints.map(t => t.ahorro),   color: () => COLORS.primary, strokeWidth: 2 },
-                ],
-                legend: ['Ingresos', 'Gastos', 'Ahorro'],
-              }}
-              width={SCREEN_W - 40}
-              height={180}
-              chartConfig={{
-                backgroundColor: COLORS.card,
-                backgroundGradientFrom: COLORS.card,
-                backgroundGradientTo: COLORS.card,
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(108,92,231,${opacity})`,
-                labelColor: () => COLORS.textMuted,
-                propsForDots: { r: '3' },
-                propsForBackgroundLines: { stroke: COLORS.border },
-              }}
-              bezier
-              withInnerLines
-              withOuterLines={false}
-              style={{ borderRadius: 12, alignSelf: 'center', marginTop: 8 }}
-              formatYLabel={v => `$${v}k`}
-            />
-            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, paddingVertical: 10 }}>
-              {[
-                { label: 'Ingresos', color: COLORS.debit },
-                { label: 'Gastos', color: COLORS.credit },
-                { label: 'Ahorro', color: COLORS.primary },
-              ].map(item => (
-                <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: item.color }} />
-                  <Text style={{ color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '600' }}>{item.label}</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Activos */}
+              <View style={styles.patSection}>
+                <Text style={styles.patSectionTitle}>↑ Activos</Text>
+                {prevActivoItems.map(it => (
+                  <View key={it.id} style={styles.patRow}>
+                    <Text style={styles.patRowEmoji}>{it.emoji}</Text>
+                    <Text style={styles.patRowName}>{it.name}</Text>
+                    <Text style={[styles.patRowVal, { color: COLORS.debit }]}>{formatCOP(it.value)}</Text>
+                  </View>
+                ))}
+                <View style={styles.patTotal}>
+                  <Text style={styles.patTotalLabel}>Total activos</Text>
+                  <Text style={[styles.patTotalVal, { color: COLORS.debit }]}>{formatCOP(prevTotalActivos)}</Text>
                 </View>
-              ))}
-            </View>
+              </View>
+
+              {/* Pasivos */}
+              {prevPasivoItems.length > 0 && (
+                <View style={styles.patSection}>
+                  <Text style={styles.patSectionTitle}>↓ Pasivos</Text>
+                  {prevPasivoItems.map(it => (
+                    <View key={it.id} style={styles.patRow}>
+                      <Text style={styles.patRowEmoji}>{it.emoji}</Text>
+                      <Text style={styles.patRowName}>{it.name}</Text>
+                      <Text style={[styles.patRowVal, { color: COLORS.credit }]}>{formatCOP(it.value)}</Text>
+                    </View>
+                  ))}
+                  <View style={styles.patTotal}>
+                    <Text style={styles.patTotalLabel}>Total pasivos</Text>
+                    <Text style={[styles.patTotalVal, { color: COLORS.credit }]}>{formatCOP(prevTotalPasivos)}</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Neto */}
+              <View style={[styles.patNetBox, { backgroundColor: prevPatrimonioNeto >= 0 ? COLORS.debit : COLORS.danger }]}>
+                <Text style={styles.patNetLabel}>Balance General</Text>
+                <Text style={styles.patNetVal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{prevPatrimonioNeto >= 0 ? '+' : ''}{formatCOP(prevPatrimonioNeto)}</Text>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
