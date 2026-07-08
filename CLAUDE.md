@@ -229,6 +229,20 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 
 ---
 
+## Palabra Clave de Auditoría en PDF
+
+> Hook real (`UserPromptSubmit`, `.claude/hooks/pdf-audita.ps1`). Detecta el mensaje exacto
+> "PDF AUDITA" (mayúsculas o minúsculas) y le inyecta contexto a Claude para correr la skill
+> AUDITA en modo directo.
+
+| Palabra clave | Acción |
+|---|---|
+| `PDF AUDITA` | Activa AUDITA. Única pregunta: cuál proyecto de `APPS/` auditar. Después de responder, Claude corre la auditoría completa y genera el informe en PDF automáticamente — sin preguntar si se quiere PDF ni dónde guardarlo — en `APPS/<proyecto>/AUDITORIAS/auditoria-<fecha>.pdf` |
+
+**Nota:** a diferencia de "AUDITA" a secas (que al final pregunta si el informe va también en PDF y dónde guardarlo), "PDF AUDITA" da por hecho ambas cosas para ir directo al resultado con una sola pregunta.
+
+---
+
 ## Checklist Universal de Proyecto Terminado
 
 - [ ] Feature principal funciona end-to-end
@@ -255,6 +269,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 | 2026-07-03 | Creado `.claude/settings.json` (no existía) registrando los 6 hooks de `.claude/hooks/`, que hasta ahora estaban en disco pero nunca conectados; documentada la extensión de auto-sync externa (commits `Auto-sync: <fecha>`) compartida con la computadora del hermano del usuario |
 | 2026-07-04 | Aclarado que "el archivo de recetas" = `RECETAS/receta-apps.txt`, no este `CLAUDE.md` — la lección de responsive design se movió ahí |
 | 2026-07-08 | Creada skill `AUDITA` (generada vía KILLER) — auditoría profesional de proyectos en `APPS/`, apoyada en los criterios de PECAS; siempre pregunta primero cuál proyecto auditar y entrega el informe en lenguaje simple, separando bugs / eliminaciones / mejoras / lo que ya funciona |
+| 2026-07-08 | Agregada palabra clave `PDF AUDITA` (hook real `.claude/hooks/pdf-audita.ps1`) — corre AUDITA con una sola pregunta (proyecto) y genera el informe completo en PDF automáticamente en `APPS/<proyecto>/AUDITORIAS/` |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise

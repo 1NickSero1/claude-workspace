@@ -16,6 +16,13 @@
             "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\proyecto-switch.ps1\"",
             "timeout": 15,
             "statusMessage": "Comprobando cambio de proyecto..."
+          },
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\pdf-audita.ps1\"",
+            "timeout": 15,
+            "statusMessage": "Comprobando comando PDF AUDITA..."
           }
         ]
       }
