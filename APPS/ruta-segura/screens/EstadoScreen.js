@@ -15,12 +15,10 @@ const ESTADOS = [
 
 const OTROS_ESTADOS = [
   { nombre: 'Illinois', emoji: '🏙️', ciudad: 'Chicago · Aurora' },
-  { nombre: 'Arizona', emoji: '🌵', ciudad: 'Phoenix · Tucson' },
-  { nombre: 'North Carolina', emoji: '🌲', ciudad: 'Charlotte · Raleigh' },
+  { nombre: 'Carolinas', emoji: '🌲', ciudad: 'Charlotte · Raleigh · Columbia' },
   { nombre: 'Nevada', emoji: '✨', ciudad: 'Las Vegas · Reno' },
   { nombre: 'New Jersey', emoji: '🌆', ciudad: 'Newark · Jersey City' },
   { nombre: 'Washington', emoji: '🌲', ciudad: 'Seattle · Tacoma' },
-  { nombre: 'Colorado', emoji: '🏔️', ciudad: 'Denver · Aurora' },
 ];
 
 export default function EstadoScreen({ navigation, route }) {
