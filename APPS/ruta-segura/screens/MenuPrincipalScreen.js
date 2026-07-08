@@ -104,7 +104,7 @@ export default function MenuPrincipalScreen({ navigation, route }) {
         {/* Módulo comunitario */}
         <View style={styles.comunidad}>
           <View style={styles.dot} />
-          <Text style={styles.comunidadText}>{mujeres} mujeres en línea ahora · No estás sola</Text>
+          <Text style={styles.comunidadText}>Estás en un espacio seguro · No estás sola</Text>
         </View>
 
       </ScrollView>
