@@ -169,7 +169,7 @@ const CONTENIDO = {
       {
         emoji: '👩‍💼',
         titulo: 'Ana Laverde',
-        sub: 'Asesora de inmigración',
+        sub: 'Consultora de inmigración',
         desc: 'Recursos especializados de inmigración. Consultas personalizadas disponibles para tu situación.',
         accion: 'Contacta a Ana Laverde →',
         esAna: true,
