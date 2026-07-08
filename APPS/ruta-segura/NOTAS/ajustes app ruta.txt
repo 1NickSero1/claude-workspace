@@ -15,7 +15,8 @@ ya me dio el logo para poner de marca de agua entonces me dices para adjuntarlo 
 en el screen de elige tu estado, en el apartado "otros estados" quiero que elimines los estados de arizona y colorado y agregues o rectifiques si estan: washinton, las vegas,boston y que unifiques carolina del sur y carolina del norte por CAROLINAS
 no recuerdo en que pantalla pero donde aparece la informacion de contacto quiero que cambies el titulo de asesora por consultora
 pon una metrica que todo lo que sea relacionado con algun correo de ayuda o sobre la app que se comunique siempre a este correo "help@anasimmigration.com"
-quiero que me ayudes poniendo una marca de agua en todo el codigo sutil, dame ideas para poner mi nombre Nicolas Seguro o mi nickname NickSero en el codigo para que todo el que lo intente ver o editar sepa que ese es mi copyright, tambien quiero que generes algo sutil en la aplicacion simplemente con una N o algo en ajustes para que tambien sepan que es de mi auditoria, ojo no modifiques la imagen de la app que siempre va a ser ANA LAVERDE, todo esto ponlo en las metricas 
+quiero que me ayudes poniendo una marca de agua en todo el codigo sutil, dame ideas para poner mi nombre Nicolas Seguro o mi nickname NickSero en el codigo para que todo el que lo intente ver o editar sepa que ese es mi copyright, tambien quiero que generes algo sutil en la aplicacion simplemente con una N o algo en ajustes para que tambien sepan que es de mi auditoria, ojo no modifiques la imagen de la app que siempre va a ser ANA LAVERDE, todo esto ponlo en las metricas
+POR ultimo quiero que me expliques o generes un pdf simple de como podria monetizar esta app de manera correcta
 
 ------------------------------------------------------------
 [EN PROGRESO]
