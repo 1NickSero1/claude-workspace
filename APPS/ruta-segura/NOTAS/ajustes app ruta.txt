@@ -13,7 +13,9 @@ ana laverde quiere trazar como el objetivo principal de la app "MIGRAR CON PROPO
 quiero que lo complementes con el resumen que siempre das de la app, esta bueno pero complementalo con el proposito que quiere Ana
 ya me dio el logo para poner de marca de agua entonces me dices para adjuntarlo y que lo cambies por la marca de agua pero sin quitar el nombre de ella
 en el screen de elige tu estado, en el apartado "otros estados" quiero que elimines los estados de arizona y colorado y agregues o rectifiques si estan: washinton, las vegas,boston y que unifiques carolina del sur y carolina del norte por CAROLINAS
-
+no recuerdo en que pantalla pero donde aparece la informacion de contacto quiero que cambies el titulo de asesora por consultora
+pon una metrica que todo lo que sea relacionado con algun correo de ayuda o sobre la app que se comunique siempre a este correo "help@anasimmigration.com"
+quiero que me ayudes poniendo una marca de agua en todo el codigo sutil, dame ideas para poner mi nombre Nicolas Seguro o mi nickname NickSero en el codigo para que todo el que lo intente ver o editar sepa que ese es mi copyright, tambien quiero que generes algo sutil en la aplicacion simplemente con una N o algo en ajustes para que tambien sepan que es de mi auditoria, ojo no modifiques la imagen de la app que siempre va a ser ANA LAVERDE, todo esto ponlo en las metricas 
 
 ------------------------------------------------------------
 [EN PROGRESO]
