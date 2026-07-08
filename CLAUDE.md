@@ -70,7 +70,8 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 ├── SKILLS/PAKI.md        ← Crea proyectos web y landings
 ├── SKILLS/PECAS.md       ← Crea apps SaaS, móviles y desktop
 ├── SKILLS/FIXA.md        ← Debug, errores y QA
-└── SKILLS/FIFAS.md       ← Analista estadístico deportivo (fútbol)
+├── SKILLS/FIFAS.md       ← Analista estadístico deportivo (fútbol)
+└── SKILLS/AUDITA.md      ← Auditor profesional de proyectos (con PECAS)
 │
 └── APPS/                 ← Código de todos los proyectos
     ├── wallet-control/
@@ -88,6 +89,7 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 | Crear una app | PECAS | "PECAS, crea una app que [hace qué]" |
 | Consulta financiera | FINANDO | "FINANDO, ¿qué hago con [X] pesos?" |
 | Debuggear un error | FIXA | "FIXA, este error: [error]" |
+| Auditar un proyecto (bugs/mejoras/eliminaciones) | AUDITA | "AUDITA" (siempre pregunta cuál proyecto) |
 
 ---
 
@@ -252,6 +254,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 | 2026-07-02 | Agregadas palabras clave `WALLET CONTROL` y `RUTA SEGURA` (hook real) — invocan PECAS y recomiendan `/clear` para arrancar enfocados en ese proyecto específico |
 | 2026-07-03 | Creado `.claude/settings.json` (no existía) registrando los 6 hooks de `.claude/hooks/`, que hasta ahora estaban en disco pero nunca conectados; documentada la extensión de auto-sync externa (commits `Auto-sync: <fecha>`) compartida con la computadora del hermano del usuario |
 | 2026-07-04 | Aclarado que "el archivo de recetas" = `RECETAS/receta-apps.txt`, no este `CLAUDE.md` — la lección de responsive design se movió ahí |
+| 2026-07-08 | Creada skill `AUDITA` (generada vía KILLER) — auditoría profesional de proyectos en `APPS/`, apoyada en los criterios de PECAS; siempre pregunta primero cuál proyecto auditar y entrega el informe en lenguaje simple, separando bugs / eliminaciones / mejoras / lo que ya funciona |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise

@@ -85,6 +85,7 @@ Cuando el usuario pida mejorar una skill:
 | NEXO | SKILLS/NEXO.md | Extensiones de navegador |
 | BOTIA | SKILLS/BOTIA.md | Bots e agentes con Claude API |
 | FIFAS | SKILLS/FIFAS.md | Análisis estadístico deportivo (fútbol) |
+| AUDITA | SKILLS/AUDITA.md | Auditoría profesional de proyectos (bugs, mejoras, eliminaciones), con PECAS |
 | KILLER | SKILLS/KILLER.md | Este mismo generador |
 
 ---
