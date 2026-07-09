@@ -421,6 +421,20 @@ v1.12 — 2026-06-18 · Hero con 3 donuts + pills elegantes
   — 3 puntos de paginación debajo del gadget
 
 ------------------------------------------------------------
+v1.13 — 2026-07-08 · Botón "+" en Tarjetas, resumen movido a Resumen
+------------------------------------------------------------
+• Pantalla Tarjetas (Balance): se quitaron los recuadros "Total gastado" /
+  "Total disponible" de arriba de la lista de tarjetas (Débito y Crédito)
+  — en su lugar, cada encabezado de sección tiene un botón "+" circular
+  para agregar tarjeta directo ahí, reemplazando el link de texto que
+  estaba debajo de la lista
+• Pantalla Resumen: nuevo par de recuadros "Total gastado" (crédito) /
+  "Total disponible" (débito + efectivo) debajo del donut principal —
+  la info que antes vivía en Tarjetas ahora está en el resumen general
+• Ícono de la app actualizado: nuevo diseño de billetera en navy sobre
+  fondo celeste (marca), con splash screen a juego
+
+------------------------------------------------------------
 [PRÓXIMO]
 ------------------------------------------------------------
 • Build permanente (APK) para compartir sin servidor

@@ -12,7 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-en la pantalla 2 "tarjetas" podrias mover la seccion de total gastado y total disponible a la pantalla de resumen, para crear las tarjetas y agregar cambialo por el boton de ¨+" 
+  — (vacío por ahora)
 
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
@@ -41,6 +41,20 @@ en la pantalla 2 "tarjetas" podrias mover la seccion de total gastado y total di
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX — pendiente "por MI" (FIXA, 2026-07-08)
+    → Pantalla Tarjetas (Balance): se quitaron los recuadros "Total gastado"
+      / "Total disponible" que aparecían arriba de la lista de tarjetas
+      (tanto en la sub-pestaña Débito como en Crédito). En su lugar, el
+      encabezado de cada sección ("Tarjetas de débito" / "Tarjetas de
+      crédito") ahora tiene un botón "+" circular a la derecha para agregar
+      tarjeta directamente ahí — se quitó el link de texto duplicado
+      "Agregar débito"/"Agregar tarjeta" que estaba debajo de la lista.
+    → Pantalla Resumen: se agregó el mismo par de recuadros "Total gastado"
+      (gasto total en tarjetas de crédito) / "Total disponible" (débito +
+      efectivo disponible) justo debajo del donut principal, reutilizando
+      variables ya calculadas en la pantalla (creditSpent, debitAvailable,
+      cashAvailable) — sin lógica nueva duplicada.
 
   ✓ Ajustes en vivo tras la 7ma ronda (PECAS, 2026-07-06)
     → "Gastos del mes" (tap en el donut de Gastos) dejó de abrir el popup
