@@ -278,13 +278,13 @@ export default function HistoryScreen() {
                     </View>
                   </View>
                   <View style={styles.monthRight}>
-                    <Text style={[styles.monthTotal, { color: COLORS.credit }]}>
+                    <Text style={[styles.monthTotal, { color: COLORS.credit }]} numberOfLines={1} adjustsFontSizeToFit>
                       -{formatCOP(totalExp)}
                     </Text>
                     {totalInc > 0 && (
                       <Text style={[styles.monthSavings, {
                         color: savings >= 0 ? COLORS.debit : COLORS.credit,
-                      }]}>
+                      }]} numberOfLines={1} adjustsFontSizeToFit>
                         {savings >= 0 ? '↑' : '↓'} {formatCOP(Math.abs(savings))}
                       </Text>
                     )}
@@ -303,13 +303,13 @@ export default function HistoryScreen() {
                       <View style={styles.detailSummary}>
                         <View style={styles.detailStat}>
                           <Text style={styles.detailStatLabel}>Ingresos</Text>
-                          <Text style={[styles.detailStatVal, { color: COLORS.debit }]}>
+                          <Text style={[styles.detailStatVal, { color: COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>
                             {formatCOP(totalInc)}
                           </Text>
                         </View>
                         <View style={styles.detailStat}>
                           <Text style={styles.detailStatLabel}>Gastos</Text>
-                          <Text style={[styles.detailStatVal, { color: COLORS.credit }]}>
+                          <Text style={[styles.detailStatVal, { color: COLORS.credit }]} numberOfLines={1} adjustsFontSizeToFit>
                             {formatCOP(totalExp)}
                           </Text>
                         </View>
@@ -317,7 +317,7 @@ export default function HistoryScreen() {
                           <Text style={styles.detailStatLabel}>Ahorro</Text>
                           <Text style={[styles.detailStatVal, {
                             color: savings >= 0 ? COLORS.debit : COLORS.credit,
-                          }]}>
+                          }]} numberOfLines={1} adjustsFontSizeToFit>
                             {formatCOP(Math.abs(savings))}
                           </Text>
                         </View>
@@ -343,8 +343,8 @@ export default function HistoryScreen() {
                               </View>
                               <View style={styles.catInfo}>
                                 <View style={styles.catInfoTop}>
-                                  <Text style={styles.catName}>{cat?.name ?? catId}</Text>
-                                  <Text style={styles.catAmt}>{formatCOP(amount)}</Text>
+                                  <Text style={styles.catName} numberOfLines={1}>{cat?.name ?? catId}</Text>
+                                  <Text style={styles.catAmt} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(amount)}</Text>
                                 </View>
                                 <View style={styles.catTrack}>
                                   <View style={[styles.catFill, {
@@ -366,7 +366,7 @@ export default function HistoryScreen() {
                           <View key={inc.id} style={styles.incomeRow}>
                             <Ionicons name="arrow-down-circle" size={16} color={COLORS.debit} />
                             <Text style={styles.incomeDesc} numberOfLines={1}>{inc.description}</Text>
-                            <Text style={styles.incomeAmt}>{formatCOP(inc.amount)}</Text>
+                            <Text style={styles.incomeAmt} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(inc.amount)}</Text>
                           </View>
                         ))}
                       </>

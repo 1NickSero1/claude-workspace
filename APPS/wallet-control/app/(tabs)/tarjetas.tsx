@@ -469,7 +469,7 @@ export default function TarjetasScreen() {
             <View style={styles.sectionDivider}>
               <Text style={styles.sectionDividerTitle}>Efectivo</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                {totalCash > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.debit }]}>{formatCOP(totalCash)}</Text>}
+                {totalCash > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalCash)}</Text>}
                 {cashCards.length > 0 && (
                   <TouchableOpacity onPress={() => openAdd(['cash'])} style={styles.sectionAddBtn}>
                     <Ionicons name="add" size={18} color={COLORS.cash} />
@@ -518,7 +518,7 @@ export default function TarjetasScreen() {
                   <Text style={styles.sectionDividerTitle}>Tarjetas de crédito</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     {totalCreditUsed > 0 && (
-                      <Text style={[styles.sectionDividerAmt, { color: COLORS.credit }]}>{formatCOP(totalCreditUsed)}</Text>
+                      <Text style={[styles.sectionDividerAmt, { color: COLORS.credit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalCreditUsed)}</Text>
                     )}
                     <TouchableOpacity onPress={() => openAdd(['credit', 'debt'])} style={styles.sectionAddBtn}>
                       <Ionicons name="add" size={18} color={COLORS.primary} />
@@ -547,14 +547,14 @@ export default function TarjetasScreen() {
 
             <View style={styles.sectionDivider}>
               <Text style={styles.sectionDividerTitle}>Préstamos</Text>
-              {totalDebt > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.danger }]}>{formatCOP(totalDebt)}</Text>}
+              {totalDebt > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.danger }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalDebt)}</Text>}
             </View>
 
             {debts.length > 0 && (
               <TouchableOpacity style={styles.debtSummaryCard} onPress={() => setDebtHistModal(true)} activeOpacity={0.8}>
                 <View>
                   <Text style={styles.debtSummaryLabel}>Total deuda</Text>
-                  <Text style={[styles.debtSummaryVal, { color: COLORS.danger }]}>{formatCOP(totalDebt)}</Text>
+                  <Text style={[styles.debtSummaryVal, { color: COLORS.danger }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalDebt)}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <View style={styles.debtSummaryBadge}>
@@ -653,19 +653,19 @@ export default function TarjetasScreen() {
                         <View style={actStyles.statsRow}>
                           <View style={actStyles.statBox}>
                             <Text style={actStyles.statLabel}>Gastado</Text>
-                            <Text style={[actStyles.statVal, { color: COLORS.credit }]}>{formatCOP(actionTotal)}</Text>
+                            <Text style={[actStyles.statVal, { color: COLORS.credit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(actionTotal)}</Text>
                           </View>
                           {actionCard.limit ? (
                             <View style={actStyles.statBox}>
                               <Text style={actStyles.statLabel}>Disponible</Text>
-                              <Text style={[actStyles.statVal, { color: COLORS.debit }]}>
+                              <Text style={[actStyles.statVal, { color: COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>
                                 {formatCOP(Math.max(actionCard.limit - actionTotal, 0))}
                               </Text>
                             </View>
                           ) : null}
                           <View style={actStyles.statBox}>
                             <Text style={actStyles.statLabel}>Límite</Text>
-                            <Text style={actStyles.statVal}>{actionCard.limit ? formatCOP(actionCard.limit) : '—'}</Text>
+                            <Text style={actStyles.statVal} numberOfLines={1} adjustsFontSizeToFit>{actionCard.limit ? formatCOP(actionCard.limit) : '—'}</Text>
                           </View>
                         </View>
                         {actionCard.limit ? (
@@ -682,7 +682,7 @@ export default function TarjetasScreen() {
                         {isDebt && actionCard.initialBalance != null && (
                           <View style={actStyles.balanceRow}>
                             <Text style={actStyles.balanceLabel}>Deuda inicial</Text>
-                            <Text style={[actStyles.balanceVal, { color: COLORS.textMuted, fontSize: FONT.base }]}>
+                            <Text style={[actStyles.balanceVal, { color: COLORS.textMuted, fontSize: FONT.base }]} numberOfLines={1} adjustsFontSizeToFit>
                               {formatCOP(actionCard.initialBalance)}
                             </Text>
                           </View>
@@ -692,7 +692,7 @@ export default function TarjetasScreen() {
                             <Text style={actStyles.balanceLabel}>
                               {isDebt ? 'Pendiente por pagar' : 'Saldo disponible'}
                             </Text>
-                            <Text style={[actStyles.balanceVal, { color: accentColor }]}>
+                            <Text style={[actStyles.balanceVal, { color: accentColor }]} numberOfLines={1} adjustsFontSizeToFit>
                               {formatCOP(isDebt
                                 ? (actionCard.balance ?? 0)
                                 : Math.max((actionCard.balance ?? 0) - getCardTotalSpent(expenses, actionCard.id), 0)
@@ -732,7 +732,7 @@ export default function TarjetasScreen() {
                                 </Text>
                                 {ev.note ? <Text style={actStyles.histNote}>{ev.note}</Text> : null}
                               </View>
-                              <Text style={[actStyles.histAmt, { color: ev.type === 'pay' ? COLORS.debt : COLORS.debit }]}>
+                              <Text style={[actStyles.histAmt, { color: ev.type === 'pay' ? COLORS.debt : COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>
                                 {formatCOP(ev.amount)}
                               </Text>
                               <Text style={actStyles.histDate}>{fmtDate(ev.date)}</Text>
@@ -748,7 +748,7 @@ export default function TarjetasScreen() {
                             >
                               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: getCatColor(e.categoryId) }} />
                               <Text style={actStyles.histLabel}>{e.name}</Text>
-                              <Text style={[actStyles.histAmt, { color: getCatColor(e.categoryId) }]}>
+                              <Text style={[actStyles.histAmt, { color: getCatColor(e.categoryId) }]} numberOfLines={1} adjustsFontSizeToFit>
                                 {formatCOP(e.amount)}
                               </Text>
                               <Ionicons name="pencil-outline" size={10} color={COLORS.textDim} />
@@ -895,11 +895,11 @@ export default function TarjetasScreen() {
             <Text style={actStyles.overflowTitle}>Abono mayor a la deuda</Text>
             <View style={actStyles.overflowRow}>
               <Text style={actStyles.overflowRowLabel}>Monto ingresado</Text>
-              <Text style={[actStyles.overflowRowVal, { color: COLORS.danger }]}>{formatCOP(overflowInfo.entered)}</Text>
+              <Text style={[actStyles.overflowRowVal, { color: COLORS.danger }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(overflowInfo.entered)}</Text>
             </View>
             <View style={actStyles.overflowRow}>
               <Text style={actStyles.overflowRowLabel}>Pendiente por pagar</Text>
-              <Text style={[actStyles.overflowRowVal, { color: COLORS.debit }]}>{formatCOP(overflowInfo.pending)}</Text>
+              <Text style={[actStyles.overflowRowVal, { color: COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(overflowInfo.pending)}</Text>
             </View>
             <View style={actStyles.overflowDivider} />
             <Text style={actStyles.overflowHint}>
@@ -1008,8 +1008,8 @@ function AccountRow({ card, spent }: { card: Card; spent: number }) {
         <Text style={s.sub}>{subtitle}</Text>
       </View>
       <View style={s.right}>
-        <Text style={[s.balance, { color: isDebt ? COLORS.danger : COLORS.debit }]}>{formatCOP(available)}</Text>
-        {!isDebt && spent > 0 && <Text style={s.spentText}>-{formatCOP(spent)} gastado</Text>}
+        <Text style={[s.balance, { color: isDebt ? COLORS.danger : COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(available)}</Text>
+        {!isDebt && spent > 0 && <Text style={s.spentText} numberOfLines={1} adjustsFontSizeToFit>-{formatCOP(spent)} gastado</Text>}
       </View>
     </View>
   );
