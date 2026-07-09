@@ -442,7 +442,12 @@ export default function TarjetasScreen() {
               <>
                 <View style={[styles.sectionDivider, { marginTop: 8 }]}>
                   <Text style={styles.sectionDividerTitle}>Tarjetas de débito</Text>
-                  <TouchableOpacity onPress={() => openAdd(['debit'])} style={styles.sectionAddBtn}>
+                  <TouchableOpacity
+                    onPress={() => openAdd(['debit'])}
+                    style={styles.sectionAddBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Agregar tarjeta débito"
+                  >
                     <Ionicons name="add" size={18} color={COLORS.primary} />
                   </TouchableOpacity>
                 </View>
@@ -471,7 +476,12 @@ export default function TarjetasScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 {totalCash > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalCash)}</Text>}
                 {cashCards.length > 0 && (
-                  <TouchableOpacity onPress={() => openAdd(['cash'])} style={styles.sectionAddBtn}>
+                  <TouchableOpacity
+                    onPress={() => openAdd(['cash'])}
+                    style={styles.sectionAddBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Agregar cuenta de efectivo"
+                  >
                     <Ionicons name="add" size={18} color={COLORS.cash} />
                   </TouchableOpacity>
                 )}
@@ -520,7 +530,12 @@ export default function TarjetasScreen() {
                     {totalCreditUsed > 0 && (
                       <Text style={[styles.sectionDividerAmt, { color: COLORS.credit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalCreditUsed)}</Text>
                     )}
-                    <TouchableOpacity onPress={() => openAdd(['credit', 'debt'])} style={styles.sectionAddBtn}>
+                    <TouchableOpacity
+                      onPress={() => openAdd(['credit', 'debt'])}
+                      style={styles.sectionAddBtn}
+                      accessibilityRole="button"
+                      accessibilityLabel="Agregar tarjeta de crédito"
+                    >
                       <Ionicons name="add" size={18} color={COLORS.primary} />
                     </TouchableOpacity>
                   </View>
@@ -586,7 +601,12 @@ export default function TarjetasScreen() {
                     <AccountRow card={card} spent={0} />
                   </TouchableOpacity>
                 ))}
-                <TouchableOpacity onPress={() => openAdd(['debt', 'credit'])} style={styles.addMoreBtn}>
+                <TouchableOpacity
+                  onPress={() => openAdd(['debt', 'credit'])}
+                  style={styles.addMoreBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Agregar préstamo"
+                >
                   <Ionicons name="add-circle-outline" size={16} color={COLORS.debt} />
                   <Text style={[styles.addMoreText, { color: COLORS.debt }]}>Agregar préstamo</Text>
                 </TouchableOpacity>

@@ -342,7 +342,12 @@ export default function PerfilScreen() {
         </View>
 
         {/* ── Cerrar sesión ────────────────────────────── */}
-        <TouchableOpacity style={styles.dangerBtn} onPress={handleLogout}>
+        <TouchableOpacity
+          style={styles.dangerBtn}
+          onPress={handleLogout}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar sesión"
+        >
           <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
           <Text style={styles.dangerText}>Cerrar sesión</Text>
         </TouchableOpacity>
