@@ -23,6 +23,13 @@
             "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\pdf-audita.ps1\"",
             "timeout": 15,
             "statusMessage": "Comprobando comando PDF AUDITA..."
+          },
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\imagina-estetik.ps1\"",
+            "timeout": 15,
+            "statusMessage": "Comprobando comando IMAGINA..."
           }
         ]
       }
