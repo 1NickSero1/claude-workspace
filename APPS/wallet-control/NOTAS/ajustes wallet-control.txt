@@ -12,7 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-en la pantalla de resumen y en donde mas se use ese mismo boton maneja el estilo que te voy a especificar como "la foto" y dale el mismo estilo a las opciones de gasto ingreso y nueva meta de ahorro 
+  — (vacío por ahora)
 
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
@@ -41,6 +41,20 @@ en la pantalla de resumen y en donde mas se use ese mismo boton maneja el estilo
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX — pendiente "por MI", botón Registrar en cápsula (FIXA, 2026-07-08)
+    → El botón "+" (Registrar) de Resumen ya no abre un bottom sheet de lista
+      completa ("¿Qué quieres registrar?" con 2 filas). Ahora, al tocarlo, el
+      mismo FAB se transforma en una cápsula redondeada flotante (mismo
+      estilo que "la foto" de referencia del usuario: pastilla oscura con
+      botones circulares + una "X" para cerrar) con 2 botones — 💸 Gasto/
+      Ingreso y 🎯 Nueva meta de ahorro — y una "X" al final para cerrar sin
+      elegir nada. Se confirmó que este era el único lugar de la app con
+      este patrón de botón (no había que replicarlo en otra pantalla).
+    → Se quitó el Modal con overlay oscuro que tenía antes (no aplica en el
+      diseño de cápsula, que flota sin oscurecer el fondo). Estilos muertos
+      regOption/regOptionEmoji eliminados; regOptionTitle/regOptionSub se
+      conservan porque los sigue usando el sheet de Ayuda (PDF/Extracto/❓).
 
   ✓ MEJORAX — pendiente "por MI" (FIXA, 2026-07-08)
     → Pantalla Tarjetas (Balance): se quitaron los recuadros "Total gastado"

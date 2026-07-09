@@ -435,6 +435,19 @@ v1.13 — 2026-07-08 · Botón "+" en Tarjetas, resumen movido a Resumen
   fondo celeste (marca), con splash screen a juego
 
 ------------------------------------------------------------
+v1.14 — 2026-07-08 · Botón Registrar en cápsula flotante
+------------------------------------------------------------
+• El FAB "+" de Resumen ya no abre un bottom sheet con 2 filas — al tocarlo
+  se transforma en una cápsula redondeada flotante con 2 botones circulares
+  (💸 Gasto/Ingreso, 🎯 Nueva meta de ahorro) y una "X" para cerrar, sin
+  oscurecer el resto de la pantalla
+• Categorías: el menú de opciones (Editar/Eliminar) y la confirmación de
+  eliminar al mantener presionada una categoría ya no son el diálogo blanco
+  nativo de Android — ahora tienen el tema oscuro de la app
+• Tarjetas (Balance): mismo botón "+" flotante que Resumen, para agregar
+  tarjeta o cuenta directo desde cualquier sub-pestaña
+
+------------------------------------------------------------
 [PRÓXIMO]
 ------------------------------------------------------------
 • Build permanente (APK) para compartir sin servidor
