@@ -72,7 +72,8 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 ├── SKILLS/PECAS.md       ← Crea apps SaaS, móviles y desktop
 ├── SKILLS/FIXA.md        ← Debug, errores y QA
 ├── SKILLS/FIFAS.md       ← Analista estadístico deportivo (fútbol)
-└── SKILLS/AUDITA.md      ← Auditor profesional de proyectos (con PECAS)
+├── SKILLS/AUDITA.md      ← Auditor profesional de proyectos (con PECAS)
+└── SKILLS/ESTETIK.md     ← Auditor visual y de experiencia de usuario (con PECAS)
 │
 └── APPS/                 ← Código de todos los proyectos
     ├── wallet-control/
@@ -91,6 +92,7 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 | Consulta financiera | FINANDO | "FINANDO, ¿qué hago con [X] pesos?" |
 | Debuggear un error | FIXA | "FIXA, este error: [error]" |
 | Auditar un proyecto (bugs/mejoras/eliminaciones) | AUDITA | "AUDITA" (siempre pregunta cuál proyecto) |
+| Auditar el visual/UX de un proyecto | ESTETIK | "ESTETIK" (siempre pregunta cuál proyecto) |
 
 ---
 
@@ -281,6 +283,7 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 | 2026-07-08 | Agregada palabra clave `PDF AUDITA` (hook real `.claude/hooks/pdf-audita.ps1`) — corre AUDITA con una sola pregunta (proyecto) y genera el informe completo en PDF automáticamente en `APPS/<proyecto>/AUDITORIAS/` |
 | 2026-07-08 | Agregada Lección 5 — correr `git pull` antes de empezar a trabajar en el repo, ya que hay más de una máquina (usuario y hermano) pusheando al mismo repo |
 | 2026-07-09 | `proyecto-switch.ps1` ahora hace `git pull --ff-only` automático antes de saludar en `WALLET CONTROL`/`RUTA SEGURA` — seguro por diseño (no fuerza merge si hay divergencia o cambios sin commitear, solo avisa); al vivir en el repo, aplica en ambas máquinas |
+| 2026-07-09 | Creada skill `ESTETIK` (generada vía KILLER) — auditoría visual y de experiencia de usuario en `APPS/`, apoyada en los patrones de PECAS; revisa consistencia de diseño, responsive, accesibilidad y microinteracciones, viendo la app realmente renderizada (no solo el código); nunca corrige código, solo diagnostica |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise
