@@ -352,6 +352,13 @@ export default function ResumenScreen() {
       alignItems: 'center',
       elevation: 3, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 8,
     },
+    creditSummaryRow: { flexDirection: 'row', gap: 10, marginHorizontal: 16, marginBottom: 20 },
+    creditSummaryBox: {
+      flex: 1, backgroundColor: COLORS.card, borderRadius: 12, padding: 12,
+      alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
+    },
+    creditSummaryLabel: { color: COLORS.textMuted, fontSize: 11, marginBottom: 4 },
+    creditSummaryVal: { fontWeight: '700', fontSize: FONT.base },
     pillsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16 },
     pill: {
       flex: 1, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 14,
