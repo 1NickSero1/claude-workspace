@@ -1,0 +1,41 @@
+PALABRAS CLAVE DEL SISTEMA
+==========================
+Indice de todas las palabras clave creadas para Claude Code en este repo, con su significado
+resumido en una palabra y si aplican en general o estan atadas a una skill/proyecto especifico.
+
+Este archivo se actualiza cada vez que se crea una palabra clave nueva (con o sin hook real
+detras). La fuente de verdad de como funciona cada una sigue siendo CLAUDE.md (secciones
+"Palabra(s) Clave de ...") - aqui solo va el resumen rapido.
+
+------------------------------------------------------------------------------------------------
+PALABRA CLAVE      | SIGNIFICADO (1 palabra) | TIPO                      | DONDE APLICA
+------------------------------------------------------------------------------------------------
+TERMINAR           | Commitear               | General                   | Cualquier proyecto (git)
+PAUSA               | Parcial                 | General                   | Cualquier proyecto (git)
+SUBIR               | Pushear                 | General                   | Cualquier proyecto (git)
+WALLET CONTROL      | Enfocar                 | Especifica de proyecto    | wallet-control (via PECAS)
+RUTA SEGURA         | Enfocar                 | Especifica de proyecto    | ruta-segura (via PECAS)
+PDF AUDITA          | Auditar                 | Especifica de skill       | AUDITA, cualquier proyecto de APPS/
+IMAGINA             | Sugerir                 | Especifica de skill       | ESTETIK, cualquier proyecto de APPS/
+------------------------------------------------------------------------------------------------
+
+Notas:
+- "General" = no depende de ninguna skill ni proyecto puntual, gobierna una accion transversal
+  (en este caso, siempre relacionada a git: commit o push).
+- "Especifica de proyecto" = arranca siempre el mismo proyecto fijo (no pregunta cual).
+- "Especifica de skill" = siempre activa la misma skill, pero esa skill pregunta sobre cual
+  proyecto de APPS/ actuar (no esta atada a uno solo).
+
+Detalle de cada una:
+- TERMINAR: commit general - agrega y confirma TODO lo pendiente en el repo.
+- PAUSA: commit especifico - Claude pregunta primero que actualizacion/archivo confirmar.
+- SUBIR: push automatico e inmediato de lo ya commiteado (hook real, sin preguntar).
+- WALLET CONTROL: hook real - hace git pull, invoca PECAS y recomienda /clear, enfocado en
+  APPS/wallet-control.
+- RUTA SEGURA: igual que WALLET CONTROL pero enfocado en APPS/ruta-segura.
+- PDF AUDITA: hook real - corre la skill AUDITA completa y entrega el informe directo en PDF en
+  APPS/<proyecto>/AUDITORIAS/, preguntando solo cual proyecto.
+- IMAGINA: hook real - corre la skill ESTETIK y entrega un mini PDF solo con los cambios/mejoras
+  visuales recomendadas en APPS/<proyecto>/PDF/, preguntando solo cual proyecto.
+
+Ultima actualizacion: 2026-07-09 (creacion del archivo, incluye hasta la palabra clave IMAGINA).
