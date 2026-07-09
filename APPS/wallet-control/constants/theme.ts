@@ -87,6 +87,7 @@ export const DARK_COLORS: typeof COLORS = {
 };
 
 export const FONT = {
+  xs:   11,
   sm:   12,
   md:   14,
   base: 16,
@@ -94,4 +95,21 @@ export const FONT = {
   xl:   22,
   xxl:  28,
   hero: 36,
+};
+
+export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+};
+
+export const RADIUS = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  pill: 999,
 };

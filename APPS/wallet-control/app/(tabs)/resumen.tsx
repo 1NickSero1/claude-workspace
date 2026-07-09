@@ -345,7 +345,7 @@ export default function ResumenScreen() {
     headerBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: COLORS.primaryBg, borderRadius: 22, paddingHorizontal: 13, paddingVertical: 8, borderWidth: 1.5, borderColor: COLORS.primary + '55' },
     headerBtnPrimary: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
     headerBtnText: { color: COLORS.primary, fontWeight: '800', fontSize: 13 },
-    headerBtnEmoji: { fontSize: 16 },
+    headerBtnEmoji: { fontSize: FONT.base },
     scroll: { paddingBottom: 100 },
     heroCard: {
       marginHorizontal: 16, marginBottom: 20,
