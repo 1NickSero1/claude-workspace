@@ -14,8 +14,8 @@
             "type": "command",
             "shell": "powershell",
             "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\proyecto-switch.ps1\"",
-            "timeout": 15,
-            "statusMessage": "Comprobando cambio de proyecto..."
+            "timeout": 30,
+            "statusMessage": "Comprobando cambio de proyecto y sincronizando con git..."
           },
           {
             "type": "command",
