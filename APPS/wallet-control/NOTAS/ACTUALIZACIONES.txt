@@ -448,6 +448,14 @@ v1.14 — 2026-07-08 · Botón Registrar en cápsula flotante
   tarjeta o cuenta directo desde cualquier sub-pestaña
 
 ------------------------------------------------------------
+v1.15 — 2026-07-08 · Botón "+" también en sección Efectivo
+------------------------------------------------------------
+• Tarjetas (Balance) → Débito → Efectivo: se quitó el texto naranja
+  "+ Agregar efectivo" de abajo de la lista — ahora el encabezado
+  "Efectivo" tiene el mismo botón "+" circular que ya tenían las secciones
+  de Tarjetas de débito y Tarjetas de crédito
+
+------------------------------------------------------------
 [PRÓXIMO]
 ------------------------------------------------------------
 • Build permanente (APK) para compartir sin servidor

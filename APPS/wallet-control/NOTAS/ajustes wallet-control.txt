@@ -12,7 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-quita el texto de agregar efectivo en naranja, y ponlo dentro del boton (+) asi como en la pantalla resumen, con el mismo estilo 
+  — (vacío por ahora)
 
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
@@ -41,6 +41,16 @@ quita el texto de agregar efectivo en naranja, y ponlo dentro del boton (+) asi 
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX — pendiente "por MI", botón "+" en sección Efectivo (FIXA, 2026-07-08)
+    → Tarjetas (Balance) → sub-pestaña Débito → sección "Efectivo": se quitó
+      el texto naranja "+ Agregar efectivo" que estaba debajo de la lista de
+      cuentas de efectivo. En su lugar, el encabezado "Efectivo" ahora tiene
+      el mismo botón "+" circular (mismo estilo/patrón que ya tenían
+      "Tarjetas de débito" y "Tarjetas de crédito") — solo visible cuando ya
+      hay al menos una cuenta de efectivo. El estado vacío (sin ninguna
+      cuenta de efectivo todavía) no se tocó: sigue con el botón punteado
+      "+ Agregar efectivo" grande, igual que el resto de secciones vacías.
 
   ✓ MEJORAX — pendiente "por MI", botón Registrar en cápsula (FIXA, 2026-07-08)
     → El botón "+" (Registrar) de Resumen ya no abre un bottom sheet de lista
