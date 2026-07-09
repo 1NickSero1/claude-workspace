@@ -359,13 +359,6 @@ export default function ResumenScreen() {
     },
     creditSummaryLabel: { color: COLORS.textMuted, fontSize: 11, marginBottom: 4 },
     creditSummaryVal: { fontWeight: '700', fontSize: FONT.base },
-    pillsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16 },
-    pill: {
-      flex: 1, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 14,
-    },
-    pillIconRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 },
-    pillLabel: { color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
-    pillValue: { fontWeight: '800', fontSize: FONT.xl, color: '#fff' },
     donutTap: { alignItems: 'center' },
     donutSlider: { marginHorizontal: -16, marginTop: 14 },
     donutSlide: { alignItems: 'center', paddingVertical: 8 },
@@ -589,23 +582,17 @@ export default function ResumenScreen() {
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
       >
-        {/* ── Hero: pills arriba + donuts swipeables ─── */}
+        {/* ── Hero: total gastado/disponible arriba + donuts swipeables ─── */}
         <View style={styles.heroCard}>
-          {/* Pills ingresos / gastos — arriba */}
-          <View style={styles.pillsRow}>
-            <View style={[styles.pill, { backgroundColor: COLORS.debit }]}>
-              <View style={styles.pillIconRow}>
-                <Ionicons name="arrow-up-circle" size={12} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.pillLabel}>Ingresos</Text>
-              </View>
-              <Text style={styles.pillValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(totalIncome)}</Text>
+          {/* Total gastado (crédito) / Total disponible (débito + efectivo) — arriba */}
+          <View style={[styles.creditSummaryRow, { marginHorizontal: 0, marginBottom: 16 }]}>
+            <View style={styles.creditSummaryBox}>
+              <Text style={styles.creditSummaryLabel}>Total gastado</Text>
+              <Text style={[styles.creditSummaryVal, { color: COLORS.credit }]}>{formatCOP(creditSpent)}</Text>
             </View>
-            <View style={[styles.pill, { backgroundColor: COLORS.credit }]}>
-              <View style={styles.pillIconRow}>
-                <Ionicons name="arrow-down-circle" size={12} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.pillLabel}>Gastos</Text>
-              </View>
-              <Text style={styles.pillValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(totalSpent)}</Text>
+            <View style={styles.creditSummaryBox}>
+              <Text style={styles.creditSummaryLabel}>Total disponible</Text>
+              <Text style={[styles.creditSummaryVal, { color: COLORS.debit }]}>{formatCOP(debitAvailable + cashAvailable)}</Text>
             </View>
           </View>
 
@@ -758,20 +745,6 @@ export default function ResumenScreen() {
             )}
           </View>
         </View>
-
-        {/* ── Total gastado (crédito) / Total disponible (débito + efectivo) ── */}
-        {(creditSpent > 0 || debitAvailable + cashAvailable > 0) && (
-          <View style={styles.creditSummaryRow}>
-            <View style={styles.creditSummaryBox}>
-              <Text style={styles.creditSummaryLabel}>Total gastado</Text>
-              <Text style={[styles.creditSummaryVal, { color: COLORS.credit }]}>{formatCOP(creditSpent)}</Text>
-            </View>
-            <View style={styles.creditSummaryBox}>
-              <Text style={styles.creditSummaryLabel}>Total disponible</Text>
-              <Text style={[styles.creditSummaryVal, { color: COLORS.debit }]}>{formatCOP(debitAvailable + cashAvailable)}</Text>
-            </View>
-          </View>
-        )}
 
         {/* ── Tarjeta de periodo (semanal/quincenal/mensual) ── */}
         {profile?.budgetPeriod === 'weekly' ? (

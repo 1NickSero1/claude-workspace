@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +28,8 @@ export default function CategoriasScreen() {
   const [editingCat, setEditingCat] = useState<CustomCategory | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [detailCat, setDetailCat]         = useState<CustomCategory | null>(null);
+  const [actionCat, setActionCat]         = useState<CustomCategory | null>(null);
+  const [confirmDeleteCat, setConfirmDeleteCat] = useState<CustomCategory | null>(null);
 
   const load = useCallback(async () => {
     const [d, cats, c] = await Promise.all([getMonthData(monthKey), getCategories(), getCards()]);
@@ -43,12 +45,17 @@ export default function CategoriasScreen() {
   const handleSaveCat = async (cat: CustomCategory) => {
     await saveCategory(cat); setCatModal(false); setEditingCat(null); await load();
   };
-  const handleDeleteCat = (cat: CustomCategory) =>
-    Alert.alert('Eliminar categoría', `¿Eliminar "${cat.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive',
-        onPress: async () => { await deleteCategory(cat.id); await load(); } },
-    ]);
+  const handleDeleteCat = (cat: CustomCategory) => {
+    setActionCat(null);
+    setConfirmDeleteCat(cat);
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteCat) return;
+    await deleteCategory(confirmDeleteCat.id);
+    setConfirmDeleteCat(null);
+    await load();
+  };
 
   const openDetail = (cat: CustomCategory) => {
     setDetailCat(cat);
@@ -102,6 +109,34 @@ export default function CategoriasScreen() {
     catListTrack: { height: 4, backgroundColor: COLORS.border, borderRadius: 2, overflow: 'hidden', marginBottom: 3 },
     catListFill: { height: '100%', borderRadius: 2 },
     catListPct: { color: COLORS.textDim, fontSize: 10, fontWeight: '600' },
+    actOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.55)' },
+    actSheet: {
+      backgroundColor: COLORS.card, borderTopLeftRadius: 28, borderTopRightRadius: 28,
+      paddingHorizontal: 20, paddingTop: 14, paddingBottom: 32,
+    },
+    actHandle: { width: 40, height: 4, backgroundColor: COLORS.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
+    actTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: 16 },
+    actRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderTopWidth: 1, borderTopColor: COLORS.border },
+    actRowText: { color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
+    actRowTextDanger: { color: COLORS.danger },
+    confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 28 },
+    confirmCard: {
+      backgroundColor: COLORS.card, borderRadius: 24, padding: 24, width: '100%',
+      alignItems: 'center', borderWidth: 2, borderColor: COLORS.danger + '44',
+      elevation: 10, shadowColor: COLORS.danger, shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25, shadowRadius: 12,
+    },
+    confirmIcon: {
+      width: 56, height: 56, borderRadius: 28,
+      backgroundColor: COLORS.danger + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+    },
+    confirmTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: 8, textAlign: 'center' },
+    confirmText: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginBottom: 20 },
+    confirmActions: { flexDirection: 'row', gap: 10, width: '100%' },
+    confirmCancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
+    confirmCancelText: { color: COLORS.textMuted, fontWeight: '700', fontSize: FONT.md },
+    confirmDeleteBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: COLORS.danger },
+    confirmDeleteText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }, moderateScale)), [COLORS, moderateScale]);
 
   return (
@@ -167,16 +202,7 @@ export default function CategoriasScreen() {
                   key={cat.id}
                   style={[styles.catCell, overBudget && styles.catCellWarning]}
                   onPress={() => openDetail(cat)}
-                  onLongPress={() =>
-                    Alert.alert(cat.name, '', [
-                      { text: 'Editar categoría', onPress: () => { setEditingCat(cat); setCatModal(true); } },
-                      ...(!cat.isDefault ? [{
-                        text: 'Eliminar', style: 'destructive' as const,
-                        onPress: () => handleDeleteCat(cat),
-                      }] : []),
-                      { text: 'Cancelar', style: 'cancel' },
-                    ])
-                  }
+                  onLongPress={() => setActionCat(cat)}
                   activeOpacity={0.75}
                 >
                   <View style={[styles.catCellIcon, { backgroundColor: cat.color + '22' }]}>
@@ -208,16 +234,7 @@ export default function CategoriasScreen() {
                   key={cat.id}
                   style={[styles.catListRow, overBudget && styles.catCellWarning]}
                   onPress={() => openDetail(cat)}
-                  onLongPress={() =>
-                    Alert.alert(cat.name, '', [
-                      { text: 'Editar categoría', onPress: () => { setEditingCat(cat); setCatModal(true); } },
-                      ...(!cat.isDefault ? [{
-                        text: 'Eliminar', style: 'destructive' as const,
-                        onPress: () => handleDeleteCat(cat),
-                      }] : []),
-                      { text: 'Cancelar', style: 'cancel' },
-                    ])
-                  }
+                  onLongPress={() => setActionCat(cat)}
                   activeOpacity={0.78}
                 >
                   <View style={[styles.catListIcon, { backgroundColor: cat.color + '22' }]}>
@@ -264,6 +281,57 @@ export default function CategoriasScreen() {
         onRefresh={load}
         onClose={() => setDetailVisible(false)}
       />
+
+      {/* Menú de acciones de categoría (reemplaza Alert.alert nativo) */}
+      <Modal visible={!!actionCat} animationType="slide" transparent onRequestClose={() => setActionCat(null)}>
+        <View style={styles.actOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setActionCat(null)} activeOpacity={1} />
+          <View style={styles.actSheet}>
+            <View style={styles.actHandle} />
+            {actionCat && (
+              <>
+                <Text style={styles.actTitle}>{actionCat.name}</Text>
+                <TouchableOpacity
+                  style={styles.actRow}
+                  onPress={() => { setEditingCat(actionCat); setCatModal(true); setActionCat(null); }}
+                >
+                  <Ionicons name="pencil-outline" size={20} color={COLORS.primary} />
+                  <Text style={styles.actRowText}>Editar categoría</Text>
+                </TouchableOpacity>
+                {!actionCat.isDefault && (
+                  <TouchableOpacity style={styles.actRow} onPress={() => handleDeleteCat(actionCat)}>
+                    <Ionicons name="trash-outline" size={20} color={COLORS.danger} />
+                    <Text style={[styles.actRowText, styles.actRowTextDanger]}>Eliminar</Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Confirmación de eliminar (reemplaza Alert.alert nativo) */}
+      <Modal visible={!!confirmDeleteCat} animationType="fade" transparent onRequestClose={() => setConfirmDeleteCat(null)}>
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmCard}>
+            <View style={styles.confirmIcon}>
+              <Ionicons name="trash" size={26} color={COLORS.danger} />
+            </View>
+            <Text style={styles.confirmTitle}>Eliminar categoría</Text>
+            <Text style={styles.confirmText}>
+              ¿Eliminar "{confirmDeleteCat?.name}"? Los gastos ya registrados no se ven afectados.
+            </Text>
+            <View style={styles.confirmActions}>
+              <TouchableOpacity style={styles.confirmCancelBtn} onPress={() => setConfirmDeleteCat(null)}>
+                <Text style={styles.confirmCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.confirmDeleteBtn} onPress={confirmDelete}>
+                <Text style={styles.confirmDeleteText}>Eliminar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
