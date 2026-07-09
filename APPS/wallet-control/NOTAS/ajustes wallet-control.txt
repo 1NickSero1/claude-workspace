@@ -12,7 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-  — (vacío por ahora)
+en la pantalla de resumen y en donde mas se use ese mismo boton maneja el estilo que te voy a especificar como "la foto" y dale el mismo estilo a las opciones de gasto ingreso y nueva meta de ahorro 
 
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
