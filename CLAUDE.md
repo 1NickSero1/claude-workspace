@@ -223,10 +223,18 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 
 | Palabra clave | Acción |
 |---|---|
-| `WALLET CONTROL` | Invoca la skill PECAS y saluda, recomendando al usuario correr `/clear` antes de seguir (contexto limpio), para trabajar específicamente en `APPS/wallet-control` |
+| `WALLET CONTROL` | Hace `git pull --ff-only` automático (ver nota), invoca la skill PECAS y saluda, recomendando al usuario correr `/clear` antes de seguir (contexto limpio), para trabajar específicamente en `APPS/wallet-control` |
 | `RUTA SEGURA` | Igual, pero enfocado en `APPS/ruta-segura` |
 
 **Nota:** Claude no puede borrar su propio contexto de conversación desde un hook — eso solo lo dispara el usuario con `/clear`. El hook recomienda hacerlo, no lo fuerza.
+
+**Nota (git pull automático, desde 2026-07-09):** antes de saludar, el hook intenta `git pull
+--ff-only` en el repo. Es una operación segura por diseño: si hay cambios sin commitear, o si el
+historial local y el remoto divergieron (ambas máquinas con commits propios sin sincronizar), el
+hook NO fuerza nada — solo avisa en el saludo y Claude puede ofrecer resolverlo a mano en la
+conversación (igual que un `git pull` normal). Como el hook vive en el repo y se sincroniza a la
+máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máquinas que arranque
+`WALLET CONTROL` o `RUTA SEGURA` revisa primero si la otra subió cambios nuevos.
 
 ---
 
@@ -272,6 +280,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 | 2026-07-08 | Creada skill `AUDITA` (generada vía KILLER) — auditoría profesional de proyectos en `APPS/`, apoyada en los criterios de PECAS; siempre pregunta primero cuál proyecto auditar y entrega el informe en lenguaje simple, separando bugs / eliminaciones / mejoras / lo que ya funciona |
 | 2026-07-08 | Agregada palabra clave `PDF AUDITA` (hook real `.claude/hooks/pdf-audita.ps1`) — corre AUDITA con una sola pregunta (proyecto) y genera el informe completo en PDF automáticamente en `APPS/<proyecto>/AUDITORIAS/` |
 | 2026-07-08 | Agregada Lección 5 — correr `git pull` antes de empezar a trabajar en el repo, ya que hay más de una máquina (usuario y hermano) pusheando al mismo repo |
+| 2026-07-09 | `proyecto-switch.ps1` ahora hace `git pull --ff-only` automático antes de saludar en `WALLET CONTROL`/`RUTA SEGURA` — seguro por diseño (no fuerza merge si hay divergencia o cambios sin commitear, solo avisa); al vivir en el repo, aplica en ambas máquinas |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise
