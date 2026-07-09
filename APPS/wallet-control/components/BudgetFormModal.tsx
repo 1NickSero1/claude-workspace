@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Modal, View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
+import BottomSheet from './BottomSheet';
 
 interface Props {
   visible: boolean;
@@ -27,9 +25,6 @@ export default function BudgetFormModal({ visible, budget, onSave, onClose }: Pr
 
   const COLORS = useColors();
   const styles = useMemo(() => StyleSheet.create({
-    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-    sheet: { backgroundColor: COLORS.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 28 },
-    handle: { width: 40, height: 4, backgroundColor: COLORS.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
     title: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: 4 },
     hint: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 16 },
     input: {
@@ -46,35 +41,30 @@ export default function BudgetFormModal({ visible, budget, onSave, onClose }: Pr
   }), [COLORS]);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
-          <Text style={styles.title}>Presupuesto mensual</Text>
-          <Text style={styles.hint}>Te avisaremos al llegar al 80% y al 100%.</Text>
-          <TextInput
-            style={styles.input}
-            value={amount ? fmt(numeric) : ''}
-            onChangeText={v => setAmount(v.replace(/\D/g, ''))}
-            placeholder="Ej: 2.000.000"
-            placeholderTextColor={COLORS.textDim}
-            keyboardType="number-pad"
-            autoFocus
-          />
-          <View style={styles.actions}>
-            <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
-              <Text style={styles.cancelText}>Cancelar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => valid && onSave(numeric)}
-              disabled={!valid}
-              style={[styles.saveBtn, !valid && styles.saveBtnOff]}
-            >
-              <Text style={styles.saveText}>Guardar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    <BottomSheet visible={visible} onClose={onClose} sheetStyle={{ paddingBottom: 28 }}>
+      <Text style={styles.title}>Presupuesto mensual</Text>
+      <Text style={styles.hint}>Te avisaremos al llegar al 80% y al 100%.</Text>
+      <TextInput
+        style={styles.input}
+        value={amount ? fmt(numeric) : ''}
+        onChangeText={v => setAmount(v.replace(/\D/g, ''))}
+        placeholder="Ej: 2.000.000"
+        placeholderTextColor={COLORS.textDim}
+        keyboardType="number-pad"
+        autoFocus
+      />
+      <View style={styles.actions}>
+        <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+          <Text style={styles.cancelText}>Cancelar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => valid && onSave(numeric)}
+          disabled={!valid}
+          style={[styles.saveBtn, !valid && styles.saveBtnOff]}
+        >
+          <Text style={styles.saveText}>Guardar</Text>
+        </TouchableOpacity>
+      </View>
+    </BottomSheet>
   );
 }
