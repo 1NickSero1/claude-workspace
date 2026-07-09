@@ -154,17 +154,17 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
           {card.type === 'credit' && available !== null && (
             <>
               <Text style={styles.balanceLabel}>Disponible</Text>
-              <Text style={styles.balanceAmt}>{formatCOP(Math.max(available, 0))}</Text>
+              <Text style={styles.balanceAmt} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(Math.max(available, 0))}</Text>
             </>
           )}
           {card.type === 'debit' && balanceLeft !== null && (
             <>
               <Text style={styles.balanceLabel}>Saldo</Text>
-              <Text style={styles.balanceAmt}>{formatCOP(Math.max(balanceLeft, 0))}</Text>
+              <Text style={styles.balanceAmt} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(Math.max(balanceLeft, 0))}</Text>
             </>
           )}
           {totalSpent > 0 && (
-            <Text style={styles.spentText}>Gastado: {formatCOP(totalSpent)}</Text>
+            <Text style={styles.spentText} numberOfLines={1} adjustsFontSizeToFit>Gastado: {formatCOP(totalSpent)}</Text>
           )}
         </View>
       </View>
