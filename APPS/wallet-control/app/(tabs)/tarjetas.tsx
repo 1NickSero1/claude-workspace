@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, Alert, Modal,
+  StyleSheet, Alert, Modal, ActivityIndicator,
   TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,6 +36,7 @@ export default function TarjetasScreen() {
   const [cards, setCards]               = useState<Card[]>([]);
   const [expenses, setExpenses]         = useState<Expense[]>([]);
   const [categories, setCategories]     = useState<CustomCategory[]>([]);
+  const [loading, setLoading]           = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCard, setEditingCard]   = useState<Card | null>(null);
   const [pendingTypes, setPendingTypes] = useState<Card['type'][]>(['debit', 'cash']);
@@ -62,6 +63,7 @@ export default function TarjetasScreen() {
   }, [params.tab]));
 
   const load = useCallback(async () => {
+    setLoading(true);
     const [c, d, cats] = await Promise.all([
       getCards(),
       getMonthData(monthKey),
@@ -70,6 +72,7 @@ export default function TarjetasScreen() {
     setCards(c);
     setExpenses(d.expenses);
     setCategories(cats);
+    setLoading(false);
   }, [monthKey]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -79,6 +82,7 @@ export default function TarjetasScreen() {
 
   const styles = useMemo(() => StyleSheet.create(scaledSheet({
     safe: { flex: 1, backgroundColor: COLORS.bg },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12, backgroundColor: COLORS.bg },
     headerTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.xl },
     subTabBar: {
@@ -391,6 +395,14 @@ export default function TarjetasScreen() {
   const actionLimitPct = actionCard?.type === 'credit' && actionCard.limit
     ? Math.min((actionTotal / actionCard.limit) * 100, 100)
     : 0;
+
+  if (loading) return (
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.center}>
+        <ActivityIndicator color={COLORS.primary} size="large" />
+      </View>
+    </SafeAreaView>
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
