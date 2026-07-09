@@ -759,6 +759,20 @@ export default function ResumenScreen() {
           </View>
         </View>
 
+        {/* ── Total gastado (crédito) / Total disponible (débito + efectivo) ── */}
+        {(creditSpent > 0 || debitAvailable + cashAvailable > 0) && (
+          <View style={styles.creditSummaryRow}>
+            <View style={styles.creditSummaryBox}>
+              <Text style={styles.creditSummaryLabel}>Total gastado</Text>
+              <Text style={[styles.creditSummaryVal, { color: COLORS.credit }]}>{formatCOP(creditSpent)}</Text>
+            </View>
+            <View style={styles.creditSummaryBox}>
+              <Text style={styles.creditSummaryLabel}>Total disponible</Text>
+              <Text style={[styles.creditSummaryVal, { color: COLORS.debit }]}>{formatCOP(debitAvailable + cashAvailable)}</Text>
+            </View>
+          </View>
+        )}
+
         {/* ── Tarjeta de periodo (semanal/quincenal/mensual) ── */}
         {profile?.budgetPeriod === 'weekly' ? (
           <TouchableOpacity activeOpacity={0.85} onPress={() => setPendingModal(true)} style={styles.budgetWrap}>
