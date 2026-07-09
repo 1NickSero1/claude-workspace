@@ -158,8 +158,8 @@ export default function PerfilScreen() {
       borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg, gap: 2,
     },
     themeBtnActive:     { borderColor: COLORS.primary, backgroundColor: COLORS.primaryBg },
-    themeBtnEmoji:      { fontSize: 18 },
-    themeBtnText:       { color: COLORS.textMuted, fontWeight: '600', fontSize: 11 },
+    themeBtnEmoji:      { fontSize: FONT.lg },
+    themeBtnText:       { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.xs },
     themeBtnTextActive: { color: COLORS.primary },
 
     dangerBtn: {
