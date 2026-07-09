@@ -13,6 +13,7 @@ COMANDO RÁPIDO:
 [PENDIENTE] por MI
 ------------------------------------------------------------
   — (vacío por ahora)
+
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
@@ -40,6 +41,44 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX — pendiente "por MI", botón "+" en sección Efectivo (FIXA, 2026-07-08)
+    → Tarjetas (Balance) → sub-pestaña Débito → sección "Efectivo": se quitó
+      el texto naranja "+ Agregar efectivo" que estaba debajo de la lista de
+      cuentas de efectivo. En su lugar, el encabezado "Efectivo" ahora tiene
+      el mismo botón "+" circular (mismo estilo/patrón que ya tenían
+      "Tarjetas de débito" y "Tarjetas de crédito") — solo visible cuando ya
+      hay al menos una cuenta de efectivo. El estado vacío (sin ninguna
+      cuenta de efectivo todavía) no se tocó: sigue con el botón punteado
+      "+ Agregar efectivo" grande, igual que el resto de secciones vacías.
+
+  ✓ MEJORAX — pendiente "por MI", botón Registrar en cápsula (FIXA, 2026-07-08)
+    → El botón "+" (Registrar) de Resumen ya no abre un bottom sheet de lista
+      completa ("¿Qué quieres registrar?" con 2 filas). Ahora, al tocarlo, el
+      mismo FAB se transforma en una cápsula redondeada flotante (mismo
+      estilo que "la foto" de referencia del usuario: pastilla oscura con
+      botones circulares + una "X" para cerrar) con 2 botones — 💸 Gasto/
+      Ingreso y 🎯 Nueva meta de ahorro — y una "X" al final para cerrar sin
+      elegir nada. Se confirmó que este era el único lugar de la app con
+      este patrón de botón (no había que replicarlo en otra pantalla).
+    → Se quitó el Modal con overlay oscuro que tenía antes (no aplica en el
+      diseño de cápsula, que flota sin oscurecer el fondo). Estilos muertos
+      regOption/regOptionEmoji eliminados; regOptionTitle/regOptionSub se
+      conservan porque los sigue usando el sheet de Ayuda (PDF/Extracto/❓).
+
+  ✓ MEJORAX — pendiente "por MI" (FIXA, 2026-07-08)
+    → Pantalla Tarjetas (Balance): se quitaron los recuadros "Total gastado"
+      / "Total disponible" que aparecían arriba de la lista de tarjetas
+      (tanto en la sub-pestaña Débito como en Crédito). En su lugar, el
+      encabezado de cada sección ("Tarjetas de débito" / "Tarjetas de
+      crédito") ahora tiene un botón "+" circular a la derecha para agregar
+      tarjeta directamente ahí — se quitó el link de texto duplicado
+      "Agregar débito"/"Agregar tarjeta" que estaba debajo de la lista.
+    → Pantalla Resumen: se agregó el mismo par de recuadros "Total gastado"
+      (gasto total en tarjetas de crédito) / "Total disponible" (débito +
+      efectivo disponible) justo debajo del donut principal, reutilizando
+      variables ya calculadas en la pantalla (creditSpent, debitAvailable,
+      cashAvailable) — sin lógica nueva duplicada.
 
   ✓ Ajustes en vivo tras la 7ma ronda (PECAS, 2026-07-06)
     → "Gastos del mes" (tap en el donut de Gastos) dejó de abrir el popup

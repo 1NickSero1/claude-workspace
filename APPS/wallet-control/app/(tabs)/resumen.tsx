@@ -71,6 +71,7 @@ export default function ResumenScreen() {
 
   // Quick entry modal
   const [quickEntry, setQuickEntry]         = useState(false);
+  const [quickEntryType, setQuickEntryType] = useState<'gasto' | 'ingreso'>('gasto');
   const [summaryModal, setSummaryModal]     = useState(false);
   const [expensesModal, setExpensesModal]   = useState(false);
   const [exporting, setExporting]           = useState(false);
@@ -352,13 +353,13 @@ export default function ResumenScreen() {
       alignItems: 'center',
       elevation: 3, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 8,
     },
-    pillsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16 },
-    pill: {
-      flex: 1, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 14,
+    creditSummaryRow: { flexDirection: 'row', gap: 10, marginHorizontal: 16, marginBottom: 20 },
+    creditSummaryBox: {
+      flex: 1, backgroundColor: COLORS.card, borderRadius: 12, padding: 12,
+      alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
     },
-    pillIconRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 },
-    pillLabel: { color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
-    pillValue: { fontWeight: '800', fontSize: FONT.xl, color: '#fff' },
+    creditSummaryLabel: { color: COLORS.textMuted, fontSize: 11, marginBottom: 4 },
+    creditSummaryVal: { fontWeight: '700', fontSize: FONT.base },
     donutTap: { alignItems: 'center' },
     donutSlider: { marginHorizontal: -16, marginTop: 14 },
     donutSlide: { alignItems: 'center', paddingVertical: 8 },
@@ -513,8 +514,6 @@ export default function ResumenScreen() {
     sheetDismiss: { flex: 1 },
     regSheet: { backgroundColor: COLORS.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 28 },
     regTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: 16, marginTop: 4 },
-    regOption: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: COLORS.card2, borderRadius: 16, padding: 16, marginBottom: 10 },
-    regOptionEmoji: { fontSize: 28 },
     regOptionTitle: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base },
     regOptionSub: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 1 },
     helpOption: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border },
@@ -539,7 +538,23 @@ export default function ResumenScreen() {
       alignItems: 'center', justifyContent: 'center',
       elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8,
     },
-    fabLabel: { color: COLORS.primary, fontSize: 12, fontWeight: '800', letterSpacing: 0.3, backgroundColor: COLORS.primaryBg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.primary + '33' },
+    regCapsule: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: COLORS.card2, borderRadius: 999, padding: 6,
+      borderWidth: 1, borderColor: COLORS.border,
+      elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+    },
+    regCapsuleBtn: {
+      width: 48, height: 48, borderRadius: 24,
+      alignItems: 'center', justifyContent: 'center',
+      backgroundColor: COLORS.bg,
+    },
+    regCapsuleEmoji: { fontSize: 22 },
+    regCapsuleClose: {
+      width: 36, height: 36, borderRadius: 18,
+      alignItems: 'center', justifyContent: 'center',
+      marginRight: 2,
+    },
   }, moderateScale)), [COLORS, moderateScale]);
 
   return (
@@ -582,23 +597,17 @@ export default function ResumenScreen() {
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
       >
-        {/* ── Hero: pills arriba + donuts swipeables ─── */}
+        {/* ── Hero: total gastado/disponible arriba + donuts swipeables ─── */}
         <View style={styles.heroCard}>
-          {/* Pills ingresos / gastos — arriba */}
-          <View style={styles.pillsRow}>
-            <View style={[styles.pill, { backgroundColor: COLORS.debit }]}>
-              <View style={styles.pillIconRow}>
-                <Ionicons name="arrow-up-circle" size={12} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.pillLabel}>Ingresos</Text>
-              </View>
-              <Text style={styles.pillValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(totalIncome)}</Text>
+          {/* Total gastado (crédito) / Total disponible (débito + efectivo) — arriba */}
+          <View style={[styles.creditSummaryRow, { marginHorizontal: 0, marginBottom: 16 }]}>
+            <View style={styles.creditSummaryBox}>
+              <Text style={styles.creditSummaryLabel}>Total gastado</Text>
+              <Text style={[styles.creditSummaryVal, { color: COLORS.credit }]}>{formatCOP(creditSpent)}</Text>
             </View>
-            <View style={[styles.pill, { backgroundColor: COLORS.credit }]}>
-              <View style={styles.pillIconRow}>
-                <Ionicons name="arrow-down-circle" size={12} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.pillLabel}>Gastos</Text>
-              </View>
-              <Text style={styles.pillValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{formatCOP(totalSpent)}</Text>
+            <View style={styles.creditSummaryBox}>
+              <Text style={styles.creditSummaryLabel}>Total disponible</Text>
+              <Text style={[styles.creditSummaryVal, { color: COLORS.debit }]}>{formatCOP(debitAvailable + cashAvailable)}</Text>
             </View>
           </View>
 
@@ -1145,33 +1154,6 @@ export default function ResumenScreen() {
         </View>
       </Modal>
 
-      {/* ── Registrar sheet ──────────────────────────── */}
-      <Modal visible={registrarSheet} animationType="slide" transparent onRequestClose={() => setRegistrarSheet(false)}>
-        <View style={styles.sheetOverlay}>
-          <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setRegistrarSheet(false)} />
-          <View style={styles.regSheet}>
-            <View style={styles.summaryHandle} />
-            <Text style={styles.regTitle}>¿Qué quieres registrar?</Text>
-            <TouchableOpacity style={styles.regOption} onPress={() => { setRegistrarSheet(false); setQuickEntry(true); }}>
-              <Text style={styles.regOptionEmoji}>💸</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.regOptionTitle}>Gasto / Ingreso</Text>
-                <Text style={styles.regOptionSub}>Registra una transacción del mes</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textDim} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.regOption} onPress={() => { setRegistrarSheet(false); setEditingGoal(null); setGoalModal(true); }}>
-              <Text style={styles.regOptionEmoji}>🎯</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.regOptionTitle}>Nueva Meta de ahorro</Text>
-                <Text style={styles.regOptionSub}>Crea o registra una meta nueva</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textDim} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
       {/* ── Help sheet ───────────────────────────────── */}
       <Modal visible={helpSheet} animationType="slide" transparent onRequestClose={() => setHelpSheet(false)}>
         <View style={styles.sheetOverlay}>
@@ -1429,22 +1411,59 @@ export default function ResumenScreen() {
       <QuickEntryModal
         visible={quickEntry}
         categories={categories}
+        initialType={quickEntryType}
         onSave={() => { setQuickEntry(false); load(); }}
         onClose={() => setQuickEntry(false)}
       />
 
       {/* FAB */}
       <View style={styles.fabContainer}>
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => setRegistrarSheet(true)}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Registrar gasto o ingreso"
-        >
-          <Ionicons name="add" size={30} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.fabLabel}>Registrar</Text>
+        {registrarSheet ? (
+          <View style={styles.regCapsule}>
+            <TouchableOpacity
+              style={styles.regCapsuleBtn}
+              onPress={() => { setRegistrarSheet(false); setQuickEntryType('ingreso'); setQuickEntry(true); }}
+              accessibilityRole="button"
+              accessibilityLabel="Registrar ingreso"
+            >
+              <Ionicons name="add" size={24} color={COLORS.debit} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.regCapsuleBtn}
+              onPress={() => { setRegistrarSheet(false); setQuickEntryType('gasto'); setQuickEntry(true); }}
+              accessibilityRole="button"
+              accessibilityLabel="Registrar gasto"
+            >
+              <Ionicons name="remove" size={24} color={COLORS.credit} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.regCapsuleBtn}
+              onPress={() => { setRegistrarSheet(false); setEditingGoal(null); setGoalModal(true); }}
+              accessibilityRole="button"
+              accessibilityLabel="Nueva meta de ahorro"
+            >
+              <Text style={styles.regCapsuleEmoji}>🎯</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.regCapsuleClose}
+              onPress={() => setRegistrarSheet(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar"
+            >
+              <Ionicons name="close" size={18} color={COLORS.textMuted} />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.fab}
+            onPress={() => setRegistrarSheet(true)}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Registrar gasto o ingreso"
+          >
+            <Ionicons name="add" size={30} color="#fff" />
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );

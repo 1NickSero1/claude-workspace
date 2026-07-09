@@ -97,13 +97,7 @@ export default function TarjetasScreen() {
     },
     subTabBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
     scroll: { paddingBottom: 40 },
-    creditSummaryRow: { flexDirection: 'row', gap: 10, marginHorizontal: 16, marginBottom: 12 },
-    creditSummaryBox: {
-      flex: 1, backgroundColor: COLORS.card, borderRadius: 12, padding: 12,
-      alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
-    },
-    creditSummaryLabel: { color: COLORS.textMuted, fontSize: 11, marginBottom: 4 },
-    creditSummaryVal: { fontWeight: '700', fontSize: FONT.base },
+    sectionAddBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
     emptyState: { paddingHorizontal: 20, paddingVertical: 32, alignItems: 'center', gap: 20 },
     emptyHint: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', lineHeight: 20 },
     addDashedBtn: {
@@ -142,6 +136,13 @@ export default function TarjetasScreen() {
     },
     balanceFooterLabel: { color: COLORS.textMuted, fontSize: FONT.sm },
     balanceFooterAmount: { color: COLORS.debit, fontWeight: '800', fontSize: FONT.lg },
+    fabContainer: { position: 'absolute', bottom: 24, right: 24, alignItems: 'center', gap: 4 },
+    fab: {
+      width: 60, height: 60, borderRadius: 30,
+      backgroundColor: COLORS.primary,
+      alignItems: 'center', justifyContent: 'center',
+      elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8,
+    },
   }, moderateScale)), [COLORS, moderateScale]);
 
   const actStyles = useMemo(() => StyleSheet.create({
@@ -279,14 +280,11 @@ export default function TarjetasScreen() {
   const tarjetas   = cards.filter(c => c.type === 'credit');
   const debts      = cards.filter(c => c.type === 'debt');
 
-  const totalBalance     = cuentas.reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0), 0);
   const totalCash        = cashCards.reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0), 0);
   const totalDebt        = debts.reduce((s, c) => s + (c.balance ?? 0), 0);
   const totalCreditUsed  = tarjetas.reduce((s, c) => s + getCardTotalSpent(expenses, c.id), 0);
-  const totalCreditAvail = tarjetas.reduce((s, c) => s + Math.max((c.limit ?? 0) - getCardTotalSpent(expenses, c.id), 0), 0);
   const totalDebitSpent  = debitCards.reduce((s, c) => s + getCardTotalSpent(expenses, c.id), 0);
   const totalDebitAvail  = debitCards.reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0), 0);
-  const totalCuentasSpent = cuentas.reduce((s, c) => s + getCardTotalSpent(expenses, c.id), 0);
 
   const allDebtPayments = debts
     .flatMap(c =>
@@ -442,20 +440,11 @@ export default function TarjetasScreen() {
               </View>
             ) : (
               <>
-                {cuentas.length > 1 && (
-                  <View style={styles.creditSummaryRow}>
-                    <View style={styles.creditSummaryBox}>
-                      <Text style={styles.creditSummaryLabel}>Total gastado</Text>
-                      <Text style={[styles.creditSummaryVal, { color: COLORS.credit }]}>{formatCOP(totalCuentasSpent)}</Text>
-                    </View>
-                    <View style={styles.creditSummaryBox}>
-                      <Text style={styles.creditSummaryLabel}>Total disponible</Text>
-                      <Text style={[styles.creditSummaryVal, { color: COLORS.debit }]}>{formatCOP(totalBalance)}</Text>
-                    </View>
-                  </View>
-                )}
                 <View style={[styles.sectionDivider, { marginTop: 8 }]}>
                   <Text style={styles.sectionDividerTitle}>Tarjetas de débito</Text>
+                  <TouchableOpacity onPress={() => openAdd(['debit'])} style={styles.sectionAddBtn}>
+                    <Ionicons name="add" size={18} color={COLORS.primary} />
+                  </TouchableOpacity>
                 </View>
                 <ScrollView
                   horizontal
@@ -473,19 +462,20 @@ export default function TarjetasScreen() {
                     />
                   ))}
                 </ScrollView>
-                <View style={{ paddingHorizontal: 16 }}>
-                  <TouchableOpacity onPress={() => openAdd(['debit'])} style={styles.addMoreBtn}>
-                    <Ionicons name="add-circle-outline" size={16} color={COLORS.primary} />
-                    <Text style={styles.addMoreText}>Agregar débito</Text>
-                  </TouchableOpacity>
-                </View>
               </>
             )}
 
             {/* ── Sección Efectivo ── */}
             <View style={styles.sectionDivider}>
               <Text style={styles.sectionDividerTitle}>Efectivo</Text>
-              {totalCash > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.debit }]}>{formatCOP(totalCash)}</Text>}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                {totalCash > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.debit }]}>{formatCOP(totalCash)}</Text>}
+                {cashCards.length > 0 && (
+                  <TouchableOpacity onPress={() => openAdd(['cash'])} style={styles.sectionAddBtn}>
+                    <Ionicons name="add" size={18} color={COLORS.cash} />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
 
             {cashCards.length === 0 ? (
@@ -507,10 +497,6 @@ export default function TarjetasScreen() {
                     <AccountRow card={card} spent={getCardTotalSpent(expenses, card.id)} />
                   </TouchableOpacity>
                 ))}
-                <TouchableOpacity onPress={() => openAdd(['cash'])} style={styles.addMoreBtn}>
-                  <Ionicons name="add-circle-outline" size={16} color={COLORS.cash} />
-                  <Text style={[styles.addMoreText, { color: COLORS.cash }]}>Agregar efectivo</Text>
-                </TouchableOpacity>
               </View>
             )}
 
@@ -528,23 +514,16 @@ export default function TarjetasScreen() {
               </View>
             ) : (
               <>
-                {tarjetas.length > 1 && (
-                  <View style={styles.creditSummaryRow}>
-                    <View style={styles.creditSummaryBox}>
-                      <Text style={styles.creditSummaryLabel}>Total gastado</Text>
-                      <Text style={[styles.creditSummaryVal, { color: COLORS.credit }]}>{formatCOP(totalCreditUsed)}</Text>
-                    </View>
-                    <View style={styles.creditSummaryBox}>
-                      <Text style={styles.creditSummaryLabel}>Total disponible</Text>
-                      <Text style={[styles.creditSummaryVal, { color: COLORS.debit }]}>{formatCOP(totalCreditAvail)}</Text>
-                    </View>
-                  </View>
-                )}
                 <View style={[styles.sectionDivider, { marginTop: 8 }]}>
                   <Text style={styles.sectionDividerTitle}>Tarjetas de crédito</Text>
-                  {totalCreditUsed > 0 && (
-                    <Text style={[styles.sectionDividerAmt, { color: COLORS.credit }]}>{formatCOP(totalCreditUsed)}</Text>
-                  )}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    {totalCreditUsed > 0 && (
+                      <Text style={[styles.sectionDividerAmt, { color: COLORS.credit }]}>{formatCOP(totalCreditUsed)}</Text>
+                    )}
+                    <TouchableOpacity onPress={() => openAdd(['credit', 'debt'])} style={styles.sectionAddBtn}>
+                      <Ionicons name="add" size={18} color={COLORS.primary} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <ScrollView
@@ -563,13 +542,6 @@ export default function TarjetasScreen() {
                     />
                   ))}
                 </ScrollView>
-
-                <View style={{ paddingHorizontal: 16, marginTop: 4 }}>
-                  <TouchableOpacity onPress={() => openAdd(['credit', 'debt'])} style={styles.addMoreBtn}>
-                    <Ionicons name="add-circle-outline" size={16} color={COLORS.primary} />
-                    <Text style={styles.addMoreText}>Agregar tarjeta</Text>
-                  </TouchableOpacity>
-                </View>
               </>
             )}
 
@@ -976,6 +948,19 @@ export default function TarjetasScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* FAB */}
+      <View style={styles.fabContainer}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => openAdd()}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Agregar tarjeta o cuenta"
+        >
+          <Ionicons name="add" size={30} color="#fff" />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
