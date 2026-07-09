@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Modal,
-  TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert,
+  View, Text, TouchableOpacity, StyleSheet,
+  TextInput, ScrollView, Alert,
 } from 'react-native';
+import BottomSheet from './BottomSheet';
 import { Ionicons } from '@expo/vector-icons';
 import { CustomCategory, Expense, Card, updateExpense, addExpenses, deleteExpense } from '@/lib/storage';
 import { cancelNotification } from '@/lib/notifications';
@@ -32,9 +33,6 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
 
   const COLORS = useColors();
   const dStyles = useMemo(() => StyleSheet.create({
-    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-    sheet: { backgroundColor: COLORS.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '88%' },
-    handle: { width: 40, height: 4, backgroundColor: COLORS.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
     header: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
     backBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
     catIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
@@ -122,11 +120,7 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
   const getCard = (id?: string) => id ? cards.find(c => c.id === id) : undefined;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={() => { reset(); onClose(); }}>
-      <KeyboardAvoidingView style={dStyles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={dStyles.sheet}>
-          <View style={dStyles.handle} />
-
+    <BottomSheet visible={visible} onClose={() => { reset(); onClose(); }} maxHeight="88%">
           {/* Header */}
           <View style={dStyles.header}>
             {mode !== 'list' ? (
@@ -289,8 +283,6 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
               </View>
             </ScrollView>
           )}
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    </BottomSheet>
   );
 }
