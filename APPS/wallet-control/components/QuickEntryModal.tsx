@@ -13,17 +13,18 @@ import {
 import { scheduleRecurringReminder } from '@/lib/notifications';
 import { formatThousands } from '@/lib/expenseParser';
 
+type EntryType = 'gasto' | 'ingreso';
+
 interface Props {
   visible: boolean;
   categories: CustomCategory[];
+  initialType?: EntryType;
   onSave: () => void;
   onClose: () => void;
 }
 
-type EntryType = 'gasto' | 'ingreso';
-
-export default function QuickEntryModal({ visible, categories, onSave, onClose }: Props) {
-  const [type, setType] = useState<EntryType>('gasto');
+export default function QuickEntryModal({ visible, categories, initialType, onSave, onClose }: Props) {
+  const [type, setType] = useState<EntryType>(initialType ?? 'gasto');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -32,8 +33,8 @@ export default function QuickEntryModal({ visible, categories, onSave, onClose }
   const [frequency, setFrequency] = useState<RecurrenceFrequency>('monthly');
 
   useEffect(() => {
-    if (!visible) {
-      setType('gasto');
+    if (visible) {
+      setType(initialType ?? 'gasto');
       setAmount('');
       setDescription('');
       setSelectedCategoryId(null);
@@ -41,7 +42,7 @@ export default function QuickEntryModal({ visible, categories, onSave, onClose }
       setIsRecurring(false);
       setFrequency('monthly');
     }
-  }, [visible]);
+  }, [visible, initialType]);
 
   const numericAmount = parseFloat(amount.replace(/\./g, '').replace(',', '.')) || 0;
   const canSave =

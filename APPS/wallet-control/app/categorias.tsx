@@ -143,7 +143,6 @@ export default function CategoriasScreen() {
       alignItems: 'center', justifyContent: 'center',
       elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8,
     },
-    fabLabel: { color: COLORS.primary, fontSize: 12, fontWeight: '800', letterSpacing: 0.3, backgroundColor: COLORS.primaryBg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.primary + '33' },
   }, moderateScale)), [COLORS, moderateScale]);
 
   return (
@@ -343,7 +342,6 @@ export default function CategoriasScreen() {
         >
           <Ionicons name="add" size={30} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.fabLabel}>Agregar</Text>
       </View>
     </SafeAreaView>
   );

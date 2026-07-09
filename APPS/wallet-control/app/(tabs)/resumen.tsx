@@ -71,6 +71,7 @@ export default function ResumenScreen() {
 
   // Quick entry modal
   const [quickEntry, setQuickEntry]         = useState(false);
+  const [quickEntryType, setQuickEntryType] = useState<'gasto' | 'ingreso'>('gasto');
   const [summaryModal, setSummaryModal]     = useState(false);
   const [expensesModal, setExpensesModal]   = useState(false);
   const [exporting, setExporting]           = useState(false);
@@ -537,7 +538,6 @@ export default function ResumenScreen() {
       alignItems: 'center', justifyContent: 'center',
       elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8,
     },
-    fabLabel: { color: COLORS.primary, fontSize: 12, fontWeight: '800', letterSpacing: 0.3, backgroundColor: COLORS.primaryBg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.primary + '33' },
     regCapsule: {
       flexDirection: 'row', alignItems: 'center', gap: 6,
       backgroundColor: COLORS.card2, borderRadius: 999, padding: 6,
@@ -1411,6 +1411,7 @@ export default function ResumenScreen() {
       <QuickEntryModal
         visible={quickEntry}
         categories={categories}
+        initialType={quickEntryType}
         onSave={() => { setQuickEntry(false); load(); }}
         onClose={() => setQuickEntry(false)}
       />
@@ -1421,11 +1422,19 @@ export default function ResumenScreen() {
           <View style={styles.regCapsule}>
             <TouchableOpacity
               style={styles.regCapsuleBtn}
-              onPress={() => { setRegistrarSheet(false); setQuickEntry(true); }}
+              onPress={() => { setRegistrarSheet(false); setQuickEntryType('ingreso'); setQuickEntry(true); }}
               accessibilityRole="button"
-              accessibilityLabel="Registrar gasto o ingreso"
+              accessibilityLabel="Registrar ingreso"
             >
-              <Text style={styles.regCapsuleEmoji}>💸</Text>
+              <Ionicons name="add" size={24} color={COLORS.debit} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.regCapsuleBtn}
+              onPress={() => { setRegistrarSheet(false); setQuickEntryType('gasto'); setQuickEntry(true); }}
+              accessibilityRole="button"
+              accessibilityLabel="Registrar gasto"
+            >
+              <Ionicons name="remove" size={24} color={COLORS.credit} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.regCapsuleBtn}
@@ -1445,18 +1454,15 @@ export default function ResumenScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          <>
-            <TouchableOpacity
-              style={styles.fab}
-              onPress={() => setRegistrarSheet(true)}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityLabel="Registrar gasto o ingreso"
-            >
-              <Ionicons name="add" size={30} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.fabLabel}>Registrar</Text>
-          </>
+          <TouchableOpacity
+            style={styles.fab}
+            onPress={() => setRegistrarSheet(true)}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Registrar gasto o ingreso"
+          >
+            <Ionicons name="add" size={30} color="#fff" />
+          </TouchableOpacity>
         )}
       </View>
     </SafeAreaView>
