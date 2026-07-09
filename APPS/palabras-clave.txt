@@ -4,27 +4,43 @@ Indice de todas las palabras clave creadas para Claude Code en este repo, con su
 resumido en una palabra y si aplican en general o estan atadas a una skill/proyecto especifico.
 
 Este archivo se actualiza cada vez que se crea una palabra clave nueva (con o sin hook real
-detras). La fuente de verdad de como funciona cada una sigue siendo CLAUDE.md (secciones
-"Palabra(s) Clave de ...") - aqui solo va el resumen rapido.
+detras). La fuente de verdad de COMO funciona cada una varia segun el tipo:
+- Generales y las que tienen hook real -> CLAUDE.md (secciones "Palabra(s) Clave de ...")
+- MEJORAX -> SKILLS/FIXA.md + NOTAS/palabras-clave.txt de cada proyecto
+- "abre el servidor" / "actualiza el plan" -> RECETAS/receta-apps.txt + NOTAS de cada proyecto
+Aqui solo va el resumen rapido de una linea por palabra.
 
-------------------------------------------------------------------------------------------------
-PALABRA CLAVE      | SIGNIFICADO (1 palabra) | TIPO                      | DONDE APLICA
-------------------------------------------------------------------------------------------------
-TERMINAR           | Commitear               | General                   | Cualquier proyecto (git)
-PAUSA               | Parcial                 | General                   | Cualquier proyecto (git)
-SUBIR               | Pushear                 | General                   | Cualquier proyecto (git)
-WALLET CONTROL      | Enfocar                 | Especifica de proyecto    | wallet-control (via PECAS)
-RUTA SEGURA         | Enfocar                 | Especifica de proyecto    | ruta-segura (via PECAS)
-PDF AUDITA          | Auditar                 | Especifica de skill       | AUDITA, cualquier proyecto de APPS/
-IMAGINA             | Sugerir                 | Especifica de skill       | ESTETIK, cualquier proyecto de APPS/
-------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+PALABRA CLAVE          | SIGNIFICADO (1 palabra) | TIPO                        | DONDE APLICA
+--------------------------------------------------------------------------------------------------------------
+TERMINAR               | Commitear               | General                     | Cualquier proyecto (git)
+PAUSA                  | Parcial                 | General                     | Cualquier proyecto (git)
+SUBIR                  | Pushear                 | General                     | Cualquier proyecto (git)
+WALLET CONTROL         | Enfocar                 | Especifica de proyecto      | wallet-control (via PECAS)
+RUTA SEGURA            | Enfocar                 | Especifica de proyecto      | ruta-segura (via PECAS)
+PDF AUDITA             | Auditar                 | Especifica de skill         | AUDITA, cualquier proyecto de APPS/
+IMAGINA                | Sugerir                 | Especifica de skill         | ESTETIK, cualquier proyecto de APPS/
+MEJORAX                | Resolver                | Contextual (proyecto activo)| wallet-control Y ruta-segura (via FIXA)
+"abre el servidor"     | Levantar                | Contextual (proyecto activo)| wallet-control Y ruta-segura
+"actualiza el plan"    | Regenerar               | Especifica de proyecto      | Solo wallet-control (por ahora)
+SUBIR PROYECTO (*)     | Buildear                | Especifica de proyecto      | Solo wallet-control (eas build)
+--------------------------------------------------------------------------------------------------------------
+(*) No esta escrita todavia en ningun archivo del repo (ni CLAUDE.md, ni NOTAS, ni RECETAS) - solo
+    vive en la memoria de Claude entre sesiones. Riesgo real de perderse si esa memoria se borra.
+    Pendiente decidir si se documenta formalmente en algun archivo del proyecto.
 
-Notas:
+Notas sobre los TIPOS:
 - "General" = no depende de ninguna skill ni proyecto puntual, gobierna una accion transversal
   (en este caso, siempre relacionada a git: commit o push).
-- "Especifica de proyecto" = arranca siempre el mismo proyecto fijo (no pregunta cual).
-- "Especifica de skill" = siempre activa la misma skill, pero esa skill pregunta sobre cual
-  proyecto de APPS/ actuar (no esta atada a uno solo).
+- "Especifica de proyecto" = siempre apunta al mismo proyecto fijo, sin importar el contexto de
+  la conversacion (no pregunta cual, y no cambia si estas hablando de otro proyecto).
+- "Especifica de skill" = siempre activa la misma skill, pero esa skill pregunta cual proyecto de
+  APPS/ usar (no esta atada a uno solo).
+- "Contextual (proyecto activo)" = el comportamiento es el mismo patron en cualquier proyecto,
+  pero actua sobre EL PROYECTO QUE ESTES TRABAJANDO EN ESE MOMENTO segun el contexto de la
+  conversacion (ej. si veniste de decir WALLET CONTROL, actua sobre wallet-control; si veniste de
+  RUTA SEGURA, actua sobre ruta-segura). No tiene un hook real que lo detecte solo — depende de
+  que el contexto de la conversacion ya deje claro en cual proyecto estas.
 
 Detalle de cada una:
 - TERMINAR: commit general - agrega y confirma TODO lo pendiente en el repo.
@@ -37,5 +53,26 @@ Detalle de cada una:
   APPS/<proyecto>/AUDITORIAS/, preguntando solo cual proyecto.
 - IMAGINA: hook real - corre la skill ESTETIK y entrega un mini PDF solo con los cambios/mejoras
   visuales recomendadas en APPS/<proyecto>/PDF/, preguntando solo cual proyecto.
+- MEJORAX: sin hook real (regla de comportamiento, definida en SKILLS/FIXA.md) - lee el archivo
+  de ajustes del proyecto activo (NOTAS/ajustes wallet-control.txt o NOTAS/ajustes app ruta.txt),
+  resuelve todo lo que este en [PENDIENTE], lo mueve a [RESUELTO], y agrega una entrada nueva en
+  el changelog del proyecto (ACTUALIZACIONES.txt en ruta-segura).
+- "abre el servidor" / "abrir el servidor": sin hook real formal (aunque hay permisos
+  preconfigurados en .claude/settings.local.json) - corre "npx expo start --port 8082" en la
+  carpeta del proyecto activo.
+- "actualiza el plan": solo documentada para wallet-control - regenera PDF/wallet-control-avance.pdf
+  via Puppeteer con el sistema visual fijo de la app, no el plan interno de Claude Code.
+- SUBIR PROYECTO: segun la memoria de Claude, en wallet-control dispara
+  "eas build --platform android --profile preview" - distinto de SUBIR (que es git push). No
+  confirmado por escrito en ningun archivo del repo todavia.
 
-Ultima actualizacion: 2026-07-09 (creacion del archivo, incluye hasta la palabra clave IMAGINA).
+--------------------------------------------------------------------------------------------------------------
+NOTA DE MANTENIMIENTO
+--------------------------------------------------------------------------------------------------------------
+Tambien existen APPS/wallet-control/NOTAS/palabras-clave.txt y APPS/ruta-segura/NOTAS/palabras-clave.txt,
+creados antes que este archivo (definidos hasta 2026-07-02). Son parcialmente redundantes con este
+indice raiz y estan desactualizados (no incluyen PDF AUDITA ni IMAGINA). Pendiente decidir con el
+usuario si se consolidan en este archivo unico o se mantienen los 3 sincronizados a mano.
+
+Ultima actualizacion: 2026-07-09 (agregadas MEJORAX, "abre el servidor", "actualiza el plan" y
+SUBIR PROYECTO tras una revision completa del repo).
