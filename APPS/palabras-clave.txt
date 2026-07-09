@@ -3,11 +3,15 @@ PALABRAS CLAVE DEL SISTEMA
 Indice de todas las palabras clave creadas para Claude Code en este repo, con su significado
 resumido en una palabra y si aplican en general o estan atadas a una skill/proyecto especifico.
 
+Este es el UNICO archivo de indice de palabras clave del repo (antes existian copias parciales
+en APPS/wallet-control/NOTAS/palabras-clave.txt y APPS/ruta-segura/NOTAS/palabras-clave.txt;
+se eliminaron el 2026-07-09 para no mantener 3 archivos desincronizados).
+
 Este archivo se actualiza cada vez que se crea una palabra clave nueva (con o sin hook real
 detras). La fuente de verdad de COMO funciona cada una varia segun el tipo:
 - Generales y las que tienen hook real -> CLAUDE.md (secciones "Palabra(s) Clave de ...")
-- MEJORAX -> SKILLS/FIXA.md + NOTAS/palabras-clave.txt de cada proyecto
-- "abre el servidor" / "actualiza el plan" -> RECETAS/receta-apps.txt + NOTAS de cada proyecto
+- MEJORAX -> SKILLS/FIXA.md
+- "abre el servidor" / "actualiza el plan" -> RECETAS/receta-apps.txt
 Aqui solo va el resumen rapido de una linea por palabra.
 
 --------------------------------------------------------------------------------------------------------------
@@ -66,13 +70,6 @@ Detalle de cada una:
   "eas build --platform android --profile preview" - distinto de SUBIR (que es git push). No
   confirmado por escrito en ningun archivo del repo todavia.
 
---------------------------------------------------------------------------------------------------------------
-NOTA DE MANTENIMIENTO
---------------------------------------------------------------------------------------------------------------
-Tambien existen APPS/wallet-control/NOTAS/palabras-clave.txt y APPS/ruta-segura/NOTAS/palabras-clave.txt,
-creados antes que este archivo (definidos hasta 2026-07-02). Son parcialmente redundantes con este
-indice raiz y estan desactualizados (no incluyen PDF AUDITA ni IMAGINA). Pendiente decidir con el
-usuario si se consolidan en este archivo unico o se mantienen los 3 sincronizados a mano.
-
 Ultima actualizacion: 2026-07-09 (agregadas MEJORAX, "abre el servidor", "actualiza el plan" y
-SUBIR PROYECTO tras una revision completa del repo).
+SUBIR PROYECTO tras una revision completa del repo; eliminados los indices duplicados que vivian
+en NOTAS/ de cada proyecto — este archivo raiz queda como el unico).
