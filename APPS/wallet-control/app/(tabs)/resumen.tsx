@@ -513,8 +513,6 @@ export default function ResumenScreen() {
     sheetDismiss: { flex: 1 },
     regSheet: { backgroundColor: COLORS.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 28 },
     regTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: 16, marginTop: 4 },
-    regOption: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: COLORS.card2, borderRadius: 16, padding: 16, marginBottom: 10 },
-    regOptionEmoji: { fontSize: 28 },
     regOptionTitle: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base },
     regOptionSub: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 1 },
     helpOption: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border },
@@ -540,6 +538,23 @@ export default function ResumenScreen() {
       elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8,
     },
     fabLabel: { color: COLORS.primary, fontSize: 12, fontWeight: '800', letterSpacing: 0.3, backgroundColor: COLORS.primaryBg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.primary + '33' },
+    regCapsule: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: COLORS.card2, borderRadius: 999, padding: 6,
+      borderWidth: 1, borderColor: COLORS.border,
+      elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+    },
+    regCapsuleBtn: {
+      width: 48, height: 48, borderRadius: 24,
+      alignItems: 'center', justifyContent: 'center',
+      backgroundColor: COLORS.bg,
+    },
+    regCapsuleEmoji: { fontSize: 22 },
+    regCapsuleClose: {
+      width: 36, height: 36, borderRadius: 18,
+      alignItems: 'center', justifyContent: 'center',
+      marginRight: 2,
+    },
   }, moderateScale)), [COLORS, moderateScale]);
 
   return (
@@ -1139,33 +1154,6 @@ export default function ResumenScreen() {
         </View>
       </Modal>
 
-      {/* ── Registrar sheet ──────────────────────────── */}
-      <Modal visible={registrarSheet} animationType="slide" transparent onRequestClose={() => setRegistrarSheet(false)}>
-        <View style={styles.sheetOverlay}>
-          <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setRegistrarSheet(false)} />
-          <View style={styles.regSheet}>
-            <View style={styles.summaryHandle} />
-            <Text style={styles.regTitle}>¿Qué quieres registrar?</Text>
-            <TouchableOpacity style={styles.regOption} onPress={() => { setRegistrarSheet(false); setQuickEntry(true); }}>
-              <Text style={styles.regOptionEmoji}>💸</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.regOptionTitle}>Gasto / Ingreso</Text>
-                <Text style={styles.regOptionSub}>Registra una transacción del mes</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textDim} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.regOption} onPress={() => { setRegistrarSheet(false); setEditingGoal(null); setGoalModal(true); }}>
-              <Text style={styles.regOptionEmoji}>🎯</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.regOptionTitle}>Nueva Meta de ahorro</Text>
-                <Text style={styles.regOptionSub}>Crea o registra una meta nueva</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textDim} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
       {/* ── Help sheet ───────────────────────────────── */}
       <Modal visible={helpSheet} animationType="slide" transparent onRequestClose={() => setHelpSheet(false)}>
         <View style={styles.sheetOverlay}>
@@ -1429,16 +1417,47 @@ export default function ResumenScreen() {
 
       {/* FAB */}
       <View style={styles.fabContainer}>
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => setRegistrarSheet(true)}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Registrar gasto o ingreso"
-        >
-          <Ionicons name="add" size={30} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.fabLabel}>Registrar</Text>
+        {registrarSheet ? (
+          <View style={styles.regCapsule}>
+            <TouchableOpacity
+              style={styles.regCapsuleBtn}
+              onPress={() => { setRegistrarSheet(false); setQuickEntry(true); }}
+              accessibilityRole="button"
+              accessibilityLabel="Registrar gasto o ingreso"
+            >
+              <Text style={styles.regCapsuleEmoji}>💸</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.regCapsuleBtn}
+              onPress={() => { setRegistrarSheet(false); setEditingGoal(null); setGoalModal(true); }}
+              accessibilityRole="button"
+              accessibilityLabel="Nueva meta de ahorro"
+            >
+              <Text style={styles.regCapsuleEmoji}>🎯</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.regCapsuleClose}
+              onPress={() => setRegistrarSheet(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar"
+            >
+              <Ionicons name="close" size={18} color={COLORS.textMuted} />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <TouchableOpacity
+              style={styles.fab}
+              onPress={() => setRegistrarSheet(true)}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Registrar gasto o ingreso"
+            >
+              <Ionicons name="add" size={30} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.fabLabel}>Registrar</Text>
+          </>
+        )}
       </View>
     </SafeAreaView>
   );
