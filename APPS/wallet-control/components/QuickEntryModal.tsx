@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Modal, View, Text, TextInput, TouchableOpacity,
-  ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Switch,
+  View, Text, TextInput, TouchableOpacity,
+  ScrollView, StyleSheet, Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
+import BottomSheet from './BottomSheet';
 import {
   CustomCategory, Expense, Income, RecurrenceFrequency,
   getCurrentMonthKey, addExpenses, addIncomes,
@@ -102,19 +103,6 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
 
   const COLORS = useColors();
   const styles = useMemo(() => StyleSheet.create({
-    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
-    sheet: {
-      backgroundColor: COLORS.card,
-      borderTopLeftRadius: 28,
-      borderTopRightRadius: 28,
-      padding: 20,
-      paddingBottom: 32,
-      maxHeight: '92%',
-    },
-    handle: {
-      width: 40, height: 4, backgroundColor: COLORS.border,
-      borderRadius: 2, alignSelf: 'center', marginBottom: 16,
-    },
     header: {
       flexDirection: 'row', alignItems: 'center',
       justifyContent: 'space-between', marginBottom: 16,
@@ -197,15 +185,14 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
   const activeBg = isGasto ? COLORS.creditBg : COLORS.debitBg;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.sheet}
-        >
-          {/* Handle */}
-          <View style={styles.handle} />
-
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      radius={28}
+      maxHeight="92%"
+      overlayOpacity={0.45}
+      sheetStyle={{ paddingBottom: 32 }}
+    >
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Registrar</Text>
@@ -346,9 +333,7 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
           >
             <Text style={styles.saveBtnText}>{saving ? 'Guardando...' : 'Guardar'}</Text>
           </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </View>
-    </Modal>
+    </BottomSheet>
   );
 }
 
