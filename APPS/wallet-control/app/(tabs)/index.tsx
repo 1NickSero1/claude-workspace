@@ -43,6 +43,7 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<DisplayMessage[]>([WELCOME]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const [cards, setCards] = useState<Card[]>([]);
   const [categories, setCategories] = useState<CustomCategory[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -69,6 +70,7 @@ export default function ChatScreen() {
       setRecentExpense(lastExpense
         ? { name: lastExpense.name, categoryId: lastExpense.categoryId, amount: lastExpense.amount }
         : null);
+      setInitializing(false);
     });
   }, [monthKey]));
 
@@ -114,6 +116,7 @@ export default function ChatScreen() {
 
   const styles = useMemo(() => StyleSheet.create(scaledSheet({
     safe: { flex: 1, backgroundColor: COLORS.bg },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     flex: { flex: 1 },
     topBar: {
       flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -321,6 +324,14 @@ export default function ChatScreen() {
         </View>
       )}
     </View>
+  );
+
+  if (initializing) return (
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.center}>
+        <ActivityIndicator color={COLORS.primary} size="large" />
+      </View>
+    </SafeAreaView>
   );
 
   if (isAnonymous) {

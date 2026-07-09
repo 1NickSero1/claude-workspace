@@ -165,7 +165,7 @@ export default function PerfilScreen() {
     dangerBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
       backgroundColor: COLORS.card, borderRadius: 16, padding: 16, marginBottom: 16,
-      borderWidth: 1, borderColor: '#EF444430',
+      borderWidth: 1, borderColor: COLORS.danger + '30',
     },
     dangerText: { color: COLORS.danger, fontWeight: '700', fontSize: FONT.base },
 
