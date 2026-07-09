@@ -81,7 +81,6 @@ export default function CategoriasScreen() {
     viewToggle: { flexDirection: 'row', backgroundColor: COLORS.card2, borderRadius: 10, padding: 3, gap: 2 },
     viewToggleBtn: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
     viewToggleBtnActive: { backgroundColor: COLORS.primary },
-    addBtn: { width: 38, height: 38, borderRadius: 10, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
     scroll: { padding: 16, paddingBottom: 40 },
     emptyState: { alignItems: 'center', paddingVertical: 60, gap: 10 },
     emptyText: { color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
@@ -137,6 +136,14 @@ export default function CategoriasScreen() {
     confirmCancelText: { color: COLORS.textMuted, fontWeight: '700', fontSize: FONT.md },
     confirmDeleteBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: COLORS.danger },
     confirmDeleteText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
+    fabContainer: { position: 'absolute', bottom: 24, right: 24, alignItems: 'center', gap: 4 },
+    fab: {
+      width: 60, height: 60, borderRadius: 30,
+      backgroundColor: COLORS.primary,
+      alignItems: 'center', justifyContent: 'center',
+      elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8,
+    },
+    fabLabel: { color: COLORS.primary, fontSize: 12, fontWeight: '800', letterSpacing: 0.3, backgroundColor: COLORS.primaryBg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.primary + '33' },
   }, moderateScale)), [COLORS, moderateScale]);
 
   return (
@@ -170,14 +177,6 @@ export default function CategoriasScreen() {
               <Ionicons name="menu" size={14} color={catView === 'list' ? '#fff' : COLORS.textMuted} />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            onPress={() => { setEditingCat(null); setCatModal(true); }}
-            style={styles.addBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Agregar categoría"
-          >
-            <Ionicons name="add" size={18} color={COLORS.primary} />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -332,6 +331,20 @@ export default function CategoriasScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* FAB */}
+      <View style={styles.fabContainer}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => { setEditingCat(null); setCatModal(true); }}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Agregar categoría"
+        >
+          <Ionicons name="add" size={30} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.fabLabel}>Agregar</Text>
+      </View>
     </SafeAreaView>
   );
 }
