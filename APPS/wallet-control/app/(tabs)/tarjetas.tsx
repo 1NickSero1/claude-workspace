@@ -136,6 +136,14 @@ export default function TarjetasScreen() {
     },
     balanceFooterLabel: { color: COLORS.textMuted, fontSize: FONT.sm },
     balanceFooterAmount: { color: COLORS.debit, fontWeight: '800', fontSize: FONT.lg },
+    fabContainer: { position: 'absolute', bottom: 24, right: 24, alignItems: 'center', gap: 4 },
+    fab: {
+      width: 60, height: 60, borderRadius: 30,
+      backgroundColor: COLORS.primary,
+      alignItems: 'center', justifyContent: 'center',
+      elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8,
+    },
+    fabLabel: { color: COLORS.primary, fontSize: 12, fontWeight: '800', letterSpacing: 0.3, backgroundColor: COLORS.primaryBg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.primary + '33' },
   }, moderateScale)), [COLORS, moderateScale]);
 
   const actStyles = useMemo(() => StyleSheet.create({
@@ -938,6 +946,20 @@ export default function TarjetasScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* FAB */}
+      <View style={styles.fabContainer}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => openAdd()}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Agregar tarjeta o cuenta"
+        >
+          <Ionicons name="add" size={30} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.fabLabel}>Agregar</Text>
+      </View>
     </SafeAreaView>
   );
 }
