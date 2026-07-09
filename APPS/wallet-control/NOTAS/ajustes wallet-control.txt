@@ -12,7 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-  — (vacío por ahora)
+quita el texto de agregar efectivo en naranja, y ponlo dentro del boton (+) asi como en la pantalla resumen, con el mismo estilo 
 
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA

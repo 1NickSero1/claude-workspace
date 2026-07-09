@@ -469,7 +469,14 @@ export default function TarjetasScreen() {
             {/* ── Sección Efectivo ── */}
             <View style={styles.sectionDivider}>
               <Text style={styles.sectionDividerTitle}>Efectivo</Text>
-              {totalCash > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.debit }]}>{formatCOP(totalCash)}</Text>}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                {totalCash > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.debit }]}>{formatCOP(totalCash)}</Text>}
+                {cashCards.length > 0 && (
+                  <TouchableOpacity onPress={() => openAdd(['cash'])} style={styles.sectionAddBtn}>
+                    <Ionicons name="add" size={18} color={COLORS.cash} />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
 
             {cashCards.length === 0 ? (
@@ -491,10 +498,6 @@ export default function TarjetasScreen() {
                     <AccountRow card={card} spent={getCardTotalSpent(expenses, card.id)} />
                   </TouchableOpacity>
                 ))}
-                <TouchableOpacity onPress={() => openAdd(['cash'])} style={styles.addMoreBtn}>
-                  <Ionicons name="add-circle-outline" size={16} color={COLORS.cash} />
-                  <Text style={[styles.addMoreText, { color: COLORS.cash }]}>Agregar efectivo</Text>
-                </TouchableOpacity>
               </View>
             )}
 
