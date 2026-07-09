@@ -184,6 +184,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 - Si el proyecto tiene partes complejas → dividir en subtareas con títulos claros
 - Al terminar una tarea: 1-2 oraciones de qué cambió y qué sigue
 - Aplicar las lecciones aprendidas de la sección correspondiente
+- Cada vez que se cree una palabra clave nueva (con o sin hook real), agregar una fila en `APPS/palabras-clave.txt` con su significado en una palabra y si es general o específica de una skill/proyecto
 
 ---
 
@@ -254,6 +255,20 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 
 ---
 
+## Palabra Clave de Auditoría Visual Rápida
+
+> Hook real (`UserPromptSubmit`, `.claude/hooks/imagina-estetik.ps1`). Detecta el mensaje exacto
+> "IMAGINA" (mayúsculas o minúsculas) y le inyecta contexto a Claude para correr la skill ESTETIK
+> en modo mini-reporte.
+
+| Palabra clave | Acción |
+|---|---|
+| `IMAGINA` | Activa ESTETIK. Única pregunta: cuál proyecto de `APPS/` revisar. Después de responder, Claude ve la app real renderizada (no solo el código) y genera un **mini PDF** enfocado solo en los cambios/mejoras visuales y de UX que recomienda (qué cambiar, por qué importa, prioridad) — sin el detalle completo de "lo que ya funciona bien" de una auditoría ESTETIK normal. Se guarda automáticamente, sin preguntar, en `APPS/<proyecto>/PDF/<proyecto>-imagina-<fecha>.pdf` |
+
+**Nota:** `IMAGINA` usa la carpeta `PDF/` del proyecto (donde ya viven otros documentos como el de avance), a diferencia de `PDF AUDITA` que guarda en `AUDITORIAS/`.
+
+---
+
 ## Checklist Universal de Proyecto Terminado
 
 - [ ] Feature principal funciona end-to-end
@@ -284,6 +299,8 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 | 2026-07-08 | Agregada Lección 5 — correr `git pull` antes de empezar a trabajar en el repo, ya que hay más de una máquina (usuario y hermano) pusheando al mismo repo |
 | 2026-07-09 | `proyecto-switch.ps1` ahora hace `git pull --ff-only` automático antes de saludar en `WALLET CONTROL`/`RUTA SEGURA` — seguro por diseño (no fuerza merge si hay divergencia o cambios sin commitear, solo avisa); al vivir en el repo, aplica en ambas máquinas |
 | 2026-07-09 | Creada skill `ESTETIK` (generada vía KILLER) — auditoría visual y de experiencia de usuario en `APPS/`, apoyada en los patrones de PECAS; revisa consistencia de diseño, responsive, accesibilidad y microinteracciones, viendo la app realmente renderizada (no solo el código); nunca corrige código, solo diagnostica |
+| 2026-07-09 | Agregada palabra clave `IMAGINA` (hook real `.claude/hooks/imagina-estetik.ps1`) — corre ESTETIK con una sola pregunta (proyecto) y genera un mini PDF solo con los cambios/mejoras visuales recomendados en `APPS/<proyecto>/PDF/` |
+| 2026-07-09 | Creado `APPS/palabras-clave.txt` — índice de todas las palabras clave del sistema con significado en una palabra y si son generales o específicas de una skill/proyecto; se actualiza cada vez que se agrega una palabra clave nueva |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise
