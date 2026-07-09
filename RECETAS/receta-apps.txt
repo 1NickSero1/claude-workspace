@@ -240,6 +240,50 @@ HISTORIAL DE CAMBIOS
   Resumen ahora abre el mismo detalle de activos/pasivos que el mes actual
   en vez de una grafica de tendencia.
 
+[2026-07-08] Auditoria completa de ruta-segura + fixes FIXA/MEJORAX + logo real
+- AUDITA genero 2 PDFs en APPS/ruta-segura/AUDITORIAS/ y PDF/: auditoria tecnica
+  completa (uso interno) y brief corto para el freelancer, separando lo que
+  funciona de verdad (SOS real via Linking.openURL, WhatsApp real, bilingue
+  ES/EN, navegacion) de lo que es fachada visual sin backend (registro,
+  contenido hardcodeado, contador "mujeres en linea" con numero aleatorio,
+  MiCaso sin persistencia).
+- FIXA convirtio la auditoria en lista de prioridad (menor a mayor esfuerzo) y
+  se ejecutaron los 5 "quick win" + tier "chico": limpieza de app.json
+  (minSdkVersion invalido eliminado, version bajada de 1.0.0 a 0.9.0 real),
+  borrado de codigo muerto (InicioScreen.js, 2 assets sin uso, imagen suelta en
+  raiz), validacion real de email en RegistroScreen.js (regex + boton
+  deshabilitado + error inline en vez de solo placeholder), eliminado bloque
+  decorativo de "Adjuntos" en MiCasoScreen.js (prometia Foto/Audio/Archivo sin
+  funcionar), ajustada lista de estados en EstadoScreen.js (fusion de Carolina
+  del Norte/Sur en "Carolinas", quitados Arizona/Colorado poco representados),
+  corregido "Asesora" -> "Consultora de inmigracion" en CategoriaScreen.js.
+- Se elimino el contador falso "mujeres en linea" (numero random en
+  MenuPrincipalScreen.js) por texto estatico honesto ("Estas en un espacio
+  seguro - No estas sola"), pero se documento como idea futura en
+  NOTAS/ideas app ruta.txt con la regla explicita: si se implementa de verdad
+  algun dia, debe ser con datos reales, nunca simulados otra vez.
+- MEJORAX corrio sobre el backlog de 8 items que la clienta (Ana Laverde) fue
+  dictando en vivo: resueltos los accionables de codigo ese mismo momento;
+  documentados en NOTAS los que son solo de posicionamiento/copy (tagline
+  "MIGRAR CON PROPOSITO"); dejados en bloqueado/en progreso los que requerian
+  un archivo del usuario (logo real) o acceso a metricas.txt (protegido por
+  hook, no editable por Claude Code).
+- Reemplazado el placeholder de marca de agua "AL" (circulo con iniciales) por
+  el logo real de Ana's Immigration Solutions (assets/ana-laverde-logo.png)
+  en las 7 pantallas que lo usan (Onboarding, Registro, Estado, MenuPrincipal,
+  Categoria, MiCaso, SOS), manteniendo siempre el nombre "Ana Laverde" visible
+  al lado — nunca se modifico la marca de la clienta, solo el icono.
+- Pendiente real que sigue bloqueado: escritura en NOTAS/metricas.txt (hook
+  block-notas-readonly.ps1 impide a Claude Code tocarlo) — se le paso al
+  usuario el texto exacto + pasos para pegarlo el mismo manualmente, cubriendo
+  atribucion de autoria en package.json/App.js y una marca sutil "N" en la UI
+  sin interferir con la marca visible de Ana Laverde.
+- Divergencia de GitDoc detectada (local 7 commits adelante, remoto 1 commit
+  del hermano) — diagnosticada solo en modo lectura (git fetch/log/show
+  --stat), advertido explicitamente NO usar "Force Push" (borraria el commit
+  del hermano); resolucion dejada pendiente para el usuario, sin merge/rebase
+  automatico de por medio (regla fija de CLAUDE.md).
+
 ----------------------------------------------------
 (las entradas nuevas se agregan debajo de esta linea)
 ----------------------------------------------------
