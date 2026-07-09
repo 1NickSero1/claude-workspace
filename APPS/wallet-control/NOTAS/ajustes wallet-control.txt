@@ -12,7 +12,8 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-  — (vacío por ahora)
+en la pantalla 2 "tarjetas" podrias mover la seccion de total gastado y total disponible a la pantalla de resumen, para crear las tarjetas y agregar cambialo por el boton de ¨+" 
+
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
