@@ -19,7 +19,7 @@ bug visual puntual).
 | Tipo de proyecto | Chequeos de diagnóstico visual/UX |
 |---|---|
 | Web app (Next.js + Tailwind) | Levantar el server real, capturas en 3 viewports (375px/768px/1440px), `npx lighthouse` (accesibilidad + best practices), `npx @axe-core/cli`, revisión de `tailwind.config.ts` (tokens de color/espaciado/tipografía) |
-| App móvil (React Native + Expo) | Levantar en simulador/dispositivo, capturas en al menos 2 tamaños de pantalla, revisión de props de accesibilidad (`accessibilityLabel`, `accessibilityRole`), tamaño mínimo de áreas táctiles (44x44pt) |
+| App móvil (React Native + Expo) | Celular Android físico conectado por USB + MCP `mobile-mcp` (ADB): screenshots reales y navegación real por la app (tap/swipe/tipeo) en vez de solo código, capturas en al menos 2 tamaños/orientaciones, revisión de props de accesibilidad (`accessibilityLabel`, `accessibilityRole`), tamaño mínimo de áreas táctiles (44x44pt) |
 | App de escritorio (Electron + React) | Capturas en distintos tamaños de ventana (incluyendo redimensionado), revisión de navegación por teclado y estados de foco |
 | Reporte final en PDF | Node.js + Puppeteer (preferencia ya validada del usuario) |
 
@@ -31,10 +31,14 @@ bug visual puntual).
    en ese momento dentro de `APPS/` (revisando el directorio real). Si el usuario pide algo más
    específico (ej. "solo la pantalla de login de wallet-control"), respetar ese alcance.
 2. Confirmar que la carpeta elegida existe antes de seguir.
-3. **Ver la app renderizada de verdad, no solo el código.** Levantar el dev server (o simulador en
-   el caso de Expo) y tomar capturas de pantalla en los tamaños relevantes al tipo de proyecto
-   (mobile/tablet/desktop para web, al menos 2 tamaños para app móvil, ventana redimensionada para
-   desktop). Ningún hallazgo visual se reporta sin haber sido visto realmente.
+3. **Ver la app renderizada de verdad, no solo el código.** Levantar el dev server (web) o, para
+   Expo/React Native, usar el celular Android físico conectado por USB a través del MCP
+   `mobile-mcp` (screenshot real + navegar tocando la app) — nunca reportar un hallazgo visual sin
+   haberlo visto realmente. Tomar capturas en los tamaños/orientaciones relevantes al tipo de
+   proyecto (mobile/tablet/desktop para web, al menos 2 tamaños/orientaciones para app móvil,
+   ventana redimensionada para desktop). Si no hay celular conectado (`adb devices` no muestra
+   ningún dispositivo autorizado), avisar al usuario al inicio del informe en vez de asumir o
+   inventar cómo se ve la app.
 4. Revisar el sistema de diseño: tokens de color, tipografía, espaciado, radios y sombras (config
    de Tailwind o equivalente) — buscar inconsistencias, como el mismo tipo de botón o tarjeta con
    estilos distintos en pantallas diferentes.
@@ -80,8 +84,12 @@ npx @axe-core/cli http://localhost:3000
 ```
 
 ```powershell
-# Mobile (Expo): levantar para revisar en simulador/dispositivo
+# Mobile (Expo): levantar para revisar en el celular físico (Expo Go)
 npx expo start --port 8082
+
+# Mobile: confirmar que el celular Android está conectado y autorizado
+# antes de usar las herramientas del MCP mobile-mcp (screenshot/tap/swipe)
+adb devices -l
 ```
 
 ```powershell
@@ -108,7 +116,7 @@ APPS/
 ## Checklist de calidad (antes de entregar el informe)
 
 - [ ] Se preguntó explícitamente cuál proyecto (y pantalla/flujo, si aplica) revisar
-- [ ] Se vio la app realmente renderizada (dev server/simulador + capturas), no solo el código
+- [ ] Se vio la app realmente renderizada (dev server, o celular Android + `mobile-mcp` + capturas), no solo el código
 - [ ] Se probaron al menos los tamaños de pantalla relevantes al tipo de proyecto
 - [ ] Todo hallazgo fue verificado visualmente o en el código real, ninguno inventado o supuesto
 - [ ] Tiene resumen ejecutivo entendible por alguien sin conocimiento técnico

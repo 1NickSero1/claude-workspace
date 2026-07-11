@@ -301,6 +301,7 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 | 2026-07-09 | Creada skill `ESTETIK` (generada vía KILLER) — auditoría visual y de experiencia de usuario en `APPS/`, apoyada en los patrones de PECAS; revisa consistencia de diseño, responsive, accesibilidad y microinteracciones, viendo la app realmente renderizada (no solo el código); nunca corrige código, solo diagnostica |
 | 2026-07-09 | Agregada palabra clave `IMAGINA` (hook real `.claude/hooks/imagina-estetik.ps1`) — corre ESTETIK con una sola pregunta (proyecto) y genera un mini PDF solo con los cambios/mejoras visuales recomendados en `APPS/<proyecto>/PDF/` |
 | 2026-07-09 | Creado `APPS/palabras-clave.txt` — índice de todas las palabras clave del sistema con significado en una palabra y si son generales o específicas de una skill/proyecto; se actualiza cada vez que se agrega una palabra clave nueva |
+| 2026-07-11 | Instalado Android Platform Tools (adb, vía winget) y registrado el MCP `mobile-mcp` (`.mcp.json`, scope proyecto) — le da a ESTETIK/IMAGINA control real sobre un celular Android físico conectado por USB (screenshot/tap/swipe reales) en vez de solo leer código; requiere depuración USB activada y el celular autorizado (`adb devices`) en cada máquina que lo use |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise
