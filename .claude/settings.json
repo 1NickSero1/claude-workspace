@@ -5,29 +5,29 @@
         "hooks": [
           {
             "type": "command",
-            "shell": "powershell",
             "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\subir-push.ps1\"",
+            "shell": "powershell",
             "timeout": 60,
             "statusMessage": "Comprobando comando SUBIR..."
           },
           {
             "type": "command",
-            "shell": "powershell",
             "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\proyecto-switch.ps1\"",
+            "shell": "powershell",
             "timeout": 30,
             "statusMessage": "Comprobando cambio de proyecto y sincronizando con git..."
           },
           {
             "type": "command",
-            "shell": "powershell",
             "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\pdf-audita.ps1\"",
+            "shell": "powershell",
             "timeout": 15,
             "statusMessage": "Comprobando comando PDF AUDITA..."
           },
           {
             "type": "command",
-            "shell": "powershell",
             "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\imagina-estetik.ps1\"",
+            "shell": "powershell",
             "timeout": 15,
             "statusMessage": "Comprobando comando IMAGINA..."
           }
@@ -40,14 +40,14 @@
         "hooks": [
           {
             "type": "command",
-            "shell": "powershell",
             "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\block-env-access.ps1\"",
+            "shell": "powershell",
             "timeout": 15
           },
           {
             "type": "command",
-            "shell": "powershell",
             "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\block-notas-readonly.ps1\"",
+            "shell": "powershell",
             "timeout": 15
           }
         ]
@@ -59,8 +59,8 @@
         "hooks": [
           {
             "type": "command",
-            "shell": "powershell",
             "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\remind-push.ps1\"",
+            "shell": "powershell",
             "timeout": 15
           }
         ]
@@ -71,12 +71,17 @@
         "hooks": [
           {
             "type": "command",
-            "shell": "powershell",
             "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\session-start-pendientes.ps1\"",
+            "shell": "powershell",
             "timeout": 15
           }
         ]
       }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "mcp__mobile-mcp__mobile_take_screenshot"
     ]
   }
 }
