@@ -60,8 +60,8 @@ export default function EstadoScreen({ navigation, route }) {
               >
                 <Text style={styles.cardEmoji}>{e.emoji}</Text>
                 <View style={styles.cardTexto}>
-                  <Text style={[styles.cardNombre, e.esOtro && styles.cardNombreOtro]}>{e.nombre}</Text>
-                  <Text style={styles.cardCiudad}>{e.ciudad}</Text>
+                  <Text style={[styles.cardNombre, e.esOtro && styles.cardNombreOtro]} numberOfLines={2}>{e.nombre}</Text>
+                  <Text style={styles.cardCiudad} numberOfLines={1} ellipsizeMode="tail">{e.ciudad}</Text>
                 </View>
                 <Text style={styles.cardArrow}>›</Text>
               </LinearGradient>
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   cardEmoji: { fontSize: 32 },
-  cardTexto: { flex: 1 },
+  cardTexto: { flex: 1, minHeight: 62, justifyContent: 'center' },
   cardNombre: { fontSize: 18, fontWeight: '800', color: '#fff' },
   cardCiudad: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   cardArrow: { color: '#fff', fontSize: 28 },

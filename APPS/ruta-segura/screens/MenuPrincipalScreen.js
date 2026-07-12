@@ -13,7 +13,7 @@ const CATEGORIAS = [
   },
   {
     id: 'alimentacion',
-    imagen: require('../assets/gavel-icon.png'),
+    emoji: '🧺',
     titulo: 'Demandas por alimentación',
     desc: 'Bancos de comida, SNAP/WIC y ONGs verificadas',
     color: '#7a5c00',
@@ -95,7 +95,7 @@ export default function MenuPrincipalScreen({ navigation, route }) {
             </View>
             <View style={styles.cardTexto}>
               <Text style={styles.cardTitulo}>{cat.titulo}</Text>
-              <Text style={styles.cardDesc}>{cat.desc}</Text>
+              <Text style={styles.cardDesc} numberOfLines={2}>{cat.desc}</Text>
             </View>
             <Text style={[styles.cardArrow, { color: cat.color }]}>›</Text>
           </TouchableOpacity>
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   cardImage: { width: 34, height: 34, resizeMode: 'contain' },
   cardTexto: { flex: 1 },
   cardTitulo: { fontSize: 15, fontWeight: '700', color: '#1a1a2e', marginBottom: 3 },
-  cardDesc: { fontSize: 12, color: '#888', lineHeight: 16 },
+  cardDesc: { fontSize: 12, color: '#888', lineHeight: 16, minHeight: 32 },
   cardArrow: { fontSize: 24, fontWeight: '300' },
   comunidad: {
     flexDirection: 'row',

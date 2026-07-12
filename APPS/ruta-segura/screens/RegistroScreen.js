@@ -29,63 +29,65 @@ export default function RegistroScreen({ navigation, route }) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar style="dark" />
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={styles.scrollCentered}>
 
           <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
             <Text style={styles.backText}>← {es ? 'Volver' : 'Back'}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.titulo}>
-            {es ? '¿Cómo quieres continuar?' : 'How do you want to continue?'}
-          </Text>
-          <Text style={styles.subtitulo}>
-            {es ? 'Elige la opción que más te convenga' : 'Choose the option that works best for you'}
-          </Text>
+          <View style={styles.selectionBlock}>
+            <Text style={styles.titulo}>
+              {es ? '¿Cómo quieres continuar?' : 'How do you want to continue?'}
+            </Text>
+            <Text style={styles.subtitulo}>
+              {es ? 'Elige la opción que más te convenga' : 'Choose the option that works best for you'}
+            </Text>
 
-          {/* Crear cuenta */}
-          <TouchableOpacity style={styles.opcionCard} activeOpacity={0.85} onPress={() => setVista('registro')}>
-            <View style={[styles.opcionIcon, { backgroundColor: '#f0e6ff' }]}>
-              <Text style={styles.opcionEmoji}>👤</Text>
-            </View>
-            <View style={styles.opcionTexto}>
-              <Text style={styles.opcionTitulo}>{es ? 'Crear cuenta' : 'Create account'}</Text>
-              <Text style={styles.opcionDesc}>{es ? 'Guarda tu historial y preferencias' : 'Save your history and preferences'}</Text>
-            </View>
-            <Text style={styles.opcionArrow}>›</Text>
-          </TouchableOpacity>
+            {/* Crear cuenta */}
+            <TouchableOpacity style={styles.opcionCard} activeOpacity={0.85} onPress={() => setVista('registro')}>
+              <View style={[styles.opcionIcon, { backgroundColor: '#f0e6ff' }]}>
+                <Text style={styles.opcionEmoji}>👤</Text>
+              </View>
+              <View style={styles.opcionTexto}>
+                <Text style={styles.opcionTitulo}>{es ? 'Crear cuenta' : 'Create account'}</Text>
+                <Text style={styles.opcionDesc}>{es ? 'Guarda tu historial y preferencias' : 'Save your history and preferences'}</Text>
+              </View>
+              <Text style={styles.opcionArrow}>›</Text>
+            </TouchableOpacity>
 
-          {/* Iniciar sesión */}
-          <TouchableOpacity style={styles.opcionCard} activeOpacity={0.85} onPress={() => setVista('login')}>
-            <View style={[styles.opcionIcon, { backgroundColor: '#e6f0ff' }]}>
-              <Text style={styles.opcionEmoji}>🔑</Text>
-            </View>
-            <View style={styles.opcionTexto}>
-              <Text style={styles.opcionTitulo}>{es ? 'Iniciar sesión' : 'Log in'}</Text>
-              <Text style={styles.opcionDesc}>{es ? 'Ya tienes una cuenta con nosotras' : 'You already have an account with us'}</Text>
-            </View>
-            <Text style={styles.opcionArrow}>›</Text>
-          </TouchableOpacity>
+            {/* Iniciar sesión */}
+            <TouchableOpacity style={styles.opcionCard} activeOpacity={0.85} onPress={() => setVista('login')}>
+              <View style={[styles.opcionIcon, { backgroundColor: '#e6f0ff' }]}>
+                <Text style={styles.opcionEmoji}>🔑</Text>
+              </View>
+              <View style={styles.opcionTexto}>
+                <Text style={styles.opcionTitulo}>{es ? 'Iniciar sesión' : 'Log in'}</Text>
+                <Text style={styles.opcionDesc}>{es ? 'Ya tienes una cuenta con nosotras' : 'You already have an account with us'}</Text>
+              </View>
+              <Text style={styles.opcionArrow}>›</Text>
+            </TouchableOpacity>
 
-          {/* Separador */}
-          <View style={styles.separador}>
-            <View style={styles.separadorLinea} />
-            <Text style={styles.separadorTexto}>{es ? 'o continúa sin cuenta' : 'or continue without account'}</Text>
-            <View style={styles.separadorLinea} />
+            {/* Separador */}
+            <View style={styles.separador}>
+              <View style={styles.separadorLinea} />
+              <Text style={styles.separadorTexto}>{es ? 'o continúa sin cuenta' : 'or continue without account'}</Text>
+              <View style={styles.separadorLinea} />
+            </View>
+
+            {/* Modo anónimo */}
+            <TouchableOpacity
+              style={styles.anonimoCard}
+              activeOpacity={0.85}
+              onPress={() => irASiguiente('Usuaria')}
+            >
+              <Text style={styles.anonimoEmoji}>🔒</Text>
+              <View style={styles.opcionTexto}>
+                <Text style={styles.anonimoTitulo}>{es ? 'Modo anónimo' : 'Anonymous mode'}</Text>
+                <Text style={styles.opcionDesc}>{es ? 'Sin nombre ni correo · Privacidad total' : 'No name or email · Full privacy'}</Text>
+              </View>
+              <Text style={[styles.opcionArrow, { color: '#C850C0' }]}>›</Text>
+            </TouchableOpacity>
           </View>
-
-          {/* Modo anónimo */}
-          <TouchableOpacity
-            style={styles.anonimoCard}
-            activeOpacity={0.85}
-            onPress={() => irASiguiente('Usuaria')}
-          >
-            <Text style={styles.anonimoEmoji}>🔒</Text>
-            <View style={styles.opcionTexto}>
-              <Text style={styles.anonimoTitulo}>{es ? 'Modo anónimo' : 'Anonymous mode'}</Text>
-              <Text style={styles.opcionDesc}>{es ? 'Sin nombre ni correo · Privacidad total' : 'No name or email · Full privacy'}</Text>
-            </View>
-            <Text style={[styles.opcionArrow, { color: '#C850C0' }]}>›</Text>
-          </TouchableOpacity>
 
         </ScrollView>
 
@@ -221,6 +223,8 @@ export default function RegistroScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { paddingHorizontal: 24, paddingBottom: 80 },
+  scrollCentered: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 80 },
+  selectionBlock: { flex: 1, justifyContent: 'center' },
   back: { paddingTop: 16, marginBottom: 8 },
   backText: { color: '#C850C0', fontSize: 16 },
   titulo: { fontSize: 26, fontWeight: '800', color: '#1a1a2e', marginBottom: 6 },
