@@ -14,10 +14,10 @@ export const COLORS = {
   debitBg:     '#E3FAF4',
   credit:      '#FF5C5C',
   creditBg:    '#FFE8E8',
-  cash:        '#F59E0B',
-  cashBg:      '#FFF3DD',
-  debt:        '#F97316',
-  debtBg:      '#FEF0E7',
+  cash:        '#00C896',
+  cashBg:      '#E3FAF4',
+  debt:        '#D9A441',
+  debtBg:      '#FBF0DC',
 
   // Text
   text:        '#1A1A2E',
@@ -58,10 +58,10 @@ export const DARK_COLORS: typeof COLORS = {
   debitBg:     '#0D2E24',
   credit:      '#FF5C5C',
   creditBg:    '#2E1515',
-  cash:        '#F59E0B',
-  cashBg:      '#332313',
-  debt:        '#F97316',
-  debtBg:      '#3A1606',
+  cash:        '#00C896',
+  cashBg:      '#0D2E24',
+  debt:        '#D9A441',
+  debtBg:      '#332711',
 
   // Text
   text:        '#F0F2FF',
