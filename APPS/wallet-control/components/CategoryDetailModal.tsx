@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  TextInput, ScrollView, Alert,
+  TextInput, ScrollView, Modal,
 } from 'react-native';
 import BottomSheet from './BottomSheet';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +30,7 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
   const [amount, setAmount]     = useState('');
   const [quincena, setQuincena] = useState<1 | 2>(1);
   const [cardId, setCardId]     = useState<string | undefined>(undefined);
+  const [confirmDeleteExp, setConfirmDeleteExp] = useState<Expense | null>(null);
 
   const COLORS = useColors();
   const dStyles = useMemo(() => StyleSheet.create({
@@ -68,6 +69,24 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     saveBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: COLORS.primary, alignItems: 'center' },
     saveBtnOff: { backgroundColor: COLORS.textDim },
     saveText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
+    confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 28 },
+    confirmCard: {
+      backgroundColor: COLORS.card, borderRadius: 24, padding: 24, width: '100%',
+      alignItems: 'center', borderWidth: 2, borderColor: COLORS.danger + '44',
+      elevation: 10, shadowColor: COLORS.danger, shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25, shadowRadius: 12,
+    },
+    confirmIcon: {
+      width: 56, height: 56, borderRadius: 28,
+      backgroundColor: COLORS.danger + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+    },
+    confirmTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: 8, textAlign: 'center' },
+    confirmText: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginBottom: 20 },
+    confirmActions: { flexDirection: 'row', gap: 10, width: '100%' },
+    confirmCancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
+    confirmCancelText: { color: COLORS.textMuted, fontWeight: '700', fontSize: FONT.md },
+    confirmDeleteBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: COLORS.danger },
+    confirmDeleteText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }), [COLORS]);
 
   const reset = () => { setMode('list'); setEditExp(null); setName(''); setAmount(''); setQuincena(1); setCardId(undefined); };
@@ -105,21 +124,21 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     reset();
   };
 
-  const handleDelete = (e: Expense) => {
-    Alert.alert('Eliminar gasto', `¿Eliminar "${e.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
-        await cancelNotification(e.notificationId);
-        await deleteExpense(monthKey, e.id);
-        await onRefresh();
-      }},
-    ]);
+  const handleDelete = (e: Expense) => setConfirmDeleteExp(e);
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteExp) return;
+    await cancelNotification(confirmDeleteExp.notificationId);
+    await deleteExpense(monthKey, confirmDeleteExp.id);
+    setConfirmDeleteExp(null);
+    await onRefresh();
   };
 
   const total = expenses.reduce((s, e) => s + e.amount, 0);
   const getCard = (id?: string) => id ? cards.find(c => c.id === id) : undefined;
 
   return (
+    <>
     <BottomSheet visible={visible} onClose={() => { reset(); onClose(); }} maxHeight="88%">
           {/* Header */}
           <View style={dStyles.header}>
@@ -284,5 +303,29 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
             </ScrollView>
           )}
     </BottomSheet>
+
+    {/* Confirmación de eliminar (reemplaza Alert.alert nativo) */}
+    <Modal visible={!!confirmDeleteExp} animationType="fade" transparent onRequestClose={() => setConfirmDeleteExp(null)}>
+      <View style={dStyles.confirmOverlay}>
+        <View style={dStyles.confirmCard}>
+          <View style={dStyles.confirmIcon}>
+            <Ionicons name="trash" size={26} color={COLORS.danger} />
+          </View>
+          <Text style={dStyles.confirmTitle}>Eliminar gasto</Text>
+          <Text style={dStyles.confirmText}>
+            ¿Eliminar "{confirmDeleteExp?.name}"?
+          </Text>
+          <View style={dStyles.confirmActions}>
+            <TouchableOpacity style={dStyles.confirmCancelBtn} onPress={() => setConfirmDeleteExp(null)}>
+              <Text style={dStyles.confirmCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={dStyles.confirmDeleteBtn} onPress={confirmDelete}>
+              <Text style={dStyles.confirmDeleteText}>Eliminar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+    </>
   );
 }

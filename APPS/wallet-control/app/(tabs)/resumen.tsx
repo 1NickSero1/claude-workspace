@@ -31,6 +31,7 @@ import { useResponsive, scaledSheet } from '@/constants/responsive';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { buildFinancialReportHtml, buildBankStatementHtml } from '@/lib/financialReport';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const GOAL_COLORS = ['#6C5CE7','#00C896','#FF5C5C','#FDCB6E','#0984E3','#A29BFE','#00B894','#E17055'];
 const INCOME_COLORS = ['#00C896','#0984E3','#6C5CE7','#FDCB6E','#00B894','#A29BFE','#E17055','#FF5C5C'];
@@ -448,6 +449,18 @@ export default function ResumenScreen() {
     emptyState: { alignItems: 'center', paddingVertical: 48, gap: 10 },
     emptyText: { color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
     emptyHint: { color: COLORS.textMuted, fontSize: FONT.sm },
+    onboardingWrap: { marginHorizontal: 16, marginTop: 8, marginBottom: 24, gap: 10 },
+    onboardingTitle: { color: COLORS.textMuted, fontWeight: '700', fontSize: FONT.sm, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 },
+    onboardingTip: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+      backgroundColor: COLORS.card2, borderRadius: 14, padding: 14,
+    },
+    onboardingNum: {
+      width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginTop: 2,
+    },
+    onboardingNumText: { color: '#fff', fontWeight: '800', fontSize: 12 },
+    onboardingTipText: { color: COLORS.text, fontWeight: '700', fontSize: FONT.md },
+    onboardingTipHint: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
     patrimonioCard: {
       marginHorizontal: 16, marginBottom: 20,
       backgroundColor: COLORS.card, borderRadius: 18, padding: 18,
@@ -974,6 +987,40 @@ export default function ResumenScreen() {
             </>
           )}
         </View>
+
+        {/* ── Primeros pasos (solo cuando la cuenta está recién creada) ── */}
+        {!budget && cards.length === 0 && goals.length === 0 && (
+          <View style={styles.onboardingWrap}>
+            <Text style={styles.onboardingTitle}>Primeros pasos</Text>
+            <TouchableOpacity style={styles.onboardingTip} activeOpacity={0.8} onPress={() => router.push('/perfil')}>
+              <View style={[styles.onboardingNum, { backgroundColor: COLORS.debit }]}>
+                <Text style={styles.onboardingNumText}>1</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.onboardingTipText}>Configura tu presupuesto mensual</Text>
+                <Text style={styles.onboardingTipHint}>2 min en Perfil — así el Resumen puede mostrar cuánto te queda</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.onboardingTip} activeOpacity={0.8} onPress={() => router.push('/tarjetas')}>
+              <View style={[styles.onboardingNum, { backgroundColor: COLORS.debit }]}>
+                <Text style={styles.onboardingNumText}>2</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.onboardingTipText}>Agrega tu primera tarjeta o efectivo</Text>
+                <Text style={styles.onboardingTipHint}>Para saber de dónde sale cada gasto</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.onboardingTip} activeOpacity={0.8} onPress={() => { setEditingGoal(null); setGoalModal(true); }}>
+              <View style={[styles.onboardingNum, { backgroundColor: COLORS.debit }]}>
+                <Text style={styles.onboardingNumText}>3</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.onboardingTipText}>Crea una meta de ahorro</Text>
+                <Text style={styles.onboardingTipHint}>Aunque sea pequeña — se ve el progreso desde el día uno</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
 
       <GoalFormModal
@@ -1169,13 +1216,13 @@ export default function ResumenScreen() {
               </View>
               {exporting && <ActivityIndicator size={16} color={COLORS.primary} />}
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.helpOption, { backgroundColor: COLORS.debitBg }]} onPress={() => { setHelpSheet(false); handleExportBankStatement(); }}>
+            <TouchableOpacity style={[styles.helpOption, { backgroundColor: COLORS.primaryBg }]} onPress={() => { setHelpSheet(false); handleExportBankStatement(); }}>
               <Text style={{ fontSize: 24 }}>🧾</Text>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.regOptionTitle, { color: COLORS.debit }]}>Extracto de tu cuenta</Text>
+                <Text style={[styles.regOptionTitle, { color: COLORS.primary }]}>Extracto de tu cuenta</Text>
                 <Text style={styles.regOptionSub}>Movimientos del mes, tipo estado de cuenta (PDF)</Text>
               </View>
-              {exportingStatement && <ActivityIndicator size={16} color={COLORS.debit} />}
+              {exportingStatement && <ActivityIndicator size={16} color={COLORS.primary} />}
             </TouchableOpacity>
             <TouchableOpacity style={[styles.helpOption, { backgroundColor: COLORS.card2 }]} onPress={() => { setHelpSheet(false); router.push('/ayuda'); }}>
               <Text style={{ fontSize: 24 }}>❓</Text>
@@ -1689,6 +1736,8 @@ function GoalFormModal({ visible, goal, onSave, onClose }: GoalModalProps) {
   const [target, setTarget]     = useState('');
   const [saved, setSaved]       = useState('');
   const [deadline, setDeadline] = useState('');
+  const [deadlineDate, setDeadlineDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [emoji, setEmoji]       = useState(GOAL_EMOJI_OPTIONS[0]);
 
   const COLORS = useColors();
@@ -1712,18 +1761,31 @@ function GoalFormModal({ visible, goal, onSave, onClose }: GoalModalProps) {
     saveBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: COLORS.primary, alignItems: 'center' },
     saveBtnOff: { backgroundColor: COLORS.textDim },
     saveText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
+    dateField: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.bg, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: COLORS.border },
+    dateFieldText: { fontSize: FONT.md },
   }), [COLORS]);
 
   React.useEffect(() => {
     if (goal) {
       setName(goal.name); setTarget(String(goal.targetAmount));
       setSaved(String(goal.savedAmount)); setDeadline(goal.deadline ?? '');
+      const parsed = goal.deadline ? new Date(goal.deadline) : null;
+      setDeadlineDate(parsed && !isNaN(parsed.getTime()) ? parsed : null);
       setEmoji(goal.emoji ?? GOAL_EMOJI_OPTIONS[0]);
     } else {
       setName(''); setTarget(''); setSaved('0'); setDeadline('');
+      setDeadlineDate(null);
       setEmoji(GOAL_EMOJI_OPTIONS[0]);
     }
+    setShowDatePicker(false);
   }, [goal, visible]);
+
+  const handleDateChange = (event: any, selected?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (event.type === 'dismissed' || !selected) return;
+    setDeadlineDate(selected);
+    setDeadline(selected.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }));
+  };
 
   const valid = name.trim().length > 0 && Number(target.replace(/\D/g, '')) > 0;
 
@@ -1772,7 +1834,21 @@ function GoalFormModal({ visible, goal, onSave, onClose }: GoalModalProps) {
               keyboardType="number-pad"
             />
             <Text style={gStyles.label}>Fecha límite (opcional)</Text>
-            <TextInput style={gStyles.input} value={deadline} onChangeText={setDeadline} placeholder="Ej: Diciembre 2025" placeholderTextColor={COLORS.textDim} />
+            <TouchableOpacity style={gStyles.dateField} onPress={() => setShowDatePicker(true)} activeOpacity={0.7}>
+              <Text style={[gStyles.dateFieldText, { color: deadline ? COLORS.text : COLORS.textDim }]}>
+                {deadline || 'Selecciona una fecha'}
+              </Text>
+              <Ionicons name="calendar-outline" size={18} color={COLORS.debit} />
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={deadlineDate ?? new Date()}
+                mode="date"
+                display="default"
+                minimumDate={new Date()}
+                onChange={handleDateChange}
+              />
+            )}
             <Text style={gStyles.label}>Emoji</Text>
             <View style={gStyles.emojiGrid}>
               {GOAL_EMOJI_OPTIONS.map(e => (

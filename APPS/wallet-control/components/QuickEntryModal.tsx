@@ -138,7 +138,7 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
       color: COLORS.text, fontSize: FONT.md,
       borderWidth: 1, borderColor: COLORS.border, marginBottom: 14,
     },
-    categoryScroll: { maxHeight: 240 },
+    categoryScroll: { maxHeight: 240, marginBottom: 12 },
     categoryGrid: {
       flexDirection: 'row', flexWrap: 'wrap',
       gap: 8, paddingBottom: 8,
@@ -319,44 +319,6 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
                 </View>
               )}
             </>
-          )}
-
-          {/* Category grid */}
-          {isGasto && (
-            <ScrollView
-              style={styles.categoryScroll}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              <View style={styles.categoryGrid}>
-                {categories.map(cat => {
-                  const selected = selectedCategoryId === cat.id;
-                  return (
-                    <TouchableOpacity
-                      key={cat.id}
-                      style={[
-                        styles.categoryCell,
-                        selected && { borderColor: cat.color, backgroundColor: cat.color + '18' },
-                      ]}
-                      onPress={() => setSelectedCategoryId(cat.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[styles.catIconCircle, { backgroundColor: cat.color + '25' }]}>
-                        <Ionicons name={cat.icon as any} size={20} color={cat.color} />
-                      </View>
-                      <Text style={[styles.catName, selected && { color: cat.color, fontWeight: '700' }]} numberOfLines={1}>
-                        {cat.name}
-                      </Text>
-                      {selected && (
-                        <View style={[styles.checkDot, { backgroundColor: cat.color }]}>
-                          <Ionicons name="checkmark" size={10} color="#fff" />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </ScrollView>
           )}
 
           {/* Save button */}

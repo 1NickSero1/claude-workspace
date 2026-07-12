@@ -530,8 +530,11 @@ export default function TarjetasScreen() {
             {tarjetas.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyHint}>Agrega tus tarjetas de crédito</Text>
-                <TouchableOpacity onPress={() => openAdd(['credit', 'debt'])} style={styles.addDashedBtn}>
-                  <Text style={styles.addDashedText}>+ Agregar tarjeta de crédito</Text>
+                <TouchableOpacity
+                  onPress={() => openAdd(['credit', 'debt'])}
+                  style={[styles.addDashedBtn, { borderColor: COLORS.debt }]}
+                >
+                  <Text style={[styles.addDashedText, { color: COLORS.debt }]}>+ Agregar tarjeta de crédito</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -548,7 +551,7 @@ export default function TarjetasScreen() {
                       accessibilityRole="button"
                       accessibilityLabel="Agregar tarjeta de crédito"
                     >
-                      <Ionicons name="add" size={18} color={COLORS.primary} />
+                      <Ionicons name="add" size={18} color={COLORS.debt} />
                     </TouchableOpacity>
                   </View>
                 </View>
