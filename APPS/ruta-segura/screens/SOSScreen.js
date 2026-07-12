@@ -102,7 +102,7 @@ export default function SOSScreen({ navigation, route }) {
 
         <View style={styles.watermark}>
           <View style={styles.watermarkLogoWrap}>
-            <Image source={require('../assets/ana-laverde-logo.png')} style={styles.watermarkLogo} />
+            <Image source={require('../assets/ana-laverde-logo-circle.png')} style={styles.watermarkLogo} />
           </View>
           <Text style={[styles.watermarkName, { color: 'rgba(255,255,255,0.5)' }]}>Ana Laverde</Text>
         </View>
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   },
   privacyText: { color: 'rgba(255,255,255,0.5)', fontSize: 12, textAlign: 'center' },
   watermark: { position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.5 },
-  watermarkLogoWrap: { width: 26, height: 26, borderRadius: 8, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
+  watermarkLogoWrap: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
   watermarkLogo: { width: '100%', height: '100%', resizeMode: 'contain' },
   watermarkName: { fontSize: 10 },
 });

@@ -90,7 +90,7 @@ export default function RegistroScreen({ navigation, route }) {
         </ScrollView>
 
         <View style={styles.watermark}>
-          <View style={styles.watermarkLogoWrap}><Image source={require('../assets/ana-laverde-logo.png')} style={styles.watermarkLogo} /></View>
+          <View style={styles.watermarkLogoWrap}><Image source={require('../assets/ana-laverde-logo-circle.png')} style={styles.watermarkLogo} /></View>
           <Text style={styles.watermarkName}>Ana Laverde</Text>
         </View>
       </SafeAreaView>
@@ -211,7 +211,7 @@ export default function RegistroScreen({ navigation, route }) {
       </KeyboardAvoidingView>
 
       <View style={styles.watermark}>
-        <View style={styles.watermarkLogoWrap}><Image source={require('../assets/ana-laverde-logo.png')} style={styles.watermarkLogo} /></View>
+        <View style={styles.watermarkLogoWrap}><Image source={require('../assets/ana-laverde-logo-circle.png')} style={styles.watermarkLogo} /></View>
         <Text style={styles.watermarkName}>Ana Laverde</Text>
       </View>
     </SafeAreaView>
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   switchModo: { alignItems: 'center', marginTop: 20 },
   switchModoText: { color: '#C850C0', fontSize: 14, fontWeight: '600' },
   watermark: { position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.6 },
-  watermarkLogoWrap: { width: 26, height: 26, borderRadius: 8, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
+  watermarkLogoWrap: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
   watermarkLogo: { width: '100%', height: '100%', resizeMode: 'contain' },
   watermarkName: { fontSize: 10, color: '#888' },
 });
