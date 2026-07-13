@@ -284,6 +284,96 @@ HISTORIAL DE CAMBIOS
   del hermano); resolucion dejada pendiente para el usuario, sin merge/rebase
   automatico de por medio (regla fija de CLAUDE.md).
 
+[2026-07-12 / 2026-07-13] Sesion larga: VISOR+scrcpy, rediseno del logo, IMAGINA, y plan "corrige todo" (unificacion + persistencia + subida Expo/RN)
+- Se le puso nombre a la capacidad de ver/controlar el celular real instalada en
+  una sesion anterior: "VISOR" (mobile-mcp + adb), confirmado que aplica a todo
+  el repo (no solo a un proyecto). Se instalo ademas scrcpy (via winget) para que
+  el usuario pueda ver el espejo de la pantalla del celular en su propio PC (esto
+  si es solo para el humano, Claude Code no lo usa directamente).
+- Se aclararon los casos de uso de cada herramienta de visualizacion (VISOR vs
+  ESTETIK vs IMAGINA vs scrcpy) en una comparativa a pedido del usuario.
+- Se hizo portable el comando de "abrir el servidor": reemplazadas rutas
+  absolutas quemadas (Z:\... / rutas de una sola maquina) por
+  -WorkingDirectory relativo en .claude/settings.local.json, tanto para
+  wallet-control como para ruta-segura, para que funcione igual en la maquina
+  del usuario y en la de su hermano.
+- Se diagnostico y arreglo en vivo (dos veces) un servidor Expo caido
+  ("Failed to download remote update" en el celular): el proceso de
+  "npx expo start --port 8082" se habia muerto en segundo plano; fix
+  reiniciarlo + "adb reverse tcp:8082 tcp:8082" + recargar la app.
+- ESTETIK audito el logo de marca de agua de Ana Laverde (circulo de corona de
+  laurel incompleto, problema de gramatica "Immigrations", redundante con el
+  texto "Ana Laverde" ya visible). Tras varias rondas de iteracion con el
+  usuario -incluyendo 2 correcciones explicitas de NO redibujar ni modificar
+  el simbolo original (ni las hojas doradas ni la balanza)- se opto por usar
+  "sharp" (Node.js) para recortar el archivo real (nunca regenerar arte nuevo):
+  resultado final es un recorte circular real (mascara alpha via SVG
+  dest-in) del logo original, sin el nombre del negocio ni el tagline, solo
+  corona+hojas+balanza+"AIS", centrado y balanceado a pedido del usuario.
+  Nuevo asset: assets/ana-laverde-logo-circle.png (reemplaza al logo
+  cuadrado/rectangular en las 7 pantallas que usan la marca de agua; el logo
+  original completo se conserva sin borrar por si se necesita para PDFs/
+  marketing a futuro).
+- "IMAGINA" genero un mini-PDF de UX (PDF/ruta-segura-imagina-2026-07-12.pdf)
+  con 5 hallazgos; PECAS implemento los primeros 4 (altura uniforme de
+  tarjetas en MenuPrincipal/Estado con numberOfLines+minHeight, contraste de
+  marca de agua en SOSScreen subido de opacity 0.5 a 0.85, reestructuracion de
+  RegistroScreen para centrar el bloque de seleccion dejando "Volver" fijo
+  arriba) dejando fuera, a peticion explicita del usuario, el ultimo
+  (consistencia de forma de los botones flotantes).
+- AUDITA actualizo el informe de seguimiento (AUDITORIAS/auditoria-2026-07-12.pdf)
+  comparando contra el del 8 de julio: ~40-45% -> ~55% de avance real, 10 items
+  resueltos, bugs pendientes/nuevos (incluyendo uno recien descubierto: el fix
+  de icono de "alimentacion" habia quedado incompleto -ver mas abajo), y numeros
+  frescos de npm audit/outdated/expo-doctor.
+- El propio proceso de auditoria destapo el bug raiz: CategoriaScreen.js tenia
+  su propia copia separada de los datos de categoria (CONTENIDO), nunca
+  sincronizada con el CATEGORIAS de MenuPrincipalScreen.js -por eso el icono de
+  "alimentacion" seguia mostrando el mazo de juez en el detalle pese a estar ya
+  arreglado en el menu, y "comunidad" tenia el problema inverso.
+- El usuario pidio "corrige todo de una vez en un plan": en Plan Mode se
+  investigo el codigo real y se corrieron npm audit/outdated en vivo antes de
+  proponer alcance; el usuario eligio el nivel mas amplio ofrecido: fixes de
+  codigo + persistencia de sesion + npm audit + subir Expo 54->57 / React
+  Native 0.78->0.86 (aceptando el riesgo), dejando fuera de forma explicita
+  Supabase real, EAS init, contenido de politica de privacidad, GPS/mapas,
+  notificaciones push y cualquier UI de cerrar sesion.
+- Plan Paso 1 (unificacion de datos) completado: nuevo data/categorias.js como
+  fuente unica de verdad (CATEGORIAS + getCategoria()), MenuPrincipalScreen.js
+  y CategoriaScreen.js ahora importan de ahi en vez de tener copias locales;
+  eliminada la rama muerta de renderizado condicional por "imagen" (ya ninguna
+  categoria la usa); borrado assets/gavel-icon.png tras confirmar que ya no
+  tenia ninguna referencia en el repo.
+- Plan Paso 2 (persistencia de sesion) completado: instalado
+  @react-native-async-storage/async-storage (mismo patron fail-open que
+  wallet-control/lib/storage.ts); nuevo lib/storage.js (getSession/saveSession,
+  sin clearSession porque no hay funcion de logout en alcance); agregado el
+  flag modoAnonimo al flujo Registro->Estado->MenuPrincipal; App.js reescrito
+  con un loading-gate (espera getSession() antes de montar el Stack.Navigator,
+  ya que initialRouteName de React Navigation solo se lee una vez al montar).
+  Verificado en dispositivo real (VISOR): tras cerrar la app por completo y
+  reabrirla, entra directo a MenuPrincipal con los mismos datos guardados.
+- Plan Paso 3 (subida de Expo/RN) en progreso: quitado "newArchEnabled": false
+  de app.json (React Native >=0.84 ya no tiene arquitectura legacy); corrido
+  "npx expo install expo@^57.0.0" y luego "npx expo install --fix" (actualizo
+  expo-linear-gradient, expo-status-bar, react, react-native,
+  react-native-safe-area-context, react-native-screens al set compatible con
+  SDK 57; agrego automaticamente el plugin "expo-status-bar" a app.json).
+  Pendiente: subir a mano @react-navigation/native y
+  @react-navigation/native-stack (no son paquetes gestionados por Expo, asi
+  que "expo install --fix" no los toca), correr expo-doctor y npm audit para
+  confirmar, reiniciar el servidor y repetir la verificacion completa de las 7
+  pantallas en dispositivo real.
+- Tarea paralela sin resolver: configurar 2 dispositivos ADB simultaneos
+  (una tablet Huawei como principal por USB + el celular ocasional por WiFi).
+  El emparejamiento inalambrico (adb pair/connect) fallo repetidamente porque
+  el puerto de depuracion inalambrica de Android rota seguido; se opto por el
+  metodo mas estable "adb tcpip 5555" (requiere conectar el celular por USB
+  una vez), pero al reconectar el cable "adb devices -l" quedo completamente
+  vacio (ni siquiera la tablet que antes si aparecia), incluso despues de un
+  "adb kill-server"/"start-server" completo -diagnostico en curso, se le pidio
+  al usuario confirmar fisicamente el cable/puerto usado.
+
 ----------------------------------------------------
 (las entradas nuevas se agregan debajo de esta linea)
 ----------------------------------------------------
