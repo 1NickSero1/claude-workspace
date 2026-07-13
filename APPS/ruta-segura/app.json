@@ -10,11 +10,6 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0d0221"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.rutasegura.app"
@@ -37,7 +32,15 @@
       }
     },
     "plugins": [
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#0d0221"
+        }
+      ]
     ]
   }
 }
