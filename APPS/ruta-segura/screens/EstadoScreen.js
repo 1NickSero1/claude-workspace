@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Modal, TextInput,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { saveSession } from '../lib/storage';
 
 const ESTADOS = [
   { nombre: 'California', emoji: '🌉', ciudad: 'Los Ángeles · San Francisco · San Diego' },

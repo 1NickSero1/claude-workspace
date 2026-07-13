@@ -79,7 +79,7 @@ export default function RegistroScreen({ navigation, route }) {
             <TouchableOpacity
               style={styles.anonimoCard}
               activeOpacity={0.85}
-              onPress={() => irASiguiente('Usuaria')}
+              onPress={() => irASiguiente('Usuaria', true)}
             >
               <Text style={styles.anonimoEmoji}>🔒</Text>
               <View style={styles.opcionTexto}>
