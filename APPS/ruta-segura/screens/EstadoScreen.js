@@ -23,7 +23,7 @@ const OTROS_ESTADOS = [
 ];
 
 export default function EstadoScreen({ navigation, route }) {
-  const { nombre, idioma } = route?.params || {};
+  const { nombre, idioma, modoAnonimo } = route?.params || {};
   const [modalVisible, setModalVisible] = useState(false);
   const [otroEstado, setOtroEstado] = useState('');
 
@@ -32,7 +32,8 @@ export default function EstadoScreen({ navigation, route }) {
     : { titulo: '¿En qué Estado estás? 🇺🇸', sub: 'Te mostraremos recursos cerca de ti', btn: 'Seleccionar estado', escribe: 'O escribe tu estado...', confirmar: 'Confirmar', otrosTitulo: 'Elige tu estado' };
 
   const irAMenuPrincipal = (estado) => {
-    navigation.navigate('MenuPrincipal', { nombre, idioma, estado });
+    navigation.navigate('MenuPrincipal', { nombre, idioma, estado, modoAnonimo });
+    saveSession({ nombre, idioma, estado, modoAnonimo: !!modoAnonimo });
     setModalVisible(false);
     setOtroEstado('');
   };
