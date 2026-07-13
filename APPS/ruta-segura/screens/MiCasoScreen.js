@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { supabase } from '../lib/supabase';
 
 const CHIPS = ['Legal', 'Psicológica', 'Documentos', 'Vivienda', 'Salud', 'Otro'];
 
@@ -15,8 +16,26 @@ export default function MiCasoScreen({ navigation, route }) {
   const [descripcion, setDescripcion] = useState('');
   const [anonimo, setAnonimo] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState('');
 
   const puedeEnviar = chipActivo && descripcion.length > 10;
+
+  const enviarCaso = async () => {
+    setEnviando(true);
+    setError('');
+    const { error } = await supabase.from('casos').insert({
+      tipo: chipActivo,
+      descripcion,
+      nombre: anonimo ? null : nombre,
+      idioma,
+      estado,
+      anonimo,
+    });
+    setEnviando(false);
+    if (error) return setError('No se pudo enviar tu caso. Intenta de nuevo.');
+    setEnviado(true);
+  };
 
   if (enviado) {
     return (
@@ -99,13 +118,19 @@ export default function MiCasoScreen({ navigation, route }) {
             <Text style={styles.compromisoText}>⏱ Respuesta garantizada en menos de 24 horas por una voluntaria verificada</Text>
           </View>
 
+          {error.length > 0 && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>⚠️ {error}</Text>
+            </View>
+          )}
+
           <TouchableOpacity
-            style={[styles.boton, !puedeEnviar && styles.botonDisabled]}
-            disabled={!puedeEnviar}
-            onPress={() => setEnviado(true)}
+            style={[styles.boton, (!puedeEnviar || enviando) && styles.botonDisabled]}
+            disabled={!puedeEnviar || enviando}
+            onPress={enviarCaso}
             activeOpacity={0.85}
           >
-            <Text style={styles.botonText}>Enviar mi caso</Text>
+            <Text style={styles.botonText}>{enviando ? 'Enviando...' : 'Enviar mi caso'}</Text>
           </TouchableOpacity>
 
         </ScrollView>
@@ -174,6 +199,13 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   compromisoText: { color: '#f57f17', fontSize: 13, textAlign: 'center' },
+  errorBox: {
+    backgroundColor: '#fdecea',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+  },
+  errorText: { color: '#c62828', fontSize: 13, textAlign: 'center' },
   boton: {
     backgroundColor: '#C850C0',
     paddingVertical: 16,
