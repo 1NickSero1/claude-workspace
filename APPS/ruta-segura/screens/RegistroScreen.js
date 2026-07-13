@@ -20,7 +20,8 @@ export default function RegistroScreen({ navigation, route }) {
   const puedeRegistrar = form.nombre && correoValido && form.pais && form.contrasena;
   const puedeLogin = correoValido && form.contrasena;
 
-  const irASiguiente = (nombre) => navigation.navigate('Estado', { nombre, idioma });
+  const irASiguiente = (nombre, modoAnonimo = false) =>
+    navigation.navigate('Estado', { nombre, idioma, modoAnonimo });
 
   const es = idioma === 'es';
 
