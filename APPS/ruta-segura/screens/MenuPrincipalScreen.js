@@ -1,49 +1,7 @@
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-
-const CATEGORIAS = [
-  {
-    id: 'comunidad',
-    emoji: '🏘️',
-    titulo: 'Ayudas comunitarias',
-    desc: 'Foros de apoyo, recursos locales y mentoría',
-    color: '#1a6b5a',
-    light: '#e6f5f1',
-  },
-  {
-    id: 'alimentacion',
-    emoji: '🧺',
-    titulo: 'Demandas por alimentación',
-    desc: 'Bancos de comida, SNAP/WIC y ONGs verificadas',
-    color: '#7a5c00',
-    light: '#fdf6e3',
-  },
-  {
-    id: 'legal',
-    emoji: '⚖️',
-    titulo: 'Legal',
-    desc: 'Abogadas pro-bono, formularios y traducción',
-    color: '#3d3580',
-    light: '#eeecf8',
-  },
-  {
-    id: 'social',
-    emoji: '🫂',
-    titulo: 'Social',
-    desc: 'Cápsulas educativas, eventos y embajadoras',
-    color: '#6b2050',
-    light: '#f9eaf4',
-  },
-  {
-    id: 'violencia',
-    emoji: '💜',
-    titulo: 'Violencia de género',
-    desc: 'SOS 24/7, refugios seguros y apoyo emocional',
-    color: '#8B0045',
-    light: '#fdf0f5',
-  },
-];
+import { CATEGORIAS } from '../data/categorias';
 
 export default function MenuPrincipalScreen({ navigation, route }) {
   const { nombre, idioma, estado } = route?.params || {};
@@ -88,10 +46,7 @@ export default function MenuPrincipalScreen({ navigation, route }) {
             onPress={() => navigation.navigate('Categoria', { id: cat.id, idioma, estado, nombre })}
           >
             <View style={[styles.cardIcon, { backgroundColor: cat.light }]}>
-              {cat.imagen
-                ? <Image source={cat.imagen} style={styles.cardImage} />
-                : <Text style={styles.cardEmoji}>{cat.emoji}</Text>
-              }
+              <Text style={styles.cardEmoji}>{cat.emoji}</Text>
             </View>
             <View style={styles.cardTexto}>
               <Text style={styles.cardTitulo}>{cat.titulo}</Text>
