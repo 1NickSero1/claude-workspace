@@ -456,6 +456,24 @@ v1.15 — 2026-07-08 · Botón "+" también en sección Efectivo
   de Tarjetas de débito y Tarjetas de crédito
 
 ------------------------------------------------------------
+v1.16 — 2026-07-12 · Registro más rápido + primeros pasos + fecha de metas
+------------------------------------------------------------
+• Registrar gasto: el modal de registro rápido ahora muestra la categoría
+  directo ahí (grid con ícono + nombre, scroll si hay muchas) — ya no hay
+  que guardar el gasto sin categoría y asignarla después
+• Resumen: nueva sección "Primeros pasos" (3 tips numerados: configurar
+  presupuesto, agregar tarjeta/efectivo, crear meta) — solo aparece en
+  cuentas recién creadas, sin presupuesto ni tarjetas ni metas todavía
+• Metas de ahorro: el campo "Fecha límite" pasó de texto libre a un
+  selector de fecha real (calendario nativo del celular) — evita fechas
+  mal escritas y formatea siempre igual ("23 de julio de 2026")
+• Eliminar un gasto desde el detalle de categoría ahora muestra un modal
+  con el tema propio de la app (ícono de basura, botones Cancelar/
+  Eliminar) en vez del diálogo blanco nativo de Android
+• Botón "+" de "Tarjetas de crédito" en la pestaña Crédito ahora usa el
+  color naranja de esa sección (antes moradito, no calzaba con el resto)
+
+------------------------------------------------------------
 [PRÓXIMO]
 ------------------------------------------------------------
 • Build permanente (APK) para compartir sin servidor

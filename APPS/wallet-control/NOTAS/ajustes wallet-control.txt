@@ -42,6 +42,19 @@ COMANDO RÁPIDO:
 [RESUELTO]
 ------------------------------------------------------------
 
+  ✓ 5 cambios de la sesión del 2026-07-12, verificados y documentados
+    en v1.16 (2026-07-15)
+    → Quedaron en el código (commits de auto-sync) pero sin registrar en
+      ACTUALIZACIONES.txt ni acá — se probaron uno por uno en el emulador
+      antes de darlos por buenos:
+    → Grid de categorías dentro de QuickEntryModal al registrar un gasto
+    → Sección "Primeros pasos" en Resumen, solo visible sin datos aún
+    → DateTimePicker nativo para "Fecha límite" en metas de ahorro
+      (nueva dependencia @react-native-community/datetimepicker)
+    → Modal temático de confirmación al eliminar gasto (CategoryDetailModal),
+      reemplaza el Alert.alert nativo
+    → Botón "+" de Tarjetas de crédito en color COLORS.debt (naranja)
+
   ✓ MEJORAX — pendiente "por MI", botón "+" en sección Efectivo (FIXA, 2026-07-08)
     → Tarjetas (Balance) → sub-pestaña Débito → sección "Efectivo": se quitó
       el texto naranja "+ Agregar efectivo" que estaba debajo de la lista de
