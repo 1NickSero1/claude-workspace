@@ -116,6 +116,7 @@ export default function SOSScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   container: { flex: 1 },
+  maxContent: { width: '100%', maxWidth: 480, alignSelf: 'center' },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',

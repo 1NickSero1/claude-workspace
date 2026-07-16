@@ -59,7 +59,7 @@ export default function MiCasoScreen({ navigation, route }) {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={[styles.scroll, styles.maxContent]} keyboardShouldPersistTaps="handled">
 
           <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
             <Text style={[styles.backText, { color: accentColor }]}>← Volver</Text>
@@ -157,6 +157,7 @@ export default function MiCasoScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { paddingHorizontal: 24, paddingBottom: 40 },
+  maxContent: { width: '100%', maxWidth: 480, alignSelf: 'center' },
   back: { paddingTop: 16, marginBottom: 8 },
   backText: { fontSize: 16 },
   titulo: { fontSize: 28, fontWeight: '800', color: '#1a1a2e', marginBottom: 4 },

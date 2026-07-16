@@ -42,12 +42,12 @@ export default function EstadoScreen({ navigation, route }) {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      <View style={styles.header}>
+      <View style={[styles.header, styles.maxContent]}>
         <Text style={styles.titulo}>{t.titulo}</Text>
         <Text style={styles.subtitulo}>{t.sub}</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scroll, styles.maxContent]} showsVerticalScrollIndicator={false}>
         <View style={styles.lista}>
           {ESTADOS.map(e => (
             <TouchableOpacity
@@ -151,6 +151,7 @@ export default function EstadoScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f4ff' },
+  maxContent: { width: '100%', maxWidth: 480, alignSelf: 'center' },
   header: {
     paddingHorizontal: 24,
     paddingTop: 24,

@@ -30,7 +30,7 @@ export default function RegistroScreen({ navigation, route }) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar style="dark" />
-        <ScrollView contentContainerStyle={styles.scrollCentered}>
+        <ScrollView contentContainerStyle={[styles.scrollCentered, styles.maxContent]}>
 
           <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
             <Text style={styles.backText}>← {es ? 'Volver' : 'Back'}</Text>
@@ -105,7 +105,7 @@ export default function RegistroScreen({ navigation, route }) {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={[styles.scroll, styles.maxContent]} keyboardShouldPersistTaps="handled">
 
           <TouchableOpacity style={styles.back} onPress={() => setVista(null)}>
             <Text style={styles.backText}>← {es ? 'Volver' : 'Back'}</Text>
@@ -225,6 +225,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { paddingHorizontal: 24, paddingBottom: 80 },
   scrollCentered: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 80 },
+  maxContent: { width: '100%', maxWidth: 480, alignSelf: 'center' },
   selectionBlock: { flex: 1, justifyContent: 'center' },
   back: { paddingTop: 16, marginBottom: 8 },
   backText: { color: '#C850C0', fontSize: 16 },
