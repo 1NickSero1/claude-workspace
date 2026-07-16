@@ -2,17 +2,22 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Linking } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { getCategoria } from '../data/categorias';
+import { getRecursosPorEstado } from '../data/recursos';
 import Watermark from '../components/Watermark';
 
 export default function CategoriaScreen({ navigation, route }) {
   const { id, idioma, estado } = route?.params || {};
   const data = getCategoria(id);
+  const recursos = (id === 'legal' || id === 'violencia') ? getRecursosPorEstado(estado, id) : [];
 
   const handlePress = (s) => {
     if (s.esAna) return Linking.openURL('https://wa.me/17542758005?text=Hola%20necesito%20ayuda');
     if (s.urgente) return navigation.navigate('SOS', { nombre: route?.params?.nombre, idioma, estado });
     navigation.navigate('MiCaso', { tipo: s.titulo, nombre: route?.params?.nombre, idioma, estado, color: data.color });
   };
+
+  const llamar = (contacto) => Linking.openURL(`tel:${contacto.replace(/[^0-9+]/g, '')}`);
+  const abrirSitio = (sitio) => Linking.openURL(sitio.startsWith('http') ? sitio : `https://${sitio}`);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: data.color }]}>
@@ -63,6 +68,39 @@ export default function CategoriaScreen({ navigation, route }) {
               </View>
             </View>
           ))}
+
+          {recursos.length > 0 && (
+            <>
+              <Text style={styles.recursosTitulo}>📋 Recursos verificados en tu zona</Text>
+              {recursos.map((r, i) => (
+                <View key={i} style={styles.card}>
+                  <View style={styles.cardBody}>
+                    {r.region && <Text style={[styles.recursoRegion, { color: data.color }]}>{r.region}</Text>}
+                    <Text style={styles.cardTitulo}>{r.nombre}</Text>
+                    <Text style={styles.cardDesc}>{r.desc}</Text>
+                    <View style={styles.recursoBotones}>
+                      {r.contacto && (
+                        <TouchableOpacity
+                          style={[styles.recursoBtn, { backgroundColor: data.color }]}
+                          activeOpacity={0.85}
+                          onPress={() => llamar(r.contacto)}
+                        >
+                          <Text style={styles.recursoBtnText}>📞 Llamar</Text>
+                        </TouchableOpacity>
+                      )}
+                      <TouchableOpacity
+                        style={[styles.recursoBtn, styles.recursoBtnSecundario, { borderColor: data.color }]}
+                        activeOpacity={0.85}
+                        onPress={() => abrirSitio(r.sitio)}
+                      >
+                        <Text style={[styles.recursoBtnText, { color: data.color }]}>🌐 Sitio oficial</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
         </ScrollView>
 
         <Watermark />
@@ -148,4 +186,11 @@ const styles = StyleSheet.create({
   cardBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   cardBtnAna: { borderWidth: 2, borderColor: '#C850C0', backgroundColor: 'transparent' },
   cardBtnAnaText: { color: '#C850C0' },
+
+  recursosTitulo: { fontSize: 15, fontWeight: '800', color: '#1a1a2e', marginTop: 6, marginBottom: 2, paddingHorizontal: 2 },
+  recursoRegion: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 },
+  recursoBotones: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  recursoBtn: { flex: 1, paddingVertical: 11, borderRadius: 20, alignItems: 'center' },
+  recursoBtnSecundario: { backgroundColor: 'transparent', borderWidth: 1.5 },
+  recursoBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
 });
