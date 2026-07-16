@@ -28,9 +28,10 @@
     },
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "8d7fd595-3d6c-4612-af47-cf09b3636a70"
       }
     },
+    "owner": "nicksero",
     "plugins": [
       "expo-status-bar",
       [
