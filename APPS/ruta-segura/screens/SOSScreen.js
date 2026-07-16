@@ -100,6 +100,18 @@ export default function SOSScreen({ navigation, route }) {
                 : 'Estas llamadas no quedan guardadas en Ruta Segura'}
             </Text>
           </View>
+
+          <TouchableOpacity
+            style={styles.registrarCaso}
+            activeOpacity={0.75}
+            onPress={() => navigation.navigate('MiCaso', { nombre, idioma, estado })}
+            accessibilityRole="button"
+            accessibilityLabel={idioma === 'en' ? 'Register my case' : 'Registrar mi caso'}
+          >
+            <Text style={styles.registrarCasoText}>
+              📝 {idioma === 'en' ? 'Register my case' : 'Registrar mi caso'}
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
 
         <View style={styles.watermark}>
@@ -182,6 +194,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   privacyText: { color: 'rgba(255,255,255,0.75)', fontSize: 12, textAlign: 'center' },
+  registrarCaso: { marginTop: 14, alignItems: 'center', paddingVertical: 10 },
+  registrarCasoText: { color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
   watermark: { position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.85 },
   watermarkLogoWrap: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
   watermarkLogo: { width: '100%', height: '100%', resizeMode: 'contain' },

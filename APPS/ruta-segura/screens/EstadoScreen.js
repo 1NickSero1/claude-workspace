@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Modal, TextInput, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { saveSession } from '../lib/storage';
+import Watermark from '../components/Watermark';
 
 const ESTADOS = [
   { nombre: 'California', emoji: '🌉', ciudad: 'Los Ángeles · San Francisco · San Diego' },
@@ -139,12 +140,7 @@ export default function EstadoScreen({ navigation, route }) {
         </KeyboardAvoidingView>
       </Modal>
 
-      <View style={styles.watermark}>
-        <View style={styles.watermarkLogoWrap}>
-          <Image source={require('../assets/ana-laverde-logo-circle.png')} style={styles.watermarkLogo} />
-        </View>
-        <Text style={styles.watermarkName}>Ana Laverde</Text>
-      </View>
+      <Watermark />
     </SafeAreaView>
   );
 }
@@ -176,10 +172,6 @@ const styles = StyleSheet.create({
   nota: { textAlign: 'center', color: '#aaa', fontSize: 13, marginTop: 28, paddingHorizontal: 24 },
   cardGradientOtro: { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.3)' },
   cardNombreOtro: { fontStyle: 'italic', fontSize: 15 },
-  watermark: { position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.6 },
-  watermarkLogoWrap: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
-  watermarkLogo: { width: '100%', height: '100%', resizeMode: 'contain' },
-  watermarkName: { fontSize: 10, color: '#888' },
 
   // Modal
   modalOverlay: {

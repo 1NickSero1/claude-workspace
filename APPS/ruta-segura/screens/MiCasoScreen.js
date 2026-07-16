@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ScrollView, Switch, KeyboardAvoidingView, Platform, Image,
+  ScrollView, Switch, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../lib/supabase';
+import Watermark from '../components/Watermark';
 
 const CHIPS = ['Legal', 'Psicológica', 'Documentos', 'Vivienda', 'Salud', 'Otro'];
 
@@ -144,12 +145,7 @@ export default function MiCasoScreen({ navigation, route }) {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <View style={styles.watermark}>
-        <View style={styles.watermarkLogoWrap}>
-          <Image source={require('../assets/ana-laverde-logo-circle.png')} style={styles.watermarkLogo} />
-        </View>
-        <Text style={styles.watermarkName}>Ana Laverde</Text>
-      </View>
+      <Watermark />
     </SafeAreaView>
   );
 }

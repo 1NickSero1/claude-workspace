@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Linking, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { getCategoria } from '../data/categorias';
+import Watermark from '../components/Watermark';
 
 export default function CategoriaScreen({ navigation, route }) {
   const { id, idioma, estado } = route?.params || {};
@@ -64,12 +65,7 @@ export default function CategoriaScreen({ navigation, route }) {
           ))}
         </ScrollView>
 
-        <View style={styles.watermark}>
-          <View style={styles.watermarkLogoWrap}>
-            <Image source={require('../assets/ana-laverde-logo-circle.png')} style={styles.watermarkLogo} />
-          </View>
-          <Text style={styles.watermarkName}>Ana Laverde</Text>
-        </View>
+        <Watermark />
       </View>
     </SafeAreaView>
   );
@@ -152,8 +148,4 @@ const styles = StyleSheet.create({
   cardBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   cardBtnAna: { borderWidth: 2, borderColor: '#C850C0', backgroundColor: 'transparent' },
   cardBtnAnaText: { color: '#C850C0' },
-  watermark: { position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.6 },
-  watermarkLogoWrap: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
-  watermarkLogo: { width: '100%', height: '100%', resizeMode: 'contain' },
-  watermarkName: { fontSize: 10, color: '#888' },
 });
