@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ScrollView, KeyboardAvoidingView, Platform, Image,
+  ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import Watermark from '../components/Watermark';
 
 const PAISES = ['México', 'Guatemala', 'Honduras', 'El Salvador', 'Colombia', 'Venezuela', 'Otro'];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -92,10 +93,7 @@ export default function RegistroScreen({ navigation, route }) {
 
         </ScrollView>
 
-        <View style={styles.watermark}>
-          <View style={styles.watermarkLogoWrap}><Image source={require('../assets/ana-laverde-logo-circle.png')} style={styles.watermarkLogo} /></View>
-          <Text style={styles.watermarkName}>Ana Laverde</Text>
-        </View>
+        <Watermark />
       </SafeAreaView>
     );
   }
@@ -213,10 +211,7 @@ export default function RegistroScreen({ navigation, route }) {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <View style={styles.watermark}>
-        <View style={styles.watermarkLogoWrap}><Image source={require('../assets/ana-laverde-logo-circle.png')} style={styles.watermarkLogo} /></View>
-        <Text style={styles.watermarkName}>Ana Laverde</Text>
-      </View>
+      <Watermark />
     </SafeAreaView>
   );
 }
@@ -318,8 +313,4 @@ const styles = StyleSheet.create({
   botonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   switchModo: { alignItems: 'center', marginTop: 20 },
   switchModoText: { color: '#C850C0', fontSize: 14, fontWeight: '600' },
-  watermark: { position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.6 },
-  watermarkLogoWrap: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
-  watermarkLogo: { width: '100%', height: '100%', resizeMode: 'contain' },
-  watermarkName: { fontSize: 10, color: '#888' },
 });

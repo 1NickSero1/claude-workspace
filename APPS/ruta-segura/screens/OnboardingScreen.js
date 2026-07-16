@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Linking, Image } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import Watermark from '../components/Watermark';
 
 const IDIOMAS = [
   { code: 'es', label: 'Español' },
@@ -104,12 +105,7 @@ export default function OnboardingScreen({ navigation }) {
         </TouchableOpacity>
 
         {/* Watermark — fondo derecho */}
-        <View style={styles.watermark}>
-          <View style={styles.watermarkLogoWrap}>
-            <Image source={require('../assets/ana-laverde-logo-circle.png')} style={styles.watermarkLogo} />
-          </View>
-          <Text style={[styles.watermarkName, { color: 'rgba(255,255,255,0.6)' }]}>Ana Laverde</Text>
-        </View>
+        <Watermark textColor="rgba(255,255,255,0.6)" />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -219,8 +215,4 @@ const styles = StyleSheet.create({
   buttonText: { color: '#4A0E6E', fontSize: 17, fontWeight: '800', letterSpacing: 0.3 },
   whatsappBtn: { position: 'absolute', bottom: 20, left: 24 },
   whatsappIcon: { width: 52, height: 52, borderRadius: 26 },
-  watermark: { position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.6 },
-  watermarkLogoWrap: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
-  watermarkLogo: { width: '100%', height: '100%', resizeMode: 'contain' },
-  watermarkName: { fontSize: 10 },
 });

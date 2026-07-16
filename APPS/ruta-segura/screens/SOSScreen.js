@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View, TouchableOpacity, Linking, ScrollView, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Linking, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import Watermark from '../components/Watermark';
 
 const LINEAS = [
   {
@@ -114,12 +115,7 @@ export default function SOSScreen({ navigation, route }) {
           </TouchableOpacity>
         </ScrollView>
 
-        <View style={styles.watermark}>
-          <View style={styles.watermarkLogoWrap}>
-            <Image source={require('../assets/ana-laverde-logo-circle.png')} style={styles.watermarkLogo} />
-          </View>
-          <Text style={[styles.watermarkName, { color: 'rgba(255,255,255,0.8)' }]}>Ana Laverde</Text>
-        </View>
+        <Watermark opacity={0.85} textColor="rgba(255,255,255,0.8)" />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -196,8 +192,4 @@ const styles = StyleSheet.create({
   privacyText: { color: 'rgba(255,255,255,0.75)', fontSize: 12, textAlign: 'center' },
   registrarCaso: { marginTop: 14, alignItems: 'center', paddingVertical: 10 },
   registrarCasoText: { color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
-  watermark: { position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.85 },
-  watermarkLogoWrap: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
-  watermarkLogo: { width: '100%', height: '100%', resizeMode: 'contain' },
-  watermarkName: { fontSize: 10 },
 });
