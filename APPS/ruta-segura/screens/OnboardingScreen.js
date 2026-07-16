@@ -32,7 +32,7 @@ export default function OnboardingScreen({ navigation }) {
         <StatusBar style="light" />
 
         {/* Barra superior */}
-        <View style={styles.topBar}>
+        <View style={[styles.topBar, styles.maxContent]}>
           <TouchableOpacity
             style={styles.sosMini}
             activeOpacity={0.8}
@@ -60,7 +60,7 @@ export default function OnboardingScreen({ navigation }) {
         </View>
 
         {/* Contenido principal */}
-        <View style={styles.content}>
+        <View style={[styles.content, styles.maxContent]}>
           {/* Ícono arriba */}
           <View style={styles.iconContainer}>
             <Text style={styles.icon}>🎀</Text>
@@ -118,6 +118,7 @@ export default function OnboardingScreen({ navigation }) {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   container: { flex: 1 },
+  maxContent: { width: '100%', maxWidth: 480, alignSelf: 'center' },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
