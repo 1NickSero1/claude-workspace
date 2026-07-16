@@ -104,7 +104,7 @@ export const CATEGORIAS = [
   },
   {
     id: 'social',
-    emoji: '🫂',
+    emoji: '📖',
     titulo: 'Social',
     desc: 'Cápsulas educativas, eventos y embajadoras',
     subtitulo: 'Aprende, conéctate y crece.\nAquí tienes herramientas para empoderarte y no depender de nadie.',

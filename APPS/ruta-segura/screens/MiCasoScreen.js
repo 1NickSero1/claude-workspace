@@ -10,7 +10,8 @@ import { supabase } from '../lib/supabase';
 const CHIPS = ['Legal', 'Psicológica', 'Documentos', 'Vivienda', 'Salud', 'Otro'];
 
 export default function MiCasoScreen({ navigation, route }) {
-  const { tipo, nombre, idioma, estado } = route?.params || {};
+  const { tipo, nombre, idioma, estado, color } = route?.params || {};
+  const accentColor = color || '#C850C0';
   const tipoInicial = tipo?.split(' ')[0] || '';
   const [chipActivo, setChipActivo] = useState(tipoInicial);
   const [descripcion, setDescripcion] = useState('');
@@ -46,7 +47,7 @@ export default function MiCasoScreen({ navigation, route }) {
           <Text style={styles.exitoTexto}>
             Una voluntaria verificada revisará tu caso{'\n'}en menos de 24 horas.
           </Text>
-          <TouchableOpacity style={styles.boton} onPress={() => navigation.navigate('MenuPrincipal', { nombre, idioma, estado })}>
+          <TouchableOpacity style={[styles.boton, { backgroundColor: accentColor }]} onPress={() => navigation.navigate('MenuPrincipal', { nombre, idioma, estado })}>
             <Text style={styles.botonText}>Volver al inicio</Text>
           </TouchableOpacity>
         </View>
@@ -61,7 +62,7 @@ export default function MiCasoScreen({ navigation, route }) {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
           <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
-            <Text style={styles.backText}>← Volver</Text>
+            <Text style={[styles.backText, { color: accentColor }]}>← Volver</Text>
           </TouchableOpacity>
 
           <Text style={styles.titulo}>Mi Caso</Text>
@@ -73,7 +74,10 @@ export default function MiCasoScreen({ navigation, route }) {
             {CHIPS.map(c => (
               <TouchableOpacity
                 key={c}
-                style={[styles.chip, chipActivo === c && styles.chipActivo]}
+                style={[
+                  styles.chip,
+                  chipActivo === c && { backgroundColor: accentColor, borderColor: accentColor },
+                ]}
                 onPress={() => setChipActivo(c)}
               >
                 <Text style={[styles.chipText, chipActivo === c && styles.chipTextActivo]}>{c}</Text>
@@ -103,7 +107,7 @@ export default function MiCasoScreen({ navigation, route }) {
             <Switch
               value={anonimo}
               onValueChange={setAnonimo}
-              trackColor={{ false: '#ddd', true: '#C850C0' }}
+              trackColor={{ false: '#ddd', true: accentColor }}
               thumbColor="#fff"
             />
           </View>
@@ -125,7 +129,11 @@ export default function MiCasoScreen({ navigation, route }) {
           )}
 
           <TouchableOpacity
-            style={[styles.boton, (!puedeEnviar || enviando) && styles.botonDisabled]}
+            style={[
+              styles.boton,
+              { backgroundColor: accentColor },
+              (!puedeEnviar || enviando) && styles.botonDisabled,
+            ]}
             disabled={!puedeEnviar || enviando}
             onPress={enviarCaso}
             activeOpacity={0.85}
@@ -150,7 +158,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { paddingHorizontal: 24, paddingBottom: 40 },
   back: { paddingTop: 16, marginBottom: 8 },
-  backText: { color: '#C850C0', fontSize: 16 },
+  backText: { fontSize: 16 },
   titulo: { fontSize: 28, fontWeight: '800', color: '#1a1a2e', marginBottom: 4 },
   subtitulo: { fontSize: 15, color: '#888', marginBottom: 24 },
   label: { fontSize: 14, fontWeight: '600', color: '#444', marginBottom: 10, marginTop: 16 },
@@ -162,7 +170,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  chipActivo: { backgroundColor: '#C850C0', borderColor: '#C850C0' },
   chipText: { color: '#666', fontSize: 14 },
   chipTextActivo: { color: '#fff', fontWeight: '700' },
   textarea: {
@@ -207,7 +214,6 @@ const styles = StyleSheet.create({
   },
   errorText: { color: '#c62828', fontSize: 13, textAlign: 'center' },
   boton: {
-    backgroundColor: '#C850C0',
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: 'center',

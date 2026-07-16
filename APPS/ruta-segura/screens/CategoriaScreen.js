@@ -10,7 +10,7 @@ export default function CategoriaScreen({ navigation, route }) {
   const handlePress = (s) => {
     if (s.esAna) return Linking.openURL('https://wa.me/17542758005?text=Hola%20necesito%20ayuda');
     if (s.urgente) return navigation.navigate('SOS', { nombre: route?.params?.nombre, idioma, estado });
-    navigation.navigate('MiCaso', { tipo: s.titulo, nombre: route?.params?.nombre, idioma, estado });
+    navigation.navigate('MiCaso', { tipo: s.titulo, nombre: route?.params?.nombre, idioma, estado, color: data.color });
   };
 
   return (
