@@ -19,23 +19,25 @@ export default function CategoriaScreen({ navigation, route }) {
 
       {/* Header de color */}
       <View style={[styles.header, { backgroundColor: data.color }]}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
-            <Text style={styles.backText}>← Volver</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.headerRow}>
-          <Text style={styles.headerEmoji}>{data.emoji}</Text>
-          <View style={styles.headerTextos}>
-            <Text style={styles.headerTitulo}>{data.titulo}</Text>
-            {estado && <Text style={styles.headerEstado}>📍 {estado}</Text>}
+        <View style={styles.maxContent}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
+              <Text style={styles.backText}>← Volver</Text>
+            </TouchableOpacity>
           </View>
+          <View style={styles.headerRow}>
+            <Text style={styles.headerEmoji}>{data.emoji}</Text>
+            <View style={styles.headerTextos}>
+              <Text style={styles.headerTitulo}>{data.titulo}</Text>
+              {estado && <Text style={styles.headerEstado}>📍 {estado}</Text>}
+            </View>
+          </View>
+          {data.subtitulo && <Text style={styles.headerSub}>{data.subtitulo}</Text>}
         </View>
-        {data.subtitulo && <Text style={styles.headerSub}>{data.subtitulo}</Text>}
       </View>
 
       <View style={styles.body}>
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={[styles.scroll, styles.maxContent]}>
           {data.secciones.map((s, i) => (
             <View key={i} style={[styles.card, s.urgente && [styles.cardUrgente, { borderColor: data.color }]]}>
               {s.urgente && (
@@ -75,6 +77,7 @@ export default function CategoriaScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  maxContent: { width: '100%', maxWidth: 480, alignSelf: 'center' },
   body: { flex: 1, backgroundColor: '#f8f4ff' },
   header: {
     paddingHorizontal: 24,

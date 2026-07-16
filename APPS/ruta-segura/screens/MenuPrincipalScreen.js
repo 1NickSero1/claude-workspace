@@ -9,7 +9,7 @@ export default function MenuPrincipalScreen({ navigation, route }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={[styles.scroll, styles.maxContent]}>
 
         {/* Barra superior */}
         <View style={styles.topBar}>
@@ -17,6 +17,8 @@ export default function MenuPrincipalScreen({ navigation, route }) {
             style={styles.sosMini}
             activeOpacity={0.8}
             onPress={() => navigation.navigate('SOS', { idioma, nombre, estado })}
+            accessibilityRole="button"
+            accessibilityLabel={idioma === 'en' ? 'Emergency, go to SOS screen' : 'Emergencia, ir a pantalla SOS'}
           >
             <Text style={styles.sosMiniEmoji}>🚨</Text>
             <Text style={styles.sosMiniLabel}>SOS</Text>
@@ -77,6 +79,7 @@ export default function MenuPrincipalScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f4ff' },
   scroll: { paddingHorizontal: 20, paddingBottom: 40 },
+  maxContent: { width: '100%', maxWidth: 480, alignSelf: 'center' },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -89,9 +92,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     backgroundColor: '#8B0045',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    minHeight: 44,
+    borderRadius: 22,
     shadowColor: '#8B0045',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.4,

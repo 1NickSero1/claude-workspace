@@ -60,7 +60,7 @@ export default function SOSScreen({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.headerBox}>
+        <View style={[styles.headerBox, styles.maxContent]}>
           <Text style={styles.sosEmoji}>☎️</Text>
           <Text style={styles.titulo}>EMERGENCIA</Text>
           <Text style={styles.subtitulo}>
@@ -70,13 +70,15 @@ export default function SOSScreen({ navigation, route }) {
           </Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.scroll, styles.maxContent]} showsVerticalScrollIndicator={false}>
           {LINEAS.map((l, i) => (
             <TouchableOpacity
               key={i}
               style={[styles.linea, l.urgente && styles.lineaUrgente]}
               activeOpacity={0.82}
               onPress={() => contactar(l)}
+              accessibilityRole="button"
+              accessibilityLabel={`${l.titulo}. ${l.sub}. ${l.esTexto ? (idioma === 'en' ? 'Send text message' : 'Enviar mensaje de texto') : (idioma === 'en' ? 'Call' : 'Llamar')}`}
             >
               <Text style={styles.lineaEmoji}>{l.emoji}</Text>
               <View style={styles.lineaTexto}>
@@ -165,7 +167,7 @@ const styles = StyleSheet.create({
   lineaTituloUrgente: { fontSize: 16 },
   lineaSub: { color: 'rgba(255,255,255,0.65)', fontSize: 12, lineHeight: 16 },
   lineaAccionBox: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 44, height: 44, borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center', justifyContent: 'center',
   },
@@ -178,7 +180,7 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
   },
-  privacyText: { color: 'rgba(255,255,255,0.5)', fontSize: 12, textAlign: 'center' },
+  privacyText: { color: 'rgba(255,255,255,0.75)', fontSize: 12, textAlign: 'center' },
   watermark: { position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.85 },
   watermarkLogoWrap: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 2, overflow: 'hidden' },
   watermarkLogo: { width: '100%', height: '100%', resizeMode: 'contain' },

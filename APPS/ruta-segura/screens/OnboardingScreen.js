@@ -37,6 +37,8 @@ export default function OnboardingScreen({ navigation }) {
             style={styles.sosMini}
             activeOpacity={0.8}
             onPress={() => navigation.navigate('SOS', { idioma, nombre: '', estado: '' })}
+            accessibilityRole="button"
+            accessibilityLabel={idioma === 'en' ? 'Emergency, go to SOS screen' : 'Emergencia, ir a pantalla SOS'}
           >
             <Text style={styles.sosMiniEmoji}>🚨</Text>
             <Text style={styles.sosMiniLabel}>{t.emergencia}</Text>
@@ -92,6 +94,8 @@ export default function OnboardingScreen({ navigation }) {
           style={styles.whatsappBtn}
           activeOpacity={0.75}
           onPress={() => Linking.openURL('https://wa.me/17542758005?text=Hola%20necesito%20ayuda')}
+          accessibilityRole="button"
+          accessibilityLabel={idioma === 'en' ? 'Contact us on WhatsApp' : 'Contactar por WhatsApp'}
         >
           <Image
             source={require('../assets/whatsapp-icon.png')}
@@ -126,9 +130,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     backgroundColor: '#8B0045',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    minHeight: 44,
+    borderRadius: 22,
     shadowColor: '#8B0045',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.5,
@@ -140,13 +145,15 @@ const styles = StyleSheet.create({
   idiomas: { flexDirection: 'row', gap: 8 },
   idiomaBtn: {
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingVertical: 13,
+    minHeight: 44,
+    justifyContent: 'center',
+    borderRadius: 22,
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.35)',
   },
   idiomaBtnActivo: { backgroundColor: 'rgba(255,255,255,0.2)', borderColor: '#fff' },
-  idiomaText: { color: 'rgba(255,255,255,0.55)', fontSize: 13, fontWeight: '600' },
+  idiomaText: { color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: '600' },
   idiomaTextActivo: { color: '#fff' },
   content: {
     flex: 1,
