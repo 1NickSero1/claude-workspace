@@ -53,6 +53,29 @@ Aplicar desde el Paso 0/1 de la receta, no al final del proyecto.
   O se quita, o se usa expo-secure-store / Keychain / Keystore. Nunca
   decirle al usuario en la UI que algo "es seguro" si no lo es.
 
+[VARIABLES DE ENTORNO EN BUILDS EAS]
+- Cualquier variable EXPO_PUBLIC_* que el codigo use en tiempo de carga (ej.
+  URL/key de Supabase en un archivo que hace createClient() a nivel de
+  modulo, no dentro de una funcion) debe existir en EAS Environment
+  Variables ANTES de correr "eas build" — el .env local NUNCA llega al
+  servidor de build de EAS (esta en .gitignore, y aunque no lo estuviera,
+  EAS no lee archivos locales sin commitear). Si falta, la variable queda
+  "undefined" incrustada en el bundle final del build.
+- Sintoma clave para reconocer este error: el APK instala bien, pero se
+  cierra solo (crash) apenas se abre, en CUALQUIER celular probado, sin
+  excepcion — no es un bug intermitente ni de un dispositivo especifico.
+  Pasa porque el modulo revienta (ej. "supabaseUrl is required") antes de
+  que React alcance a pintar cualquier pantalla, incluida la de carga.
+- Fix: correr "eas env:create <environment> --name X --value Y --scope
+  project" para cada variable EXPO_PUBLIC_* que la app necesite, en cada
+  entorno que se vaya a compilar (preview y production por separado — no
+  se comparten automaticamente), ANTES del primer "eas build". Repetir
+  cada vez que se agregue una variable de entorno nueva al proyecto.
+  Detectado en ruta-segura (2026-07-18): el build de EAS del 16-jul se
+  compilo sin estas variables (agregadas a Supabase el 15-jul, después de
+  que ya existia el eas.json pero sin volver a revisar env vars), causando
+  crash en 2 celulares distintos hasta diagnosticarlo.
+
 [SETUP TEMPRANO — evita bloquear el primer build]
 - Configurar bundleIdentifier (iOS) / package (Android) en app.json
   desde el Paso 1 de setup, no cuando ya se quiere compartir la app.
@@ -387,3 +410,34 @@ HISTORIAL DE CAMBIOS
   ambos 8081 y 8082 estan ocupados (el fijo a 8082 fallaba en ese caso).
 - Actualizado en CLAUDE.md (Leccion 3), APPS/palabras-clave.txt y
   SKILLS/ESTETIK.md para reflejar el nuevo comportamiento.
+
+[2026-07-18] AUDITA de seguimiento + diagnostico y fix de crash en build EAS
+- AUDITA genero el 4to informe de seguimiento de ruta-segura
+  (AUDITORIAS/auditoria-2026-07-18.pdf): ~65% -> ~82%. Resueltos desde el
+  13-jul: build EAS generado con exito, backend real de Supabase conectado
+  para "Mi Caso" (tabla + RLS), contenido real de recursos verificados
+  (legal/violencia) en 8 estados/ciudades tomado del directorio de la
+  freelancer, y 2 entregables de recomendacion (ubicacion del tagline de
+  Ana, propuesta de monetizacion freemium). Hallazgo nuevo de prioridad
+  alta: los casos ya se guardan en Supabase pero no hay forma de que Ana se
+  entere de que llego uno (sin panel, sin notificacion, sin politica de
+  lectura configurada).
+- El usuario reporto que el APK del build anterior instalaba bien pero se
+  crasheaba al abrir, en 2 celulares distintos. Diagnostico: App.js
+  importa MiCasoScreen de forma estatica desde el arranque, que a su vez
+  importa lib/supabase.js, el cual llama createClient() a nivel de modulo
+  usando EXPO_PUBLIC_SUPABASE_URL/ANON_KEY — variables que solo existian en
+  el .env local, nunca configuradas como EAS Environment Variables. El
+  build se habia compilado con esas variables "undefined", causando el
+  crash inmediato en cualquier dispositivo. Ver leccion nueva
+  "VARIABLES DE ENTORNO EN BUILDS EAS" mas arriba en este archivo.
+- Fix aplicado: las 2 variables se registraron con "eas env:create" en los
+  entornos preview y production del proyecto @nicksero/ruta-segura, y se
+  disparo un build nuevo con "eas build --platform android --profile
+  preview". (Accion requirio confirmacion explicita del usuario porque
+  subir credenciales a un servicio externo activo el clasificador de
+  permisos de Claude Code.)
+- Tambien corregida en la misma sesion la regresion leve de expo-doctor
+  (19/20 -> 20/20) detectada por AUDITA: 4 paquetes con version patch
+  desalineada del SDK 57 (expo, expo-linear-gradient, expo-splash-screen,
+  expo-status-bar), resuelta con "npx expo install --fix".
