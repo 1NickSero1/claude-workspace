@@ -55,7 +55,7 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 |---|---|---|
 | 1 | Verificar estado real del directorio antes de asumir qué existe | Siempre |
 | 2 | Los `node_modules` de React Native tienen rutas demasiado largas para `Remove-Item` — usar `robocopy` + `rd /s /q` | PowerShell / limpieza |
-| 3 | Si el puerto 8081 está ocupado (otro proyecto Expo corriendo), usar `npx expo start --port 8082` | Expo / React Native |
+| 3 | Al abrir el servidor Expo, usar siempre el primer puerto libre a partir de 8081 (detectado en el momento, no fijo a 8082) — evita conflicto si hay otro proyecto Expo corriendo | Expo / React Native |
 | 4 | Los commits `Auto-sync: <fecha>` en el historial de git vienen de una extensión externa instalada en esta máquina y en la del hermano del usuario, no de Claude Code — no confundirlos con acciones propias ni intentar revertirlos o desactivarlos sin que se pida | Git / control de versiones |
 | 5 | Antes de empezar a trabajar en el repo, correr `git pull` primero — hay más de una máquina (la del usuario y la de su hermano) pusheando al mismo repo, y sin este paso se puede trabajar desincronizado o generar conflictos | Git / control de versiones |
 
@@ -302,6 +302,7 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 | 2026-07-09 | Agregada palabra clave `IMAGINA` (hook real `.claude/hooks/imagina-estetik.ps1`) — corre ESTETIK con una sola pregunta (proyecto) y genera un mini PDF solo con los cambios/mejoras visuales recomendados en `APPS/<proyecto>/PDF/` |
 | 2026-07-09 | Creado `APPS/palabras-clave.txt` — índice de todas las palabras clave del sistema con significado en una palabra y si son generales o específicas de una skill/proyecto; se actualiza cada vez que se agrega una palabra clave nueva |
 | 2026-07-11 | Instalado Android Platform Tools (adb, vía winget) y registrado el MCP `mobile-mcp` (`.mcp.json`, scope proyecto) — le da a ESTETIK/IMAGINA control real sobre un celular Android físico conectado por USB (screenshot/tap/swipe reales) en vez de solo leer código; requiere depuración USB activada y el celular autorizado (`adb devices`) en cada máquina que lo use |
+| 2026-07-17 | Lección 3 actualizada — "abre el servidor/qr" de wallet-control/ruta-segura ya no fuerza el puerto 8082: ahora detecta y usa el primer puerto libre a partir de 8081 en el momento de ejecutar |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise

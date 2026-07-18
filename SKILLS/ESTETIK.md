@@ -85,7 +85,8 @@ npx @axe-core/cli http://localhost:3000
 
 ```powershell
 # Mobile (Expo): levantar para revisar en el celular físico (Expo Go)
-npx expo start --port 8082
+# usa el primer puerto libre desde 8081, no un puerto fijo
+npx expo start
 
 # Mobile: confirmar que el celular Android está conectado y autorizado
 # antes de usar las herramientas del MCP mobile-mcp (screenshot/tap/swipe)

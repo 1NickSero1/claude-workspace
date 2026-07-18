@@ -377,3 +377,13 @@ HISTORIAL DE CAMBIOS
 ----------------------------------------------------
 (las entradas nuevas se agregan debajo de esta linea)
 ----------------------------------------------------
+
+[2026-07-17] Cambio de instruccion fija: puerto del servidor Expo
+- El usuario modifico la instruccion fija del 2026-07-01 (linea 148-152 de
+  este archivo): "abre el servidor"/"abre el qr" de wallet-control ya NO
+  fuerza el puerto 8082 a mano. Ahora se detecta y usa el primer puerto
+  libre a partir de 8081 en el momento de ejecutar el comando.
+- Motivo: evitar fallos si 8081 esta libre (no haria falta 8082) o si
+  ambos 8081 y 8082 estan ocupados (el fijo a 8082 fallaba en ese caso).
+- Actualizado en CLAUDE.md (Leccion 3), APPS/palabras-clave.txt y
+  SKILLS/ESTETIK.md para reflejar el nuevo comportamiento.

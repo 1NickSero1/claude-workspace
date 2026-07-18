@@ -62,8 +62,9 @@ Detalle de cada una:
   resuelve todo lo que este en [PENDIENTE], lo mueve a [RESUELTO], y agrega una entrada nueva en
   el changelog del proyecto (ACTUALIZACIONES.txt en ruta-segura).
 - "abre el servidor" / "abrir el servidor": sin hook real formal (aunque hay permisos
-  preconfigurados en .claude/settings.local.json) - corre "npx expo start --port 8082" en la
-  carpeta del proyecto activo.
+  preconfigurados en .claude/settings.local.json) - corre "npx expo start --port <primero libre
+  desde 8081>" en la carpeta del proyecto activo (puerto detectado en el momento, ya no fijo a
+  8082).
 - "actualiza el plan": solo documentada para wallet-control - regenera PDF/wallet-control-avance.pdf
   via Puppeteer con el sistema visual fijo de la app, no el plan interno de Claude Code.
 - SUBIR PROYECTO: segun la memoria de Claude, en wallet-control dispara
