@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, View, KeyboardAvoidingView, Platform, StyleSheet, ViewStyle } from 'react-native';
 import { useColors } from '@/constants/ThemeContext';
+import { SPACING, RADIUS } from '@/constants/theme';
 
 interface Props {
   visible: boolean;
@@ -18,7 +19,7 @@ export default function BottomSheet({
   onClose,
   children,
   overlayOpacity = 0.5,
-  radius = 24,
+  radius = RADIUS.xl,
   maxHeight,
   showHandle = true,
   sheetStyle,
@@ -53,6 +54,6 @@ export default function BottomSheet({
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end' },
-  sheet: { padding: 20, overflow: 'hidden' },
-  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
+  sheet: { padding: SPACING.xl, overflow: 'hidden' },
+  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: SPACING.lg },
 });
