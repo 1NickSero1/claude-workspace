@@ -145,7 +145,10 @@ export default function TarjetasScreen() {
       width: 60, height: 60, borderRadius: 30,
       backgroundColor: COLORS.primary,
       alignItems: 'center', justifyContent: 'center',
-      elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8,
+      ...Platform.select({
+        android: { elevation: 8 },
+        ios: { shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
+      }),
     },
   }, moderateScale)), [COLORS, moderateScale]);
 

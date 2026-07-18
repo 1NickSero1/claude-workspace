@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, RefreshControl, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -141,7 +141,10 @@ export default function CategoriasScreen() {
       width: 60, height: 60, borderRadius: 30,
       backgroundColor: COLORS.primary,
       alignItems: 'center', justifyContent: 'center',
-      elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8,
+      ...Platform.select({
+        android: { elevation: 8 },
+        ios: { shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
+      }),
     },
   }, moderateScale)), [COLORS, moderateScale]);
 
