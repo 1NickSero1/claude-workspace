@@ -1535,10 +1535,7 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
 
   const COLORS = useColors();
   const gdStyles = useMemo(() => StyleSheet.create({
-    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-    sheet: { backgroundColor: COLORS.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '88%' },
-    handle: { width: 40, height: 4, backgroundColor: COLORS.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
-    header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+    header: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: 14 },
     goalDot: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
     goalEmoji: { fontSize: 20 },
     headerInfo: { flex: 1 },
@@ -1559,15 +1556,15 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
     depAmt: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base },
     depNote: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
     depDate: { color: COLORS.textMuted, fontSize: FONT.sm },
-    hintText: { color: COLORS.textDim, fontSize: 10, textAlign: 'center', marginTop: 6, marginBottom: 4 },
-    addBtn: { borderRadius: 14, padding: 14, alignItems: 'center', marginTop: 8 },
+    hintText: { color: COLORS.textDim, fontSize: 10, textAlign: 'center', marginTop: 6, marginBottom: SPACING.xs },
+    addBtn: { borderRadius: 14, padding: 14, alignItems: 'center', marginTop: SPACING.sm },
     addBtnText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
-    label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 12, marginBottom: 6 },
-    input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: 12, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
-    formActions: { flexDirection: 'row', gap: 10, marginTop: 20 },
-    cancelBtn: { flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
+    label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: SPACING.md, marginBottom: 6 },
+    input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
+    formActions: { flexDirection: 'row', gap: 10, marginTop: SPACING.xl },
+    cancelBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
     cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
-    saveBtn: { flex: 1, padding: 14, borderRadius: 12, alignItems: 'center' },
+    saveBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, alignItems: 'center' },
     saveBtnOff: { backgroundColor: COLORS.textDim },
     saveText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }), [COLORS]);
@@ -1607,11 +1604,7 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <KeyboardAvoidingView style={gdStyles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={gdStyles.sheet}>
-          <View style={gdStyles.handle} />
-
+    <BottomSheet visible={visible} onClose={onClose} maxHeight="88%">
           {/* Header con progreso */}
           <View style={gdStyles.header}>
             <View style={[gdStyles.goalDot, { backgroundColor: goal?.color ?? COLORS.primary }]}>
@@ -1721,9 +1714,7 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
               </View>
             </>
           )}
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    </BottomSheet>
   );
 }
 
@@ -1743,26 +1734,23 @@ function GoalFormModal({ visible, goal, onSave, onClose }: GoalModalProps) {
 
   const COLORS = useColors();
   const gStyles = useMemo(() => StyleSheet.create({
-    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-    sheet: { backgroundColor: COLORS.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '88%' },
-    handle: { width: 40, height: 4, backgroundColor: COLORS.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
-    title: { color: COLORS.text, fontWeight: '700', fontSize: FONT.lg, marginBottom: 16 },
+    title: { color: COLORS.text, fontWeight: '700', fontSize: FONT.lg, marginBottom: SPACING.lg },
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 14, marginBottom: 6 },
-    input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: 12, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
-    emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
+    emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
     emojiBtn: { width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.card2, borderWidth: 1.5, borderColor: 'transparent' },
     emojiBtnSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primary + '18' },
     emojiText: { fontSize: 22 },
-    preview: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: COLORS.card2, borderRadius: 12, padding: 14, marginTop: 14 },
+    preview: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: COLORS.card2, borderRadius: RADIUS.md, padding: 14, marginTop: 14 },
     previewEmoji: { fontSize: 26 },
     previewName: { color: COLORS.text, fontWeight: '600', fontSize: FONT.md },
-    actions: { flexDirection: 'row', gap: 10, marginTop: 20 },
-    cancelBtn: { flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
+    actions: { flexDirection: 'row', gap: 10, marginTop: SPACING.xl },
+    cancelBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
     cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
-    saveBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: COLORS.primary, alignItems: 'center' },
+    saveBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: 'center' },
     saveBtnOff: { backgroundColor: COLORS.textDim },
     saveText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
-    dateField: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.bg, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: COLORS.border },
+    dateField: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.border },
     dateFieldText: { fontSize: FONT.md },
   }), [COLORS]);
 
@@ -1808,10 +1796,7 @@ function GoalFormModal({ visible, goal, onSave, onClose }: GoalModalProps) {
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <KeyboardAvoidingView style={gStyles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={gStyles.sheet}>
-          <View style={gStyles.handle} />
+    <BottomSheet visible={visible} onClose={onClose} maxHeight="88%">
           <Text style={gStyles.title}>{goal ? 'Editar meta' : 'Nueva meta de ahorro'}</Text>
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <Text style={gStyles.label}>Nombre</Text>
@@ -1871,9 +1856,7 @@ function GoalFormModal({ visible, goal, onSave, onClose }: GoalModalProps) {
               <Text style={gStyles.saveText}>Guardar</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    </BottomSheet>
   );
 }
 
