@@ -13,7 +13,7 @@ import {
   sumIncomes,
 } from '@/lib/storage';
 import { sumExpenses, formatCOP } from '@/lib/expenseParser';
-import { COLORS as _COLORS, FONT } from '@/constants/theme';
+import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
 
@@ -78,18 +78,18 @@ export default function HistoryScreen() {
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     header: {
       flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-      paddingHorizontal: 20, paddingTop: 20, paddingBottom: 14,
+      paddingHorizontal: SPACING.xl, paddingTop: SPACING.xl, paddingBottom: 14,
       backgroundColor: COLORS.bg,
     },
     headerTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.xl },
     headerSub: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
     searchBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
-    scroll: { paddingHorizontal: 16, paddingBottom: 40 },
+    scroll: { paddingHorizontal: SPACING.lg, paddingBottom: 40 },
     emptyState: { alignItems: 'center', paddingVertical: 80, gap: 10 },
     emptyText: { color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
     emptyHint: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', lineHeight: 20 },
     monthCard: {
-      backgroundColor: COLORS.card, borderRadius: 18, padding: 16, marginBottom: 12,
+      backgroundColor: COLORS.card, borderRadius: 18, padding: SPACING.lg, marginBottom: SPACING.md,
       elevation: 2, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 1, shadowRadius: 4,
     },
@@ -98,8 +98,8 @@ export default function HistoryScreen() {
     monthLabel: { color: COLORS.text, fontWeight: '700', fontSize: FONT.lg, textTransform: 'capitalize' },
     monthBadges: { flexDirection: 'row', gap: 6, marginTop: 6 },
     badge: {
-      backgroundColor: COLORS.bg, borderRadius: 8,
-      paddingHorizontal: 8, paddingVertical: 3,
+      backgroundColor: COLORS.bg, borderRadius: RADIUS.sm,
+      paddingHorizontal: SPACING.sm, paddingVertical: 3,
       borderWidth: 1, borderColor: COLORS.border,
     },
     badgeGreen: { borderColor: COLORS.debit + '55', backgroundColor: COLORS.debitBg },
@@ -108,16 +108,16 @@ export default function HistoryScreen() {
     monthTotal: { fontWeight: '800', fontSize: FONT.lg },
     monthSavings: { fontSize: FONT.sm, fontWeight: '600', marginTop: 2 },
     monthDetail: {
-      marginTop: 16, paddingTop: 16,
+      marginTop: SPACING.lg, paddingTop: SPACING.lg,
       borderTopWidth: 1, borderTopColor: COLORS.border,
     },
     detailSummary: {
       flexDirection: 'row', backgroundColor: COLORS.bg,
-      borderRadius: 12, padding: 12, marginBottom: 16,
+      borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.lg,
       borderWidth: 1, borderColor: COLORS.border,
     },
     detailStat: { flex: 1, alignItems: 'center' },
-    detailStatLabel: { color: COLORS.textMuted, fontSize: 11, marginBottom: 4 },
+    detailStatLabel: { color: COLORS.textMuted, fontSize: 11, marginBottom: SPACING.xs },
     detailStatVal: { fontWeight: '700', fontSize: FONT.base },
     detailSectionLabel: {
       color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '700',
@@ -126,30 +126,30 @@ export default function HistoryScreen() {
     },
     catRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
     catDot: {
-      width: 28, height: 28, borderRadius: 8,
+      width: 28, height: 28, borderRadius: RADIUS.sm,
       alignItems: 'center', justifyContent: 'center', marginRight: 10,
     },
     catInfo: { flex: 1 },
-    catInfoTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+    catInfoTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xs },
     catName: { color: COLORS.text, fontSize: FONT.sm, fontWeight: '600' },
     catAmt: { color: COLORS.text, fontSize: FONT.sm, fontWeight: '700' },
     catTrack: { height: 4, backgroundColor: COLORS.border, borderRadius: 2, overflow: 'hidden' },
     catFill: { height: '100%', borderRadius: 2 },
     incomeRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 8,
+      flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
       paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: COLORS.border,
     },
     incomeDesc: { flex: 1, color: COLORS.text, fontSize: FONT.sm },
     incomeAmt: { color: COLORS.debit, fontWeight: '700', fontSize: FONT.sm },
     trendCard: {
-      backgroundColor: COLORS.card, marginHorizontal: 16, marginBottom: 8,
-      borderRadius: 18, paddingTop: 16, paddingBottom: 8,
+      backgroundColor: COLORS.card, marginHorizontal: SPACING.lg, marginBottom: SPACING.sm,
+      borderRadius: 18, paddingTop: SPACING.lg, paddingBottom: SPACING.sm,
       elevation: 2, shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: 1 }, shadowOpacity: 1, shadowRadius: 4,
     },
-    trendTitle: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base, paddingHorizontal: 16, marginBottom: 8 },
-    trendChart: { borderRadius: 12, alignSelf: 'center' },
-    trendLegend: { flexDirection: 'row', justifyContent: 'center', gap: 20, paddingVertical: 10 },
+    trendTitle: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base, paddingHorizontal: SPACING.lg, marginBottom: SPACING.sm },
+    trendChart: { borderRadius: RADIUS.md, alignSelf: 'center' },
+    trendLegend: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.xl, paddingVertical: 10 },
     trendLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     trendDot: { width: 10, height: 10, borderRadius: 5 },
     trendLegendText: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '600' },

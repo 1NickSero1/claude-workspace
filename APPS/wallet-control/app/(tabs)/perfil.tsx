@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Alert, ScrollView, Modal, TextInput, KeyboardAvoidingView, Platform, Switch,
+  Alert, ScrollView, TextInput, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -16,7 +16,8 @@ import { requestNotificationPermission, cancelBalanceNotification } from '@/lib/
 import { supabase } from '@/lib/supabase';
 import { formatCOP } from '@/lib/expenseParser';
 import BudgetFormModal from '@/components/BudgetFormModal';
-import { COLORS as _COLORS, FONT } from '@/constants/theme';
+import BottomSheet from '@/components/BottomSheet';
+import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors, useThemeInfo } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
 import type { ThemeMode } from '@/lib/storage';
@@ -108,41 +109,41 @@ export default function PerfilScreen() {
 
   const styles = useMemo(() => StyleSheet.create(scaledSheet({
     safe:        { flex: 1, backgroundColor: COLORS.bg },
-    header:      { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16 },
+    header:      { paddingHorizontal: SPACING.xl, paddingTop: SPACING.xl, paddingBottom: SPACING.lg },
     headerTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.xl },
-    scroll:      { paddingHorizontal: 20, paddingBottom: 40 },
+    scroll:      { paddingHorizontal: SPACING.xl, paddingBottom: 40 },
 
     avatarCard: {
-      backgroundColor: COLORS.card, borderRadius: 20, padding: 20,
-      alignItems: 'center', gap: 6, marginBottom: 24,
+      backgroundColor: COLORS.card, borderRadius: 20, padding: SPACING.xl,
+      alignItems: 'center', gap: 6, marginBottom: SPACING.xxl,
       elevation: 2, shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 8,
       borderWidth: 1, borderColor: COLORS.border,
     },
     avatar: {
       width: 72, height: 72, borderRadius: 36,
-      alignItems: 'center', justifyContent: 'center', marginBottom: 4,
+      alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.xs,
     },
     avatarText:   { color: '#fff', fontWeight: '800', fontSize: FONT.xl },
     profileName:  { color: COLORS.text, fontWeight: '700', fontSize: FONT.lg },
     profileEmail: { color: COLORS.textMuted, fontSize: FONT.sm },
     editBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 6,
-      paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+      paddingHorizontal: 14, paddingVertical: SPACING.sm, borderRadius: 20,
       backgroundColor: COLORS.primaryBg, marginTop: 6,
     },
     editBtnText: { color: COLORS.primary, fontWeight: '600', fontSize: FONT.sm },
 
     sectionLabel: {
       color: COLORS.textMuted, fontWeight: '700', fontSize: 11,
-      textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginTop: 4,
+      textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: SPACING.sm, marginTop: 4,
     },
     section: {
-      backgroundColor: COLORS.card, borderRadius: 16, overflow: 'hidden',
-      marginBottom: 20, borderWidth: 1, borderColor: COLORS.border,
+      backgroundColor: COLORS.card, borderRadius: RADIUS.lg, overflow: 'hidden',
+      marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border,
     },
     row: {
-      flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12,
+      flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md,
     },
     rowDivider: { borderTopWidth: 1, borderTopColor: COLORS.border },
     rowIcon: {
@@ -152,9 +153,9 @@ export default function PerfilScreen() {
     rowLabel: { flex: 1, color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
     rowValue:  { color: COLORS.textMuted, fontSize: FONT.sm },
 
-    themeRow: { flexDirection: 'row', gap: 8, flex: 1 },
+    themeRow: { flexDirection: 'row', gap: SPACING.sm, flex: 1 },
     themeBtn: {
-      flex: 1, paddingVertical: 10, borderRadius: 12, borderWidth: 2,
+      flex: 1, paddingVertical: 10, borderRadius: RADIUS.md, borderWidth: 2,
       borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg, gap: 2,
     },
     themeBtnActive:     { borderColor: COLORS.primary, backgroundColor: COLORS.primaryBg },
@@ -163,34 +164,25 @@ export default function PerfilScreen() {
     themeBtnTextActive: { color: COLORS.primary },
 
     dangerBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      backgroundColor: COLORS.card, borderRadius: 16, padding: 16, marginBottom: 16,
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
+      backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.lg,
       borderWidth: 1, borderColor: COLORS.danger + '30',
     },
     dangerText: { color: COLORS.danger, fontWeight: '700', fontSize: FONT.base },
 
-    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-    sheet: {
-      backgroundColor: COLORS.card,
-      borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20,
-    },
-    handle: {
-      width: 40, height: 4, backgroundColor: COLORS.border,
-      borderRadius: 2, alignSelf: 'center', marginBottom: 16,
-    },
-    modalTitle: { color: COLORS.text, fontWeight: '700', fontSize: FONT.lg, marginBottom: 16 },
+    modalTitle: { color: COLORS.text, fontWeight: '700', fontSize: FONT.lg, marginBottom: SPACING.lg },
     modalLabel: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 6 },
     input: {
-      backgroundColor: COLORS.bg, borderRadius: 10, padding: 12,
-      color: COLORS.text, fontSize: FONT.base, borderWidth: 1, borderColor: COLORS.border, marginBottom: 20,
+      backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md,
+      color: COLORS.text, fontSize: FONT.base, borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.xl,
     },
     modalActions: { flexDirection: 'row', gap: 10 },
     cancelBtn: {
-      flex: 1, padding: 14, borderRadius: 12, borderWidth: 1,
+      flex: 1, padding: 14, borderRadius: RADIUS.md, borderWidth: 1,
       borderColor: COLORS.border, alignItems: 'center',
     },
     cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
-    saveBtn:    { flex: 1, padding: 14, borderRadius: 12, backgroundColor: COLORS.primary, alignItems: 'center' },
+    saveBtn:    { flex: 1, padding: 14, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: 'center' },
     saveText:   { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }, moderateScale)), [COLORS, moderateScale]);
 
@@ -355,35 +347,27 @@ export default function PerfilScreen() {
       </ScrollView>
 
       {/* Modal editar nombre */}
-      <Modal visible={editModal} animationType="slide" transparent onRequestClose={() => setEditModal(false)}>
-        <KeyboardAvoidingView
-          style={styles.overlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <View style={styles.sheet}>
-            <View style={styles.handle} />
-            <Text style={styles.modalTitle}>Editar nombre</Text>
-            <Text style={styles.modalLabel}>Nombre</Text>
-            <TextInput
-              style={styles.input}
-              value={editName}
-              onChangeText={setEditName}
-              placeholder="Tu nombre"
-              placeholderTextColor={COLORS.textDim}
-              autoFocus
-              autoCapitalize="words"
-            />
-            <View style={styles.modalActions}>
-              <TouchableOpacity onPress={() => setEditModal(false)} style={styles.cancelBtn}>
-                <Text style={styles.cancelText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleSaveName} style={styles.saveBtn}>
-                <Text style={styles.saveText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <BottomSheet visible={editModal} onClose={() => setEditModal(false)}>
+        <Text style={styles.modalTitle}>Editar nombre</Text>
+        <Text style={styles.modalLabel}>Nombre</Text>
+        <TextInput
+          style={styles.input}
+          value={editName}
+          onChangeText={setEditName}
+          placeholder="Tu nombre"
+          placeholderTextColor={COLORS.textDim}
+          autoFocus
+          autoCapitalize="words"
+        />
+        <View style={styles.modalActions}>
+          <TouchableOpacity onPress={() => setEditModal(false)} style={styles.cancelBtn}>
+            <Text style={styles.cancelText}>Cancelar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleSaveName} style={styles.saveBtn}>
+            <Text style={styles.saveText}>Guardar</Text>
+          </TouchableOpacity>
+        </View>
+      </BottomSheet>
 
       <BudgetFormModal
         visible={budgetModal}

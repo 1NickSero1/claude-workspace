@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
-import { COLORS as _COLORS, FONT } from '@/constants/theme';
+import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
 import { formatCOP } from '@/lib/expenseParser';
@@ -46,13 +46,13 @@ export default function DonutChart({ data, total, size, centerLabel, centerValue
     totalLabel: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
     empty: {
       backgroundColor: COLORS.card,
-      borderRadius: 999,
+      borderRadius: RADIUS.pill,
       borderWidth: 2,
       borderColor: COLORS.border,
       borderStyle: 'dashed',
     },
     emptyText: { color: COLORS.textMuted, fontSize: FONT.base, fontWeight: '600' },
-    emptyHint: { color: COLORS.textDim, fontSize: FONT.sm, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 },
+    emptyHint: { color: COLORS.textDim, fontSize: FONT.sm, marginTop: SPACING.xs, textAlign: 'center', paddingHorizontal: SPACING.xl },
   }, moderateScale)), [COLORS, moderateScale]);
 
   const defaultSize = Math.min(width - 64, 220);

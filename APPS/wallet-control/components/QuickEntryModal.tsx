@@ -4,7 +4,7 @@ import {
   ScrollView, StyleSheet, Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS as _COLORS, FONT } from '@/constants/theme';
+import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import BottomSheet from './BottomSheet';
 import {
@@ -105,46 +105,46 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
   const styles = useMemo(() => StyleSheet.create({
     header: {
       flexDirection: 'row', alignItems: 'center',
-      justifyContent: 'space-between', marginBottom: 16,
+      justifyContent: 'space-between', marginBottom: SPACING.lg,
     },
     title: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg },
     closeBtn: {
-      width: 32, height: 32, borderRadius: 16,
+      width: 32, height: 32, borderRadius: RADIUS.lg,
       backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center',
     },
-    toggleRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+    toggleRow: { flexDirection: 'row', gap: 10, marginBottom: SPACING.lg },
     toggleBtn: {
       flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-      gap: 6, paddingVertical: 10, borderRadius: 12,
+      gap: 6, paddingVertical: 10, borderRadius: RADIUS.md,
       borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.bg,
     },
     toggleText: { color: COLORS.textMuted, fontWeight: '700', fontSize: FONT.md },
     amountBox: {
       flexDirection: 'row', alignItems: 'center',
-      borderRadius: 16, borderWidth: 1.5,
-      paddingHorizontal: 20, paddingVertical: 6,
-      marginBottom: 12,
+      borderRadius: RADIUS.lg, borderWidth: 1.5,
+      paddingHorizontal: SPACING.xl, paddingVertical: 6,
+      marginBottom: SPACING.md,
     },
     currencySymbol: {
       color: COLORS.textMuted, fontSize: FONT.xxl,
-      fontWeight: '700', marginRight: 4,
+      fontWeight: '700', marginRight: SPACING.xs,
     },
     amountInput: {
       flex: 1, fontSize: FONT.xxl * 1.4, fontWeight: '800',
-      textAlign: 'center', paddingVertical: 4,
+      textAlign: 'center', paddingVertical: SPACING.xs,
     },
     descInput: {
-      backgroundColor: COLORS.bg, borderRadius: 12, padding: 12,
+      backgroundColor: COLORS.bg, borderRadius: RADIUS.md, padding: SPACING.md,
       color: COLORS.text, fontSize: FONT.md,
       borderWidth: 1, borderColor: COLORS.border, marginBottom: 14,
     },
-    categoryScroll: { maxHeight: 240, marginBottom: 12 },
+    categoryScroll: { maxHeight: 240, marginBottom: SPACING.md },
     categoryGrid: {
       flexDirection: 'row', flexWrap: 'wrap',
-      gap: 8, paddingBottom: 8,
+      gap: SPACING.sm, paddingBottom: SPACING.sm,
     },
     categoryCell: {
-      width: '30.5%', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 4,
+      width: '30.5%', alignItems: 'center', paddingVertical: 10, paddingHorizontal: SPACING.xs,
       borderRadius: 14, borderWidth: 1.5, borderColor: COLORS.border,
       backgroundColor: COLORS.bg, position: 'relative',
     },
@@ -155,22 +155,22 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
     catName: { color: COLORS.textMuted, fontSize: 11, textAlign: 'center' },
     checkDot: {
       position: 'absolute', top: 6, right: 6,
-      width: 16, height: 16, borderRadius: 8,
+      width: 16, height: 16, borderRadius: RADIUS.sm,
       alignItems: 'center', justifyContent: 'center',
     },
     saveBtn: {
-      marginTop: 16, paddingVertical: 16,
-      borderRadius: 16, alignItems: 'center',
+      marginTop: SPACING.lg, paddingVertical: 16,
+      borderRadius: RADIUS.lg, alignItems: 'center',
     },
     saveBtnText: { color: '#fff', fontWeight: '800', fontSize: FONT.base },
     recurringRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4, marginBottom: 14,
-      backgroundColor: COLORS.card2, borderRadius: 12, padding: 12,
+      flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginTop: SPACING.xs, marginBottom: 14,
+      backgroundColor: COLORS.card2, borderRadius: RADIUS.md, padding: SPACING.md,
       borderWidth: 1, borderColor: COLORS.border,
     },
     recurringLabel: { color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
     recurringCaption: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
-    freqRow: { flexDirection: 'row', gap: 8, marginTop: -6, marginBottom: 14 },
+    freqRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: -6, marginBottom: 14 },
     freqBtn: {
       flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center',
       borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,

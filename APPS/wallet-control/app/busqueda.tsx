@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getCategories, getCategoryIdsWithExpenses, searchExpenses, CustomCategory, Expense } from '@/lib/storage';
 import { formatCOP } from '@/lib/expenseParser';
-import { COLORS as _COLORS, FONT } from '@/constants/theme';
+import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
 
@@ -63,36 +63,36 @@ export default function BusquedaScreen() {
     safe: { flex: 1, backgroundColor: COLORS.bg },
     header: {
       flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingHorizontal: 16, paddingVertical: 12,
+      paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
       backgroundColor: COLORS.card, borderBottomWidth: 1, borderBottomColor: COLORS.border,
     },
     backBtn: { width: 38, height: 38, borderRadius: 10, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
     headerTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg },
-    body: { flex: 1, padding: 16 },
+    body: { flex: 1, padding: SPACING.lg },
     searchBox: {
-      flexDirection: 'row', alignItems: 'center', gap: 8,
-      backgroundColor: COLORS.bg, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border,
-      paddingHorizontal: 12, marginBottom: 12,
+      flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
+      backgroundColor: COLORS.bg, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+      paddingHorizontal: SPACING.md, marginBottom: SPACING.md,
     },
     searchInput: { flex: 1, color: COLORS.text, fontSize: FONT.base, paddingVertical: 10 },
-    chipsRow: { flexGrow: 0, marginBottom: 12 },
-    chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, marginRight: 8, backgroundColor: COLORS.bg },
+    chipsRow: { flexGrow: 0, marginBottom: SPACING.md },
+    chip: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, marginRight: SPACING.sm, backgroundColor: COLORS.bg },
     chipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
     chipText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
-    dateRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+    dateRow: { flexDirection: 'row', gap: 10, marginBottom: SPACING.lg },
     dateCol: { flex: 1 },
-    dateLabel: { color: COLORS.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 4 },
-    input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: 12, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
+    dateLabel: { color: COLORS.textMuted, fontSize: 11, fontWeight: '700', marginBottom: SPACING.xs },
+    input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
     resultRow: {
       flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.card,
-      borderRadius: 14, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border,
+      borderRadius: 14, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.border,
     },
-    resultIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+    resultIcon: { width: 38, height: 38, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center', marginRight: SPACING.md },
     resultBody: { flex: 1 },
     resultName: { color: COLORS.text, fontWeight: '700', fontSize: FONT.sm },
     resultMeta: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
     resultAmt: { fontWeight: '800', fontSize: FONT.sm },
-    emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
+    emptyState: { alignItems: 'center', paddingVertical: 60, gap: SPACING.sm },
     emptyText: { color: COLORS.textMuted, fontSize: FONT.sm },
   }, moderateScale)), [COLORS, moderateScale]);
 

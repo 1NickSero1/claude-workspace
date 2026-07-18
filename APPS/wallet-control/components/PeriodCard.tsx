@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { FONT } from '@/constants/theme';
+import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { PeriodInfo } from '@/lib/periodInfo';
 
@@ -13,9 +13,9 @@ export default function PeriodCard({ info }: Props) {
   const styles = useMemo(() => StyleSheet.create({
     card: {
       backgroundColor: COLORS.card,
-      borderRadius: 16,
-      padding: 16,
-      marginBottom: 12,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.lg,
+      marginBottom: SPACING.md,
       borderWidth: 1,
       borderColor: COLORS.border,
     },

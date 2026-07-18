@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS as _COLORS, FONT } from '@/constants/theme';
+import { COLORS as _COLORS, FONT, SPACING } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { Expense, CustomCategory, DEFAULT_CATEGORIES } from '@/lib/storage';
 import { formatCOP, sumExpenses } from '@/lib/expenseParser';
@@ -19,20 +19,20 @@ export default function ExpenseExtractCard({ expenses, categories = [] }: Props)
   const styles = useMemo(() => StyleSheet.create({
     card: {
       backgroundColor: COLORS.card, borderRadius: 14,
-      marginHorizontal: 12, marginVertical: 6, padding: 14,
+      marginHorizontal: SPACING.md, marginVertical: 6, padding: 14,
       borderWidth: 1, borderColor: COLORS.primary + '44',
     },
     header: {
       color: COLORS.primary, fontSize: FONT.sm, fontWeight: '700',
       letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10,
     },
-    row: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    row: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.sm },
     dot: { width: 10, height: 10, borderRadius: 5, marginRight: 10 },
     info: { flex: 1 },
     name: { color: COLORS.text, fontWeight: '600', fontSize: FONT.md },
     cat: { color: COLORS.textMuted, fontSize: FONT.sm },
     amount: { fontWeight: '700', fontSize: FONT.md },
-    divider: { height: 1, backgroundColor: COLORS.border, marginVertical: 8 },
+    divider: { height: 1, backgroundColor: COLORS.border, marginVertical: SPACING.sm },
     totalRow: { flexDirection: 'row', justifyContent: 'space-between' },
     totalLabel: { color: COLORS.textMuted, fontSize: FONT.sm },
     totalAmt: { color: COLORS.primary, fontWeight: '700', fontSize: FONT.base },
