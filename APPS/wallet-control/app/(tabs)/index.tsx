@@ -19,7 +19,7 @@ import { sumExpenses } from '@/lib/expenseParser';
 import ChatBubble from '@/components/ChatBubble';
 import ExpenseExtractCard from '@/components/ExpenseExtractCard';
 import CardView from '@/components/CardView';
-import { COLORS as _COLORS, FONT } from '@/constants/theme';
+import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
 
@@ -120,7 +120,7 @@ export default function ChatScreen() {
     flex: { flex: 1 },
     topBar: {
       flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingHorizontal: 16, paddingVertical: 12,
+      paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
       backgroundColor: COLORS.card,
       borderBottomWidth: 1, borderBottomColor: COLORS.border,
       elevation: 2, shadowColor: COLORS.shadow,
@@ -135,27 +135,27 @@ export default function ChatScreen() {
     topTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.base },
     topSub: { color: COLORS.textMuted, fontSize: FONT.sm, textTransform: 'capitalize' },
     analysisBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 4,
+      flexDirection: 'row', alignItems: 'center', gap: SPACING.xs,
       backgroundColor: COLORS.primaryBg, borderRadius: 20,
       paddingHorizontal: 10, paddingVertical: 6,
     },
     analysisBtnText: { color: COLORS.primary, fontWeight: '700', fontSize: FONT.sm },
-    helpBtn: { padding: 4, marginLeft: 4 },
-    list: { paddingTop: 12, paddingBottom: 8 },
+    helpBtn: { padding: SPACING.xs, marginLeft: SPACING.xs },
+    list: { paddingTop: SPACING.md, paddingBottom: SPACING.sm },
     typing: {
-      flexDirection: 'row', alignItems: 'center', gap: 8,
-      paddingHorizontal: 16, paddingVertical: 6,
+      flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
+      paddingHorizontal: SPACING.lg, paddingVertical: 6,
     },
     typingText: { color: COLORS.textMuted, fontSize: FONT.sm },
-    chips: { paddingHorizontal: 12, paddingVertical: 8, flexGrow: 0 },
+    chips: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, flexGrow: 0 },
     chip: {
       backgroundColor: COLORS.primaryBg, borderRadius: 20,
-      paddingHorizontal: 12, paddingVertical: 7, marginRight: 8,
+      paddingHorizontal: SPACING.md, paddingVertical: 7, marginRight: SPACING.sm,
       borderWidth: 1, borderColor: COLORS.primary + '44',
     },
     chipText: { color: COLORS.primary, fontSize: FONT.sm, fontWeight: '600' },
     inputBar: {
-      flexDirection: 'row', alignItems: 'flex-end', padding: 10, gap: 8,
+      flexDirection: 'row', alignItems: 'flex-end', padding: 10, gap: SPACING.sm,
       backgroundColor: COLORS.card,
       borderTopWidth: 1, borderTopColor: COLORS.border,
     },
@@ -170,21 +170,21 @@ export default function ChatScreen() {
     },
     sendOff: { backgroundColor: COLORS.textDim },
     incomeCard: {
-      marginHorizontal: 12, marginVertical: 4,
-      backgroundColor: COLORS.debitBg, borderRadius: 12,
-      padding: 12, borderWidth: 1, borderColor: COLORS.debit + '55',
+      marginHorizontal: SPACING.md, marginVertical: SPACING.xs,
+      backgroundColor: COLORS.debitBg, borderRadius: RADIUS.md,
+      padding: SPACING.md, borderWidth: 1, borderColor: COLORS.debit + '55',
     },
     incomeHeader: {
       color: COLORS.debit, fontWeight: '700', fontSize: FONT.sm,
-      marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5,
+      marginBottom: SPACING.sm, textTransform: 'uppercase', letterSpacing: 0.5,
     },
-    incomeRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+    incomeRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xs },
     incomeDesc: { color: COLORS.text, fontSize: FONT.md, flex: 1 },
     incomeAmt: { color: COLORS.debit, fontWeight: '700', fontSize: FONT.md },
     cardPicker: {
-      marginHorizontal: 12, marginVertical: 6,
+      marginHorizontal: SPACING.md, marginVertical: 6,
       backgroundColor: COLORS.card, borderRadius: 14,
-      padding: 12, borderWidth: 1, borderColor: COLORS.border,
+      padding: SPACING.md, borderWidth: 1, borderColor: COLORS.border,
       elevation: 2, shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: 1 }, shadowOpacity: 1, shadowRadius: 3,
     },
@@ -195,13 +195,13 @@ export default function ChatScreen() {
     noCardBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 6,
       backgroundColor: COLORS.bg, borderRadius: 10,
-      paddingHorizontal: 12, paddingVertical: 8, marginRight: 8,
+      paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, marginRight: SPACING.sm,
       borderWidth: 1, borderColor: COLORS.border,
     },
     noCardText: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '600' },
     lockedWrap: {
       flex: 1, alignItems: 'center', justifyContent: 'center',
-      paddingHorizontal: 32, gap: 12,
+      paddingHorizontal: 32, gap: SPACING.md,
     },
     lockedTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, textAlign: 'center' },
     lockedSub: { color: COLORS.textMuted, fontSize: FONT.base, textAlign: 'center', lineHeight: 22 },
