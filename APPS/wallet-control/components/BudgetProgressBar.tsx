@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS as _COLORS, FONT } from '@/constants/theme';
+import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { formatCOP } from '@/lib/expenseParser';
 
@@ -14,9 +14,9 @@ export default function BudgetProgressBar({ budget, spent }: Props) {
   const styles = useMemo(() => StyleSheet.create({
     card: {
       backgroundColor: COLORS.card,
-      borderRadius: 16,
-      padding: 16,
-      marginBottom: 12,
+      borderRadius: RADIUS.lg,
+      padding: SPACING.lg,
+      marginBottom: SPACING.md,
       borderWidth: 1,
       borderColor: COLORS.border,
     },
@@ -28,7 +28,7 @@ export default function BudgetProgressBar({ budget, spent }: Props) {
     footer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
     sub: { color: COLORS.textMuted, fontSize: FONT.sm },
     val: { fontWeight: '700', fontSize: FONT.base, marginTop: 2 },
-    budgetLine: { color: COLORS.textDim, fontSize: FONT.sm, marginTop: 8, textAlign: 'center' },
+    budgetLine: { color: COLORS.textDim, fontSize: FONT.sm, marginTop: SPACING.sm, textAlign: 'center' },
   }), [COLORS]);
 
   const pct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;

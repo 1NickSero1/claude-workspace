@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { FONT } from '@/constants/theme';
+import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import BottomSheet from './BottomSheet';
 
@@ -25,17 +25,17 @@ export default function BudgetFormModal({ visible, budget, onSave, onClose }: Pr
 
   const COLORS = useColors();
   const styles = useMemo(() => StyleSheet.create({
-    title: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: 4 },
-    hint: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 16 },
+    title: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: SPACING.xs },
+    hint: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: SPACING.lg },
     input: {
-      backgroundColor: COLORS.bg, borderRadius: 12, padding: 14,
+      backgroundColor: COLORS.bg, borderRadius: RADIUS.md, padding: 14,
       color: COLORS.text, fontSize: FONT.xl, fontWeight: '700',
       borderWidth: 1, borderColor: COLORS.border, textAlign: 'center',
     },
-    actions: { flexDirection: 'row', gap: 10, marginTop: 20 },
-    cancelBtn: { flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
+    actions: { flexDirection: 'row', gap: 10, marginTop: SPACING.xl },
+    cancelBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
     cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
-    saveBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: COLORS.primary, alignItems: 'center' },
+    saveBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: 'center' },
     saveBtnOff: { backgroundColor: COLORS.textDim },
     saveText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }), [COLORS]);

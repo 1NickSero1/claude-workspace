@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CustomCategory, Expense, Card, updateExpense, addExpenses, deleteExpense } from '@/lib/storage';
 import { cancelNotification } from '@/lib/notifications';
 import { formatCOP, formatThousands } from '@/lib/expenseParser';
-import { FONT } from '@/constants/theme';
+import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 
 interface CatDetailProps {
@@ -34,9 +34,9 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
 
   const COLORS = useColors();
   const dStyles = useMemo(() => StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+    header: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: SPACING.lg },
     backBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
-    catIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    catIcon: { width: 40, height: 40, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' },
     headerInfo: { flex: 1 },
     catName: { color: COLORS.text, fontWeight: '700', fontSize: FONT.lg },
     catTotal: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
@@ -44,34 +44,34 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     list: { maxHeight: 360 },
     emptyState: { alignItems: 'center', paddingVertical: 40, gap: 10 },
     emptyText: { color: COLORS.textMuted, fontSize: FONT.sm },
-    expRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 8 },
+    expRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: SPACING.sm },
     expLeft: { flex: 1 },
     expName: { color: COLORS.text, fontWeight: '600', fontSize: FONT.md },
     expMeta: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
     expAmt: { color: COLORS.text, fontWeight: '700', fontSize: FONT.md },
-    editBtn: { width: 30, height: 30, borderRadius: 8, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
-    deleteBtn: { width: 30, height: 30, borderRadius: 8, backgroundColor: COLORS.creditBg, alignItems: 'center', justifyContent: 'center' },
-    addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: COLORS.primary, borderRadius: 14, padding: 14, marginTop: 16 },
+    editBtn: { width: 30, height: 30, borderRadius: RADIUS.sm, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
+    deleteBtn: { width: 30, height: 30, borderRadius: RADIUS.sm, backgroundColor: COLORS.creditBg, alignItems: 'center', justifyContent: 'center' },
+    addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, backgroundColor: COLORS.primary, borderRadius: 14, padding: 14, marginTop: SPACING.lg },
     addBtnText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 14, marginBottom: 6 },
-    input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: 12, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
+    input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
     qRow: { flexDirection: 'row', gap: 10 },
     qBtn: { flex: 1, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
     qBtnActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryBg },
     qBtnText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
     qBtnTextActive: { color: COLORS.primary },
-    cardChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, marginRight: 8, backgroundColor: COLORS.bg },
+    cardChip: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, marginRight: SPACING.sm, backgroundColor: COLORS.bg },
     cardChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
     cardChipText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
-    formActions: { flexDirection: 'row', gap: 10, marginTop: 20, marginBottom: 8 },
-    cancelBtn: { flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
+    formActions: { flexDirection: 'row', gap: 10, marginTop: SPACING.xl, marginBottom: SPACING.sm },
+    cancelBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
     cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
-    saveBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: COLORS.primary, alignItems: 'center' },
+    saveBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: 'center' },
     saveBtnOff: { backgroundColor: COLORS.textDim },
     saveText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 28 },
     confirmCard: {
-      backgroundColor: COLORS.card, borderRadius: 24, padding: 24, width: '100%',
+      backgroundColor: COLORS.card, borderRadius: RADIUS.xl, padding: SPACING.xxl, width: '100%',
       alignItems: 'center', borderWidth: 2, borderColor: COLORS.danger + '44',
       elevation: 10, shadowColor: COLORS.danger, shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.25, shadowRadius: 12,
@@ -80,8 +80,8 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
       width: 56, height: 56, borderRadius: 28,
       backgroundColor: COLORS.danger + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 14,
     },
-    confirmTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: 8, textAlign: 'center' },
-    confirmText: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginBottom: 20 },
+    confirmTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: SPACING.sm, textAlign: 'center' },
+    confirmText: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginBottom: SPACING.xl },
     confirmActions: { flexDirection: 'row', gap: 10, width: '100%' },
     confirmCancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
     confirmCancelText: { color: COLORS.textMuted, fontWeight: '700', fontSize: FONT.md },

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/lib/storage';
 import { formatCOP } from '@/lib/expenseParser';
-import { FONT } from '@/constants/theme';
+import { FONT, SPACING } from '@/constants/theme';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
 
 interface Props {
@@ -62,7 +62,7 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
     cardName: { color: '#fff', fontSize: FONT.base, fontWeight: '700', marginTop: 2 },
     typeBadge: {
       backgroundColor: 'rgba(255,255,255,0.2)',
-      paddingHorizontal: 8, paddingVertical: 3,
+      paddingHorizontal: SPACING.sm, paddingVertical: 3,
       borderRadius: 6,
     },
     typeText: { color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
@@ -84,12 +84,12 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
     compact: {
       borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      minWidth: 110, marginRight: 8,
+      minWidth: 110, marginRight: SPACING.sm,
     },
     compactSelected: { borderWidth: 2, borderColor: '#fff' },
-    compactChip: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
+    compactChip: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, flex: 1 },
     compactText: { color: '#fff', fontSize: FONT.sm, fontWeight: '700', flex: 1 },
-    compactLast: { color: 'rgba(255,255,255,0.7)', fontSize: 10, marginLeft: 4 },
+    compactLast: { color: 'rgba(255,255,255,0.7)', fontSize: 10, marginLeft: SPACING.xs },
   }, moderateScale)), [moderateScale]);
 
   const available = card.type === 'credit' && card.limit ? card.limit - totalSpent : null;

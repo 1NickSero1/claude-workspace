@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TextStyle, StyleProp } from 'react-native';
-import { COLORS as _COLORS, FONT } from '@/constants/theme';
+import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 
 interface Props {
@@ -60,17 +60,17 @@ export default function ChatBubble({ role, content }: Props) {
   const styles = useMemo(() => StyleSheet.create({
     row: {
       flexDirection: 'row',
-      marginVertical: 4,
-      paddingHorizontal: 12,
+      marginVertical: SPACING.xs,
+      paddingHorizontal: SPACING.md,
       alignItems: 'flex-end',
     },
     rowLeft: { justifyContent: 'flex-start' },
     rowRight: { justifyContent: 'flex-end' },
     avatar: {
-      width: 32, height: 32, borderRadius: 16,
+      width: 32, height: 32, borderRadius: RADIUS.lg,
       backgroundColor: COLORS.primary,
       alignItems: 'center', justifyContent: 'center',
-      marginRight: 8, marginBottom: 2,
+      marginRight: SPACING.sm, marginBottom: 2,
     },
     avatarText: { color: '#fff', fontWeight: '800', fontSize: 10 },
     bubble: {
