@@ -16,7 +16,7 @@ import { scheduleRecurringReminder } from '@/lib/notifications';
 import { formatThousands } from '@/lib/expenseParser';
 import { trackSignup } from '@/lib/userTracking';
 import { supabase } from '@/lib/supabase';
-import { COLORS as _COLORS, FONT } from '@/constants/theme';
+import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors, useThemeInfo } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
 
@@ -345,7 +345,7 @@ export default function OnboardingScreen() {
     logoWrap: {
       width: 88, height: 88, borderRadius: 44,
       alignItems: 'center', justifyContent: 'center',
-      marginBottom: 20,
+      marginBottom: SPACING.xl,
       elevation: 4, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.25, shadowRadius: 10,
     },
@@ -356,7 +356,7 @@ export default function OnboardingScreen() {
       lineHeight: 24,
     },
     featureList: { width: '100%', gap: 14 },
-    featureRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    featureRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
     featureIcon: {
       width: 36, height: 36, borderRadius: 10,
       backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center',
@@ -364,14 +364,14 @@ export default function OnboardingScreen() {
     featureText: { flex: 1, color: COLORS.text, fontSize: FONT.md, lineHeight: 20 },
 
     // Choice
-    choiceContainer: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 20, paddingBottom: 24 },
+    choiceContainer: { flexGrow: 1, paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl, paddingBottom: SPACING.xxl },
     optionCard: {
       flexDirection: 'row', alignItems: 'center', gap: 14,
-      backgroundColor: COLORS.card, borderRadius: 16, padding: 16,
+      backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: SPACING.lg,
       borderWidth: 1, borderColor: COLORS.border, marginBottom: 14,
     },
     optionIcon: {
-      width: 44, height: 44, borderRadius: 12,
+      width: 44, height: 44, borderRadius: RADIUS.md,
       alignItems: 'center', justifyContent: 'center',
     },
     optionTextWrap: { flex: 1 },
@@ -385,29 +385,29 @@ export default function OnboardingScreen() {
     },
     avatarLarge: {
       width: 100, height: 100, borderRadius: 30,
-      alignItems: 'center', justifyContent: 'center', marginBottom: 24,
+      alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.xxl,
       elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.2, shadowRadius: 8,
     },
     avatarInitialsLarge: { color: '#fff', fontWeight: '900', fontSize: 36 },
-    doneTitle: { color: COLORS.text, fontWeight: '900', fontSize: 28, marginBottom: 12 },
+    doneTitle: { color: COLORS.text, fontWeight: '900', fontSize: 28, marginBottom: SPACING.md },
     doneSub: {
       color: COLORS.textMuted, fontSize: FONT.base, textAlign: 'center',
       lineHeight: 24, marginBottom: 48,
     },
 
     // Form
-    formScroll: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40 },
+    formScroll: { paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl, paddingBottom: 40 },
     backBtn: {
-      width: 40, height: 40, borderRadius: 12,
+      width: 40, height: 40, borderRadius: RADIUS.md,
       backgroundColor: COLORS.card, alignItems: 'center', justifyContent: 'center',
-      marginBottom: 24, borderWidth: 1, borderColor: COLORS.border,
+      marginBottom: SPACING.xxl, borderWidth: 1, borderColor: COLORS.border,
     },
-    formTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.xl, marginBottom: 4 },
-    formSub: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 24 },
+    formTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.xl, marginBottom: SPACING.xs },
+    formSub: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: SPACING.xxl },
 
     // Avatar picker
-    avatarSection: { alignItems: 'center', marginBottom: 24, gap: 12 },
+    avatarSection: { alignItems: 'center', marginBottom: SPACING.xxl, gap: SPACING.md },
     avatarPreview: {
       width: 72, height: 72, borderRadius: 20,
       alignItems: 'center', justifyContent: 'center',
@@ -419,7 +419,7 @@ export default function OnboardingScreen() {
     colorDot: { width: 28, height: 28, borderRadius: 14 },
     colorDotSelected: { borderWidth: 3, borderColor: COLORS.text },
     hiddenEmojiInput: { height: 0, width: 0, opacity: 0 },
-    emojiSuggestRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+    emojiSuggestRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, justifyContent: 'center' },
     emojiSuggestBtn: {
       width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
       backgroundColor: COLORS.card2, borderWidth: 2, borderColor: 'transparent',
@@ -433,58 +433,58 @@ export default function OnboardingScreen() {
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 6, marginTop: 14 },
     inputWrap: { position: 'relative' },
     input: {
-      backgroundColor: COLORS.card, borderRadius: 12, padding: 14,
+      backgroundColor: COLORS.card, borderRadius: RADIUS.md, padding: 14,
       color: COLORS.text, fontSize: FONT.md,
       borderWidth: 1.5, borderColor: COLORS.border,
       paddingRight: 44,
     },
     inputError: { borderColor: COLORS.credit },
     inputIcon: { position: 'absolute', right: 14, top: 14 },
-    errorText: { color: COLORS.credit, fontSize: FONT.sm, marginTop: 4 },
+    errorText: { color: COLORS.credit, fontSize: FONT.sm, marginTop: SPACING.xs },
     privacyNote: {
       color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center',
-      marginTop: 20, marginBottom: 8, lineHeight: 20,
-      backgroundColor: COLORS.primaryBg, borderRadius: 12, padding: 12,
+      marginTop: SPACING.xl, marginBottom: SPACING.sm, lineHeight: 20,
+      backgroundColor: COLORS.primaryBg, borderRadius: RADIUS.md, padding: SPACING.md,
     },
 
     // Buttons
     primaryBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-      gap: 8, backgroundColor: COLORS.primary,
-      borderRadius: 16, padding: 16,
+      gap: SPACING.sm, backgroundColor: COLORS.primary,
+      borderRadius: RADIUS.lg, padding: SPACING.lg,
       elevation: 4, shadowColor: COLORS.primary,
       shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
     },
-    primaryBtnSpaced: { marginTop: 20 },
+    primaryBtnSpaced: { marginTop: SPACING.xl },
     primaryBtnOff: { backgroundColor: COLORS.textDim, elevation: 0, shadowOpacity: 0 },
     primaryBtnText: { color: '#fff', fontWeight: '800', fontSize: FONT.base },
 
     // Gastos fijos (onboarding)
-    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.xs },
     chip: {
-      paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
+      paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: 20,
       backgroundColor: COLORS.card2, borderWidth: 1, borderColor: COLORS.border,
     },
     chipText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
     addRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
     addBtn: {
-      width: 48, height: 48, borderRadius: 12, backgroundColor: COLORS.primary,
+      width: 48, height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
       alignItems: 'center', justifyContent: 'center',
     },
     expenseItemRow: {
       flexDirection: 'row', alignItems: 'center', gap: 10,
-      backgroundColor: COLORS.card, borderRadius: 12, padding: 12, marginBottom: 8,
+      backgroundColor: COLORS.card, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm,
       borderWidth: 1, borderColor: COLORS.border,
     },
     expenseItemName: { color: COLORS.text, fontWeight: '700', fontSize: FONT.md },
     expenseItemAmount: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
     expenseItemDelete: {
-      width: 32, height: 32, borderRadius: 8, backgroundColor: COLORS.creditBg,
+      width: 32, height: 32, borderRadius: RADIUS.sm, backgroundColor: COLORS.creditBg,
       alignItems: 'center', justifyContent: 'center',
     },
 
     // Password
-    strengthTrack: { height: 6, backgroundColor: COLORS.border, borderRadius: 3, overflow: 'hidden', marginTop: 8 },
+    strengthTrack: { height: 6, backgroundColor: COLORS.border, borderRadius: 3, overflow: 'hidden', marginTop: SPACING.sm },
     strengthFill: { height: '100%', borderRadius: 3 },
     strengthLabel: { fontSize: FONT.sm, fontWeight: '700', marginTop: 6 },
   }, moderateScale)), [COLORS, moderateScale]);
