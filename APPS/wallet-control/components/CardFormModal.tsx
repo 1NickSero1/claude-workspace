@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Modal, View, Text, TextInput, TouchableOpacity,
-  ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Switch, Alert,
+  View, Text, TextInput, TouchableOpacity,
+  ScrollView, StyleSheet, Switch, Alert,
 } from 'react-native';
+import BottomSheet from './BottomSheet';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import { Card } from '@/lib/storage';
-import { FONT } from '@/constants/theme';
+import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { CARD_COLORS } from '@/constants/categories';
 
@@ -138,25 +139,16 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
 
   const COLORS = useColors();
   const styles = useMemo(() => StyleSheet.create({
-    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-    sheet: {
-      backgroundColor: COLORS.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-      padding: 20, maxHeight: '92%',
-    },
-    handle: {
-      width: 40, height: 4, backgroundColor: COLORS.border,
-      borderRadius: 2, alignSelf: 'center', marginBottom: 16,
-    },
-    title: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: 16 },
+    title: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: SPACING.lg },
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 18, marginBottom: 6 },
     input: {
-      backgroundColor: COLORS.bg, borderRadius: 10, padding: 12,
+      backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md,
       color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border,
     },
-    typeChipRow: { flexDirection: 'row', gap: 8 },
+    typeChipRow: { flexDirection: 'row', gap: SPACING.sm },
     typeChip: {
       flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-      paddingVertical: 12, borderRadius: 12, borderWidth: 1.5,
+      paddingVertical: SPACING.md, borderRadius: RADIUS.md, borderWidth: 1.5,
       borderColor: COLORS.border, backgroundColor: COLORS.bg,
     },
     typeChipColumn: { alignItems: 'center', gap: 2 },
@@ -164,10 +156,10 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
     typeChipLabelActive: { fontWeight: '700' },
     typeChipCaption: { color: COLORS.textDim, fontSize: 10 },
     typeChipCaptionActive: { opacity: 0.85 },
-    typeChipLocked: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    typeChipLocked: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
     typeChipLockedLabel: { fontWeight: '700', fontSize: FONT.md },
-    colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 },
-    colorDot: { width: 32, height: 32, borderRadius: 16 },
+    colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: SPACING.xs },
+    colorDot: { width: 32, height: 32, borderRadius: RADIUS.lg },
     colorDotSelected: { borderWidth: 3, borderColor: COLORS.text },
     previewCard: {
       borderRadius: 18, padding: 18, marginBottom: 6, height: 110,
@@ -195,22 +187,22 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
       position: 'absolute', right: 16, top: '50%',
       transform: [{ translateY: -14 }], fontSize: 28,
     },
-    actions: { flexDirection: 'row', gap: 10, marginTop: 20 },
+    actions: { flexDirection: 'row', gap: 10, marginTop: SPACING.xl },
     cancelBtn: {
-      flex: 1, padding: 14, borderRadius: 12, borderWidth: 1,
+      flex: 1, padding: 14, borderRadius: RADIUS.md, borderWidth: 1,
       borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg,
     },
     cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
-    saveBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: COLORS.primary, alignItems: 'center' },
+    saveBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: 'center' },
     saveBtnOff: { backgroundColor: COLORS.textDim },
     saveText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     notifyRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10,
-      backgroundColor: COLORS.debtBg, borderRadius: 12, padding: 12,
+      flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginTop: 10,
+      backgroundColor: COLORS.debtBg, borderRadius: RADIUS.md, padding: SPACING.md,
       borderWidth: 1, borderColor: COLORS.debt + '33',
     },
     notifyLabel: { color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
-    notifyCaption: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+    notifyCaption: { color: COLORS.textMuted, fontSize: FONT.xs, marginTop: 2 },
   }), [COLORS]);
 
   const title = card
@@ -218,13 +210,7 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
     : form.type === 'credit' ? 'Nueva tarjeta de crédito' : `Nuevo ${TYPE_META[form.type].label.toLowerCase()}`;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
+    <BottomSheet visible={visible} onClose={onClose} maxHeight="92%">
           <Text style={styles.title}>{title}</Text>
 
           <ScrollView showsVerticalScrollIndicator={false}>
@@ -437,8 +423,6 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
               <Text style={styles.saveText}>Guardar</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    </BottomSheet>
   );
 }

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Modal, View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, ScrollView,
 } from 'react-native';
+import BottomSheet from './BottomSheet';
 import { CustomCategory } from '@/lib/storage';
-import { FONT } from '@/constants/theme';
+import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { CATEGORY_COLOR_OPTIONS } from '@/constants/categories';
 
@@ -32,26 +33,21 @@ export default function CategoryFormModal({ visible, category, onSave, onClose }
   }, [emoji]);
 
   const styles = useMemo(() => StyleSheet.create({
-    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.65)' },
-    sheet: {
-      backgroundColor: COLORS.card, borderTopLeftRadius: 28, borderTopRightRadius: 28,
-      maxHeight: '88%', overflow: 'hidden',
-    },
     hero: {
-      alignItems: 'center', paddingVertical: 24, paddingHorizontal: 20,
+      alignItems: 'center', paddingVertical: 24, paddingHorizontal: SPACING.xl,
       borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)',
     },
-    heroEmoji: { fontSize: 52, marginBottom: 8 },
+    heroEmoji: { fontSize: 52, marginBottom: SPACING.sm },
     heroName: { color: '#fff', fontWeight: '800', fontSize: FONT.lg, opacity: 0.95 },
     heroSub: { color: 'rgba(255,255,255,0.65)', fontSize: FONT.sm, marginTop: 2 },
-    handle: { width: 40, height: 4, backgroundColor: 'rgba(255,255,255,0.35)', borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
-    body: { padding: 20 },
-    label: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '700', marginTop: 14, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+    handle: { width: 40, height: 4, backgroundColor: 'rgba(255,255,255,0.35)', borderRadius: 2, alignSelf: 'center', marginBottom: SPACING.lg },
+    body: { padding: SPACING.xl },
+    label: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '700', marginTop: 14, marginBottom: SPACING.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
     input: {
-      backgroundColor: COLORS.card2, borderRadius: 12, padding: 14,
+      backgroundColor: COLORS.card2, borderRadius: RADIUS.md, padding: 14,
       color: COLORS.text, fontSize: FONT.md, borderWidth: 1.5, borderColor: COLORS.border,
     },
-    emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
     emojiBtn: {
       width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
       backgroundColor: COLORS.card2, borderWidth: 2, borderColor: 'transparent',
@@ -61,7 +57,7 @@ export default function CategoryFormModal({ visible, category, onSave, onClose }
       transform: [{ scale: 1.1 }],
     },
     emojiText: { fontSize: 22 },
-    actions: { flexDirection: 'row', gap: 10, marginTop: 24 },
+    actions: { flexDirection: 'row', gap: 10, marginTop: SPACING.xxl },
     cancelBtn: {
       flex: 1, padding: 14, borderRadius: 14, borderWidth: 1.5,
       borderColor: COLORS.border, alignItems: 'center',
@@ -97,9 +93,15 @@ export default function CategoryFormModal({ visible, category, onSave, onClose }
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={styles.sheet}>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      overlayOpacity={0.65}
+      radius={28}
+      maxHeight="88%"
+      showHandle={false}
+      sheetStyle={{ padding: 0 }}
+    >
           {/* Hero header con color dinámico */}
           <View style={[styles.hero, { backgroundColor: autoColor }]}>
             <View style={styles.handle} />
@@ -148,8 +150,6 @@ export default function CategoryFormModal({ visible, category, onSave, onClose }
               </TouchableOpacity>
             </View>
           </ScrollView>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    </BottomSheet>
   );
 }
