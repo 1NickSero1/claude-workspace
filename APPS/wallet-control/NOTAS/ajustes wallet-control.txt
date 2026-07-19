@@ -12,7 +12,15 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-  — (vacío por ahora)
+
+  — Reemplazar Alert.alert nativo por modal temático en tarjetas.tsx (eliminar tarjeta)
+    → Detectado en seguimiento del informe ESTETIK "fluidez e interacción" (12 jul 2026,
+      hallazgo #2 "Eliminar gasto rompe el tema oscuro"): ese hallazgo cubría categorías/
+      gastos, pero handleDeleteCard en app/(tabs)/tarjetas.tsx todavía abre el AlertDialog
+      nativo de Android (fondo blanco) al eliminar una tarjeta/cuenta — mismo tipo de
+      quiebre visual, pantalla distinta.
+    → La misma mejora ya se aplicó a "eliminar meta" en resumen.tsx (ver RESUELTO,
+      2026-07-19). Falta replicarla en tarjetas.tsx.
 
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
@@ -41,6 +49,19 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ "Eliminar meta" ya no rompe el tema oscuro (FIXA/ESTETIK, 2026-07-19)
+    → Seguimiento del informe ESTETIK "fluidez e interacción" (12 jul 2026): el hallazgo
+      #2 original solo cubría "Eliminar gasto" en categorías; al revisar qué tan
+      extendido estaba el patrón, se encontró que Metas de ahorro tenía el mismo
+      problema (Alert.alert nativo, blanco/negro, rompe el tema oscuro del resto de la app).
+    → app/(tabs)/resumen.tsx: nuevos estados actionGoal/confirmDeleteGoal. El long-press
+      sobre una meta ahora abre un bottom sheet oscuro (Editar meta / Eliminar) en vez
+      de Alert.alert — mismo patrón ya usado en categorias.tsx (menú de acciones de
+      categoría). handleDeleteGoal ya no llama Alert.alert: abre un modal de
+      confirmación centrado (ícono de basurero, texto, botones Cancelar/Eliminar en
+      rojo), reutilizando el mismo estilo visual de "Eliminar categoría".
+    → Queda el mismo cambio por aplicar en tarjetas.tsx (eliminar tarjeta) — ver PENDIENTE.
 
   ✓ 5 cambios de la sesión del 2026-07-12, verificados y documentados
     en v1.16 (2026-07-15)
