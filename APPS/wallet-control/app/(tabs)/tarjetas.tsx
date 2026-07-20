@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, Alert, Modal, ActivityIndicator,
+  StyleSheet, Modal, ActivityIndicator,
   TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,6 +48,7 @@ export default function TarjetasScreen() {
   const [debtHistModal, setDebtHistModal] = useState(false);
   const [overflowModal, setOverflowModal] = useState(false);
   const [overflowInfo, setOverflowInfo]   = useState({ entered: 0, pending: 0 });
+  const [confirmDeleteCard, setConfirmDeleteCard] = useState<Card | null>(null);
 
   const [expModal, setExpModal]         = useState(false);
   const [editingExp, setEditingExp]     = useState<Expense | null>(null);
@@ -265,6 +266,24 @@ export default function TarjetasScreen() {
     overflowHint: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', lineHeight: 18, marginBottom: SPACING.xl },
     overflowBtn: { backgroundColor: COLORS.danger, borderRadius: 14, paddingVertical: 14, width: '100%', alignItems: 'center' },
     overflowBtnText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
+    deleteConfirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 28 },
+    deleteConfirmCard: {
+      backgroundColor: COLORS.card, borderRadius: RADIUS.xl, padding: 28, width: '100%',
+      alignItems: 'center', borderWidth: 2, borderColor: COLORS.danger + '44',
+      elevation: 10, shadowColor: COLORS.danger, shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25, shadowRadius: 12,
+    },
+    deleteConfirmIcon: {
+      width: 56, height: 56, borderRadius: 28,
+      backgroundColor: COLORS.danger + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+    },
+    deleteConfirmTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: SPACING.sm, textAlign: 'center' },
+    deleteConfirmText: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginBottom: SPACING.xl },
+    deleteConfirmActions: { flexDirection: 'row', gap: 10, width: '100%' },
+    deleteConfirmCancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
+    deleteConfirmCancelText: { color: COLORS.textMuted, fontWeight: '700', fontSize: FONT.md },
+    deleteConfirmBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: COLORS.danger },
+    deleteConfirmBtnText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }), [COLORS]);
 
   const expStyles = useMemo(() => StyleSheet.create({
@@ -358,14 +377,15 @@ export default function TarjetasScreen() {
   };
 
   const handleDeleteCard = (card: Card) => {
-    Alert.alert('Eliminar', `¿Eliminar "${card.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
-        await deleteCard(card.id);
-        closeAction();
-        await load();
-      }},
-    ]);
+    closeAction();
+    setConfirmDeleteCard(card);
+  };
+
+  const confirmDeleteCardNow = async () => {
+    if (!confirmDeleteCard) return;
+    await deleteCard(confirmDeleteCard.id);
+    setConfirmDeleteCard(null);
+    await load();
   };
 
   const openExpenseEdit = (exp: Expense) => {
@@ -946,6 +966,27 @@ export default function TarjetasScreen() {
             <TouchableOpacity style={actStyles.overflowBtn} onPress={() => setOverflowModal(false)}>
               <Text style={actStyles.overflowBtnText}>Entendido, voy a corregirlo</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Confirmación de eliminar (reemplaza Alert.alert nativo) */}
+      <Modal visible={!!confirmDeleteCard} animationType="fade" transparent onRequestClose={() => setConfirmDeleteCard(null)}>
+        <View style={actStyles.deleteConfirmOverlay}>
+          <View style={actStyles.deleteConfirmCard}>
+            <View style={actStyles.deleteConfirmIcon}>
+              <Ionicons name="trash" size={26} color={COLORS.danger} />
+            </View>
+            <Text style={actStyles.deleteConfirmTitle}>Eliminar</Text>
+            <Text style={actStyles.deleteConfirmText}>¿Eliminar "{confirmDeleteCard?.name}"?</Text>
+            <View style={actStyles.deleteConfirmActions}>
+              <TouchableOpacity style={actStyles.deleteConfirmCancelBtn} onPress={() => setConfirmDeleteCard(null)}>
+                <Text style={actStyles.deleteConfirmCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={actStyles.deleteConfirmBtn} onPress={confirmDeleteCardNow}>
+                <Text style={actStyles.deleteConfirmBtnText}>Eliminar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

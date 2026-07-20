@@ -70,6 +70,8 @@ export default function ResumenScreen() {
   // Goal detail modal
   const [goalDetailVisible, setGoalDetailVisible] = useState(false);
   const [goalDetailTarget, setGoalDetailTarget]   = useState<Goal | null>(null);
+  const [actionGoal, setActionGoal]               = useState<Goal | null>(null);
+  const [confirmDeleteGoal, setConfirmDeleteGoal] = useState<Goal | null>(null);
 
   // Quick entry modal
   const [quickEntry, setQuickEntry]         = useState(false);
@@ -200,12 +202,17 @@ export default function ResumenScreen() {
   const handleSaveGoal = async (goal: Goal) => {
     await saveGoal(goal); setGoalModal(false); setEditingGoal(null); await load();
   };
-  const handleDeleteGoal = (goal: Goal) =>
-    Alert.alert('Eliminar meta', `¿Eliminar "${goal.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive',
-        onPress: async () => { await deleteGoal(goal.id); await load(); } },
-    ]);
+  const handleDeleteGoal = (goal: Goal) => {
+    setActionGoal(null);
+    setConfirmDeleteGoal(goal);
+  };
+
+  const confirmDeleteGoalNow = async () => {
+    if (!confirmDeleteGoal) return;
+    await deleteGoal(confirmDeleteGoal.id);
+    setConfirmDeleteGoal(null);
+    await load();
+  };
 
   // Debit / Credit classification
   const cardTypeMap = new Map(cards.map(c => [c.id, c.type]));
@@ -445,6 +452,34 @@ export default function ResumenScreen() {
     goalSaved: { color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
     goalTarget: { color: COLORS.textMuted, fontSize: FONT.sm },
     goalDeadline: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: SPACING.xs },
+    goalActOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.55)' },
+    goalActSheet: {
+      backgroundColor: COLORS.card, borderTopLeftRadius: 28, borderTopRightRadius: 28,
+      paddingHorizontal: SPACING.xl, paddingTop: 14, paddingBottom: 32,
+    },
+    goalActHandle: { width: 40, height: 4, backgroundColor: COLORS.border, borderRadius: 2, alignSelf: 'center', marginBottom: SPACING.lg },
+    goalActTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: SPACING.lg },
+    goalActRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingVertical: 14, borderTopWidth: 1, borderTopColor: COLORS.border },
+    goalActRowText: { color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
+    goalActRowTextDanger: { color: COLORS.danger },
+    goalConfirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 28 },
+    goalConfirmCard: {
+      backgroundColor: COLORS.card, borderRadius: RADIUS.xl, padding: SPACING.xxl, width: '100%',
+      alignItems: 'center', borderWidth: 2, borderColor: COLORS.danger + '44',
+      elevation: 10, shadowColor: COLORS.danger, shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25, shadowRadius: 12,
+    },
+    goalConfirmIcon: {
+      width: 56, height: 56, borderRadius: 28,
+      backgroundColor: COLORS.danger + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+    },
+    goalConfirmTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: SPACING.sm, textAlign: 'center' },
+    goalConfirmText: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginBottom: SPACING.xl },
+    goalConfirmActions: { flexDirection: 'row', gap: 10, width: '100%' },
+    goalConfirmCancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
+    goalConfirmCancelText: { color: COLORS.textMuted, fontWeight: '700', fontSize: FONT.md },
+    goalConfirmDeleteBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: COLORS.danger },
+    goalConfirmDeleteText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     emptyGoal: { alignItems: 'center', paddingVertical: 32, gap: SPACING.sm, borderWidth: 2, borderColor: COLORS.border, borderStyle: 'dashed', borderRadius: RADIUS.lg, marginBottom: SPACING.lg },
     emptyGoalText: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '600' },
     emptyState: { alignItems: 'center', paddingVertical: 48, gap: 10 },
@@ -960,11 +995,7 @@ export default function ResumenScreen() {
               return (
                 <TouchableOpacity key={goal.id} style={styles.goalCard}
                   onPress={() => { setGoalDetailTarget(goal); setGoalDetailVisible(true); }}
-                  onLongPress={() => Alert.alert(goal.name, '', [
-                    { text: 'Editar', onPress: () => { setEditingGoal(goal); setGoalModal(true); } },
-                    { text: 'Eliminar', style: 'destructive', onPress: () => handleDeleteGoal(goal) },
-                    { text: 'Cancelar', style: 'cancel' },
-                  ])} activeOpacity={0.85}
+                  onLongPress={() => setActionGoal(goal)} activeOpacity={0.85}
                 >
                   <View style={[styles.goalDot, { backgroundColor: goal.color }]}>
                     {goal.emoji
@@ -1045,6 +1076,53 @@ export default function ResumenScreen() {
         }}
         onClose={() => { setGoalDetailVisible(false); setGoalDetailTarget(null); }}
       />
+
+      {/* Menú de acciones de meta (reemplaza Alert.alert nativo) */}
+      <Modal visible={!!actionGoal} animationType="slide" transparent onRequestClose={() => setActionGoal(null)}>
+        <View style={styles.goalActOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setActionGoal(null)} activeOpacity={1} />
+          <View style={styles.goalActSheet}>
+            <View style={styles.goalActHandle} />
+            {actionGoal && (
+              <>
+                <Text style={styles.goalActTitle}>{actionGoal.name}</Text>
+                <TouchableOpacity
+                  style={styles.goalActRow}
+                  onPress={() => { setEditingGoal(actionGoal); setGoalModal(true); setActionGoal(null); }}
+                >
+                  <Ionicons name="pencil-outline" size={20} color={COLORS.primary} />
+                  <Text style={styles.goalActRowText}>Editar meta</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.goalActRow} onPress={() => handleDeleteGoal(actionGoal)}>
+                  <Ionicons name="trash-outline" size={20} color={COLORS.danger} />
+                  <Text style={[styles.goalActRowText, styles.goalActRowTextDanger]}>Eliminar</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Confirmación de eliminar meta (reemplaza Alert.alert nativo) */}
+      <Modal visible={!!confirmDeleteGoal} animationType="fade" transparent onRequestClose={() => setConfirmDeleteGoal(null)}>
+        <View style={styles.goalConfirmOverlay}>
+          <View style={styles.goalConfirmCard}>
+            <View style={styles.goalConfirmIcon}>
+              <Ionicons name="trash" size={26} color={COLORS.danger} />
+            </View>
+            <Text style={styles.goalConfirmTitle}>Eliminar meta</Text>
+            <Text style={styles.goalConfirmText}>¿Eliminar "{confirmDeleteGoal?.name}"?</Text>
+            <View style={styles.goalConfirmActions}>
+              <TouchableOpacity style={styles.goalConfirmCancelBtn} onPress={() => setConfirmDeleteGoal(null)}>
+                <Text style={styles.goalConfirmCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.goalConfirmDeleteBtn} onPress={confirmDeleteGoalNow}>
+                <Text style={styles.goalConfirmDeleteText}>Eliminar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* ── Summary popup (donut tap) ─────────────────── */}
       <Modal visible={summaryModal} animationType="slide" transparent onRequestClose={() => setSummaryModal(false)}>

@@ -42,6 +42,25 @@ COMANDO RÁPIDO:
 [RESUELTO]
 ------------------------------------------------------------
 
+  ✓ "Eliminar" ya no rompe el tema oscuro en Metas ni en Tarjetas (FIXA/ESTETIK, 2026-07-19)
+    → Seguimiento del informe ESTETIK "fluidez e interacción" (12 jul 2026): el hallazgo
+      #2 original solo cubría "Eliminar gasto" en categorías; al revisar qué tan
+      extendido estaba el patrón, se encontró el mismo Alert.alert nativo (blanco/negro,
+      rompe el tema oscuro) en dos lugares más: Metas de ahorro y Tarjetas/Cuentas.
+    → app/(tabs)/resumen.tsx: nuevos estados actionGoal/confirmDeleteGoal. El long-press
+      sobre una meta ahora abre un bottom sheet oscuro (Editar meta / Eliminar) en vez
+      de Alert.alert — mismo patrón ya usado en categorias.tsx (menú de acciones de
+      categoría). handleDeleteGoal ya no llama Alert.alert: abre un modal de
+      confirmación centrado (ícono de basurero, texto, botones Cancelar/Eliminar en
+      rojo), reutilizando el mismo estilo visual de "Eliminar categoría".
+    → app/(tabs)/tarjetas.tsx: el botón "Eliminar" del panel de acción (que ya era un
+      bottom sheet a medida, eso no cambió) ya no dispara Alert.alert al confirmar —
+      nuevo estado confirmDeleteCard + modal de confirmación centrado, mismo estilo
+      visual que el "Modal de abono excedido" que ya existía en este archivo
+      (overflowModal/overflowCard), para no introducir un cuarto patrón visual distinto.
+      Se quitó el import de Alert (ya sin uso en el archivo).
+    → Verificado con `npx tsc --noEmit` sin errores en ambos archivos.
+
   ✓ 5 cambios de la sesión del 2026-07-12, verificados y documentados
     en v1.16 (2026-07-15)
     → Quedaron en el código (commits de auto-sync) pero sin registrar en
