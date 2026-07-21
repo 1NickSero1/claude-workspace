@@ -474,6 +474,17 @@ v1.16 — 2026-07-12 · Registro más rápido + primeros pasos + fecha de metas
   color naranja de esa sección (antes moradito, no calzaba con el resto)
 
 ------------------------------------------------------------
+v1.17 — 2026-07-19 · Confirmaciones de eliminar con tema propio
+------------------------------------------------------------
+• Resumen: al mantener presionada una meta, el menú "Editar/Eliminar" y la
+  confirmación de eliminar ya no son el diálogo blanco nativo de Android —
+  ahora son modales con el tema oscuro de la app (igual que categorías y
+  gastos)
+• Tarjetas (Balance): la confirmación de eliminar una tarjeta o cuenta
+  también pasó de diálogo nativo a modal temático, con ícono de basura y
+  botones Cancelar/Eliminar
+
+------------------------------------------------------------
 [PRÓXIMO]
 ------------------------------------------------------------
 • Build permanente (APK) para compartir sin servidor
