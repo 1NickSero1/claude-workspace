@@ -7,18 +7,26 @@
   sistema es solo el alias de Microsoft Store, no una instalacion real).
   Descargar el instalador oficial desde python.org, NO desde Microsoft
   Store (que solo ofrece versiones recientes, incompatibles con Windows 7).
-- Respuestas del usuario a las 6 preguntas de PECAS antes de conectar la API
-  real (ver IDEA / PROYECTO ACTUAL en RECETAS/receta-apps.txt).
-- Conectar la llamada real a la API en skills/base.py (metodo _llamar_api),
-  hoy es un placeholder que devuelve una respuesta de ejemplo.
-- Habilitar herramienta de busqueda web real en skills/moda.py una vez
-  elegido el proveedor de API (pregunta 3).
-- Definir paleta de colores final y aplicar tema custom de CustomTkinter en
-  main.py (hoy usa el tema azul por defecto).
-- Generar icon.ico / assets finales (assets/icons/) para el empaquetado con
-  PyInstaller - hoy la carpeta esta vacia.
-- Decidir e implementar el manejo de la API key (embebida vs. pedida a la
-  usuaria en el primer uso) en config.py (pregunta 5).
-- Implementar el limite de gasto/mensajes real (pregunta 6) - hoy solo hay
-  un contador simple de mensajes por sesion en skills/base.py
-  (LIMITE_MENSAJES_SESION en config.py) como placeholder.
+- Una vez instalado Python: crear el entorno (pip install -r
+  requirements.txt) y correr "python assets/generar_icono.py" para generar
+  assets/icons/icon.ico, assets/icons/icon.png y assets/fondo.png - no se
+  pudo ejecutar en esta sesion por no haber Python instalado, solo se dejo
+  el script listo.
+- Reemplazar el placeholder de secreto.py con la API key real del usuario
+  (nunca por chat) antes de poder probar o compilar la app de verdad.
+- Nombres personalizados de cada una de las 5 skills (el usuario los va a
+  dar mas adelante, antes de cerrar el proyecto) - hoy usan nombres
+  genericos (TITULO en cada modulo de skills/).
+- assets/fondo.png esta generado pero todavia no se usa en main.py (quedo
+  fuera de esta ronda) - si se quiere aplicar como fondo decorativo detras
+  del menu principal, hay que agregarlo con un CTkLabel de imagen o un
+  Canvas de fondo.
+- Probar en dispositivo/maquina real todo el flujo: las 5 ventanas, el
+  limite diario de tokens (bajar LIMITE_TOKENS_DIARIOS temporalmente para
+  probarlo rapido), y en particular la memoria persistente de Psicologia
+  (confirmar que crea y reutiliza archivos en
+  %APPDATA%/Pollito/memoria_psicologia/ entre sesiones distintas).
+- Empaquetar con PyInstaller (--onefile --windowed --icon=assets/icons/
+  icon.ico) y probarlo en una carpeta distinta sin variables de entorno,
+  simulando la PC de la novia (recordar: puede salir el aviso de Windows
+  SmartScreen la primera vez, es esperado en un .exe sin firmar).

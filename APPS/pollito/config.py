@@ -24,6 +24,11 @@ WEB_SEARCH_TOOL = {
     "max_uses": 5,  # tope de busquedas por turno, control de costo adicional
 }
 
+# Herramienta de memoria (cliente): usada solo por la skill de Psicologia
+# para que "la vaya conociendo" entre sesiones - el manejador real vive en
+# skills/memoria_psicologia.py.
+MEMORY_TOOL = {"type": "memory_20250818", "name": "memory"}
+
 # Effort bajo: reduce la profundidad de razonamiento y el gasto de tokens por
 # respuesta. Va anidado en output_config, no como parametro top-level.
 OUTPUT_CONFIG = {"effort": "low"}

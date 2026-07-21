@@ -5,7 +5,7 @@ mismo para las 5. _llamar_api() hace la llamada real a la API de Anthropic
 (Claude Sonnet 5), con busqueda web server-side habilitada por defecto.
 """
 import threading
-from typing import Optional
+from typing import Callable, Optional
 
 import anthropic
 import customtkinter as ctk
@@ -50,6 +50,7 @@ class VentanaChat(ctk.CTkToplevel):
         system_prompt: str,
         tools=None,
         acento: Optional[str] = None,
+        manejador_herramienta_cliente: Optional[Callable[[dict], str]] = None,
     ):
         super().__init__(parent)
         self.title(titulo)
@@ -59,6 +60,9 @@ class VentanaChat(ctk.CTkToplevel):
         # Por defecto, las 5 skills tienen busqueda web habilitada.
         self.tools = tools if tools is not None else [WEB_SEARCH_TOOL]
         self.acento = acento or tema.BOTON_PRINCIPAL
+        # Solo la skill de Psicologia pasa esto (herramienta de memoria,
+        # ejecutada del lado cliente - ver skills/memoria_psicologia.py).
+        self.manejador_herramienta_cliente = manejador_herramienta_cliente
         self.historial = []
         self._mensajes_enviados = 0
         self._construir_ui()
@@ -131,31 +135,12 @@ class VentanaChat(ctk.CTkToplevel):
     def _llamar_api(self):
         mensajes = list(self.historial)
         tokens_totales = 0
+        intentos = 0
 
         try:
             cliente = _obtener_cliente()
-            respuesta = cliente.messages.create(
-                model=MODEL_ID,
-                max_tokens=MAX_TOKENS_RESPUESTA,
-                system=self.system_prompt,
-                tools=self.tools,
-                thinking=THINKING_CONFIG,
-                output_config=OUTPUT_CONFIG,
-                messages=mensajes,
-            )
-            tokens_totales += respuesta.usage.input_tokens + respuesta.usage.output_tokens
 
-            intentos = 0
-            while (
-                respuesta.stop_reason == "pause_turn"
-                and intentos < _MAX_REINTENTOS_PAUSE_TURN
-            ):
-                # El loop server-side de busqueda web llego a su limite
-                # interno de iteraciones. Se reenvia el historial completo
-                # mas el turno del asistente pausado - NO se agrega ningun
-                # mensaje nuevo de usuario tipo "Continue", la API detecta
-                # el bloque server_tool_use pendiente y retoma sola.
-                mensajes = mensajes + [{"role": "assistant", "content": respuesta.content}]
+            while True:
                 respuesta = cliente.messages.create(
                     model=MODEL_ID,
                     max_tokens=MAX_TOKENS_RESPUESTA,
@@ -166,7 +151,44 @@ class VentanaChat(ctk.CTkToplevel):
                     messages=mensajes,
                 )
                 tokens_totales += respuesta.usage.input_tokens + respuesta.usage.output_tokens
-                intentos += 1
+
+                if intentos >= _MAX_REINTENTOS_PAUSE_TURN:
+                    break
+
+                if respuesta.stop_reason == "tool_use" and self.manejador_herramienta_cliente:
+                    # Herramienta ejecutada del lado cliente (ej. memoria de
+                    # la skill de Psicologia). Se ejecuta cada bloque
+                    # tool_use, se devuelven todos los tool_result juntos en
+                    # un solo mensaje de usuario, y se vuelve a llamar a la
+                    # API para que continue con el resultado.
+                    resultados = [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": bloque.id,
+                            "content": self.manejador_herramienta_cliente(bloque.input),
+                        }
+                        for bloque in respuesta.content
+                        if bloque.type == "tool_use"
+                    ]
+                    mensajes = mensajes + [
+                        {"role": "assistant", "content": respuesta.content},
+                        {"role": "user", "content": resultados},
+                    ]
+                    intentos += 1
+                    continue
+
+                if respuesta.stop_reason == "pause_turn":
+                    # El loop server-side de busqueda web llego a su limite
+                    # interno de iteraciones. Se reenvia el historial
+                    # completo mas el turno del asistente pausado - NO se
+                    # agrega ningun mensaje nuevo de usuario tipo
+                    # "Continue", la API detecta el bloque server_tool_use
+                    # pendiente y retoma sola.
+                    mensajes = mensajes + [{"role": "assistant", "content": respuesta.content}]
+                    intentos += 1
+                    continue
+
+                break
 
         except anthropic.AuthenticationError:
             self.after(

@@ -14,3 +14,40 @@
   llamada real a la API en skills/base.py.
 - Agregada palabra clave POLLITO (hook proyecto-switch.ps1) para arrancar
   sesiones enfocadas en este proyecto.
+
+[2026-07-21] Conexion real a la API + personalizacion + memoria + identidad visual
+- Respondidas las 6 preguntas de PECAS: nombre "Pollito", modelo Claude Sonnet 5
+  (con busqueda web nativa en las 5 skills), API key propia embebida via
+  secreto.py (gitignored, nunca por chat), paleta de tonos rosa (tema.py, ya
+  aplicada a main.py y a las 5 ventanas de chat), limite diario de 20,000
+  tokens (20% de una base de 100,000/dia).
+- Implementada la llamada real a la API en skills/base.py: loop unificado que
+  maneja tanto "pause_turn" (la busqueda web server-side llega a su limite
+  interno de iteraciones) como "tool_use" (herramientas de lado cliente, hoy
+  solo la memoria de Psicologia), con manejo de errores especifico
+  (autenticacion, sin conexion, rate limit, error generico).
+- Personalizados los system prompts de 4 de las 5 skills con detalles reales
+  de la novia del usuario: Maquillaje/Skincare (piel sensible, brotes
+  ocasionales, posible relacion con la pastilla), Moda (estilo elegante y
+  femenino, rosa como color favorito), Gym y Nutricion (ya entrena regular,
+  pero el foco pasa a ser bajar de peso y cambiar habitos - como ella cocina
+  en casa, la skill recomienda recetas con los ingredientes que ella vaya
+  indicando), Psicologia (tono calido y jugueton). Finanzas se dejo generica
+  a proposito, por no pedir detalles economicos de un tercero.
+- Agregada memoria persistente real a la skill de Psicologia (herramienta
+  memory_20250818 de Claude + manejador propio en
+  skills/memoria_psicologia.py, con validacion de rutas para evitar salir del
+  directorio de memoria): la va conociendo entre sesiones distintas (no solo
+  dentro de una conversacion abierta) y trackea que conceptos de psicologia
+  ya le fue explicando, para ensenarle de a poco sin repetirse.
+- Creado assets/generar_icono.py: dibuja con Pillow (procedural, sin depender
+  de un generador de imagenes) un pollito bebe tierno en tonos rosa - ojos
+  grandes estilo kawaii, mejillas con blush, lacito, patitas, con
+  supersampling 4x + LANCZOS para que los bordes salgan suaves. Genera
+  icon.ico (multi-resolucion, para el .exe y la ventana), icon.png y
+  fondo.png (version tenue para uso decorativo). No se pudo ejecutar en esta
+  sesion - no hay ninguna instalacion real de Python en esta maquina.
+- Contexto nuevo: la app va a correr en una PC distinta a la del usuario/
+  hermano, en un hogar con otra IP - no afecta la autenticacion con
+  Anthropic, pero el .exe sin firmar probablemente dispare el aviso de
+  Windows SmartScreen la primera vez (avisarle a la novia como continuar).

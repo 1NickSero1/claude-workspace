@@ -497,6 +497,40 @@ HISTORIAL DE CAMBIOS
   SEGURA en proyecto-switch.ps1: git pull + invoca PECAS + recomienda
   /clear) para arrancar sesiones enfocadas en este proyecto.
 
+[2026-07-21] Pollito: conexion real a la API + personalizacion + memoria + identidad visual
+- Continuacion del scaffold inicial de pollito (misma fecha, entrada anterior).
+  Se uso Plan Mode para diseñar y validar la conexion real a la API antes de
+  escribir codigo (agente Plan verifico contra la doc oficial de Claude el
+  tool de busqueda web correcto, el manejo de pause_turn multi-turno, y el
+  bundling de secreto.py con PyInstaller).
+- Resueltas las 6 preguntas de PECAS: modelo Claude Sonnet 5 + busqueda web
+  nativa en las 5 skills (no solo moda), API key propia embebida via
+  secreto.py (gitignored, nunca pedida ni pegada en el chat), limite diario
+  real de 20,000 tokens (20% de una base de 100,000/dia) implementado en
+  uso_diario.py (persistido en %APPDATA%/Pollito/, no en la carpeta de la
+  app por el tema de la extraccion temporal de PyInstaller --onefile).
+- Personalizadas 4 de las 5 skills con detalles reales de la novia del
+  usuario (piel sensible, estilo elegante/femenino, entrena regular pero el
+  foco ahora es bajar de peso y recetas con lo que ella tenga en casa ya que
+  cocina ella, tono calido/jugueton para psicologia) - Finanzas se dejo
+  generica a proposito por no pedir datos economicos de un tercero.
+- Agregada memoria persistente real solo a la skill de Psicologia (pedido
+  explicito: que "la vaya conociendo" entre sesiones y aprenda de a poco
+  sobre psicologia) usando la herramienta memory_20250818 de Claude, con
+  manejador propio (skills/memoria_psicologia.py) que valida que las rutas
+  pedidas por el modelo no salgan del directorio de memoria.
+- Creado assets/generar_icono.py: pollito bebe tierno dibujado con Pillow
+  (ojos grandes kawaii, blush, lazo, patitas, supersampling 4x + LANCZOS para
+  bordes suaves) en la paleta de tema.py - genera icon.ico/icon.png/fondo.png.
+  No se pudo ejecutar: no hay ninguna instalacion real de Python en esta
+  maquina (solo el alias de Microsoft Store), queda pendiente para cuando el
+  usuario instale Python 3.8.10.
+- Nuevo contexto de despliegue: la app corre en una PC distinta a la del
+  usuario o su hermano, en un hogar con otra IP - no afecta la key de
+  Anthropic, pero el .exe sin firmar va a disparar el aviso de Windows
+  SmartScreen la primera vez (avisarle a la novia como continuar, no es un
+  error).
+
 [2026-07-21] Politica de privacidad real + hallazgo en RegistroScreen + confirmacion de canal de notificacion (correo)
 - Se reviso RegistroScreen.js linea por linea para escribir la politica de
   privacidad con datos reales, no una plantilla generica (dado que la app
