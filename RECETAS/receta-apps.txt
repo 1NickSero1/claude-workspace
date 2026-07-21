@@ -467,6 +467,36 @@ HISTORIAL DE CAMBIOS
   desalineada del SDK 57 (expo, expo-linear-gradient, expo-splash-screen,
   expo-status-bar), resuelta con "npx expo install --fix".
 
+[2026-07-21] Scaffold inicial de pollito (app de escritorio, regalo)
+- Se recibio el prompt inicial completo: menu principal + 5 skills de chat
+  (maquillaje/skincare, moda con busqueda web, finanzas, gym/nutricion,
+  psicologia con disclaimer obligatorio), diseño calido/femenino, Python +
+  CustomTkinter/PyQt5 + PyInstaller --onefile --windowed, compatible con
+  Windows 7 Pro.
+- Hallazgo critico antes de escribir codigo: Python 3.10 (pedido en el
+  prompt) NO corre en Windows 7 - el instalador oficial de python.org dejo
+  de soportar Windows 7 desde la serie 3.9; Python 3.8.10 es la ultima
+  version con instalador para Windows 7. Se fijo Python 3.8 como target del
+  proyecto.
+- Se verifico el entorno de la maquina: no hay ninguna instalacion real de
+  Python (solo el alias de Microsoft Store) - queda pendiente instalar
+  Python 3.8.10 desde python.org antes de poder correr o empaquetar nada.
+- Se creo el scaffold completo en APPS/pollito/: main.py (menu principal con
+  CustomTkinter), skills/ (base.py con la ventana de chat generica + un
+  modulo por skill con su system prompt), config.py (modelo/API key/limite
+  de mensajes, todo placeholder), requirements.txt, .gitignore,
+  assets/icons/, y NOTAS/ (ACTUALIZACIONES.txt, "ajustes pollito.txt",
+  "ideas pollito.txt").
+- Sigue en pie el bloqueo de Fase 0 de PECAS: el propio usuario pidio que no
+  se conecte la API real ni se avance mas alla del scaffold hasta responder
+  las 6 preguntas de personalizacion (nombre de la app, nombres de cada
+  skill, proveedor de API, paleta de colores, manejo de la API key, limite
+  de gasto) - documentadas en la seccion IDEA / PROYECTO ACTUAL de este
+  archivo.
+- Se agrego la palabra clave POLLITO (mismo patron que WALLET CONTROL/RUTA
+  SEGURA en proyecto-switch.ps1: git pull + invoca PECAS + recomienda
+  /clear) para arrancar sesiones enfocadas en este proyecto.
+
 [2026-07-21] Politica de privacidad real + hallazgo en RegistroScreen + confirmacion de canal de notificacion (correo)
 - Se reviso RegistroScreen.js linea por linea para escribir la politica de
   privacidad con datos reales, no una plantilla generica (dado que la app

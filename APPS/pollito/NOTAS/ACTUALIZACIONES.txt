@@ -1,0 +1,16 @@
+====================================================
+ POLLITO - CHANGELOG
+====================================================
+
+[2026-07-21] Scaffold inicial del proyecto
+- Creada la estructura base: main.py (menu principal), skills/ (5 asistentes
+  con system prompts placeholder: maquillaje_skincare, moda, finanzas,
+  gym_nutricion, psicologia), config.py, requirements.txt.
+- Fijado Python 3.8 como target del proyecto (no 3.10, pedido originalmente)
+  por compatibilidad con Windows 7 Pro - ver ajustes pollito.txt.
+- Pendiente: respuestas del usuario a las 6 preguntas de personalizacion de
+  PECAS (nombre de la app, nombres de cada skill, proveedor de API, paleta
+  de colores, manejo de la API key, limite de gasto) antes de conectar la
+  llamada real a la API en skills/base.py.
+- Agregada palabra clave POLLITO (hook proyecto-switch.ps1) para arrancar
+  sesiones enfocadas en este proyecto.

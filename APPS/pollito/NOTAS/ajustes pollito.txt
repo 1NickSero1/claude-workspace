@@ -1,0 +1,24 @@
+====================================================
+ AJUSTES POLLITO - PENDIENTES Y BUGS
+====================================================
+
+[PENDIENTE]
+- Instalar Python 3.8.10 (no esta instalado en esta maquina; el "python" del
+  sistema es solo el alias de Microsoft Store, no una instalacion real).
+  Descargar el instalador oficial desde python.org, NO desde Microsoft
+  Store (que solo ofrece versiones recientes, incompatibles con Windows 7).
+- Respuestas del usuario a las 6 preguntas de PECAS antes de conectar la API
+  real (ver IDEA / PROYECTO ACTUAL en RECETAS/receta-apps.txt).
+- Conectar la llamada real a la API en skills/base.py (metodo _llamar_api),
+  hoy es un placeholder que devuelve una respuesta de ejemplo.
+- Habilitar herramienta de busqueda web real en skills/moda.py una vez
+  elegido el proveedor de API (pregunta 3).
+- Definir paleta de colores final y aplicar tema custom de CustomTkinter en
+  main.py (hoy usa el tema azul por defecto).
+- Generar icon.ico / assets finales (assets/icons/) para el empaquetado con
+  PyInstaller - hoy la carpeta esta vacia.
+- Decidir e implementar el manejo de la API key (embebida vs. pedida a la
+  usuaria en el primer uso) en config.py (pregunta 5).
+- Implementar el limite de gasto/mensajes real (pregunta 6) - hoy solo hay
+  un contador simple de mensajes por sesion en skills/base.py
+  (LIMITE_MENSAJES_SESION en config.py) como placeholder.
