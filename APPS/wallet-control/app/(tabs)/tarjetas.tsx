@@ -911,6 +911,7 @@ export default function TarjetasScreen() {
           style={expStyles.overlay}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => { setExpModal(false); setEditingExp(null); }} activeOpacity={1} />
           <View style={expStyles.sheet}>
             <View style={expStyles.handle} />
             <Text style={expStyles.title}>Editar gasto</Text>
@@ -945,8 +946,8 @@ export default function TarjetasScreen() {
       </Modal>
       {/* Overflow warning modal */}
       <Modal visible={overflowModal} animationType="fade" transparent onRequestClose={() => setOverflowModal(false)}>
-        <View style={actStyles.overflowOverlay}>
-          <View style={actStyles.overflowCard}>
+        <TouchableOpacity style={actStyles.overflowOverlay} activeOpacity={1} onPress={() => setOverflowModal(false)}>
+          <TouchableOpacity style={actStyles.overflowCard} activeOpacity={1} onPress={() => {}}>
             <View style={actStyles.overflowIcon}>
               <Ionicons name="alert-circle" size={34} color={COLORS.danger} />
             </View>
@@ -966,14 +967,14 @@ export default function TarjetasScreen() {
             <TouchableOpacity style={actStyles.overflowBtn} onPress={() => setOverflowModal(false)}>
               <Text style={actStyles.overflowBtnText}>Entendido, voy a corregirlo</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* Confirmación de eliminar (reemplaza Alert.alert nativo) */}
       <Modal visible={!!confirmDeleteCard} animationType="fade" transparent onRequestClose={() => setConfirmDeleteCard(null)}>
-        <View style={actStyles.deleteConfirmOverlay}>
-          <View style={actStyles.deleteConfirmCard}>
+        <TouchableOpacity style={actStyles.deleteConfirmOverlay} activeOpacity={1} onPress={() => setConfirmDeleteCard(null)}>
+          <TouchableOpacity style={actStyles.deleteConfirmCard} activeOpacity={1} onPress={() => {}}>
             <View style={actStyles.deleteConfirmIcon}>
               <Ionicons name="trash" size={26} color={COLORS.danger} />
             </View>
@@ -987,8 +988,8 @@ export default function TarjetasScreen() {
                 <Text style={actStyles.deleteConfirmBtnText}>Eliminar</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* Debt payments history modal */}
