@@ -5,6 +5,7 @@ if ($prompt) {
     $proyecto = $null
     if ($t -ieq 'WALLET CONTROL') { $proyecto = 'wallet-control' }
     elseif ($t -ieq 'RUTA SEGURA') { $proyecto = 'ruta-segura' }
+    elseif ($t -ieq 'POLLITO') { $proyecto = 'pollito' }
 
     if ($proyecto) {
         $repoDir = $env:CLAUDE_PROJECT_DIR

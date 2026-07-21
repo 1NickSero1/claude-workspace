@@ -12,13 +12,28 @@ Historial de Cambios con fecha y hora.
 ----------------------------------------------------
 IDEA / PROYECTO ACTUAL
 ----------------------------------------------------
-Estado: EN DEFINICION
-Aun no se ha descrito la idea de la app. Pendiente de responder:
-  1. Que hace exactamente la app (una oracion)
-  2. Web, movil o escritorio
-  3. Necesita login de usuarios (Supabase Auth)
-  4. Necesita cobrar (Stripe: pago unico o suscripcion)
-  5. Cual es el MVP minimo vendible
+Proyecto: pollito (APPS/pollito) — app de escritorio, regalo para la novia del usuario.
+Estado: EN DEFINICION (prompt inicial recibido, faltan parametros de personalizacion)
+
+Que hace: ventana principal tipo menu con acceso a 5 asistentes de chat especializados
+(maquillaje/skincare, moda con busqueda web, finanzas personales, gym/nutricion,
+psicologia/acompañamiento emocional con disclaimer obligatorio), diseño calido/femenino
+(pastel/rosado/lavanda), cada skill = system prompt distinto sobre la misma API de LLM.
+
+Stack propuesto: Python + CustomTkinter o PyQt5 + PyInstaller (--onefile --windowed).
+ADVERTENCIA tecnica ya planteada al usuario: Python 3.10 (pedido en el prompt original)
+NO corre en Windows 7 — el instalador oficial de python.org dejo de soportar Windows 7
+desde Python 3.9; Python 3.8.10 es la ultima version con instalador para Windows 7.
+Recomendado: fijar Python 3.8 para todo el proyecto antes de armar el entorno.
+
+Pendiente de responder (las 6 preguntas que el propio usuario pidio que se hicieran
+antes de escribir codigo):
+  1. Nombre de la app en general
+  2. Nombre personalizado de cada una de las 5 skills
+  3. Que API de modelo de lenguaje (y si ya tiene la key o hay que dejar campo de ingreso)
+  4. Paleta de colores preferida (o si Claude propone opciones)
+  5. Si la API key va embebida en el .exe o se pide a la usuaria en el primer uso
+  6. Limite de mensajes/gasto a fijar por seguridad de la cuenta de API
 
 ----------------------------------------------------
 PASOS DE LA RECETA (se van llenando conforme avanza el proyecto)

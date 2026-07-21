@@ -35,6 +35,7 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 |---|---|---|---|
 | wallet-control | PECAS | En progreso | `APPS/wallet-control` |
 | ruta-segura | PECAS | En progreso | `APPS/ruta-segura` |
+| pollito | PECAS | En definición | `APPS/pollito` |
 
 ---
 
@@ -228,6 +229,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 |---|---|
 | `WALLET CONTROL` | Hace `git pull --ff-only` automático (ver nota), invoca la skill PECAS y saluda, recomendando al usuario correr `/clear` antes de seguir (contexto limpio), para trabajar específicamente en `APPS/wallet-control` |
 | `RUTA SEGURA` | Igual, pero enfocado en `APPS/ruta-segura` |
+| `POLLITO` | Igual, pero enfocado en `APPS/pollito` (app de escritorio, regalo) |
 
 **Nota:** Claude no puede borrar su propio contexto de conversación desde un hook — eso solo lo dispara el usuario con `/clear`. El hook recomienda hacerlo, no lo fuerza.
 
@@ -303,6 +305,7 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 | 2026-07-09 | Creado `APPS/palabras-clave.txt` — índice de todas las palabras clave del sistema con significado en una palabra y si son generales o específicas de una skill/proyecto; se actualiza cada vez que se agrega una palabra clave nueva |
 | 2026-07-11 | Instalado Android Platform Tools (adb, vía winget) y registrado el MCP `mobile-mcp` (`.mcp.json`, scope proyecto) — le da a ESTETIK/IMAGINA control real sobre un celular Android físico conectado por USB (screenshot/tap/swipe reales) en vez de solo leer código; requiere depuración USB activada y el celular autorizado (`adb devices`) en cada máquina que lo use |
 | 2026-07-17 | Lección 3 actualizada — "abre el servidor/qr" de wallet-control/ruta-segura ya no fuerza el puerto 8082: ahora detecta y usa el primer puerto libre a partir de 8081 en el momento de ejecutar |
+| 2026-07-21 | Agregado proyecto `pollito` (app de escritorio, regalo) a Proyectos Activos; agregada palabra clave `POLLITO` en `proyecto-switch.ps1` (mismo patrón que WALLET CONTROL/RUTA SEGURA — git pull + PECAS + recomendación de `/clear`) |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise
