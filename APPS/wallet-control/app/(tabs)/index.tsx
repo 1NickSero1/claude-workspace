@@ -23,6 +23,8 @@ import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
 
+const capitalizeFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 interface DisplayMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -133,7 +135,7 @@ export default function ChatScreen() {
     },
     topInfo: { flex: 1 },
     topTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.base },
-    topSub: { color: COLORS.textMuted, fontSize: FONT.sm, textTransform: 'capitalize' },
+    topSub: { color: COLORS.textMuted, fontSize: FONT.sm },
     analysisBtn: {
       flexDirection: 'row', alignItems: 'center', gap: SPACING.xs,
       backgroundColor: COLORS.primaryBg, borderRadius: 20,
@@ -368,7 +370,7 @@ export default function ChatScreen() {
         <View style={styles.topInfo}>
           <Text style={styles.topTitle}>Finando</Text>
           <Text style={styles.topSub}>
-            Asesor IA · {new Date().toLocaleString('es-CO', { month: 'long', year: 'numeric' })}
+            Asesor IA · {capitalizeFirst(new Date().toLocaleString('es-CO', { month: 'long', year: 'numeric' }))}
           </Text>
         </View>
         <TouchableOpacity onPress={handleAnalysis} style={styles.analysisBtn}>

@@ -84,7 +84,7 @@ export default function HistoryScreen() {
     headerTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.xl },
     headerSub: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
     searchBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
-    scroll: { paddingHorizontal: SPACING.lg, paddingBottom: 40 },
+    scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: SPACING.lg, paddingBottom: 40 },
     emptyState: { alignItems: 'center', paddingVertical: 80, gap: 10 },
     emptyText: { color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
     emptyHint: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', lineHeight: 20 },
