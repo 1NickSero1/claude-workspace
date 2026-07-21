@@ -1613,6 +1613,7 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
   const [amount, setAmount] = useState('');
   const [date, setDate]     = useState('');
   const [note, setNote]     = useState('');
+  const [confirmDeleteDeposit, setConfirmDeleteDeposit] = useState<GoalDeposit | null>(null);
 
   const COLORS = useColors();
   const gdStyles = useMemo(() => StyleSheet.create({
@@ -1648,6 +1649,24 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
     saveBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, alignItems: 'center' },
     saveBtnOff: { backgroundColor: COLORS.textDim },
     saveText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
+    confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 28 },
+    confirmCard: {
+      backgroundColor: COLORS.card, borderRadius: RADIUS.xl, padding: SPACING.xxl, width: '100%',
+      alignItems: 'center', borderWidth: 2, borderColor: COLORS.danger + '44',
+      elevation: 10, shadowColor: COLORS.danger, shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25, shadowRadius: 12,
+    },
+    confirmIcon: {
+      width: 56, height: 56, borderRadius: 28,
+      backgroundColor: COLORS.danger + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+    },
+    confirmTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: SPACING.sm, textAlign: 'center' },
+    confirmText: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginBottom: SPACING.xl },
+    confirmActions: { flexDirection: 'row', gap: 10, width: '100%' },
+    confirmCancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
+    confirmCancelText: { color: COLORS.textMuted, fontWeight: '700', fontSize: FONT.md },
+    confirmDeleteBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: COLORS.danger },
+    confirmDeleteText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }), [COLORS]);
 
   const today = () => {
@@ -1674,17 +1693,18 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
   };
 
   const handleDelete = (dep: GoalDeposit) => {
-    Alert.alert('Eliminar depósito', `¿Eliminar ${dep.amount > 0 ? '+' : ''}$${dep.amount.toLocaleString('es-CO')}?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
-        if (!goal) return;
-        await deleteGoalDeposit(goal.id, dep.id);
-        await onRefresh();
-      }},
-    ]);
+    setConfirmDeleteDeposit(dep);
+  };
+
+  const confirmDeleteDepositNow = async () => {
+    if (!goal || !confirmDeleteDeposit) return;
+    await deleteGoalDeposit(goal.id, confirmDeleteDeposit.id);
+    setConfirmDeleteDeposit(null);
+    await onRefresh();
   };
 
   return (
+    <>
     <BottomSheet visible={visible} onClose={onClose} maxHeight="88%">
           {/* Header con progreso */}
           <View style={gdStyles.header}>
@@ -1796,6 +1816,30 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
             </>
           )}
     </BottomSheet>
+
+    {/* Confirmación de eliminar aporte (reemplaza Alert.alert nativo) */}
+    <Modal visible={!!confirmDeleteDeposit} animationType="fade" transparent onRequestClose={() => setConfirmDeleteDeposit(null)}>
+      <TouchableOpacity style={gdStyles.confirmOverlay} activeOpacity={1} onPress={() => setConfirmDeleteDeposit(null)}>
+        <TouchableOpacity style={gdStyles.confirmCard} activeOpacity={1} onPress={() => {}}>
+          <View style={gdStyles.confirmIcon}>
+            <Ionicons name="trash" size={26} color={COLORS.danger} />
+          </View>
+          <Text style={gdStyles.confirmTitle}>Eliminar aporte</Text>
+          <Text style={gdStyles.confirmText}>
+            ¿Eliminar {confirmDeleteDeposit ? formatCOP(confirmDeleteDeposit.amount) : ''}?
+          </Text>
+          <View style={gdStyles.confirmActions}>
+            <TouchableOpacity style={gdStyles.confirmCancelBtn} onPress={() => setConfirmDeleteDeposit(null)}>
+              <Text style={gdStyles.confirmCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={gdStyles.confirmDeleteBtn} onPress={confirmDeleteDepositNow}>
+              <Text style={gdStyles.confirmDeleteText}>Eliminar</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+    </>
   );
 }
 

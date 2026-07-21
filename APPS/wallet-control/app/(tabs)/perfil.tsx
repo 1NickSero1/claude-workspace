@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Alert, ScrollView, TextInput, Switch,
+  ScrollView, TextInput, Switch, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -44,6 +44,7 @@ export default function PerfilScreen() {
   const [showBalanceNotif, setShowBalanceNotif] = useState(false);
   const [budget, setBudget]         = useState<number | null>(null);
   const [budgetModal, setBudgetModal] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
   const monthKey = getCurrentMonthKey();
 
   useEffect(() => {
@@ -81,22 +82,14 @@ export default function PerfilScreen() {
   const avatarGlyph = profile?.avatarEmoji || initials;
 
   const handleLogout = () => {
-    Alert.alert(
-      'Cerrar sesión',
-      '¿Seguro? Tus datos guardados se mantendrán en el dispositivo.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Cerrar sesión',
-          style: 'destructive',
-          onPress: async () => {
-            if (profile?.id) await supabase.auth.signOut();
-            await deleteUserProfile();
-            router.replace('/onboarding');
-          },
-        },
-      ],
-    );
+    setConfirmLogout(true);
+  };
+
+  const confirmLogoutNow = async () => {
+    setConfirmLogout(false);
+    if (profile?.id) await supabase.auth.signOut();
+    await deleteUserProfile();
+    router.replace('/onboarding');
   };
 
   const handleSaveName = async () => {
@@ -184,6 +177,25 @@ export default function PerfilScreen() {
     cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
     saveBtn:    { flex: 1, padding: 14, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: 'center' },
     saveText:   { color: '#fff', fontWeight: '700', fontSize: FONT.md },
+
+    confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 28 },
+    confirmCard: {
+      backgroundColor: COLORS.card, borderRadius: RADIUS.xl, padding: SPACING.xxl, width: '100%',
+      alignItems: 'center', borderWidth: 2, borderColor: COLORS.danger + '44',
+      elevation: 10, shadowColor: COLORS.danger, shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25, shadowRadius: 12,
+    },
+    confirmIcon: {
+      width: 56, height: 56, borderRadius: 28,
+      backgroundColor: COLORS.danger + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+    },
+    confirmTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: SPACING.sm, textAlign: 'center' },
+    confirmText: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginBottom: SPACING.xl },
+    confirmActions: { flexDirection: 'row', gap: 10, width: '100%' },
+    confirmCancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
+    confirmCancelText: { color: COLORS.textMuted, fontWeight: '700', fontSize: FONT.md },
+    confirmDeleteBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: COLORS.danger },
+    confirmDeleteText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }, moderateScale)), [COLORS, moderateScale]);
 
   return (
@@ -375,6 +387,27 @@ export default function PerfilScreen() {
         onSave={handleSaveBudget}
         onClose={() => setBudgetModal(false)}
       />
+
+      {/* Confirmación de cerrar sesión (reemplaza Alert.alert nativo) */}
+      <Modal visible={confirmLogout} animationType="fade" transparent onRequestClose={() => setConfirmLogout(false)}>
+        <TouchableOpacity style={styles.confirmOverlay} activeOpacity={1} onPress={() => setConfirmLogout(false)}>
+          <TouchableOpacity style={styles.confirmCard} activeOpacity={1} onPress={() => {}}>
+            <View style={styles.confirmIcon}>
+              <Ionicons name="log-out-outline" size={26} color={COLORS.danger} />
+            </View>
+            <Text style={styles.confirmTitle}>Cerrar sesión</Text>
+            <Text style={styles.confirmText}>¿Seguro? Tus datos guardados se mantendrán en el dispositivo.</Text>
+            <View style={styles.confirmActions}>
+              <TouchableOpacity style={styles.confirmCancelBtn} onPress={() => setConfirmLogout(false)}>
+                <Text style={styles.confirmCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.confirmDeleteBtn} onPress={confirmLogoutNow}>
+                <Text style={styles.confirmDeleteText}>Cerrar sesión</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }

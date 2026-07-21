@@ -18,15 +18,6 @@ COMANDO RÁPIDO:
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
 
-  — Iniciar sesión en Expo/EAS (eas login) para vincular el proyecto
-    (eas init → obtener extra.eas.projectId en app.json) y poder correr
-    "eas build --profile preview" y generar el APK real.
-    → Al arrancar "npx expo start" apareció un prompt pidiendo login de
-      Expo antes de levantar el servidor (2026-07-06); el usuario no
-      tiene cuenta creada todavía. No es necesario para desarrollo local
-      normal, solo para EAS build / vincular el proyecto — queda pendiente
-      para cuando se quiera generar el primer build instalable.
-
   — Reactivar "Confirm email" en el dashboard de Supabase
     (Authentication → Providers → Email) antes del lanzamiento público.
     → El código ya está listo para esto (ver RESUELTO más abajo, ronda
@@ -41,6 +32,26 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ EAS ya estaba vinculado — nota desactualizada (AUDITA, 2026-07-21)
+    → El pendiente "por MAQUINA" de hacer eas login/eas init ya no aplicaba: app.json
+      tiene extra.eas.projectId configurado y eas.json ya tiene los 3 perfiles de build
+      (development/preview/production). eas whoami confirmó sesión activa (nicksero) en
+      esta máquina. Se quitó el pendiente de este archivo.
+
+  ✓ "Eliminar aporte" (meta) y "Cerrar sesión" ya no rompen el tema oscuro (FIXA, 2026-07-21)
+    → Seguimiento de la auditoría AUDITA del mismo día: quedaban 2 lugares con el mismo
+      Alert.alert nativo que ya se había reemplazado en el resto de la app.
+    → app/(tabs)/resumen.tsx (GoalDetailModal): nuevo estado confirmDeleteDeposit. El
+      long-press sobre un aporte del historial de una meta ya no llama Alert.alert —
+      abre un modal de confirmación centrado (ícono de basurero, botones Cancelar/
+      Eliminar), mismo estilo visual que "Eliminar meta" (estilos duplicados como
+      confirm* dentro de gdStyles, ya que GoalDetailModal es un componente separado
+      con sus propios estilos).
+    → app/(tabs)/perfil.tsx: nuevo estado confirmLogout + modal de confirmación
+      centrado con el mismo patrón visual (ícono log-out, texto, Cancelar/Cerrar
+      sesión). Se quitó el import de Alert (ya sin uso en el archivo).
+    → Verificado con `npx tsc --noEmit` sin errores en ambos archivos.
 
   ✓ "Eliminar" ya no rompe el tema oscuro en Metas ni en Tarjetas (FIXA/ESTETIK, 2026-07-19)
     → Seguimiento del informe ESTETIK "fluidez e interacción" (12 jul 2026): el hallazgo

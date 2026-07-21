@@ -14,8 +14,15 @@ ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")  # colores reales aplicados manualmente via tema.py
 
 # Saludo que se muestra arriba de los botones (distinto del titulo de la
-# ventana/taskbar, que sigue siendo APP_NAME = "Pollito").
-SALUDO = "Hola mi Sofi \U0001FA77"
+# ventana/taskbar, que sigue siendo APP_NAME = "Pollito"). Se usa el simbolo
+# clasico "corazon" (U+2665) en vez de un emoji de corazon rosa: los emojis
+# nuevos no siempre tienen glifo en todas las fuentes/versiones de Windows
+# (se vio como un cuadrito en la maquina de prueba), y la app tiene que
+# funcionar tambien en Windows 7.
+SALUDO = "Hola mi Sofi ♥"
+
+TAMANO_VENTANA = (420, 580)
+TAMANO_MASCOTA = 160
 
 SKILLS = [
     ("Maquillaje y Skincare", maquillaje_skincare.abrir_ventana),
@@ -30,12 +37,13 @@ class MenuPrincipal(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title(APP_NAME)
-        self.geometry("680x580")
+        self.geometry("{}x{}".format(*TAMANO_VENTANA))
         self.resizable(False, False)
         self.configure(fg_color=tema.FONDO)
         self._ventanas_abiertas = {}
         self._aplicar_icono()
         self._construir_ui()
+        self._agregar_mascota()
 
     def _aplicar_icono(self):
         icono = get_base_path() / "assets" / "icons" / "icon.ico"
@@ -46,19 +54,13 @@ class MenuPrincipal(ctk.CTk):
                 pass  # sin icono no rompe la app, solo se ve el default de Tk
 
     def _construir_ui(self):
-        columna_botones = ctk.CTkFrame(self, fg_color="transparent")
-        columna_botones.pack(side="left", fill="both", expand=True, padx=(28, 8), pady=28)
-
-        columna_mascota = ctk.CTkFrame(self, fg_color="transparent")
-        columna_mascota.pack(side="right", fill="both", padx=(8, 28), pady=28)
-
         titulo = ctk.CTkLabel(
-            columna_botones,
+            self,
             text=SALUDO,
-            font=ctk.CTkFont(size=26, weight="bold"),
+            font=ctk.CTkFont(size=28, weight="bold"),
             text_color=tema.TEXTO,
         )
-        titulo.pack(pady=(8, 24))
+        titulo.pack(pady=(36, 28))
 
         # Tipografia "cute" para los nombres de las skills - Segoe Print
         # viene instalada por defecto en Windows y se ve mas tierna que una
@@ -67,7 +69,7 @@ class MenuPrincipal(ctk.CTk):
 
         for nombre, abrir_ventana in SKILLS:
             boton = ctk.CTkButton(
-                columna_botones,
+                self,
                 text=nombre,
                 width=300,
                 height=56,
@@ -80,18 +82,27 @@ class MenuPrincipal(ctk.CTk):
             )
             boton.pack(pady=10)
 
-        self._agregar_mascota(columna_mascota)
-
-    def _agregar_mascota(self, contenedor):
-        """Pollito decorativo a la derecha de la ventana (reusa el mismo
-        arte que el icono, generado con assets/generar_icono.py)."""
+    def _agregar_mascota(self):
+        """Pollito decorativo asomando por la esquina inferior derecha,
+        parcialmente "afuera" de la ventana (recortado por el borde) -
+        reusa el mismo arte que el icono, generado con
+        assets/generar_icono.py."""
         ruta_imagen = get_base_path() / "assets" / "icons" / "icon.png"
         if not ruta_imagen.exists():
             return
         imagen_pil = Image.open(ruta_imagen)
-        imagen = ctk.CTkImage(light_image=imagen_pil, dark_image=imagen_pil, size=(240, 240))
-        etiqueta = ctk.CTkLabel(contenedor, image=imagen, text="")
-        etiqueta.pack(expand=True)
+        imagen = ctk.CTkImage(
+            light_image=imagen_pil, dark_image=imagen_pil, size=(TAMANO_MASCOTA, TAMANO_MASCOTA)
+        )
+        etiqueta = ctk.CTkLabel(self, image=imagen, text="", fg_color="transparent")
+
+        ancho_ventana, alto_ventana = TAMANO_VENTANA
+        # Se muestra ~2/3 de la mascota; el resto queda mas alla del borde
+        # de la ventana y Tk simplemente no lo dibuja (efecto "saliendo").
+        x = ancho_ventana - int(TAMANO_MASCOTA * 0.62)
+        y = alto_ventana - int(TAMANO_MASCOTA * 0.62)
+        etiqueta.place(x=x, y=y)
+        etiqueta.lower()  # detras de los botones, por si llega a superponerse
 
     def _abrir_skill(self, nombre, abrir_ventana):
         # Evita abrir dos veces la misma ventana de chat si ya esta abierta.
