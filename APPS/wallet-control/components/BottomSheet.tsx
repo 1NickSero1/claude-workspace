@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, KeyboardAvoidingView, Platform, StyleSheet, ViewStyle } from 'react-native';
+import { Modal, View, TouchableOpacity, KeyboardAvoidingView, Platform, StyleSheet, ViewStyle } from 'react-native';
 import { useColors } from '@/constants/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/theme';
 
@@ -32,6 +32,7 @@ export default function BottomSheet({
         style={[styles.overlay, { backgroundColor: `rgba(0,0,0,${overlayOpacity})` }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        <TouchableOpacity style={styles.dismissArea} onPress={onClose} activeOpacity={1} />
         <View
           style={[
             styles.sheet,
@@ -54,6 +55,7 @@ export default function BottomSheet({
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end' },
+  dismissArea: { flex: 1 },
   sheet: { padding: SPACING.xl, overflow: 'hidden' },
   handle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: SPACING.lg },
 });
