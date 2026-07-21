@@ -364,7 +364,7 @@ export default function OnboardingScreen() {
     featureText: { flex: 1, color: COLORS.text, fontSize: FONT.md, lineHeight: 20 },
 
     // Choice
-    choiceContainer: { flexGrow: 1, paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl, paddingBottom: SPACING.xxl },
+    choiceContainer: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl, paddingBottom: SPACING.xxl },
     optionCard: {
       flexDirection: 'row', alignItems: 'center', gap: 14,
       backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: SPACING.lg,
@@ -397,7 +397,7 @@ export default function OnboardingScreen() {
     },
 
     // Form
-    formScroll: { paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl, paddingBottom: 40 },
+    formScroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl, paddingBottom: 40 },
     backBtn: {
       width: 40, height: 40, borderRadius: RADIUS.md,
       backgroundColor: COLORS.card, alignItems: 'center', justifyContent: 'center',

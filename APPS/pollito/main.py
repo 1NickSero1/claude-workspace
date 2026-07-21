@@ -22,7 +22,7 @@ ctk.set_default_color_theme("blue")  # colores reales aplicados manualmente via 
 SALUDO = "Hola mi Sofi ♥"
 
 TAMANO_VENTANA = (420, 580)
-TAMANO_MASCOTA = 160
+TAMANO_MASCOTA = 130
 
 SKILLS = [
     ("Maquillaje y Skincare", maquillaje_skincare.abrir_ventana),
@@ -67,6 +67,7 @@ class MenuPrincipal(ctk.CTk):
         # tipografia generica, sin perder legibilidad.
         fuente_botones = ctk.CTkFont(family="Segoe Print", size=15, weight="bold")
 
+        self._ultimo_boton = None
         for nombre, abrir_ventana in SKILLS:
             boton = ctk.CTkButton(
                 self,
@@ -81,12 +82,14 @@ class MenuPrincipal(ctk.CTk):
                 command=lambda fn=abrir_ventana, n=nombre: self._abrir_skill(n, fn),
             )
             boton.pack(pady=10)
+            self._ultimo_boton = boton
 
     def _agregar_mascota(self):
-        """Pollito decorativo asomando por la esquina inferior derecha,
-        parcialmente "afuera" de la ventana (recortado por el borde) -
-        reusa el mismo arte que el icono, generado con
-        assets/generar_icono.py."""
+        """Pollito decorativo saliendo por el borde derecho de la ventana
+        (recortado por Tk al no dibujar lo que queda fuera del area de la
+        ventana) - se ve completo de arriba a abajo, solo se recorta a la
+        derecha. Reusa el mismo arte que el icono
+        (assets/generar_icono.py)."""
         ruta_imagen = get_base_path() / "assets" / "icons" / "icon.png"
         if not ruta_imagen.exists():
             return
@@ -96,13 +99,22 @@ class MenuPrincipal(ctk.CTk):
         )
         etiqueta = ctk.CTkLabel(self, image=imagen, text="", fg_color="transparent")
 
-        ancho_ventana, alto_ventana = TAMANO_VENTANA
-        # Se muestra ~2/3 de la mascota; el resto queda mas alla del borde
-        # de la ventana y Tk simplemente no lo dibuja (efecto "saliendo").
-        x = ancho_ventana - int(TAMANO_MASCOTA * 0.62)
-        y = alto_ventana - int(TAMANO_MASCOTA * 0.62)
+        self.update_idletasks()
+        ancho_ventana = self.winfo_width()
+        alto_ventana = self.winfo_height()
+
+        y_libre_de_botones = self._ultimo_boton.winfo_y() + self._ultimo_boton.winfo_height() + 24
+        y_apoyado_abajo = alto_ventana - TAMANO_MASCOTA
+        # Si hay lugar de sobra debajo del ultimo boton, apoya la mascota
+        # bien abajo (se ve completa, sin recorte vertical). Si no entra,
+        # prioriza no tapar los botones antes que evitar un recorte chico.
+        y = max(y_libre_de_botones, y_apoyado_abajo)
+
+        # Solo se muestra ~65% del ancho - el resto "sale" por el borde
+        # derecho de la ventana.
+        x = ancho_ventana - int(TAMANO_MASCOTA * 0.65)
+
         etiqueta.place(x=x, y=y)
-        etiqueta.lower()  # detras de los botones, por si llega a superponerse
 
     def _abrir_skill(self, nombre, abrir_ventana):
         # Evita abrir dos veces la misma ventana de chat si ya esta abierta.

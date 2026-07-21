@@ -17,7 +17,7 @@ interface Props {
 
 export default function CardView({ card, totalSpent = 0, selected, onPress, onLongPress, compact }: Props) {
   const { width, moderateScale } = useResponsive();
-  const CARD_W = width * 0.72;
+  const CARD_W = Math.min(width * 0.72, 340);
   const CARD_H = CARD_W * 0.58;
   const styles = useMemo(() => StyleSheet.create(scaledSheet({
     card: {
