@@ -1105,8 +1105,8 @@ export default function ResumenScreen() {
 
       {/* Confirmación de eliminar meta (reemplaza Alert.alert nativo) */}
       <Modal visible={!!confirmDeleteGoal} animationType="fade" transparent onRequestClose={() => setConfirmDeleteGoal(null)}>
-        <View style={styles.goalConfirmOverlay}>
-          <View style={styles.goalConfirmCard}>
+        <TouchableOpacity style={styles.goalConfirmOverlay} activeOpacity={1} onPress={() => setConfirmDeleteGoal(null)}>
+          <TouchableOpacity style={styles.goalConfirmCard} activeOpacity={1} onPress={() => {}}>
             <View style={styles.goalConfirmIcon}>
               <Ionicons name="trash" size={26} color={COLORS.danger} />
             </View>
@@ -1120,8 +1120,8 @@ export default function ResumenScreen() {
                 <Text style={styles.goalConfirmDeleteText}>Eliminar</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* ── Summary popup (donut tap) ─────────────────── */}
