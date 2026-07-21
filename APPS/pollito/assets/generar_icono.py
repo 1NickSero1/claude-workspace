@@ -77,11 +77,12 @@ def _dibujar_pollito(draw: ImageDraw.ImageDraw, cx: int) -> None:
     # Pico (triangulo pequeño, centrado debajo de los ojos)
     draw.polygon(_p([(cx - 20, 210), (cx + 20, 210), (cx, 237)]), fill=COLOR_PICO)
 
-    # Lazo (dos triangulos + nudo), arriba a un costado de la cabeza
-    lx, ly = cx + 90, 100
-    draw.polygon(_p([(lx - 40, ly), (lx, ly - 22), (lx, ly + 22)]), fill=COLOR_LAZO)
-    draw.polygon(_p([(lx + 40, ly), (lx, ly - 22), (lx, ly + 22)]), fill=COLOR_LAZO)
-    draw.ellipse(_e([lx - 10, ly - 10, lx + 10, ly + 10]), fill=COLOR_SOMBRA)
+    # Lazo (dos "moños" ovalados + nudo central), centrado arriba de la
+    # cabeza - mas reconocible como lazo que triangulos cruzados.
+    ly = 72
+    draw.ellipse(_e([cx - 62, ly - 20, cx - 14, ly + 20]), fill=COLOR_LAZO)
+    draw.ellipse(_e([cx + 14, ly - 20, cx + 62, ly + 20]), fill=COLOR_LAZO)
+    draw.ellipse(_e([cx - 16, ly - 16, cx + 16, ly + 16]), fill=COLOR_SOMBRA)
 
 
 def _agregar_brillo(imagen: Image.Image, cx: int) -> Image.Image:
