@@ -485,6 +485,19 @@ v1.17 — 2026-07-19 · Confirmaciones de eliminar con tema propio
   botones Cancelar/Eliminar
 
 ------------------------------------------------------------
+v1.18 — 2026-07-20 · Cerrar modales tocando afuera
+------------------------------------------------------------
+• Todos los sheets y ventanas emergentes de la app ahora se pueden cerrar
+  tocando la zona oscura de afuera, no solo con el botón "X" o "Cancelar":
+  — Sheet compartido (categoría, registro rápido, presupuesto, categorías,
+    tarjeta/cuenta): editar/agregar gasto de una categoría, formulario de
+    presupuesto, formulario de categoría, formulario de tarjeta/cuenta
+  — Confirmaciones de eliminar: meta, tarjeta/cuenta, categoría, gasto
+  — Modal "Editar gasto" y aviso "Abono mayor a la deuda" en Tarjetas
+• Los menús de acciones y popups que ya cerraban tocando afuera (Resumen,
+  Balance General, Metas, Ingresos) quedaron igual, sin cambios
+
+------------------------------------------------------------
 [PRÓXIMO]
 ------------------------------------------------------------
 • Build permanente (APK) para compartir sin servidor
