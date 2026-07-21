@@ -313,8 +313,8 @@ export default function CategoriasScreen() {
 
       {/* Confirmación de eliminar (reemplaza Alert.alert nativo) */}
       <Modal visible={!!confirmDeleteCat} animationType="fade" transparent onRequestClose={() => setConfirmDeleteCat(null)}>
-        <View style={styles.confirmOverlay}>
-          <View style={styles.confirmCard}>
+        <TouchableOpacity style={styles.confirmOverlay} activeOpacity={1} onPress={() => setConfirmDeleteCat(null)}>
+          <TouchableOpacity style={styles.confirmCard} activeOpacity={1} onPress={() => {}}>
             <View style={styles.confirmIcon}>
               <Ionicons name="trash" size={26} color={COLORS.danger} />
             </View>
@@ -330,8 +330,8 @@ export default function CategoriasScreen() {
                 <Text style={styles.confirmDeleteText}>Eliminar</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* FAB */}

@@ -306,8 +306,8 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
 
     {/* Confirmación de eliminar (reemplaza Alert.alert nativo) */}
     <Modal visible={!!confirmDeleteExp} animationType="fade" transparent onRequestClose={() => setConfirmDeleteExp(null)}>
-      <View style={dStyles.confirmOverlay}>
-        <View style={dStyles.confirmCard}>
+      <TouchableOpacity style={dStyles.confirmOverlay} activeOpacity={1} onPress={() => setConfirmDeleteExp(null)}>
+        <TouchableOpacity style={dStyles.confirmCard} activeOpacity={1} onPress={() => {}}>
           <View style={dStyles.confirmIcon}>
             <Ionicons name="trash" size={26} color={COLORS.danger} />
           </View>
@@ -323,8 +323,8 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
               <Text style={dStyles.confirmDeleteText}>Eliminar</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
     </>
   );
