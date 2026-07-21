@@ -12,7 +12,14 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-  — (vacío por ahora)
+poner el deslizable para ver el balance del mes anterior
+quita los botones que están con líneas punteadas en la pantalla de tarjetas, de efectivo de crédito y debito, quita el + pequeño de tarjetas de debito y deja solo el + grande de la abajo derecha
+que desde el + de la pantalla de debito pueda agregar una tarjeta debito y el efectivo desde el mismo + morado
+quita la opción de efectivo cuando uno ingresa al pop up de ingresar nuevo efectivo ya que es mucho ya es intrusivo
+quita el emogi que aparece inicial y donde dice opcional recomiéndale emojis genéricos para efectivo
+pon que sea obligatorio poner el monto al crear cualquier tipo de cuenta sea debito/creito o efectivo y que si se va a salir confirme si quiere dejarlo en 0 o borrar lo que hizo
+pon que quizá pueda poner un avatar en vez de una foto de perfil
+
 
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
