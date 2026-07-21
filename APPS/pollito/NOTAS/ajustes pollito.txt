@@ -2,18 +2,28 @@
  AJUSTES POLLITO - PENDIENTES Y BUGS
 ====================================================
 
+[RESUELTO]
+- Python 3.8.10 instalado (Windows installer (64-bit) oficial de
+  python.org, no la version de Microsoft Store). El PATH del usuario aun no
+  lo ve en la sesion de Claude Code actual (falta reiniciar la app por
+  completo) - mientras tanto se usa la ruta completa
+  %LOCALAPPDATA%\Programs\Python\Python38\python.exe.
+- Dependencias instaladas (pip install -r requirements.txt). Hubo que
+  bypassear un proxy local (127.0.0.1, de un antivirus haciendo inspeccion
+  HTTPS) que rompia el pip viejo (21.1.1) con el error "check_hostname
+  requires server_hostname" - se soluciono forzando HTTP_PROXY/HTTPS_PROXY
+  con esquema http:// explicito en vez del valor ambiguo del registro.
+- assets/icons/icon.ico, icon.png y assets/fondo.png generados y revisados
+  visualmente - el primer intento del lazo se veia como un rombo suelto, se
+  corrigio a dos ovalos + nudo central, mas reconocible como lazo.
+- Verificado que main.py levanta sin errores: sintaxis limpia en todos los
+  .py del proyecto, y la ventana "Pollito" abre y queda estable (probado en
+  vivo, cerrada manualmente despues).
+
 [PENDIENTE]
-- Instalar Python 3.8.10 (no esta instalado en esta maquina; el "python" del
-  sistema es solo el alias de Microsoft Store, no una instalacion real).
-  Descargar el instalador oficial desde python.org, NO desde Microsoft
-  Store (que solo ofrece versiones recientes, incompatibles con Windows 7).
-- Una vez instalado Python: crear el entorno (pip install -r
-  requirements.txt) y correr "python assets/generar_icono.py" para generar
-  assets/icons/icon.ico, assets/icons/icon.png y assets/fondo.png - no se
-  pudo ejecutar en esta sesion por no haber Python instalado, solo se dejo
-  el script listo.
 - Reemplazar el placeholder de secreto.py con la API key real del usuario
-  (nunca por chat) antes de poder probar o compilar la app de verdad.
+  (nunca por chat) antes de poder probar el chat de verdad o compilar la
+  app para entregarsela a la novia.
 - Nombres personalizados de cada una de las 5 skills (el usuario los va a
   dar mas adelante, antes de cerrar el proyecto) - hoy usan nombres
   genericos (TITULO en cada modulo de skills/).
@@ -21,12 +31,14 @@
   fuera de esta ronda) - si se quiere aplicar como fondo decorativo detras
   del menu principal, hay que agregarlo con un CTkLabel de imagen o un
   Canvas de fondo.
-- Probar en dispositivo/maquina real todo el flujo: las 5 ventanas, el
-  limite diario de tokens (bajar LIMITE_TOKENS_DIARIOS temporalmente para
-  probarlo rapido), y en particular la memoria persistente de Psicologia
-  (confirmar que crea y reutiliza archivos en
-  %APPDATA%/Pollito/memoria_psicologia/ entre sesiones distintas).
-- Empaquetar con PyInstaller (--onefile --windowed --icon=assets/icons/
-  icon.ico) y probarlo en una carpeta distinta sin variables de entorno,
-  simulando la PC de la novia (recordar: puede salir el aviso de Windows
-  SmartScreen la primera vez, es esperado en un .exe sin firmar).
+- Probar con la key real: las 5 ventanas de chat, que la busqueda web
+  responda con info real, el limite diario de tokens (bajar
+  LIMITE_TOKENS_DIARIOS temporalmente para probarlo rapido), y en
+  particular la memoria persistente de Psicologia (confirmar que crea y
+  reutiliza archivos en %APPDATA%/Pollito/memoria_psicologia/ entre
+  sesiones distintas).
+- Empaquetar con PyInstaller (pyinstaller --onefile --windowed
+  --icon=assets/icons/icon.ico --name Pollito main.py) y probarlo en una
+  carpeta distinta sin variables de entorno, simulando la PC de la novia
+  (recordar: puede salir el aviso de Windows SmartScreen la primera vez, es
+  esperado en un .exe sin firmar).
