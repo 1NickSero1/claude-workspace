@@ -1,18 +1,16 @@
 """Pollito - ventana principal (menu).
 
-TODO pendiente de personalizacion (ver 6 preguntas de PECAS en
-RECETAS/receta-apps.txt):
-- Nombre definitivo de la app (config.APP_NAME)
-- Nombre personalizado de cada skill (dentro de cada modulo en skills/)
-- Paleta de colores final (por ahora tema por defecto de CustomTkinter)
+TODO pendiente: nombre personalizado de cada skill (dentro de cada modulo
+en skills/) - el usuario los dara mas adelante, antes de cerrar el proyecto.
 """
 import customtkinter as ctk
 
-from config import APP_NAME
+import tema
+from config import APP_NAME, get_base_path
 from skills import finanzas, gym_nutricion, maquillaje_skincare, moda, psicologia
 
 ctk.set_appearance_mode("light")
-ctk.set_default_color_theme("blue")  # TODO: reemplazar por paleta pastel/rosada/lavanda
+ctk.set_default_color_theme("blue")  # colores reales aplicados manualmente via tema.py
 
 SKILLS = [
     ("Maquillaje y Skincare", maquillaje_skincare.abrir_ventana),
@@ -29,12 +27,25 @@ class MenuPrincipal(ctk.CTk):
         self.title(APP_NAME)
         self.geometry("420x580")
         self.resizable(False, False)
+        self.configure(fg_color=tema.FONDO)
         self._ventanas_abiertas = {}
+        self._aplicar_icono()
         self._construir_ui()
+
+    def _aplicar_icono(self):
+        icono = get_base_path() / "assets" / "icons" / "icon.ico"
+        if icono.exists():
+            try:
+                self.iconbitmap(str(icono))
+            except Exception:
+                pass  # sin icono no rompe la app, solo se ve el default de Tk
 
     def _construir_ui(self):
         titulo = ctk.CTkLabel(
-            self, text=APP_NAME, font=ctk.CTkFont(size=28, weight="bold")
+            self,
+            text=APP_NAME,
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color=tema.TEXTO,
         )
         titulo.pack(pady=(36, 28))
 
@@ -46,6 +57,9 @@ class MenuPrincipal(ctk.CTk):
                 height=56,
                 corner_radius=18,
                 font=ctk.CTkFont(size=16),
+                fg_color=tema.ACENTOS.get(nombre, tema.BOTON_PRINCIPAL),
+                hover_color=tema.BOTON_PRINCIPAL_HOVER,
+                text_color=tema.TEXTO,
                 command=lambda fn=abrir_ventana, n=nombre: self._abrir_skill(n, fn),
             )
             boton.pack(pady=10)

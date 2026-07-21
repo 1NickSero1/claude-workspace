@@ -1,5 +1,4 @@
 customtkinter>=5.2,<6
 pyinstaller>=6.0,<7
-# TODO: agregar aqui el SDK del proveedor de LLM elegido (pregunta 3 de
-# RECETAS/receta-apps.txt), por ejemplo:
-# anthropic>=0.40
+anthropic>=0.40,<1
+pillow>=10.0,<11

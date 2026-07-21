@@ -1,30 +1,77 @@
 """Ventana de chat generica, reutilizada por cada una de las 5 skills.
 
 Cada skill le pasa su propio system_prompt; el codigo de ventana/UI es el
-mismo para las 5. TODO: conectar la llamada real a la API una vez definida
-la pregunta 3 (proveedor/modelo) de RECETAS/receta-apps.txt - hoy
-_llamar_api() es un placeholder para no bloquear el resto del desarrollo.
+mismo para las 5. _llamar_api() hace la llamada real a la API de Anthropic
+(Claude Sonnet 5), con busqueda web server-side habilitada por defecto.
 """
 import threading
+from typing import Optional
 
+import anthropic
 import customtkinter as ctk
 
-from config import LIMITE_MENSAJES_SESION
+import tema
+from config import (
+    LIMITE_MENSAJES_SESION,
+    MAX_TOKENS_RESPUESTA,
+    MODEL_ID,
+    OUTPUT_CONFIG,
+    THINKING_CONFIG,
+    WEB_SEARCH_TOOL,
+    get_api_key,
+)
+from uso_diario import limite_alcanzado, registrar_uso
+
+# Tope de reintentos si el loop server-side de busqueda web pausa
+# (stop_reason == "pause_turn") por llegar a su limite interno de
+# iteraciones. Evita un loop infinito en un caso patologico.
+_MAX_REINTENTOS_PAUSE_TURN = 5
+
+_cliente: Optional[anthropic.Anthropic] = None
+_cliente_lock = threading.Lock()
+
+
+def _obtener_cliente() -> anthropic.Anthropic:
+    """Cliente de Anthropic compartido por las 5 ventanas de chat, creado
+    de forma perezosa (recien en el primer mensaje) y una sola vez."""
+    global _cliente
+    if _cliente is None:
+        with _cliente_lock:
+            if _cliente is None:
+                _cliente = anthropic.Anthropic(api_key=get_api_key())
+    return _cliente
 
 
 class VentanaChat(ctk.CTkToplevel):
-    def __init__(self, parent, titulo: str, system_prompt: str, tools=None):
+    def __init__(
+        self,
+        parent,
+        titulo: str,
+        system_prompt: str,
+        tools=None,
+        acento: Optional[str] = None,
+    ):
         super().__init__(parent)
         self.title(titulo)
         self.geometry("480x640")
+        self.configure(fg_color=tema.FONDO)
         self.system_prompt = system_prompt
-        self.tools = tools or []
+        # Por defecto, las 5 skills tienen busqueda web habilitada.
+        self.tools = tools if tools is not None else [WEB_SEARCH_TOOL]
+        self.acento = acento or tema.BOTON_PRINCIPAL
         self.historial = []
         self._mensajes_enviados = 0
         self._construir_ui()
 
     def _construir_ui(self):
-        self.area_chat = ctk.CTkTextbox(self, wrap="word")
+        self.area_chat = ctk.CTkTextbox(
+            self,
+            wrap="word",
+            fg_color=tema.FONDO_SECUNDARIO,
+            text_color=tema.TEXTO,
+            border_color=self.acento,
+            border_width=2,
+        )
         self.area_chat.pack(fill="both", expand=True, padx=16, pady=(16, 8))
         self.area_chat.configure(state="disabled")
 
@@ -35,7 +82,14 @@ class VentanaChat(ctk.CTkToplevel):
         self.entrada.pack(side="left", fill="x", expand=True, padx=(0, 8))
         self.entrada.bind("<Return>", lambda evento: self._enviar())
 
-        boton_enviar = ctk.CTkButton(frame_input, text="Enviar", width=80, command=self._enviar)
+        boton_enviar = ctk.CTkButton(
+            frame_input,
+            text="Enviar",
+            width=80,
+            fg_color=self.acento,
+            hover_color=tema.BOTON_PRINCIPAL_HOVER,
+            command=self._enviar,
+        )
         boton_enviar.pack(side="right")
 
     def _agregar_mensaje(self, remitente: str, texto: str):
@@ -57,6 +111,15 @@ class VentanaChat(ctk.CTkToplevel):
             )
             return
 
+        # Verificacion del limite diario de tokens ANTES de llamar a la API.
+        if limite_alcanzado():
+            self._agregar_mensaje(
+                "Sistema",
+                "Se alcanzo el limite diario de uso de Pollito. Intenta de "
+                "nuevo manana.",
+            )
+            return
+
         self.entrada.delete(0, "end")
         self._agregar_mensaje("Tu", mensaje)
         self.historial.append({"role": "user", "content": mensaje})
@@ -66,8 +129,105 @@ class VentanaChat(ctk.CTkToplevel):
         hilo.start()
 
     def _llamar_api(self):
-        # TODO: reemplazar por la llamada real a la API elegida (pregunta 3
-        # de RECETAS/receta-apps.txt). Placeholder para poder probar la UI
-        # completa antes de tener las respuestas del usuario.
-        respuesta = "[respuesta de ejemplo - falta conectar la API real]"
-        self.after(0, lambda: self._agregar_mensaje(self.title(), respuesta))
+        mensajes = list(self.historial)
+        tokens_totales = 0
+
+        try:
+            cliente = _obtener_cliente()
+            respuesta = cliente.messages.create(
+                model=MODEL_ID,
+                max_tokens=MAX_TOKENS_RESPUESTA,
+                system=self.system_prompt,
+                tools=self.tools,
+                thinking=THINKING_CONFIG,
+                output_config=OUTPUT_CONFIG,
+                messages=mensajes,
+            )
+            tokens_totales += respuesta.usage.input_tokens + respuesta.usage.output_tokens
+
+            intentos = 0
+            while (
+                respuesta.stop_reason == "pause_turn"
+                and intentos < _MAX_REINTENTOS_PAUSE_TURN
+            ):
+                # El loop server-side de busqueda web llego a su limite
+                # interno de iteraciones. Se reenvia el historial completo
+                # mas el turno del asistente pausado - NO se agrega ningun
+                # mensaje nuevo de usuario tipo "Continue", la API detecta
+                # el bloque server_tool_use pendiente y retoma sola.
+                mensajes = mensajes + [{"role": "assistant", "content": respuesta.content}]
+                respuesta = cliente.messages.create(
+                    model=MODEL_ID,
+                    max_tokens=MAX_TOKENS_RESPUESTA,
+                    system=self.system_prompt,
+                    tools=self.tools,
+                    thinking=THINKING_CONFIG,
+                    output_config=OUTPUT_CONFIG,
+                    messages=mensajes,
+                )
+                tokens_totales += respuesta.usage.input_tokens + respuesta.usage.output_tokens
+                intentos += 1
+
+        except anthropic.AuthenticationError:
+            self.after(
+                0,
+                lambda: self._agregar_mensaje(
+                    "Sistema",
+                    "Falta configurar la API key correctamente (revisa secreto.py).",
+                ),
+            )
+            return
+        except anthropic.APIConnectionError:
+            self.after(
+                0,
+                lambda: self._agregar_mensaje(
+                    "Sistema", "No se pudo conectar a internet. Intenta de nuevo."
+                ),
+            )
+            return
+        except anthropic.RateLimitError:
+            self.after(
+                0,
+                lambda: self._agregar_mensaje(
+                    "Sistema",
+                    "Demasiadas solicitudes por ahora. Espera un momento e "
+                    "intenta de nuevo.",
+                ),
+            )
+            return
+        except anthropic.APIStatusError:
+            self.after(
+                0,
+                lambda: self._agregar_mensaje(
+                    "Sistema",
+                    "Hubo un error con el servicio de IA. Intenta de nuevo mas tarde.",
+                ),
+            )
+            return
+        except Exception:
+            self.after(
+                0,
+                lambda: self._agregar_mensaje(
+                    "Sistema", "Ocurrio un error inesperado. Intenta de nuevo."
+                ),
+            )
+            return
+
+        # Concatena solo los bloques de texto, ignorando bloques de
+        # busqueda web (server_tool_use / web_search_tool_result) y de
+        # pensamiento (thinking).
+        texto_final = "".join(
+            bloque.text for bloque in respuesta.content if bloque.type == "text"
+        )
+
+        # Se guarda el turno completo del asistente (response.content, no
+        # solo el texto) para conservar contexto de las herramientas
+        # server-side usadas en proximos mensajes.
+        self.historial.append({"role": "assistant", "content": respuesta.content})
+
+        registrar_uso(tokens_totales)
+
+        self.after(
+            0,
+            lambda: self._agregar_mensaje(self.title(), texto_final or "(sin respuesta)"),
+        )

@@ -1,25 +1,48 @@
-"""Configuracion central: modelo de LLM y manejo de la API key.
-
-Pendiente de definir con el usuario (ver 6 preguntas de PECAS en
-RECETAS/receta-apps.txt) antes de que esto deje de ser un placeholder:
-- Que proveedor/modelo usar (pregunta 3)
-- Si la key va embebida en el .exe o se pide a la usuaria en el primer uso
-  (pregunta 5)
-- Limite de mensajes/gasto por seguridad (pregunta 6)
-"""
+"""Configuracion central: modelo de LLM, herramientas y manejo de la API key."""
 import os
 import sys
 from pathlib import Path
 from typing import Optional
 
-APP_NAME = "Pollito"  # TODO: nombre definitivo pendiente (pregunta 1)
+APP_NAME = "Pollito"
 
-# TODO: reemplazar por el modelo elegido una vez definida la pregunta 3.
+# Claude Sonnet 5: buen balance costo/calidad, con herramienta de busqueda
+# web nativa server-side (las 5 skills la necesitan - respuesta a pregunta 3).
 MODEL_ID = "claude-sonnet-5"
 
-# TODO: limite de mensajes por sesion como control de gasto (pregunta 6).
-# Placeholder conservador hasta que el usuario confirme el numero.
+# Tope de tokens de salida por respuesta. Conservador: es un chat personal,
+# no necesita respuestas de miles de tokens.
+MAX_TOKENS_RESPUESTA = 2048
+
+# Herramienta de busqueda web server-side (Anthropic). La variante _20260209
+# soporta "dynamic filtering" (Claude filtra resultados con codigo antes de
+# que lleguen al contexto) y esta soportada por Sonnet 5. No requiere beta
+# header ni ejecucion del lado cliente - Anthropic la corre por su cuenta.
+WEB_SEARCH_TOOL = {
+    "type": "web_search_20260209",
+    "name": "web_search",
+    "max_uses": 5,  # tope de busquedas por turno, control de costo adicional
+}
+
+# Effort bajo: reduce la profundidad de razonamiento y el gasto de tokens por
+# respuesta. Va anidado en output_config, no como parametro top-level.
+OUTPUT_CONFIG = {"effort": "low"}
+
+# En Sonnet 5, si no se manda "thinking", el modelo corre en modo adaptive
+# (pensamiento activado) por defecto - no es "sin pensar". Se desactiva
+# explicitamente para no gastar tokens de mas en un chat de uso cotidiano.
+# Si en el futuro se prefieren respuestas mas razonadas a costa de mas gasto,
+# cambiar a {"type": "adaptive"}.
+THINKING_CONFIG = {"type": "disabled"}
+
+# Limite de mensajes por sesion como control de gasto adicional (pregunta 6).
 LIMITE_MENSAJES_SESION = 50
+
+# Limite de gasto diario en tokens (pregunta 6): 20% de la base diaria del
+# usuario. LIMITE_TOKENS_DIARIOS_TOTAL = 100_000 confirmado por el usuario
+# (default conservador) -> tope real de 20_000 tokens/dia.
+LIMITE_TOKENS_DIARIOS_TOTAL = 100_000
+LIMITE_TOKENS_DIARIOS = int(LIMITE_TOKENS_DIARIOS_TOTAL * 0.20)
 
 
 def get_base_path() -> Path:
@@ -32,8 +55,14 @@ def get_base_path() -> Path:
 
 
 def get_api_key() -> Optional[str]:
-    """TODO: definir aqui si la key viene embebida (constante en este mismo
-    archivo) o se lee de un archivo local creado en el primer uso de la app
-    (ver pregunta 5). Por ahora solo lee una variable de entorno para poder
-    probar el flujo de chat sin bloquear el resto del desarrollo."""
-    return os.environ.get("POLLITO_API_KEY")
+    """La key es la del usuario y va embebida en el .exe compilado (pregunta
+    5): vive en secreto.py, un archivo local que esta en .gitignore y que
+    PyInstaller bundlea automaticamente al compilar por ser un import Python
+    normal. Nunca se pide ni se acepta pegada en el chat de Claude Code. Si
+    secreto.py no existe todavia (checkout limpio antes de crearlo), cae a
+    la variable de entorno POLLITO_API_KEY para no bloquear el desarrollo."""
+    try:
+        from secreto import API_KEY
+        return API_KEY
+    except ImportError:
+        return os.environ.get("POLLITO_API_KEY")
