@@ -103,6 +103,16 @@ Aplicar desde el Paso 0/1 de la receta, no al final del proyecto.
   diseno visual como terminado. Revisar visualmente el asset final, no
   solo confirmar que el archivo existe.
 
+[GENERACION DE PDFs CON PUPPETEER]
+- Si puppeteer se instala con "npm install --no-save puppeteer" (para no
+  ensuciar package.json de una app movil/web que no lo necesita en
+  produccion), cualquier "npm install" posterior -incluido el que dispara
+  "npx expo install --fix" por debajo- lo desinstala silenciosamente por
+  no estar declarado en ninguna dependencia. Sintoma: "Cannot find module
+  '...node_modules\puppeteer'" al querer generar un PDF que antes si
+  funcionaba. Fix: volver a correr "npm install --no-save puppeteer" antes
+  de reintentar el script. Detectado en ruta-segura (2026-07-18/21).
+
 [EVITAR FEATURES A MEDIAS]
 - No dejar componentes construidos pero nunca montados en ninguna
   pantalla (ej. una barra de progreso de presupuesto que existe en
@@ -441,3 +451,42 @@ HISTORIAL DE CAMBIOS
   (19/20 -> 20/20) detectada por AUDITA: 4 paquetes con version patch
   desalineada del SDK 57 (expo, expo-linear-gradient, expo-splash-screen,
   expo-status-bar), resuelta con "npx expo install --fix".
+
+[2026-07-21] Politica de privacidad real + hallazgo en RegistroScreen + confirmacion de canal de notificacion (correo)
+- Se reviso RegistroScreen.js linea por linea para escribir la politica de
+  privacidad con datos reales, no una plantilla generica (dado que la app
+  maneja estatus migratorio y violencia domestica, una plantilla generica
+  se considero insuficiente). Hallazgo: el formulario "Crear cuenta/Iniciar
+  sesion" pide correo, contraseña y pais via useState local, pero no
+  importa Supabase/auth ni hace ninguna llamada de red -solo el nombre
+  viaja a la siguiente pantalla via parametros de navegacion. Hoy nadie
+  "crea una cuenta" de verdad; el dato no se envia ni se guarda en ningun
+  lado.
+- Se genero el borrador bilingue ES/EN (politica-privacidad.html ->
+  PDF/ruta-segura-politica-privacidad.pdf) documentando con precision que
+  SI se guarda (nombre opcional, idioma/estado elegidos a mano en
+  AsyncStorage local, envios de "Mi Caso" en Supabase) y que NO se guarda
+  (GPS, llamadas SOS via marcador nativo, conversaciones de WhatsApp, y el
+  correo/contraseña/pais del formulario de cuenta -declarado explicitamente
+  como "solo interfaz, sin backend, se actualizara cuando este activo").
+  Incluye aviso de portada: es un borrador generado por IA, requiere
+  revision legal antes de publicar, Ana Laverde como primera revisora
+  recomendada.
+- El usuario confirmo que las notificaciones de nuevos casos a Ana deben
+  ser por correo (no WhatsApp). Se investigo la viabilidad de WhatsApp:
+  no existe API de automatizacion oficial para WhatsApp personal/Business
+  app normal; la WhatsApp Business Platform (Cloud API) si permite envio
+  programatico pero requiere verificacion de Meta Business y plantillas de
+  mensaje pre-aprobadas para mensajes iniciados por el negocio -por eso se
+  descarto por ahora en favor de correo.
+- Pendiente real sin resolver: falta que el usuario confirme si ya tiene
+  cuenta/API key de un proveedor de correo (Resend sugerido) o si necesita
+  guia para crear una, para poder implementar el Database Webhook de
+  Supabase que dispare el correo a Ana cuando llega un "Mi Caso" nuevo. Sin
+  esto, los casos se siguen guardando pero nadie es notificado en tiempo
+  real (hallazgo ya documentado como prioridad alta en la auditoria del
+  18-jul).
+- Fix operativo de la misma sesion: puppeteer fue podado por el
+  "npm install" que corre "expo install --fix" por debajo (estaba
+  instalado con --no-save, nunca declarado en package.json) — ver leccion
+  nueva "GENERACION DE PDFs CON PUPPETEER" mas arriba en este archivo.
