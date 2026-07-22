@@ -697,6 +697,7 @@ export default function ResumenScreen() {
     patNetBox: { borderRadius: 14, padding: 14, alignItems: 'center', marginTop: SPACING.xs },
     patNetLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: '600' },
     patNetVal: { color: '#fff', fontWeight: '800', fontSize: FONT.xl, marginTop: SPACING.xs },
+    fabDismiss: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
     fabContainer: { position: 'absolute', bottom: 24, right: 24, alignItems: 'center', gap: SPACING.xs },
     fab: {
       width: 60, height: 60, borderRadius: 30,
@@ -1952,6 +1953,13 @@ export default function ResumenScreen() {
       />
 
       {/* FAB */}
+      {registrarSheet && (
+        <TouchableOpacity
+          style={styles.fabDismiss}
+          activeOpacity={1}
+          onPress={() => setRegistrarSheet(false)}
+        />
+      )}
       <View style={styles.fabContainer}>
         {registrarSheet ? (
           <View style={styles.regCapsule}>
