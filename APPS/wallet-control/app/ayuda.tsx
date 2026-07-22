@@ -433,6 +433,21 @@ export default function AyudaScreen() {
     introTitle: { color: COLORS.primary, fontWeight: '800', fontSize: FONT.lg, marginBottom: 4 },
     introSub: { color: COLORS.textMuted, fontSize: FONT.sm, lineHeight: 18 },
 
+    firstStepsWrap: { marginBottom: 16, gap: 10 },
+    firstStepsTitle: { color: COLORS.textMuted, fontWeight: '700', fontSize: FONT.sm, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 },
+    firstStepRow: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+      backgroundColor: COLORS.card, borderRadius: 14, padding: 14,
+      borderWidth: 1, borderColor: COLORS.border,
+    },
+    firstStepNum: {
+      width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center',
+      marginTop: 2, backgroundColor: COLORS.primary,
+    },
+    firstStepNumText: { color: '#fff', fontWeight: '800', fontSize: 12 },
+    firstStepTitleText: { color: COLORS.text, fontWeight: '700', fontSize: FONT.md },
+    firstStepHint: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
+
     section: {
       backgroundColor: COLORS.card, borderRadius: 14, marginBottom: 10,
       overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border,
@@ -530,6 +545,38 @@ export default function AyudaScreen() {
           </View>
         </View>
 
+        {/* Primeros pasos */}
+        <View style={styles.firstStepsWrap}>
+          <Text style={styles.firstStepsTitle}>Primeros pasos</Text>
+          <TouchableOpacity style={styles.firstStepRow} activeOpacity={0.8} onPress={() => router.push('/perfil')}>
+            <View style={styles.firstStepNum}>
+              <Text style={styles.firstStepNumText}>1</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.firstStepTitleText}>Configura tu presupuesto mensual</Text>
+              <Text style={styles.firstStepHint}>2 min en Perfil — así el Resumen puede mostrar cuánto te queda</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.firstStepRow} activeOpacity={0.8} onPress={() => router.push('/tarjetas')}>
+            <View style={styles.firstStepNum}>
+              <Text style={styles.firstStepNumText}>2</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.firstStepTitleText}>Agrega tu primera tarjeta o efectivo</Text>
+              <Text style={styles.firstStepHint}>Para saber de dónde sale cada gasto</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.firstStepRow} activeOpacity={0.8} onPress={() => router.push('/resumen')}>
+            <View style={styles.firstStepNum}>
+              <Text style={styles.firstStepNumText}>3</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.firstStepTitleText}>Crea una meta de ahorro</Text>
+              <Text style={styles.firstStepHint}>Aunque sea pequeña — se ve el progreso desde el día uno</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* Sections */}
         {SECTIONS.map((sec, i) => (
           <View key={i} style={styles.section}>
@@ -568,9 +615,13 @@ export default function AyudaScreen() {
         <View style={styles.tipsCard}>
           <Text style={styles.tipsTitle}>💡 Tips rápidos</Text>
           {[
+            'Toca una categoría o meta para ver el detalle; mantenla presionada para editarla o eliminarla',
             'Puedes registrar varios gastos en un solo mensaje',
             'Di "analizar" para que Finando revise tus finanzas',
-            'Presiona largo en categorías y metas para editarlas',
+            'Marca un gasto como "recurrente" para llevar el conteo de cuáles ya pagaste cada quincena',
+            'Exporta el PDF del mes o tu extracto de cuenta desde el ícono "?" en Resumen',
+            'Desliza el título del mes (junto a las flechitas) para revisar meses anteriores',
+            'Toca cualquier diagrama de Resumen para ver el detalle completo con nombres y montos',
             'El historial se guarda automáticamente cada mes',
             'Tus datos nunca salen de este dispositivo',
           ].map((tip, i) => (
