@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  ScrollView, StyleSheet, Switch, Alert,
+  ScrollView, StyleSheet, Switch, Alert, Modal,
 } from 'react-native';
 import BottomSheet from './BottomSheet';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Card } from '@/lib/storage';
 import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
@@ -32,6 +33,13 @@ const TYPE_META: Record<Card['type'], {
   debt:   { icon: 'receipt-outline',   label: 'Préstamo',  caption: 'Préstamo o deuda informal',   accent: 'debt',   accentBg: 'debtBg' },
 };
 
+const EMOJI_SUGGESTIONS: Record<Card['type'], string[]> = {
+  debit:  ['🏦', '💳', '🏧', '💰'],
+  credit: ['💳', '💰', '🏦', '💎'],
+  cash:   ['💵', '💰', '👛', '🪙'],
+  debt:   ['💸', '📋', '🤝', '⏳'],
+};
+
 const fmt  = (n: number) => n.toLocaleString('es-CO');
 const parse = (s: string) => Number(s.replace(/\./g, '').replace(/,/g, '').replace(/\D/g, ''));
 
@@ -46,6 +54,18 @@ const BLANK = (type: Card['type']) => ({
 
 export default function CardFormModal({ visible, card, allowedTypes, onSave, onClose }: Props) {
   const [form, setForm] = useState(BLANK(card?.type ?? allowedTypes[0]));
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dueDateObj, setDueDateObj] = useState<Date | null>(null);
+
+  const parseDueDate = (raw: string): Date | null => {
+    const parts = raw.trim().split('/');
+    if (parts.length !== 3) return null;
+    const [d, m, y] = parts.map(Number);
+    if (!d || !m || !y || y < 2024) return null;
+    const date = new Date(y, m - 1, d, 9, 0, 0);
+    return isNaN(date.getTime()) ? null : date;
+  };
 
   useEffect(() => {
     if (card) {
@@ -61,28 +81,31 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
         dueDate:     card.dueDate  ?? '',
         notifyOnDue: false,
       });
+      setDueDateObj(card.dueDate ? parseDueDate(card.dueDate) : null);
     } else {
       setForm(BLANK(allowedTypes[0]));
+      setDueDateObj(null);
     }
+    setShowDatePicker(false);
   }, [card, visible, allowedTypes]);
 
   const set = (k: keyof ReturnType<typeof BLANK>, v: any) =>
     setForm(f => ({ ...f, [k]: v }));
 
-  const parseDueDate = (raw: string): Date | null => {
-    const parts = raw.trim().split('/');
-    if (parts.length !== 3) return null;
-    const [d, m, y] = parts.map(Number);
-    if (!d || !m || !y || y < 2024) return null;
-    const date = new Date(y, m - 1, d, 9, 0, 0);
-    return isNaN(date.getTime()) ? null : date;
+  const handleDueDateChange = (event: any, selected?: Date) => {
+    setShowDatePicker(false);
+    if (event.type === 'dismissed' || !selected) return;
+    setDueDateObj(selected);
+    set('dueDate', selected.toLocaleDateString('es-CO'));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (zeroOut = false) => {
     const name = (form.name ?? '').trim();
     if (!name) return;
     const isDebtType = form.type === 'debt';
-    const newBalance = (form.type === 'debit' || form.type === 'cash' || isDebtType) && form.balance != null ? Number(form.balance) : undefined;
+    const balanceValue = zeroOut && form.type !== 'credit' ? 0 : form.balance;
+    const limitValue   = zeroOut && form.type === 'credit' ? 0 : form.limit;
+    const newBalance = (form.type === 'debit' || form.type === 'cash' || isDebtType) && balanceValue != null ? Number(balanceValue) : undefined;
 
     let notificationId: string | undefined = card?.notificationId;
 
@@ -119,7 +142,7 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
       lastFour:       (form.lastFour?.trim().length === 4) ? form.lastFour.trim() : String(Math.floor(1000 + Math.random() * 9000)),
       color:          form.color,
       emoji:          form.emoji?.trim() || undefined,
-      limit:          form.type === 'credit' && form.limit ? Number(form.limit) : undefined,
+      limit:          form.type === 'credit' && limitValue != null ? Number(limitValue) : undefined,
       balance:        newBalance,
       initialBalance: isDebtType ? (card?.initialBalance ?? newBalance) : undefined,
       dueDate:        isDebtType ? (form.dueDate.trim() || undefined) : undefined,
@@ -129,10 +152,20 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
     });
   };
 
-  const valid = (form.name ?? '').trim().length > 0;
+  const handleCancelAttempt = () => {
+    const nameFilled = (form.name ?? '').trim().length > 0;
+    if (nameFilled && !amountFilled) {
+      setConfirmDiscard(true);
+    } else {
+      onClose();
+    }
+  };
+
   const isCredit = form.type === 'credit';
   const isCash   = form.type === 'cash';
   const isDebt   = form.type === 'debt';
+  const amountFilled = isCredit ? form.limit != null : form.balance != null;
+  const valid = (form.name ?? '').trim().length > 0 && amountFilled;
 
   const effectiveTypes = card ? [card.type] : allowedTypes;
   const showSelector = effectiveTypes.length > 1;
@@ -156,8 +189,14 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
     typeChipLabelActive: { fontWeight: '700' },
     typeChipCaption: { color: COLORS.textDim, fontSize: 10 },
     typeChipCaptionActive: { opacity: 0.85 },
-    typeChipLocked: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-    typeChipLockedLabel: { fontWeight: '700', fontSize: FONT.md },
+    emojiSuggestRow: { flexDirection: 'row', gap: SPACING.sm, alignItems: 'center' },
+    emojiSuggestBtn: {
+      width: 44, height: 44, borderRadius: RADIUS.md, borderWidth: 1.5,
+      borderColor: COLORS.border, backgroundColor: COLORS.bg,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    emojiSuggestText: { fontSize: 20 },
+    emojiCustomInput: { flex: 1, textAlign: 'center' },
     colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: SPACING.xs },
     colorDot: { width: 32, height: 32, borderRadius: RADIUS.lg },
     colorDotSelected: { borderWidth: 3, borderColor: COLORS.text },
@@ -203,6 +242,26 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
     },
     notifyLabel: { color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
     notifyCaption: { color: COLORS.textMuted, fontSize: FONT.xs, marginTop: 2 },
+    dateField: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.border },
+    dateFieldText: { fontSize: FONT.md },
+    confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 28 },
+    confirmCard: {
+      backgroundColor: COLORS.card, borderRadius: RADIUS.xl, padding: SPACING.xxl, width: '100%',
+      alignItems: 'center', borderWidth: 2, borderColor: COLORS.primary + '44',
+      elevation: 10, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25, shadowRadius: 12,
+    },
+    confirmIcon: {
+      width: 56, height: 56, borderRadius: 28,
+      backgroundColor: COLORS.primary + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+    },
+    confirmTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: SPACING.sm, textAlign: 'center' },
+    confirmText: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginBottom: SPACING.xl },
+    confirmActions: { flexDirection: 'row', gap: 10, width: '100%' },
+    confirmDiscardBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, borderColor: COLORS.danger + '55', alignItems: 'center', backgroundColor: COLORS.danger + '11' },
+    confirmDiscardText: { color: COLORS.danger, fontWeight: '700', fontSize: FONT.md },
+    confirmZeroBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: COLORS.primary },
+    confirmZeroText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }), [COLORS]);
 
   const title = card
@@ -210,7 +269,8 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
     : form.type === 'credit' ? 'Nueva tarjeta de crédito' : `Nuevo ${TYPE_META[form.type].label.toLowerCase()}`;
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} maxHeight="92%">
+    <>
+    <BottomSheet visible={visible} onClose={handleCancelAttempt} maxHeight="92%">
           <Text style={styles.title}>{title}</Text>
 
           <ScrollView showsVerticalScrollIndicator={false}>
@@ -229,8 +289,8 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
               <Text style={styles.previewName}>{form.name || 'Nombre'}</Text>
             </View>
 
-            {/* ── Tipo de cuenta ───────────────────────── */}
-            {showSelector ? (
+            {/* ── Tipo de cuenta (solo cuando hay más de una opción para elegir) ── */}
+            {showSelector && (
               <>
                 <Text style={styles.label}>Tipo de cuenta</Text>
                 <View style={styles.typeChipRow}>
@@ -258,19 +318,6 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
                       </TouchableOpacity>
                     );
                   })}
-                </View>
-              </>
-            ) : (
-              <>
-                <Text style={styles.label}>Tipo de cuenta</Text>
-                <View style={[styles.typeChip, styles.typeChipLocked, {
-                  borderColor: COLORS[TYPE_META[form.type].accent],
-                  backgroundColor: COLORS[TYPE_META[form.type].accentBg],
-                }]}>
-                  <Ionicons name={TYPE_META[form.type].icon} size={18} color={COLORS[TYPE_META[form.type].accent]} />
-                  <Text style={[styles.typeChipLockedLabel, { color: COLORS[TYPE_META[form.type].accent] }]}>
-                    {TYPE_META[form.type].label}
-                  </Text>
                 </View>
               </>
             )}
@@ -307,14 +354,30 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
             {/* ── Emoji opcional (todos los tipos) ─────── */}
             <>
               <Text style={styles.label}>Emoji (opcional)</Text>
-              <TextInput
-                style={styles.input}
-                value={form.emoji}
-                onChangeText={v => set('emoji', v)}
-                placeholder={isDebt ? '💸' : isCredit ? '💳' : isCash ? '💵' : '🏦'}
-                placeholderTextColor={COLORS.textDim}
-                maxLength={2}
-              />
+              <View style={styles.emojiSuggestRow}>
+                {EMOJI_SUGGESTIONS[form.type].map(e => (
+                  <TouchableOpacity
+                    key={e}
+                    onPress={() => set('emoji', e)}
+                    style={[styles.emojiSuggestBtn, form.emoji === e && {
+                      borderColor: COLORS[TYPE_META[form.type].accent],
+                      backgroundColor: COLORS[TYPE_META[form.type].accentBg],
+                    }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Usar emoji ${e}`}
+                  >
+                    <Text style={styles.emojiSuggestText}>{e}</Text>
+                  </TouchableOpacity>
+                ))}
+                <TextInput
+                  style={[styles.input, styles.emojiCustomInput]}
+                  value={form.emoji}
+                  onChangeText={v => set('emoji', v)}
+                  placeholder="Otro"
+                  placeholderTextColor={COLORS.textDim}
+                  maxLength={2}
+                />
+              </View>
             </>
 
             {/* ── Últimos 4 dígitos (solo crédito, opcional) ── */}
@@ -369,15 +432,21 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
             {isDebt && (
               <>
                 <Text style={styles.label}>Fecha límite de pago (opcional)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={form.dueDate}
-                  onChangeText={v => set('dueDate', v)}
-                  placeholder="DD/MM/AAAA"
-                  placeholderTextColor={COLORS.textDim}
-                  keyboardType="numbers-and-punctuation"
-                  maxLength={10}
-                />
+                <TouchableOpacity style={styles.dateField} onPress={() => setShowDatePicker(true)} activeOpacity={0.7}>
+                  <Text style={[styles.dateFieldText, { color: form.dueDate ? COLORS.text : COLORS.textDim }]}>
+                    {form.dueDate || 'Selecciona una fecha'}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={18} color={COLORS.debt} />
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={dueDateObj ?? new Date()}
+                    mode="date"
+                    display="default"
+                    minimumDate={new Date()}
+                    onChange={handleDueDateChange}
+                  />
+                )}
                 {form.dueDate.length > 0 && (
                   <View style={styles.notifyRow}>
                     <View style={{ flex: 1 }}>
@@ -412,7 +481,7 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
           </ScrollView>
 
           <View style={styles.actions}>
-            <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+            <TouchableOpacity onPress={handleCancelAttempt} style={styles.cancelBtn}>
               <Text style={styles.cancelText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -424,5 +493,36 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
             </TouchableOpacity>
           </View>
     </BottomSheet>
+
+    {/* Confirmación al salir sin monto: dejar en $0 o descartar */}
+    <Modal visible={confirmDiscard} animationType="fade" transparent onRequestClose={() => setConfirmDiscard(false)}>
+      <TouchableOpacity style={styles.confirmOverlay} activeOpacity={1} onPress={() => setConfirmDiscard(false)}>
+        <TouchableOpacity style={styles.confirmCard} activeOpacity={1} onPress={() => {}}>
+          <View style={styles.confirmIcon}>
+            <Ionicons name="help-circle" size={26} color={COLORS.primary} />
+          </View>
+          <Text style={styles.confirmTitle}>Falta el monto</Text>
+          <Text style={styles.confirmText}>
+            No pusiste {isCredit ? 'el límite de crédito' : 'el monto'} de "{form.name.trim() || TYPE_META[form.type].label}".
+            ¿Lo dejamos en $0 o descartamos lo que hiciste?
+          </Text>
+          <View style={styles.confirmActions}>
+            <TouchableOpacity
+              style={styles.confirmDiscardBtn}
+              onPress={() => { setConfirmDiscard(false); onClose(); }}
+            >
+              <Text style={styles.confirmDiscardText}>Descartar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.confirmZeroBtn}
+              onPress={() => { setConfirmDiscard(false); handleSave(true); }}
+            >
+              <Text style={styles.confirmZeroText}>Dejar en $0</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+    </>
   );
 }

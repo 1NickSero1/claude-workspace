@@ -498,6 +498,173 @@ v1.18 — 2026-07-20 · Cerrar modales tocando afuera
   Balance General, Metas, Ingresos) quedaron igual, sin cambios
 
 ------------------------------------------------------------
+v1.19 — 2026-07-21 · Tarjetas simplificadas + monto obligatorio
+------------------------------------------------------------
+• Resumen: al eliminar un aporte del historial de una meta, y en Perfil al
+  cerrar sesión, la confirmación ya no es el diálogo blanco nativo de
+  Android — ahora son modales con el tema oscuro de la app, igual que el
+  resto de confirmaciones de eliminar
+• Tarjetas (Balance): se quitaron los botones con líneas punteadas de las
+  secciones vacías y los "+" pequeños de cada encabezado — ahora se agrega
+  todo desde el botón "+" grande de abajo a la derecha (que ya dejaba elegir
+  Débito/Efectivo o Crédito/Préstamo según la pestaña activa)
+• Formulario de tarjeta/cuenta: cuando solo hay un tipo posible (por
+  ejemplo al editar), ya no se muestra la insignia "Tipo de cuenta" —
+  el título y la vista previa ya lo dejan claro
+• Formulario de tarjeta/cuenta: el emoji ahora se elige entre 4 sugerencias
+  según el tipo de cuenta (ej. efectivo: 💵💰👛🪙) en vez de un placeholder
+  fijo, con opción de escribir uno distinto
+• Formulario de tarjeta/cuenta: el saldo/límite ahora es obligatorio para
+  guardar. Si intentas salir habiendo puesto el alias pero no el monto,
+  aparece un aviso para elegir entre dejarlo en $0 o descartar
+• Componente de tarjeta visual (débito/crédito): tamaño limitado en
+  pantallas grandes (tablets) para que no crezca de forma desproporcionada
+• Corrección de capitalización en la pantalla de Finando bloqueada (modo
+  anónimo): "No disponible en modo anónimo" en vez de Title Case
+
+------------------------------------------------------------
+v1.20 — 2026-07-21 · Tarjeta de crédito arreglada + gastos por tipo de cuenta
+------------------------------------------------------------
+• Tarjeta visual de crédito: el número enmascarado y "Disponible" ya no se
+  superponen en pantallas grandes — número acortado a "•••• 1234"
+• Resumen: el popup "Gastos del mes" (al tocar el donut de Gastos) ahora
+  agrupa los gastos por tipo de cuenta (🏦 Débito · 💳 Crédito · 💵 Efectivo ·
+  💸 Préstamos) con su propio subtotal, en vez de una sola lista plana
+• Historial: revertido un centrado vertical que dejaba la tarjeta del mes
+  flotando feo en pantallas grandes — vuelve a verse ordenado arriba
+• Balance General: corregido el slider entre mes actual y mes anterior para
+  que el swipe no se sienta atrapado por el estado del componente
+
+------------------------------------------------------------
+v1.21 — 2026-07-21 · Historial por sección + selector de fecha en préstamos
+------------------------------------------------------------
+• Tarjetas (Balance): cada sección (Débito, Crédito, Efectivo, Préstamos)
+  tiene ahora un ícono de reloj junto al título para ver su propio
+  historial — depósitos combinados en Débito/Efectivo, gastos combinados
+  en Crédito, abonos en Préstamos (ya existía, ahora con el mismo ícono)
+• Tarjetas de débito: el título ahora también muestra el saldo disponible
+  total, igual que las otras 3 secciones
+• Préstamos: la "Fecha límite de pago" ahora se elige con el calendario
+  nativo del celular, no escribiéndola con el teclado
+• Resumen: los títulos de los 4 diagramas de torta (Gastos del mes, Metas
+  de ahorro, Fuentes de ingreso, Billetera general) se movieron arriba de
+  cada diagrama y con letra más grande y visible
+• Resumen: corregido el ancho de los montos en la leyenda de cada donut
+  (se veían cortados en pantallas grandes, ej. "$500" en vez de "$500.000")
+
+------------------------------------------------------------
+v1.22 — 2026-07-21 · Deslizable de mes arreglado de verdad + montos de leyenda visibles
+------------------------------------------------------------
+• Balance General (Resumen): el arreglo de v1.21 no era suficiente — cada
+  slide (mes actual/anterior) estaba envuelto en un botón que cubría toda
+  la tarjeta y competía con el gesto de deslizar. Ahora solo el texto
+  "Toca para ver detalle" es tocable; el resto de la tarjeta queda libre
+  para deslizar. Confirmado deslizando en ambas direcciones en la tablet.
+• Leyenda de los diagramas de torta (Billetera general / Fuentes de
+  ingreso): el arreglo de v1.21 tampoco alcanzó — el monto seguía
+  cortándose ("$500" en vez de "$500.000") por un problema de layout más
+  profundo. Se rediseñó la fila (contenedor izquierdo con ícono+nombre,
+  monto con ancho fijo empujado al extremo derecho) y ahora se ve completo.
+• Resumen: la tarjeta "Gastos" (accede a Categorías) se renombró a "Gastos
+  fijos mensuales" y se movió justo después de la Quincena, antes de
+  Balance General — agrupa todo lo relacionado a gasto/presupuesto del mes
+  antes de pasar a patrimonio neto y metas.
+• Resumen: la cápsula de registro (botón "+") ahora muestra una leyenda de
+  texto (Ingreso / Gasto / Meta) encima de cada ícono, para que sea claro
+  qué hace cada botón sin tener que adivinar.
+
+------------------------------------------------------------
+v1.23 — 2026-07-21 · Billetera general primero + leyendas completas en todos los diagramas
+------------------------------------------------------------
+• Resumen: el carrusel de diagramas ahora empieza en "Billetera general"
+  (antes iba último), seguido de Gastos del mes, Metas de ahorro y
+  Fuentes de ingreso.
+• Resumen: los diagramas de "Gastos del mes" y "Metas de ahorro" ahora
+  muestran una leyenda completa (nombre + monto por categoría/meta), igual
+  que ya tenían Billetera general y Fuentes de ingreso.
+• Resumen: el título del mes en el header ahora tiene flechitas a los
+  lados para que se note que se puede deslizar a meses anteriores.
+• Categorías: el botón "+" para crear una categoría nueva ahora tiene una
+  leyenda "Nueva categoría" encima.
+• Categorías: al agregar o editar un gasto manual dentro de una categoría,
+  ahora se puede marcar como "Gasto recurrente" (semanal o mensual), igual
+  que ya se podía al registrar un gasto desde el botón "+" de Resumen.
+
+------------------------------------------------------------
+v1.24 — 2026-07-21 · Seguimiento de gastos fijos pagados por quincena
+------------------------------------------------------------
+• Resumen: la tarjeta de Quincena 1/2 ahora muestra "X de Y gastos fijos
+  pagados" — cuántos de tus gastos recurrentes ya registraste en esa
+  quincena específica. Tocar la tarjeta abre el mismo popup "Pendientes
+  por pagar" de siempre para ver el detalle.
+• Categorías: al agregar o editar un gasto dentro de una categoría, se
+  simplificó el formulario — ya no hay que elegir Quincena ni Tarjeta
+  (se asignan solas), y el toggle "Gasto recurrente" ahora también
+  permite frecuencia Quincenal, además de Semanal y Mensual.
+
+------------------------------------------------------------
+v1.25 — 2026-07-21 · Gastos recurrentes con su propia frecuencia y fecha de pago
+------------------------------------------------------------
+• Categorías: en la lista de gastos, uno marcado como recurrente ahora
+  muestra su frecuencia (Semanal/Quincenal/Mensual) en vez de "1ª/2ª
+  Quincena" — ese dato no aplicaba a un gasto que se repite solo.
+• Categorías: al marcar un gasto como recurrente, ahora se puede indicar
+  (opcional) qué día hay que pagarlo, eligiendo la fecha en el calendario
+  del celular. Si se llena, se ve en la lista ("Mensual · vence
+  30/7/2026").
+
+------------------------------------------------------------
+v1.26 — 2026-07-21 · Tarjetas de Quincena más simples
+------------------------------------------------------------
+• Resumen: la tarjeta de Quincena 1/2 ya no muestra el monto gastado —
+  solo queda la barra de progreso del periodo y el contador de gastos
+  fijos pagados.
+
+------------------------------------------------------------
+v1.27 — 2026-07-21 · Edita cualquier gasto desde "Gastos del mes"
+------------------------------------------------------------
+• Resumen: el popup "Gastos del mes" (donut de Gastos) ahora permite
+  editar cualquier gasto del mes desde ahí mismo — nombre, monto, tarjeta,
+  y si es recurrente (con frecuencia y fecha de pago opcional), sin tener
+  que ir hasta Categorías.
+• Ahí mismo, un gasto recurrente muestra su frecuencia (Semanal/Quincenal/
+  Mensual) en vez de "1ª/2ª Quincena", igual que ya pasaba en Categorías.
+• Al editar un gasto desde este popup, ahora es obligatorio elegir de qué
+  cuenta salió el dinero — así el saldo disponible de esa cuenta siempre
+  queda correctamente descontado.
+
+------------------------------------------------------------
+v1.28 — 2026-07-22 · Montos completos + total gastado sincronizado
+------------------------------------------------------------
+• Tarjetas: se quitó la tarjeta naranja "Total deuda", redundante desde
+  que "Préstamos" ya muestra el mismo total con su propio ícono de
+  historial de abonos.
+• Billetera general: el centro del donut ya no abrevia el monto ("$650k")
+  — muestra el valor completo ("$650.000"), igual que los otros 3 donuts.
+• Quincena 1/2: se agregó de vuelta el total gastado en cada quincena,
+  esta vez al final de la tarjeta (después de la barra de progreso y el
+  contador de gastos fijos pagados).
+• "Gastos del mes" (diagrama de torta): un gasto recurrente con fecha de
+  pago configurada ya no cuenta como gastado hasta que esa fecha llega en
+  el mes — aunque ya esté registrado. Sin fecha configurada, sigue
+  contando de inmediato como antes. Solo afecta ese diagrama puntual, no
+  el presupuesto ni el patrimonio neto.
+• "Total gastado" (arriba de Resumen) estaba mostrando solo lo gastado en
+  tarjetas de crédito, por eso se quedaba en $0 para quien no usa crédito
+  — ahora muestra el total real de todas las cuentas, igual que el resto
+  de la app.
+
+------------------------------------------------------------
+v1.29 — 2026-07-22 · Recurrentes vs no recurrentes en el resumen del mes
+------------------------------------------------------------
+• Tarjeta "Presupuesto mensual": se agregó la leyenda "Toca para ver el
+  resumen del mes →" para que quede claro qué pasa al tocarla, y se quitó
+  la línea "Presupuesto: $X" (quedaba redundante junto a "Disponible").
+• Popup "Resumen del mes": nueva sección "Recurrentes vs no recurrentes"
+  entre "Gastos por categoría" y "Fuentes de ingreso", con el total y % de
+  lo gastado en gastos fijos/recurrentes vs el resto.
+
+------------------------------------------------------------
 [PRÓXIMO]
 ------------------------------------------------------------
 • Build permanente (APK) para compartir sin servidor

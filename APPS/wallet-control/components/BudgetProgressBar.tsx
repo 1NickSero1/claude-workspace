@@ -28,7 +28,7 @@ export default function BudgetProgressBar({ budget, spent }: Props) {
     footer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
     sub: { color: COLORS.textMuted, fontSize: FONT.sm },
     val: { fontWeight: '700', fontSize: FONT.base, marginTop: 2 },
-    budgetLine: { color: COLORS.textDim, fontSize: FONT.sm, marginTop: SPACING.sm, textAlign: 'center' },
+    hint: { color: COLORS.textDim, fontSize: 10, marginTop: SPACING.sm, textAlign: 'center' },
   }), [COLORS]);
 
   const pct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
@@ -61,7 +61,7 @@ export default function BudgetProgressBar({ budget, spent }: Props) {
         </View>
       </View>
 
-      <Text style={styles.budgetLine}>Presupuesto: {formatCOP(budget)}</Text>
+      <Text style={styles.hint}>Toca para ver el resumen del mes →</Text>
     </View>
   );
 }

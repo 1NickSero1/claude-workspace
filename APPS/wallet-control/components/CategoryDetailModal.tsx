@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  TextInput, ScrollView, Modal,
+  TextInput, ScrollView, Modal, Switch,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import BottomSheet from './BottomSheet';
 import { Ionicons } from '@expo/vector-icons';
-import { CustomCategory, Expense, Card, updateExpense, addExpenses, deleteExpense } from '@/lib/storage';
-import { cancelNotification } from '@/lib/notifications';
+import { CustomCategory, Expense, Card, RecurrenceFrequency, updateExpense, addExpenses, deleteExpense } from '@/lib/storage';
+import { cancelNotification, scheduleRecurringReminder } from '@/lib/notifications';
 import { formatCOP, formatThousands } from '@/lib/expenseParser';
 import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
@@ -30,6 +31,11 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
   const [amount, setAmount]     = useState('');
   const [quincena, setQuincena] = useState<1 | 2>(1);
   const [cardId, setCardId]     = useState<string | undefined>(undefined);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [frequency, setFrequency]     = useState<RecurrenceFrequency>('monthly');
+  const [dueDate, setDueDate]         = useState('');
+  const [dueDateObj, setDueDateObj]   = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [confirmDeleteExp, setConfirmDeleteExp] = useState<Expense | null>(null);
 
   const COLORS = useColors();
@@ -55,14 +61,27 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     addBtnText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 14, marginBottom: 6 },
     input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
-    qRow: { flexDirection: 'row', gap: 10 },
-    qBtn: { flex: 1, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
-    qBtnActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryBg },
-    qBtnText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
-    qBtnTextActive: { color: COLORS.primary },
-    cardChip: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, marginRight: SPACING.sm, backgroundColor: COLORS.bg },
-    cardChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-    cardChipText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
+    recurringRow: {
+      flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginTop: 14,
+      backgroundColor: COLORS.card2, borderRadius: RADIUS.md, padding: SPACING.md,
+      borderWidth: 1, borderColor: COLORS.border,
+    },
+    recurringLabel: { color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
+    recurringCaption: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+    freqRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.sm },
+    freqBtn: {
+      flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center',
+      borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,
+    },
+    freqBtnActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryBg },
+    freqBtnText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
+    freqBtnTextActive: { color: COLORS.primary },
+    dateField: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md,
+      borderWidth: 1, borderColor: COLORS.border, marginTop: SPACING.sm,
+    },
+    dateFieldText: { fontSize: FONT.sm },
     formActions: { flexDirection: 'row', gap: 10, marginTop: SPACING.xl, marginBottom: SPACING.sm },
     cancelBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
     cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
@@ -89,7 +108,10 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     confirmDeleteText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }), [COLORS]);
 
-  const reset = () => { setMode('list'); setEditExp(null); setName(''); setAmount(''); setQuincena(1); setCardId(undefined); };
+  const reset = () => {
+    setMode('list'); setEditExp(null); setName(''); setAmount(''); setQuincena(1); setCardId(undefined);
+    setIsRecurring(false); setFrequency('monthly'); setDueDate(''); setDueDateObj(null); setShowDatePicker(false);
+  };
 
   const startEdit = (e: Expense) => {
     setEditExp(e);
@@ -97,27 +119,64 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     setAmount(String(e.amount));
     setQuincena(e.quincena);
     setCardId(e.cardId);
+    setIsRecurring(!!e.isRecurring);
+    setFrequency(e.recurrenceFrequency ?? 'monthly');
+    setDueDate(e.recurrenceDueDate ?? '');
     setMode('edit');
   };
 
-  const startAdd = () => { setName(''); setAmount(''); setQuincena(1); setCardId(undefined); setMode('add'); };
+  const startAdd = () => {
+    const autoQuincena: 1 | 2 = new Date().getDate() <= 15 ? 1 : 2;
+    setName(''); setAmount(''); setQuincena(autoQuincena); setCardId(undefined);
+    setIsRecurring(false); setFrequency('monthly'); setDueDate(''); setDueDateObj(null); setMode('add');
+  };
+
+  const handleDueDateChange = (event: any, selected?: Date) => {
+    setShowDatePicker(false);
+    if (event.type === 'dismissed' || !selected) return;
+    setDueDateObj(selected);
+    setDueDate(selected.toLocaleDateString('es-CO'));
+  };
 
   const handleSave = async () => {
     const amt = Number(amount.replace(/\D/g, ''));
     if (!name.trim() || !amt) return;
+    const trimmedName = name.trim().toUpperCase();
 
     if (mode === 'edit' && editExp) {
-      await updateExpense(monthKey, { id: editExp.id, name: name.trim().toUpperCase(), amount: amt, quincena, cardId });
+      let notificationId = editExp.notificationId;
+      const wasRecurring = !!editExp.isRecurring;
+      if (isRecurring && (!wasRecurring || frequency !== editExp.recurrenceFrequency)) {
+        if (notificationId) await cancelNotification(notificationId);
+        notificationId = await scheduleRecurringReminder(trimmedName, frequency, new Date());
+      } else if (!isRecurring && wasRecurring) {
+        if (notificationId) await cancelNotification(notificationId);
+        notificationId = undefined;
+      }
+      await updateExpense(monthKey, {
+        id: editExp.id, name: trimmedName, amount: amt, quincena, cardId,
+        isRecurring: isRecurring || undefined,
+        recurrenceFrequency: isRecurring ? frequency : undefined,
+        recurrenceDueDate: isRecurring && dueDate ? dueDate : undefined,
+        notificationId,
+      });
     } else if (mode === 'add' && cat) {
+      const notificationId = isRecurring
+        ? await scheduleRecurringReminder(trimmedName, frequency, new Date())
+        : undefined;
       await addExpenses(monthKey, [{
         id: `${Date.now()}_manual`,
-        name: name.trim().toUpperCase(),
+        name: trimmedName,
         amount: amt,
         categoryId: cat.id,
         quincena,
         cardId,
         createdAt: new Date().toISOString(),
         monthKey,
+        isRecurring: isRecurring || undefined,
+        recurrenceFrequency: isRecurring ? frequency : undefined,
+        recurrenceDueDate: isRecurring && dueDate ? dueDate : undefined,
+        notificationId,
       }]);
     }
     await onRefresh();
@@ -191,7 +250,10 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
                         <View style={dStyles.expLeft}>
                           <Text style={dStyles.expName}>{e.name}</Text>
                           <Text style={dStyles.expMeta}>
-                            {e.quincena === 1 ? '1ª Quincena' : '2ª Quincena'}
+                            {e.isRecurring
+                              ? (e.recurrenceFrequency === 'weekly' ? 'Semanal' : e.recurrenceFrequency === 'biweekly' ? 'Quincenal' : 'Mensual')
+                              : (e.quincena === 1 ? '1ª Quincena' : '2ª Quincena')}
+                            {e.isRecurring && e.recurrenceDueDate ? ` · vence ${e.recurrenceDueDate}` : ''}
                             {card ? ` · ${card.name}` : ''}
                           </Text>
                         </View>
@@ -249,42 +311,49 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
                 keyboardType="number-pad"
               />
 
-              <Text style={dStyles.label}>Quincena</Text>
-              <View style={dStyles.qRow}>
-                {([1, 2] as const).map(q => (
-                  <TouchableOpacity
-                    key={q}
-                    onPress={() => setQuincena(q)}
-                    style={[dStyles.qBtn, quincena === q && dStyles.qBtnActive]}
-                  >
-                    <Text style={[dStyles.qBtnText, quincena === q && dStyles.qBtnTextActive]}>
-                      {q === 1 ? '1ª Quincena' : '2ª Quincena'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={dStyles.recurringRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={dStyles.recurringLabel}>Gasto recurrente</Text>
+                  <Text style={dStyles.recurringCaption}>Recibirás un recordatorio automático</Text>
+                </View>
+                <Switch
+                  value={isRecurring}
+                  onValueChange={setIsRecurring}
+                  trackColor={{ false: COLORS.border, true: COLORS.primary + '88' }}
+                  thumbColor={isRecurring ? COLORS.primary : COLORS.textDim}
+                />
               </View>
-
-              {cards.length > 0 && (
+              {isRecurring && (
                 <>
-                  <Text style={dStyles.label}>Tarjeta (opcional)</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
-                    <TouchableOpacity
-                      onPress={() => setCardId(undefined)}
-                      style={[dStyles.cardChip, !cardId && dStyles.cardChipActive]}
-                    >
-                      <Text style={[dStyles.cardChipText, !cardId && { color: '#fff' }]}>Sin tarjeta</Text>
-                    </TouchableOpacity>
-                    {cards.map(c => (
+                  <View style={dStyles.freqRow}>
+                    {(['weekly', 'biweekly', 'monthly'] as const).map(f => (
                       <TouchableOpacity
-                        key={c.id}
-                        onPress={() => setCardId(c.id)}
-                        style={[dStyles.cardChip, cardId === c.id && dStyles.cardChipActive,
-                                cardId === c.id && { backgroundColor: c.color }]}
+                        key={f}
+                        onPress={() => setFrequency(f)}
+                        style={[dStyles.freqBtn, frequency === f && dStyles.freqBtnActive]}
                       >
-                        <Text style={[dStyles.cardChipText, cardId === c.id && { color: '#fff' }]}>{c.name}</Text>
+                        <Text style={[dStyles.freqBtnText, frequency === f && dStyles.freqBtnTextActive]}>
+                          {f === 'weekly' ? 'Semanal' : f === 'biweekly' ? 'Quincenal' : 'Mensual'}
+                        </Text>
                       </TouchableOpacity>
                     ))}
-                  </ScrollView>
+                  </View>
+
+                  <Text style={dStyles.label}>¿Qué día lo tienes que pagar? (opcional)</Text>
+                  <TouchableOpacity style={dStyles.dateField} onPress={() => setShowDatePicker(true)} activeOpacity={0.7}>
+                    <Text style={[dStyles.dateFieldText, { color: dueDate ? COLORS.text : COLORS.textDim }]}>
+                      {dueDate || 'Selecciona una fecha'}
+                    </Text>
+                    <Ionicons name="calendar-outline" size={18} color={COLORS.primary} />
+                  </TouchableOpacity>
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={dueDateObj ?? new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={handleDueDateChange}
+                    />
+                  )}
                 </>
               )}
 

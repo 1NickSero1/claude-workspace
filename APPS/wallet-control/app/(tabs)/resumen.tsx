@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, RefreshControl, Alert, Modal,
-  TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
+  TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, router } from 'expo-router';
@@ -16,10 +16,10 @@ import {
   getRecurringTemplates, RecurringTemplate,
   syncCardBalanceSnapshot, getCardBalanceSnapshot,
   CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile, MonthData,
-  getCardTotalSpent, sumIncomes,
+  getCardTotalSpent, sumIncomes, updateExpense, RecurrenceFrequency,
 } from '@/lib/storage';
 import { sumExpenses, formatCOP, formatThousands } from '@/lib/expenseParser';
-import { checkBudgetThreshold, updateBalanceNotification } from '@/lib/notifications';
+import { checkBudgetThreshold, updateBalanceNotification, cancelNotification, scheduleRecurringReminder } from '@/lib/notifications';
 import DonutChart, { DonutSlice } from '@/components/DonutChart';
 import QuickEntryModal from '@/components/QuickEntryModal';
 import BudgetProgressBar from '@/components/BudgetProgressBar';
@@ -36,8 +36,13 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 const GOAL_COLORS = ['#6C5CE7','#00C896','#FF5C5C','#FDCB6E','#0984E3','#A29BFE','#00B894','#E17055'];
 const INCOME_COLORS = ['#00C896','#0984E3','#6C5CE7','#FDCB6E','#00B894','#A29BFE','#E17055','#FF5C5C'];
-const fmtShort = (n: number) => n >= 1_000_000 ? `$${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `$${Math.round(n/1_000)}k` : formatCOP(n);
 const MONTH_SWIPE_WIDTH = 170;
+const ACCOUNT_TYPE_GROUPS: { type: Card['type']; label: string; emoji: string }[] = [
+  { type: 'debit',  label: 'Débito',    emoji: '🏦' },
+  { type: 'credit', label: 'Crédito',   emoji: '💳' },
+  { type: 'cash',   label: 'Efectivo',  emoji: '💵' },
+  { type: 'debt',   label: 'Préstamos', emoji: '💸' },
+];
 const BALANCE_FILTER_OPTIONS: { id: 'all' | 'debit' | 'credit' | 'cash'; label: string }[] = [
   { id: 'all',    label: 'Todos' },
   { id: 'debit',  label: 'Débito' },
@@ -94,8 +99,19 @@ export default function ResumenScreen() {
   const [availableMonths, setAvailableMonths]   = useState<string[]>([]);
   const [monthlyBalances, setMonthlyBalances]   = useState<{ monthKey: string; gasto: number; ingreso: number; balance: number }[]>([]);
   const [balanceFilter, setBalanceFilter] = useState<'all' | 'debit' | 'credit' | 'cash'>('all');
+  const [editExpTarget, setEditExpTarget]   = useState<Expense | null>(null);
+  const [editExpName, setEditExpName]       = useState('');
+  const [editExpAmount, setEditExpAmount]   = useState('');
+  const [editExpCardId, setEditExpCardId]   = useState<string | undefined>(undefined);
+  const [editExpIsRecurring, setEditExpIsRecurring] = useState(false);
+  const [editExpFrequency, setEditExpFrequency]     = useState<RecurrenceFrequency>('monthly');
+  const [editExpDueDate, setEditExpDueDate]         = useState('');
+  const [editExpDueDateObj, setEditExpDueDateObj]   = useState<Date | null>(null);
+  const [editExpShowDatePicker, setEditExpShowDatePicker] = useState(false);
   const monthScrollRef = useRef<ScrollView>(null);
   const monthScrollSynced = useRef(false);
+  const balanceScrollRef = useRef<ScrollView>(null);
+  const balanceScrollSynced = useRef(false);
 
   const handleExportPDF = async () => {
     setExporting(true);
@@ -184,6 +200,52 @@ export default function ResumenScreen() {
   }, [monthKey, prevMonthKey, isCurrentMonth]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  // ── Editar cualquier gasto desde el popup "Gastos del mes" ────────────────
+  const startEditExpense = (e: Expense) => {
+    setEditExpTarget(e);
+    setEditExpName(e.name);
+    setEditExpAmount(String(e.amount));
+    setEditExpCardId(e.cardId);
+    setEditExpIsRecurring(!!e.isRecurring);
+    setEditExpFrequency(e.recurrenceFrequency ?? 'monthly');
+    setEditExpDueDate(e.recurrenceDueDate ?? '');
+    setEditExpDueDateObj(null);
+    setEditExpShowDatePicker(false);
+  };
+
+  const editExpAmountNum = Number(editExpAmount.replace(/\D/g, ''));
+  const canSaveEditExpense = !!editExpName.trim() && !!editExpAmountNum && !!editExpCardId;
+
+  const handleEditExpDueDateChange = (event: any, selected?: Date) => {
+    setEditExpShowDatePicker(false);
+    if (event.type === 'dismissed' || !selected) return;
+    setEditExpDueDateObj(selected);
+    setEditExpDueDate(selected.toLocaleDateString('es-CO'));
+  };
+
+  const saveEditExpense = async () => {
+    if (!editExpTarget || !canSaveEditExpense) return;
+    const trimmedName = editExpName.trim().toUpperCase();
+    let notificationId = editExpTarget.notificationId;
+    const wasRecurring = !!editExpTarget.isRecurring;
+    if (editExpIsRecurring && (!wasRecurring || editExpFrequency !== editExpTarget.recurrenceFrequency)) {
+      if (notificationId) await cancelNotification(notificationId);
+      notificationId = await scheduleRecurringReminder(trimmedName, editExpFrequency, new Date());
+    } else if (!editExpIsRecurring && wasRecurring) {
+      if (notificationId) await cancelNotification(notificationId);
+      notificationId = undefined;
+    }
+    await updateExpense(monthKey, {
+      id: editExpTarget.id, name: trimmedName, amount: editExpAmountNum, cardId: editExpCardId,
+      isRecurring: editExpIsRecurring || undefined,
+      recurrenceFrequency: editExpIsRecurring ? editExpFrequency : undefined,
+      recurrenceDueDate: editExpIsRecurring && editExpDueDate ? editExpDueDate : undefined,
+      notificationId,
+    });
+    setEditExpTarget(null);
+    await load();
+  };
 
   // Ubica el slider de meses en el mes seleccionado una sola vez, apenas
   // llega la lista real de meses (evita pelear con el swipe del usuario en
@@ -277,6 +339,19 @@ export default function ResumenScreen() {
   const donutSize = Math.min(Math.floor((SCREEN_W - 32) * 0.55), 200);
   const cardWidth = SCREEN_W - 32;
 
+  // Ubica el slider de Balance General en el mes actual una sola vez, apenas
+  // hay datos reales que mostrar — mismo patrón que monthScrollRef: evita que
+  // el contentOffset declarativo pelee con el swipe del usuario en cada
+  // re-render (contentOffset se re-aplicaba en cada render y "tragaba" el swipe).
+  useEffect(() => {
+    if (balanceScrollSynced.current) return;
+    if (totalActivos === 0 && totalPasivos === 0 && prevTotalActivos === 0 && prevTotalPasivos === 0) return;
+    balanceScrollSynced.current = true;
+    requestAnimationFrame(() => {
+      balanceScrollRef.current?.scrollTo({ x: cardWidth, animated: false });
+    });
+  }, [totalActivos, totalPasivos, prevTotalActivos, prevTotalPasivos, cardWidth]);
+
   const activoItems = [
     ...cards.filter(c => c.type === 'debit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '🏦', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
     ...cards.filter(c => c.type === 'cash').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💵', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
@@ -316,6 +391,31 @@ export default function ResumenScreen() {
   // (onboarding o toggle "Gasto recurrente"), no contra un umbral inventado.
   const today = new Date();
   const day = today.getDate();
+
+  // "Gastos del mes" (diagrama de torta): un gasto recurrente con fecha de
+  // pago configurada solo cuenta como ya gastado desde ese día en adelante —
+  // si se registró antes de su fecha de pago, todavía no se suma al total
+  // del diagrama (sí sigue apareciendo en el popup de detalle, que es un
+  // registro de lo anotado, no un indicador de "cuánto llevo gastado").
+  const parseDMY = (raw: string): Date | null => {
+    const parts = raw.trim().split('/');
+    if (parts.length !== 3) return null;
+    const [d, m, y] = parts.map(Number);
+    if (!d || !m || !y) return null;
+    const date = new Date(y, m - 1, d);
+    return isNaN(date.getTime()) ? null : date;
+  };
+  const chartExpenses = expenses.filter(e => {
+    if (!e.isRecurring || !e.recurrenceDueDate) return true;
+    const due = parseDMY(e.recurrenceDueDate);
+    return !due || due <= today;
+  });
+  const chartCatRows = categories
+    .map(cat => ({ cat, total: chartExpenses.filter(e => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0) }))
+    .filter(r => r.total > 0)
+    .sort((a, b) => b.total - a.total);
+  const chartDonutData: DonutSlice[] = chartCatRows.map(r => ({ id: r.cat.id, color: r.cat.color, amount: r.total }));
+  const chartTotalSpent = chartCatRows.reduce((s, r) => s + r.total, 0);
   const dow = today.getDay();
   const mondayIndex = dow === 0 ? 6 : dow - 1;
   const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayIndex);
@@ -336,8 +436,19 @@ export default function ResumenScreen() {
   const loggedNames = new Set(expensesInPeriodWindow.map(e => e.name.trim().toLowerCase()));
   const pendingTemplates = recurringTemplates.filter(t => !loggedNames.has(t.name.trim().toLowerCase()));
 
-  // Progreso de fechas + gasto de cada quincena (para el slider Quincena 1/2)
+  // Conteo de gastos fijos pagados/pendientes por quincena específica (para el
+  // badge inline en cada slide del slider Quincena 1/2, independiente de cuál
+  // quincena esté "viendo" el usuario en ese momento).
+  const paidCountForQuincena = (q: 1 | 2) => {
+    const loggedNamesQ = new Set(expenses.filter(e => e.quincena === q).map(e => e.name.trim().toLowerCase()));
+    const pending = recurringTemplates.filter(t => !loggedNamesQ.has(t.name.trim().toLowerCase()));
+    return recurringTemplates.length - pending.length;
+  };
+
+  // Total gastado dentro de cada quincena específica (para el pie de cada slide).
   const quincenaSpent = (q: 1 | 2) => expenses.filter(e => e.quincena === q).reduce((s, e) => s + e.amount, 0);
+
+  // Progreso de fechas de cada quincena (para el slider Quincena 1/2)
   const quincenaProgress = (q: 1 | 2) => {
     if (q === 1) return day > 15 ? 100 : (day / 15) * 100;
     const span = lastDayOfMonth - 15;
@@ -348,6 +459,7 @@ export default function ResumenScreen() {
   const styles = useMemo(() => StyleSheet.create(scaledSheet({
     safe: { flex: 1, backgroundColor: COLORS.bg },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: SPACING.xl, paddingTop: SPACING.xl, paddingBottom: 14, backgroundColor: COLORS.bg },
+    monthSliderWrap: { flexDirection: 'row', alignItems: 'center', gap: 2 },
     headerTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.xl },
     headerSub: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2, textTransform: 'capitalize' },
     headerRight: { flexDirection: 'row', gap: SPACING.sm, alignItems: 'center' },
@@ -372,24 +484,21 @@ export default function ResumenScreen() {
     donutTap: { alignItems: 'center' },
     donutSlider: { marginHorizontal: -16, marginTop: 14 },
     donutSlide: { alignItems: 'center', paddingVertical: SPACING.sm },
-    heroDonutLabel: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 6 },
+    heroDonutLabel: { color: COLORS.text, fontSize: FONT.md, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
     dotRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 10 },
     dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.border },
     dotActive: { width: 18, backgroundColor: COLORS.primary },
-    goalsEmojiLegend: { flexDirection: 'row', gap: SPACING.md, marginTop: 10, justifyContent: 'center', flexWrap: 'wrap' },
-    goalsEmojiItem: { alignItems: 'center', gap: SPACING.xs },
-    goalsEmojiChar: { fontSize: FONT.lg },
-    goalsEmojiBar: { width: 12, height: 3, borderRadius: 2 },
     balanceFilterRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: 10, justifyContent: 'center', flexWrap: 'wrap' },
     balanceFilterChip: { paddingHorizontal: SPACING.md, paddingVertical: 6, borderRadius: RADIUS.lg, backgroundColor: COLORS.card2, borderWidth: 1, borderColor: COLORS.border },
     balanceFilterChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
     balanceFilterChipText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.xs },
     balanceFilterChipTextActive: { color: '#fff' },
-    incomeLegend: { width: '100%', paddingHorizontal: SPACING.xl, marginTop: 10, gap: SPACING.xs },
-    incomeLegendRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+    incomeLegend: { alignSelf: 'stretch', paddingHorizontal: SPACING.xl, marginTop: 10, gap: SPACING.xs },
+    incomeLegendRow: { flexDirection: 'row', alignItems: 'center' },
+    incomeLegendLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, flexShrink: 1, marginRight: SPACING.sm },
     incomeLegendDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
-    incomeLegendName: { flex: 1, color: COLORS.textMuted, fontSize: FONT.xs, fontWeight: '600' },
-    incomeLegendAmt: { color: COLORS.debit, fontWeight: '700', fontSize: FONT.xs },
+    incomeLegendName: { color: COLORS.textMuted, fontSize: FONT.xs, fontWeight: '600', flexShrink: 1 },
+    incomeLegendAmt: { color: COLORS.debit, fontWeight: '700', fontSize: FONT.xs, marginLeft: 'auto', width: 110 },
     heroGoalsWidget: { marginTop: SPACING.md },
     heroGoalsDivider: { height: 1, backgroundColor: COLORS.border, marginBottom: 10 },
     heroGoalsRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
@@ -413,9 +522,10 @@ export default function ResumenScreen() {
     quincenaCardLabel: { color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
     quincenaBadge: { backgroundColor: COLORS.primaryBg, borderRadius: 10, paddingHorizontal: SPACING.sm, paddingVertical: 3 },
     quincenaBadgeText: { color: COLORS.primary, fontWeight: '700', fontSize: 10 },
-    quincenaCardSpent: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: SPACING.sm },
     quincenaCardTrack: { height: 8, backgroundColor: COLORS.border, borderRadius: 4, overflow: 'hidden' },
     quincenaCardFill: { height: '100%', borderRadius: 4, backgroundColor: COLORS.primary },
+    quincenaPendingText: { color: COLORS.textDim, fontSize: 11, marginTop: SPACING.sm },
+    quincenaCardSpentTotal: { color: COLORS.credit, fontWeight: '700', fontSize: FONT.sm, marginTop: SPACING.sm },
     gastosCard: {
       flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
       marginHorizontal: SPACING.lg, marginBottom: SPACING.xxl,
@@ -557,6 +667,7 @@ export default function ResumenScreen() {
     expCardName: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base },
     expCardMeta: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
     expCardAmt: { fontWeight: '800', fontSize: FONT.md, maxWidth: 110 },
+    expCardEditBtn: { width: 30, height: 30, borderRadius: RADIUS.sm, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
     summaryCloseBtn: { marginTop: SPACING.lg, backgroundColor: COLORS.primary, borderRadius: 14, padding: 14, alignItems: 'center' },
     summaryCloseBtnText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     sheetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
@@ -591,11 +702,13 @@ export default function ResumenScreen() {
       }),
     },
     regCapsule: {
-      flexDirection: 'row', alignItems: 'center', gap: 6,
+      flexDirection: 'row', alignItems: 'flex-end', gap: 6,
       backgroundColor: COLORS.card2, borderRadius: RADIUS.pill, padding: 6,
       borderWidth: 1, borderColor: COLORS.border,
       elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
     },
+    regCapsuleItem: { alignItems: 'center', gap: 4 },
+    regCapsuleLabel: { color: COLORS.textMuted, fontSize: 10, fontWeight: '600' },
     regCapsuleBtn: {
       width: 48, height: 48, borderRadius: RADIUS.xl,
       alignItems: 'center', justifyContent: 'center',
@@ -607,31 +720,81 @@ export default function ResumenScreen() {
       alignItems: 'center', justifyContent: 'center',
       marginRight: 2,
     },
+    editExpHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.lg },
+    editExpTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, flex: 1 },
+    closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
+    label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: SPACING.md, marginBottom: 6 },
+    input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
+    cardChip: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, marginRight: SPACING.sm, backgroundColor: COLORS.bg },
+    cardChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+    cardChipText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
+    cardRequiredHint: { color: COLORS.danger, fontSize: 11, marginTop: 6 },
+    recurringRow: {
+      flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginTop: 14,
+      backgroundColor: COLORS.card2, borderRadius: RADIUS.md, padding: SPACING.md,
+      borderWidth: 1, borderColor: COLORS.border,
+    },
+    recurringLabel: { color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
+    recurringCaption: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+    freqRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.sm },
+    freqBtn: {
+      flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center',
+      borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,
+    },
+    freqBtnActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryBg },
+    freqBtnText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
+    freqBtnTextActive: { color: COLORS.primary },
+    dateField: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md,
+      borderWidth: 1, borderColor: COLORS.border, marginTop: SPACING.sm,
+    },
+    dateFieldText: { fontSize: FONT.sm },
+    formActions: { flexDirection: 'row', gap: 10, marginTop: SPACING.xl },
+    cancelBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
+    cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
+    saveBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: 'center' },
+    saveBtnOff: { backgroundColor: COLORS.textDim },
+    saveText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }, moderateScale)), [COLORS, moderateScale]);
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <ScrollView
-          ref={monthScrollRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          style={{ width: MONTH_SWIPE_WIDTH, overflow: 'hidden' }}
-          onMomentumScrollEnd={e => {
-            const idx = Math.round(e.nativeEvent.contentOffset.x / MONTH_SWIPE_WIDTH);
-            const key = availableMonths[idx];
-            if (key && key !== selectedMonthKey) setSelectedMonthKey(key);
-          }}
-        >
-          {availableMonths.map(mk => (
-            <View key={mk} style={{ width: MONTH_SWIPE_WIDTH, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-                {formatMonthLabel(mk)}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
+        <View style={[styles.monthSliderWrap, { width: MONTH_SWIPE_WIDTH + 40 }]}>
+          <Ionicons
+            name="chevron-back"
+            size={16}
+            color={COLORS.textDim}
+            style={{ opacity: availableMonths.indexOf(selectedMonthKey) > 0 ? 1 : 0.25 }}
+          />
+          <ScrollView
+            ref={monthScrollRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            style={{ width: MONTH_SWIPE_WIDTH, overflow: 'hidden' }}
+            onMomentumScrollEnd={e => {
+              const idx = Math.round(e.nativeEvent.contentOffset.x / MONTH_SWIPE_WIDTH);
+              const key = availableMonths[idx];
+              if (key && key !== selectedMonthKey) setSelectedMonthKey(key);
+            }}
+          >
+            {availableMonths.map(mk => (
+              <View key={mk} style={{ width: MONTH_SWIPE_WIDTH, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                  {formatMonthLabel(mk)}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+          <Ionicons
+            name="chevron-forward"
+            size={16}
+            color={COLORS.textDim}
+            style={{ opacity: availableMonths.indexOf(selectedMonthKey) < availableMonths.length - 1 ? 1 : 0.25 }}
+          />
+        </View>
         <View style={styles.headerRight}>
           <TouchableOpacity
             onPress={() => setHelpSheet(true)}
@@ -655,7 +818,7 @@ export default function ResumenScreen() {
           <View style={[styles.creditSummaryRow, { marginHorizontal: 0, marginBottom: 16 }]}>
             <View style={styles.creditSummaryBox}>
               <Text style={styles.creditSummaryLabel}>Total gastado</Text>
-              <Text style={[styles.creditSummaryVal, { color: COLORS.credit }]}>{formatCOP(creditSpent)}</Text>
+              <Text style={[styles.creditSummaryVal, { color: COLORS.credit }]}>{formatCOP(totalSpent)}</Text>
             </View>
             <View style={styles.creditSummaryBox}>
               <Text style={styles.creditSummaryLabel}>Total disponible</Text>
@@ -671,86 +834,15 @@ export default function ResumenScreen() {
             style={styles.donutSlider}
             onMomentumScrollEnd={e => setActiveDot(Math.round(e.nativeEvent.contentOffset.x / cardWidth))}
           >
-            {/* Slide 1 — Gastos */}
+            {/* Slide 1 — Balance (débito/crédito/efectivo/deudas) */}
             <View style={[styles.donutSlide, { width: cardWidth }]}>
-              <TouchableOpacity onPress={() => setExpensesModal(true)} activeOpacity={0.85} style={styles.donutTap}>
-                <DonutChart
-                  data={donutData}
-                  total={totalSpent || 1}
-                  size={donutSize}
-                  centerLabel="💸 toca para ver"
-                  centerValue={formatCOP(totalSpent)}
-                  centerValueColor={COLORS.credit}
-                />
-              </TouchableOpacity>
-              <Text style={styles.heroDonutLabel}>Gastos del mes</Text>
-            </View>
-
-            {/* Slide 2 — Metas */}
-            <View style={[styles.donutSlide, { width: cardWidth }]}>
-              <TouchableOpacity onPress={() => goals.length > 0 && setMetasModal(true)} activeOpacity={0.85} style={styles.donutTap}>
-                <DonutChart
-                  data={goalsDonutData}
-                  total={totalTarget || 1}
-                  size={donutSize}
-                  centerValue={goals.length > 0 ? formatCOP(totalSaved) : ''}
-                  centerLabel={goals.length > 0 ? `de ${formatCOP(totalTarget)}` : 'Sin metas'}
-                  centerValueColor={COLORS.primary}
-                  emptyLabel="Sin metas aún"
-                  emptyHint="Toca + para crear tu primera meta de ahorro"
-                />
-              </TouchableOpacity>
-              {/* Emoji legend por meta */}
-              {goals.length > 0 && (
-                <View style={styles.goalsEmojiLegend}>
-                  {goals.slice(0, 6).map(g => (
-                    <View key={g.id} style={styles.goalsEmojiItem}>
-                      <Text style={styles.goalsEmojiChar}>{g.emoji ?? '🎯'}</Text>
-                      <View style={[styles.goalsEmojiBar, { backgroundColor: g.color }]} />
-                    </View>
-                  ))}
-                </View>
-              )}
-              <Text style={styles.heroDonutLabel}>Metas de ahorro</Text>
-            </View>
-
-            {/* Slide 3 — Ingresos */}
-            <View style={[styles.donutSlide, { width: cardWidth }]}>
-              <TouchableOpacity onPress={() => incomes.length > 0 && setIngresosModal(true)} activeOpacity={0.85} style={styles.donutTap}>
-                <DonutChart
-                  data={incomesDonutData}
-                  total={totalIncome || 1}
-                  size={donutSize}
-                  centerValue={formatCOP(totalIncome)}
-                  centerLabel="Total ingresos"
-                  centerValueColor={COLORS.debit}
-                  emptyLabel="Sin ingresos"
-                  emptyHint="Toca + para registrar un ingreso"
-                />
-              </TouchableOpacity>
-              {/* Leyenda de ingresos */}
-              {incomes.length > 0 && (
-                <View style={styles.incomeLegend}>
-                  {incomes.slice(0, 4).map((inc, i) => (
-                    <View key={inc.id} style={styles.incomeLegendRow}>
-                      <View style={[styles.incomeLegendDot, { backgroundColor: INCOME_COLORS[i % INCOME_COLORS.length] }]} />
-                      <Text style={styles.incomeLegendName} numberOfLines={1}>{inc.description || 'Ingreso'}</Text>
-                      <Text style={styles.incomeLegendAmt}>{formatCOP(inc.amount)}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-              <Text style={styles.heroDonutLabel}>Fuentes de ingreso</Text>
-            </View>
-
-            {/* Slide 4 — Balance (débito/crédito/efectivo/deudas) */}
-            <View style={[styles.donutSlide, { width: cardWidth }]}>
+              <Text style={styles.heroDonutLabel}>Billetera general</Text>
               <TouchableOpacity onPress={() => balanceItems.length > 0 && setPatrimonioModal(true)} activeOpacity={0.85} style={styles.donutTap}>
                 <DonutChart
                   data={balanceDonutData}
                   total={totalBalance || 1}
                   size={donutSize}
-                  centerValue={balanceItems.length > 0 ? fmtShort(totalBalance) : ''}
+                  centerValue={balanceItems.length > 0 ? formatCOP(totalBalance) : ''}
                   centerLabel={balanceItems.length > 0 ? 'toca para ver' : 'Sin cuentas'}
                   centerValueColor={COLORS.primary}
                   emptyLabel="Sin cuentas"
@@ -778,14 +870,108 @@ export default function ResumenScreen() {
                 <View style={styles.incomeLegend}>
                   {balanceItems.slice(0, 6).map(it => (
                     <View key={it.id} style={styles.incomeLegendRow}>
-                      <View style={[styles.incomeLegendDot, { backgroundColor: it.color }]} />
-                      <Text style={styles.incomeLegendName} numberOfLines={1}>{it.emoji} {it.name}</Text>
+                      <View style={styles.incomeLegendLeft}>
+                        <View style={[styles.incomeLegendDot, { backgroundColor: it.color }]} />
+                        <Text style={styles.incomeLegendName} numberOfLines={1}>{it.emoji} {it.name}</Text>
+                      </View>
                       <Text style={styles.incomeLegendAmt}>{formatCOP(it.value)}</Text>
                     </View>
                   ))}
                 </View>
               )}
-              <Text style={styles.heroDonutLabel}>Billetera general</Text>
+            </View>
+
+            {/* Slide 2 — Gastos */}
+            <View style={[styles.donutSlide, { width: cardWidth }]}>
+              <Text style={styles.heroDonutLabel}>Gastos del mes</Text>
+              <TouchableOpacity onPress={() => setExpensesModal(true)} activeOpacity={0.85} style={styles.donutTap}>
+                <DonutChart
+                  data={chartDonutData}
+                  total={chartTotalSpent || 1}
+                  size={donutSize}
+                  centerLabel="💸 toca para ver"
+                  centerValue={formatCOP(chartTotalSpent)}
+                  centerValueColor={COLORS.credit}
+                />
+              </TouchableOpacity>
+              {/* Leyenda por categoría */}
+              {chartCatRows.length > 0 && (
+                <View style={styles.incomeLegend}>
+                  {chartCatRows.slice(0, 6).map(r => (
+                    <View key={r.cat.id} style={styles.incomeLegendRow}>
+                      <View style={styles.incomeLegendLeft}>
+                        <View style={[styles.incomeLegendDot, { backgroundColor: r.cat.color }]} />
+                        <Text style={styles.incomeLegendName} numberOfLines={1}>
+                          {r.cat.emoji ? `${r.cat.emoji} ` : ''}{r.cat.name}
+                        </Text>
+                      </View>
+                      <Text style={styles.incomeLegendAmt}>{formatCOP(r.total)}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* Slide 3 — Metas */}
+            <View style={[styles.donutSlide, { width: cardWidth }]}>
+              <Text style={styles.heroDonutLabel}>Metas de ahorro</Text>
+              <TouchableOpacity onPress={() => goals.length > 0 && setMetasModal(true)} activeOpacity={0.85} style={styles.donutTap}>
+                <DonutChart
+                  data={goalsDonutData}
+                  total={totalTarget || 1}
+                  size={donutSize}
+                  centerValue={goals.length > 0 ? formatCOP(totalSaved) : ''}
+                  centerLabel={goals.length > 0 ? `de ${formatCOP(totalTarget)}` : 'Sin metas'}
+                  centerValueColor={COLORS.primary}
+                  emptyLabel="Sin metas aún"
+                  emptyHint="Toca + para crear tu primera meta de ahorro"
+                />
+              </TouchableOpacity>
+              {/* Leyenda por meta */}
+              {goals.length > 0 && (
+                <View style={styles.incomeLegend}>
+                  {goals.slice(0, 6).map(g => (
+                    <View key={g.id} style={styles.incomeLegendRow}>
+                      <View style={styles.incomeLegendLeft}>
+                        <View style={[styles.incomeLegendDot, { backgroundColor: g.color }]} />
+                        <Text style={styles.incomeLegendName} numberOfLines={1}>{g.emoji ?? '🎯'} {g.name}</Text>
+                      </View>
+                      <Text style={styles.incomeLegendAmt}>{formatCOP(g.savedAmount)}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* Slide 4 — Ingresos */}
+            <View style={[styles.donutSlide, { width: cardWidth }]}>
+              <Text style={styles.heroDonutLabel}>Fuentes de ingreso</Text>
+              <TouchableOpacity onPress={() => incomes.length > 0 && setIngresosModal(true)} activeOpacity={0.85} style={styles.donutTap}>
+                <DonutChart
+                  data={incomesDonutData}
+                  total={totalIncome || 1}
+                  size={donutSize}
+                  centerValue={formatCOP(totalIncome)}
+                  centerLabel="Total ingresos"
+                  centerValueColor={COLORS.debit}
+                  emptyLabel="Sin ingresos"
+                  emptyHint="Toca + para registrar un ingreso"
+                />
+              </TouchableOpacity>
+              {/* Leyenda de ingresos */}
+              {incomes.length > 0 && (
+                <View style={styles.incomeLegend}>
+                  {incomes.slice(0, 4).map((inc, i) => (
+                    <View key={inc.id} style={styles.incomeLegendRow}>
+                      <View style={styles.incomeLegendLeft}>
+                        <View style={[styles.incomeLegendDot, { backgroundColor: INCOME_COLORS[i % INCOME_COLORS.length] }]} />
+                        <Text style={styles.incomeLegendName} numberOfLines={1}>{inc.description || 'Ingreso'}</Text>
+                      </View>
+                      <Text style={styles.incomeLegendAmt}>{formatCOP(inc.amount)}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           </ScrollView>
 
@@ -849,10 +1035,15 @@ export default function ResumenScreen() {
                           </View>
                         )}
                       </View>
-                      <Text style={styles.quincenaCardSpent}>{formatCOP(quincenaSpent(q))} gastado</Text>
                       <View style={styles.quincenaCardTrack}>
                         <View style={[styles.quincenaCardFill, { width: `${pct}%` }]} />
                       </View>
+                      {recurringTemplates.length > 0 && (
+                        <Text style={styles.quincenaPendingText}>
+                          {paidCountForQuincena(q)} de {recurringTemplates.length} gastos fijos pagados
+                        </Text>
+                      )}
+                      <Text style={styles.quincenaCardSpentTotal}>{formatCOP(quincenaSpent(q))} gastados</Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -865,6 +1056,20 @@ export default function ResumenScreen() {
           </View>
         )}
 
+        {/* ── Gastos fijos mensuales (entra a la pantalla de categorías) ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/categorias')} style={styles.gastosCard}>
+          <View style={styles.gastosCardIcon}>
+            <Ionicons name="pricetags" size={22} color={COLORS.credit} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.gastosCardTitle}>Gastos fijos mensuales</Text>
+            <Text style={styles.gastosCardSub}>
+              {catRows.filter(r => r.total > 0).length} categorías · {formatCOP(totalSpent)}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.textDim} />
+        </TouchableOpacity>
+
         {/* ── Balance General (patrimonio neto) — mes actual / anterior ── */}
         {(totalActivos > 0 || totalPasivos > 0 || prevTotalActivos > 0 || prevTotalPasivos > 0) && (() => {
           const netoColor = patrimonioNeto >= 0 ? COLORS.debit : COLORS.danger;
@@ -872,15 +1077,15 @@ export default function ResumenScreen() {
           return (
             <View style={styles.budgetWrap}>
               <ScrollView
+                ref={balanceScrollRef}
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 style={styles.balanceSlider}
-                contentOffset={{ x: cardWidth, y: 0 }}
                 onMomentumScrollEnd={e => setBalanceDot(Math.round(e.nativeEvent.contentOffset.x / cardWidth))}
               >
                 {/* Slide 1 — mes anterior */}
-                <TouchableOpacity activeOpacity={0.82} onPress={() => setPrevPatrimonioModal(true)} style={{ width: cardWidth }}>
+                <View style={{ width: cardWidth }}>
                   <View style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: prevNetoColor, backgroundColor: prevNetoColor + '0D' }]}>
                     <View style={styles.patrimonioHeader}>
                       <Ionicons name={prevPatrimonioNeto >= 0 ? 'trending-up' : 'trending-down'} size={18} color={prevNetoColor} />
@@ -903,12 +1108,19 @@ export default function ResumenScreen() {
                         {prevPatrimonioNeto >= 0 ? '+' : ''}{formatCOP(prevPatrimonioNeto)}
                       </Text>
                     </View>
-                    <Text style={{ color: COLORS.textDim, fontSize: 10, marginTop: 6, textAlign: 'right' }}>Toca para ver detalle →</Text>
+                    <TouchableOpacity
+                      activeOpacity={0.6}
+                      onPress={() => setPrevPatrimonioModal(true)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={{ alignSelf: 'flex-end', marginTop: 6 }}
+                    >
+                      <Text style={{ color: COLORS.textDim, fontSize: 10 }}>Toca para ver detalle →</Text>
+                    </TouchableOpacity>
                   </View>
-                </TouchableOpacity>
+                </View>
 
-                {/* Slide 2 — mes actual (vista inicial "bloqueada" vía contentOffset) */}
-                <TouchableOpacity activeOpacity={0.82} onPress={() => setPatrimonioModal(true)} style={{ width: cardWidth }}>
+                {/* Slide 2 — mes actual (vista inicial "bloqueada" vía scrollTo) */}
+                <View style={{ width: cardWidth }}>
                   <View style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: netoColor, backgroundColor: netoColor + '0D' }]}>
                     <View style={styles.patrimonioHeader}>
                       <Ionicons name={patrimonioNeto >= 0 ? 'trending-up' : 'trending-down'} size={18} color={netoColor} />
@@ -931,9 +1143,16 @@ export default function ResumenScreen() {
                         {patrimonioNeto >= 0 ? '+' : ''}{formatCOP(patrimonioNeto)}
                       </Text>
                     </View>
-                    <Text style={{ color: COLORS.textDim, fontSize: 10, marginTop: 6, textAlign: 'right' }}>Toca para ver detalle →</Text>
+                    <TouchableOpacity
+                      activeOpacity={0.6}
+                      onPress={() => setPatrimonioModal(true)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={{ alignSelf: 'flex-end', marginTop: 6 }}
+                    >
+                      <Text style={{ color: COLORS.textDim, fontSize: 10 }}>Toca para ver detalle →</Text>
+                    </TouchableOpacity>
                   </View>
-                </TouchableOpacity>
+                </View>
               </ScrollView>
               <View style={styles.dotRow}>
                 <View style={[styles.dot, balanceDot === 0 && styles.dotActive]} />
@@ -942,20 +1161,6 @@ export default function ResumenScreen() {
             </View>
           );
         })()}
-
-        {/* ── Gastos (entra a la pantalla de categorías) ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/categorias')} style={styles.gastosCard}>
-          <View style={styles.gastosCardIcon}>
-            <Ionicons name="pricetags" size={22} color={COLORS.credit} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.gastosCardTitle}>Gastos</Text>
-            <Text style={styles.gastosCardSub}>
-              {catRows.filter(r => r.total > 0).length} categorías · {formatCOP(totalSpent)}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={COLORS.textDim} />
-        </TouchableOpacity>
 
         {/* ── Metas de ahorro ───────────────────────────── */}
         <View style={[styles.section, { marginTop: 8 }]}>
@@ -1178,6 +1383,37 @@ export default function ResumenScreen() {
                 </>
               )}
 
+              {/* Recurrentes vs no recurrentes */}
+              {totalSpent > 0 && (() => {
+                const recurringTotal = expenses.filter(e => e.isRecurring).reduce((s, e) => s + e.amount, 0);
+                const nonRecurringTotal = totalSpent - recurringTotal;
+                const rows = [
+                  { key: 'rec', label: 'Recurrentes', amt: recurringTotal, color: COLORS.primary },
+                  { key: 'nonrec', label: 'No recurrentes', amt: nonRecurringTotal, color: COLORS.textDim },
+                ];
+                return (
+                  <>
+                    <View style={[styles.summarySectionHeader, { marginTop: 16 }]}>
+                      <Text style={styles.summarySectionTitle}>🔁 Recurrentes vs no recurrentes</Text>
+                    </View>
+                    {rows.map(row => {
+                      const pct = totalSpent > 0 ? (row.amt / totalSpent) * 100 : 0;
+                      return (
+                        <View key={row.key} style={{ position: 'relative' }}>
+                          <View style={styles.summaryCatRow}>
+                            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: row.color }} />
+                            <Text style={styles.summaryCatName}>{row.label}</Text>
+                            <Text style={[styles.summaryCatAmt, { color: row.color }]}>{formatCOP(row.amt)}</Text>
+                            <Text style={styles.summaryCatPct}>{Math.round(pct)}%</Text>
+                          </View>
+                          <View style={[styles.summaryCatBar, { width: `${pct}%`, backgroundColor: row.color + '33' }]} />
+                        </View>
+                      );
+                    })}
+                  </>
+                );
+              })()}
+
               {/* Ingresos */}
               {incomes.length > 0 && (
                 <>
@@ -1250,35 +1486,184 @@ export default function ResumenScreen() {
                   <Text style={styles.emptyText}>Sin gastos este mes</Text>
                 </View>
               ) : (
-                [...expenses]
-                  .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-                  .map(e => {
-                    const cat = categories.find(c => c.id === e.categoryId);
-                    const card = cards.find(c => c.id === e.cardId);
-                    return (
-                      <View key={e.id} style={styles.expCard}>
-                        <View style={[styles.expCardIcon, { backgroundColor: (cat?.color ?? COLORS.textDim) + '22' }]}>
-                          {cat?.emoji
-                            ? <Text style={{ fontSize: 20 }}>{cat.emoji}</Text>
-                            : <Ionicons name={(cat?.icon ?? 'pricetag') as any} size={20} color={cat?.color ?? COLORS.textMuted} />}
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.expCardName} numberOfLines={1}>{e.name}</Text>
-                          <Text style={styles.expCardMeta}>
-                            {cat?.name ?? 'Sin categoría'} · {e.quincena === 1 ? '1ª Quincena' : '2ª Quincena'}{card ? ` · ${card.name}` : ''}
-                          </Text>
-                        </View>
-                        <Text style={[styles.expCardAmt, { color: cat?.color ?? COLORS.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-                          {formatCOP(e.amount)}
-                        </Text>
+                ACCOUNT_TYPE_GROUPS.map(group => {
+                  const groupExpenses = expenses
+                    .filter(e => (e.cardId ? cardTypeMap.get(e.cardId) : 'debit') === group.type)
+                    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+                  if (groupExpenses.length === 0) return null;
+                  const groupTotal = sumExpenses(groupExpenses);
+                  return (
+                    <View key={group.type}>
+                      <View style={styles.summarySectionHeader}>
+                        <Text style={styles.summarySectionTitle}>{group.emoji} {group.label}</Text>
+                        <Text style={styles.summarySectionTotal}>{formatCOP(groupTotal)}</Text>
                       </View>
-                    );
-                  })
+                      {groupExpenses.map(e => {
+                        const cat = categories.find(c => c.id === e.categoryId);
+                        const card = cards.find(c => c.id === e.cardId);
+                        return (
+                          <View key={e.id} style={styles.expCard}>
+                            <View style={[styles.expCardIcon, { backgroundColor: (cat?.color ?? COLORS.textDim) + '22' }]}>
+                              {cat?.emoji
+                                ? <Text style={{ fontSize: 20 }}>{cat.emoji}</Text>
+                                : <Ionicons name={(cat?.icon ?? 'pricetag') as any} size={20} color={cat?.color ?? COLORS.textMuted} />}
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text style={styles.expCardName} numberOfLines={1}>{e.name}</Text>
+                              <Text style={styles.expCardMeta}>
+                                {cat?.name ?? 'Sin categoría'} ·{' '}
+                                {e.isRecurring
+                                  ? (e.recurrenceFrequency === 'weekly' ? 'Semanal' : e.recurrenceFrequency === 'biweekly' ? 'Quincenal' : 'Mensual')
+                                  : (e.quincena === 1 ? '1ª Quincena' : '2ª Quincena')}
+                                {card ? ` · ${card.name}` : ''}
+                              </Text>
+                            </View>
+                            <Text style={[styles.expCardAmt, { color: cat?.color ?? COLORS.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                              {formatCOP(e.amount)}
+                            </Text>
+                            <TouchableOpacity
+                              onPress={() => startEditExpense(e)}
+                              style={styles.expCardEditBtn}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Editar ${e.name}`}
+                            >
+                              <Ionicons name="pencil" size={14} color={COLORS.primary} />
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  );
+                })
               )}
             </ScrollView>
             <TouchableOpacity style={styles.summaryCloseBtn} onPress={() => setExpensesModal(false)}>
               <Text style={styles.summaryCloseBtnText}>Cerrar</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Editar gasto (desde "Gastos del mes") ─────── */}
+      <Modal visible={!!editExpTarget} animationType="slide" transparent onRequestClose={() => setEditExpTarget(null)}>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setEditExpTarget(null)} />
+          <View style={[styles.regSheet, { maxHeight: '88%' }]}>
+            <View style={styles.summaryHandle} />
+            <View style={styles.editExpHeader}>
+              <Text style={styles.editExpTitle}>Editar gasto</Text>
+              <TouchableOpacity
+                onPress={() => setEditExpTarget(null)}
+                style={styles.closeBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar"
+              >
+                <Ionicons name="close" size={20} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.label}>Nombre del gasto</Text>
+              <TextInput
+                style={styles.input}
+                value={editExpName}
+                onChangeText={setEditExpName}
+                placeholder="Ej: ARRIENDO, SPOTIFY"
+                placeholderTextColor={COLORS.textDim}
+                autoCapitalize="characters"
+              />
+
+              <Text style={styles.label}>Monto (COP)</Text>
+              <TextInput
+                style={styles.input}
+                value={formatThousands(editExpAmount)}
+                onChangeText={v => setEditExpAmount(v.replace(/\D/g, ''))}
+                placeholder="0"
+                placeholderTextColor={COLORS.textDim}
+                keyboardType="number-pad"
+              />
+
+              <Text style={styles.label}>¿De dónde salió el dinero?</Text>
+              {cards.length === 0 ? (
+                <Text style={styles.cardRequiredHint}>Primero crea una cuenta o tarjeta en Balance.</Text>
+              ) : (
+                <>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
+                    {cards.map(c => (
+                      <TouchableOpacity
+                        key={c.id}
+                        onPress={() => setEditExpCardId(c.id)}
+                        style={[styles.cardChip, editExpCardId === c.id && styles.cardChipActive,
+                                editExpCardId === c.id && { backgroundColor: c.color }]}
+                      >
+                        <Text style={[styles.cardChipText, editExpCardId === c.id && { color: '#fff' }]}>{c.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                  {!editExpCardId && (
+                    <Text style={styles.cardRequiredHint}>Elige de dónde salió el dinero.</Text>
+                  )}
+                </>
+              )}
+
+              <View style={styles.recurringRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.recurringLabel}>Gasto recurrente</Text>
+                  <Text style={styles.recurringCaption}>Recibirás un recordatorio automático</Text>
+                </View>
+                <Switch
+                  value={editExpIsRecurring}
+                  onValueChange={setEditExpIsRecurring}
+                  trackColor={{ false: COLORS.border, true: COLORS.primary + '88' }}
+                  thumbColor={editExpIsRecurring ? COLORS.primary : COLORS.textDim}
+                />
+              </View>
+              {editExpIsRecurring && (
+                <>
+                  <View style={styles.freqRow}>
+                    {(['weekly', 'biweekly', 'monthly'] as const).map(f => (
+                      <TouchableOpacity
+                        key={f}
+                        onPress={() => setEditExpFrequency(f)}
+                        style={[styles.freqBtn, editExpFrequency === f && styles.freqBtnActive]}
+                      >
+                        <Text style={[styles.freqBtnText, editExpFrequency === f && styles.freqBtnTextActive]}>
+                          {f === 'weekly' ? 'Semanal' : f === 'biweekly' ? 'Quincenal' : 'Mensual'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={styles.label}>¿Qué día lo tienes que pagar? (opcional)</Text>
+                  <TouchableOpacity style={styles.dateField} onPress={() => setEditExpShowDatePicker(true)} activeOpacity={0.7}>
+                    <Text style={[styles.dateFieldText, { color: editExpDueDate ? COLORS.text : COLORS.textDim }]}>
+                      {editExpDueDate || 'Selecciona una fecha'}
+                    </Text>
+                    <Ionicons name="calendar-outline" size={18} color={COLORS.primary} />
+                  </TouchableOpacity>
+                  {editExpShowDatePicker && (
+                    <DateTimePicker
+                      value={editExpDueDateObj ?? new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={handleEditExpDueDateChange}
+                    />
+                  )}
+                </>
+              )}
+
+              <View style={styles.formActions}>
+                <TouchableOpacity onPress={() => setEditExpTarget(null)} style={styles.cancelBtn}>
+                  <Text style={styles.cancelText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={saveEditExpense}
+                  disabled={!canSaveEditExpense}
+                  style={[styles.saveBtn, !canSaveEditExpense && styles.saveBtnOff]}
+                >
+                  <Text style={styles.saveText}>Guardar</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1549,30 +1934,39 @@ export default function ResumenScreen() {
       <View style={styles.fabContainer}>
         {registrarSheet ? (
           <View style={styles.regCapsule}>
-            <TouchableOpacity
-              style={styles.regCapsuleBtn}
-              onPress={() => { setRegistrarSheet(false); setQuickEntryType('ingreso'); setQuickEntry(true); }}
-              accessibilityRole="button"
-              accessibilityLabel="Registrar ingreso"
-            >
-              <Ionicons name="add" size={24} color={COLORS.debit} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.regCapsuleBtn}
-              onPress={() => { setRegistrarSheet(false); setQuickEntryType('gasto'); setQuickEntry(true); }}
-              accessibilityRole="button"
-              accessibilityLabel="Registrar gasto"
-            >
-              <Ionicons name="remove" size={24} color={COLORS.credit} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.regCapsuleBtn}
-              onPress={() => { setRegistrarSheet(false); setEditingGoal(null); setGoalModal(true); }}
-              accessibilityRole="button"
-              accessibilityLabel="Nueva meta de ahorro"
-            >
-              <Text style={styles.regCapsuleEmoji}>🎯</Text>
-            </TouchableOpacity>
+            <View style={styles.regCapsuleItem}>
+              <Text style={styles.regCapsuleLabel}>Ingreso</Text>
+              <TouchableOpacity
+                style={styles.regCapsuleBtn}
+                onPress={() => { setRegistrarSheet(false); setQuickEntryType('ingreso'); setQuickEntry(true); }}
+                accessibilityRole="button"
+                accessibilityLabel="Registrar ingreso"
+              >
+                <Ionicons name="add" size={24} color={COLORS.debit} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.regCapsuleItem}>
+              <Text style={styles.regCapsuleLabel}>Gasto</Text>
+              <TouchableOpacity
+                style={styles.regCapsuleBtn}
+                onPress={() => { setRegistrarSheet(false); setQuickEntryType('gasto'); setQuickEntry(true); }}
+                accessibilityRole="button"
+                accessibilityLabel="Registrar gasto"
+              >
+                <Ionicons name="remove" size={24} color={COLORS.credit} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.regCapsuleItem}>
+              <Text style={styles.regCapsuleLabel}>Meta</Text>
+              <TouchableOpacity
+                style={styles.regCapsuleBtn}
+                onPress={() => { setRegistrarSheet(false); setEditingGoal(null); setGoalModal(true); }}
+                accessibilityRole="button"
+                accessibilityLabel="Nueva meta de ahorro"
+              >
+                <Text style={styles.regCapsuleEmoji}>🎯</Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               style={styles.regCapsuleClose}
               onPress={() => setRegistrarSheet(false)}

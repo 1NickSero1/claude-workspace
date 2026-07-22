@@ -80,6 +80,19 @@ export async function scheduleRecurringReminder(
     });
   }
 
+  if (frequency === 'biweekly') {
+    // Sin trigger nativo quincenal en expo-notifications: se repite cada 15 días
+    // por intervalo de tiempo en vez de un día calendario fijo.
+    return Notifications.scheduleNotificationAsync({
+      content,
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 15 * 24 * 60 * 60,
+        repeats: true,
+      },
+    });
+  }
+
   return Notifications.scheduleNotificationAsync({
     content,
     trigger: {

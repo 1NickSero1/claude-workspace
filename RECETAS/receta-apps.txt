@@ -531,6 +531,30 @@ HISTORIAL DE CAMBIOS
   SmartScreen la primera vez (avisarle a la novia como continuar, no es un
   error).
 
+[2026-07-21] Pollito: Python instalado + primera prueba en vivo + rediseño del menu
+- Continuacion de las dos entradas anteriores de pollito (misma fecha).
+  Instalado Python 3.8.10 real (installer 64-bit de python.org - hubo que
+  aclarar que NO era el "Python Install Manager" que la web ofrece por
+  defecto, y confirmar via la pagina oficial de la 3.8.20 que 3.8.10 sigue
+  siendo la ultima con instalador de Windows real).
+- Instaladas dependencias sorteando un proxy local de un antivirus
+  (HTTPS scanning en 127.0.0.1) que rompia el pip viejo del 3.8.10;
+  generados de verdad los assets (icon.ico/icon.png/fondo.png), con una
+  correccion en vivo del lazo (se veia como un rombo suelto).
+- Primera corrida real de main.py confirmada sin errores. A partir de ahi,
+  varias rondas de ajuste de diseño con el usuario viendo la ventana real
+  en su pantalla: titulo interno cambiado a "Hola mi Sofi ♥" (nombre de la
+  novia: Sofi; un emoji de corazon rosa probado antes no renderizaba, muy
+  nuevo para Windows/Tk), tipografia de los botones a "Segoe Print", y el
+  pollito agregado como mascota flotante con .place() - version final
+  recortada solo por el borde derecho (se ve completo de arriba a abajo),
+  descartando antes una version de ventana ancha a dos columnas y otra que
+  solo mostraba la cara.
+- El usuario cerro la sesion pidiendo que la palabra clave POLLITO (ya
+  configurada) traiga el contexto completo la proxima vez - queda
+  documentado aca y en APPS/pollito/NOTAS/ (ACTUALIZACIONES.txt y
+  "ajustes pollito.txt").
+
 [2026-07-21] Politica de privacidad real + hallazgo en RegistroScreen + confirmacion de canal de notificacion (correo)
 - Se reviso RegistroScreen.js linea por linea para escribir la politica de
   privacidad con datos reales, no una plantilla generica (dado que la app

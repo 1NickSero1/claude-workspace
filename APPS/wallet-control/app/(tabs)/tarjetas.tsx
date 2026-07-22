@@ -46,6 +46,7 @@ export default function TarjetasScreen() {
   const [actionAmount, setActionAmount] = useState('');
   const [actionNote, setActionNote]     = useState('');
   const [debtHistModal, setDebtHistModal] = useState(false);
+  const [historyModalType, setHistoryModalType] = useState<'debit' | 'credit' | 'cash' | null>(null);
   const [overflowModal, setOverflowModal] = useState(false);
   const [overflowInfo, setOverflowInfo]   = useState({ entered: 0, pending: 0 });
   const [confirmDeleteCard, setConfirmDeleteCard] = useState<Card | null>(null);
@@ -102,17 +103,9 @@ export default function TarjetasScreen() {
     },
     subTabBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
     scroll: { paddingBottom: 40 },
-    sectionAddBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
     emptyState: { paddingHorizontal: SPACING.xl, paddingVertical: 32, alignItems: 'center', gap: SPACING.xl },
     emptyHint: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', lineHeight: 20 },
-    addDashedBtn: {
-      borderWidth: 2, borderColor: COLORS.primary, borderStyle: 'dashed',
-      borderRadius: 14, paddingVertical: 14, paddingHorizontal: SPACING.xl, width: '100%', alignItems: 'center',
-    },
-    addDashedText: { color: COLORS.primary, fontWeight: '700', fontSize: FONT.md },
     listSection: { paddingHorizontal: SPACING.lg },
-    addMoreBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: SPACING.md },
-    addMoreText: { color: COLORS.primary, fontWeight: '700', fontSize: FONT.sm },
     cardScroll: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.lg, gap: 14 },
     sectionDivider: {
       flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -121,18 +114,8 @@ export default function TarjetasScreen() {
     },
     sectionDividerTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.base },
     sectionDividerAmt: { color: COLORS.debt, fontWeight: '700', fontSize: FONT.base },
-    debtSummaryCard: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      marginHorizontal: SPACING.lg, marginBottom: 14, backgroundColor: COLORS.debtBg,
-      borderRadius: 14, padding: 14, borderWidth: 1, borderColor: COLORS.debt + '33',
-    },
-    debtSummaryLabel: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 2 },
-    debtSummaryVal: { fontWeight: '800', fontSize: FONT.lg },
-    debtSummaryBadge: {
-      backgroundColor: COLORS.debt + '22', borderRadius: 10,
-      paddingHorizontal: 10, paddingVertical: 5,
-    },
-    debtSummaryBadgeText: { color: COLORS.debt, fontWeight: '700', fontSize: FONT.sm },
+    sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    historyToggleBtn: { padding: 4 },
     balanceFooter: {
       flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
       marginHorizontal: SPACING.lg, marginTop: SPACING.xl, marginBottom: SPACING.xs,
@@ -322,6 +305,50 @@ export default function TarjetasScreen() {
 
   const getCatColor = (id: string) => categories.find(c => c.id === id)?.color ?? COLORS.textDim;
 
+  // Historial de depósitos combinados (débito/efectivo) para el toggle de cada sección
+  const getDepositHistory = (type: 'debit' | 'cash') => cards
+    .filter(c => c.type === type)
+    .flatMap(c =>
+      (c.events ?? [])
+        .filter(e => e.type === 'deposit')
+        .map(e => ({ ...e, cardName: c.name, cardColor: c.color, cardEmoji: c.emoji }))
+    )
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // Historial de gastos cargados a tarjetas de crédito, combinados
+  const getCreditExpenseHistory = () => {
+    const creditCardIds = new Set(tarjetas.map(c => c.id));
+    return expenses
+      .filter(e => e.cardId && creditCardIds.has(e.cardId))
+      .map(e => {
+        const card = cards.find(c => c.id === e.cardId);
+        return { ...e, cardName: card?.name, cardColor: getCatColor(e.categoryId) };
+      })
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  };
+
+  const HISTORY_TYPE_META = {
+    debit:  { title: 'Historial de depósitos', emptyText: 'Aún no hay depósitos registrados' },
+    cash:   { title: 'Historial de depósitos', emptyText: 'Aún no hay depósitos registrados' },
+    credit: { title: 'Historial de gastos', emptyText: 'Aún no hay gastos registrados' },
+  } as const;
+
+  interface HistoryRow { key: string; primary: string; secondary: string; amount: number; date: string; color: string }
+
+  const getHistoryRows = (type: 'debit' | 'cash' | 'credit'): HistoryRow[] => {
+    if (type === 'credit') {
+      return getCreditExpenseHistory().map((e, i) => ({
+        key: `${e.id}-${i}`, primary: e.name, secondary: e.cardName ?? '', amount: e.amount, date: e.createdAt, color: e.cardColor,
+      }));
+    }
+    return getDepositHistory(type).map((e, i) => ({
+      key: `${type}-${i}`,
+      primary: `${e.cardEmoji ? e.cardEmoji + ' ' : ''}${e.cardName}`,
+      secondary: e.note ?? '',
+      amount: e.amount, date: e.date, color: e.cardColor,
+    }));
+  };
+
   const handleSaveCard = async (card: Card) => {
     await saveCard(card);
     setModalVisible(false);
@@ -466,26 +493,30 @@ export default function TarjetasScreen() {
         {activeTab === 'cuentas' && (
           <>
             {/* ── Sección Débito ── */}
+            <View style={[styles.sectionDivider, { marginTop: 8 }]}>
+              <View style={styles.sectionTitleRow}>
+                <Text style={styles.sectionDividerTitle}>Tarjetas de débito</Text>
+                {debitCards.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setHistoryModalType('debit')}
+                    style={styles.historyToggleBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Ver historial de débito"
+                  >
+                    <Ionicons name="time-outline" size={16} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                )}
+              </View>
+              {totalDebitAvail > 0 && (
+                <Text style={[styles.sectionDividerAmt, { color: COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalDebitAvail)}</Text>
+              )}
+            </View>
             {debitCards.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyHint}>Agrega tus cuentas bancarias o tarjetas débito</Text>
-                <TouchableOpacity onPress={() => openAdd(['debit'])} style={styles.addDashedBtn}>
-                  <Text style={styles.addDashedText}>+ Agregar débito</Text>
-                </TouchableOpacity>
               </View>
             ) : (
               <>
-                <View style={[styles.sectionDivider, { marginTop: 8 }]}>
-                  <Text style={styles.sectionDividerTitle}>Tarjetas de débito</Text>
-                  <TouchableOpacity
-                    onPress={() => openAdd(['debit'])}
-                    style={styles.sectionAddBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Agregar tarjeta débito"
-                  >
-                    <Ionicons name="add" size={18} color={COLORS.primary} />
-                  </TouchableOpacity>
-                </View>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -507,20 +538,20 @@ export default function TarjetasScreen() {
 
             {/* ── Sección Efectivo ── */}
             <View style={styles.sectionDivider}>
-              <Text style={styles.sectionDividerTitle}>Efectivo</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                {totalCash > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalCash)}</Text>}
+              <View style={styles.sectionTitleRow}>
+                <Text style={styles.sectionDividerTitle}>Efectivo</Text>
                 {cashCards.length > 0 && (
                   <TouchableOpacity
-                    onPress={() => openAdd(['cash'])}
-                    style={styles.sectionAddBtn}
+                    onPress={() => setHistoryModalType('cash')}
+                    style={styles.historyToggleBtn}
                     accessibilityRole="button"
-                    accessibilityLabel="Agregar cuenta de efectivo"
+                    accessibilityLabel="Ver historial de efectivo"
                   >
-                    <Ionicons name="add" size={18} color={COLORS.cash} />
+                    <Ionicons name="time-outline" size={16} color={COLORS.textMuted} />
                   </TouchableOpacity>
                 )}
               </View>
+              {totalCash > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalCash)}</Text>}
             </View>
 
             {cashCards.length === 0 ? (
@@ -528,12 +559,6 @@ export default function TarjetasScreen() {
                 <Text style={[styles.emptyHint, { marginBottom: 16 }]}>
                   Registra tu dinero en efectivo o billetera
                 </Text>
-                <TouchableOpacity
-                  onPress={() => openAdd(['cash'])}
-                  style={[styles.addDashedBtn, { borderColor: COLORS.cash }]}
-                >
-                  <Text style={[styles.addDashedText, { color: COLORS.cash }]}>+ Agregar efectivo</Text>
-                </TouchableOpacity>
               </View>
             ) : (
               <View style={styles.listSection}>
@@ -550,35 +575,30 @@ export default function TarjetasScreen() {
 
         {activeTab === 'tarjetas' && (
           <>
+            <View style={[styles.sectionDivider, { marginTop: 8 }]}>
+              <View style={styles.sectionTitleRow}>
+                <Text style={styles.sectionDividerTitle}>Tarjetas de crédito</Text>
+                {tarjetas.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setHistoryModalType('credit')}
+                    style={styles.historyToggleBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Ver historial de crédito"
+                  >
+                    <Ionicons name="time-outline" size={16} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                )}
+              </View>
+              {totalCreditUsed > 0 && (
+                <Text style={[styles.sectionDividerAmt, { color: COLORS.credit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalCreditUsed)}</Text>
+              )}
+            </View>
             {tarjetas.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyHint}>Agrega tus tarjetas de crédito</Text>
-                <TouchableOpacity
-                  onPress={() => openAdd(['credit', 'debt'])}
-                  style={[styles.addDashedBtn, { borderColor: COLORS.debt }]}
-                >
-                  <Text style={[styles.addDashedText, { color: COLORS.debt }]}>+ Agregar tarjeta de crédito</Text>
-                </TouchableOpacity>
               </View>
             ) : (
               <>
-                <View style={[styles.sectionDivider, { marginTop: 8 }]}>
-                  <Text style={styles.sectionDividerTitle}>Tarjetas de crédito</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    {totalCreditUsed > 0 && (
-                      <Text style={[styles.sectionDividerAmt, { color: COLORS.credit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalCreditUsed)}</Text>
-                    )}
-                    <TouchableOpacity
-                      onPress={() => openAdd(['credit', 'debt'])}
-                      style={styles.sectionAddBtn}
-                      accessibilityRole="button"
-                      accessibilityLabel="Agregar tarjeta de crédito"
-                    >
-                      <Ionicons name="add" size={18} color={COLORS.debt} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -599,38 +619,27 @@ export default function TarjetasScreen() {
             )}
 
             <View style={styles.sectionDivider}>
-              <Text style={styles.sectionDividerTitle}>Préstamos</Text>
+              <View style={styles.sectionTitleRow}>
+                <Text style={styles.sectionDividerTitle}>Préstamos</Text>
+                {debts.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setDebtHistModal(true)}
+                    style={styles.historyToggleBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Ver historial de préstamos"
+                  >
+                    <Ionicons name="time-outline" size={16} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                )}
+              </View>
               {totalDebt > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.danger }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalDebt)}</Text>}
             </View>
-
-            {debts.length > 0 && (
-              <TouchableOpacity style={styles.debtSummaryCard} onPress={() => setDebtHistModal(true)} activeOpacity={0.8}>
-                <View>
-                  <Text style={styles.debtSummaryLabel}>Total deuda</Text>
-                  <Text style={[styles.debtSummaryVal, { color: COLORS.danger }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalDebt)}</Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <View style={styles.debtSummaryBadge}>
-                    <Text style={styles.debtSummaryBadgeText}>
-                      {debts.length} {debts.length === 1 ? 'préstamo' : 'préstamos'}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color={COLORS.debt} />
-                </View>
-              </TouchableOpacity>
-            )}
 
             {debts.length === 0 ? (
               <View style={{ paddingHorizontal: 20 }}>
                 <Text style={[styles.emptyHint, { marginBottom: 16 }]}>
                   Registra préstamos o deudas informales
                 </Text>
-                <TouchableOpacity
-                  onPress={() => openAdd(['debt', 'credit'])}
-                  style={[styles.addDashedBtn, { borderColor: COLORS.debt }]}
-                >
-                  <Text style={[styles.addDashedText, { color: COLORS.debt }]}>+ Agregar préstamo</Text>
-                </TouchableOpacity>
               </View>
             ) : (
               <View style={styles.listSection}>
@@ -639,15 +648,6 @@ export default function TarjetasScreen() {
                     <AccountRow card={card} spent={0} />
                   </TouchableOpacity>
                 ))}
-                <TouchableOpacity
-                  onPress={() => openAdd(['debt', 'credit'])}
-                  style={styles.addMoreBtn}
-                  accessibilityRole="button"
-                  accessibilityLabel="Agregar préstamo"
-                >
-                  <Ionicons name="add-circle-outline" size={16} color={COLORS.debt} />
-                  <Text style={[styles.addMoreText, { color: COLORS.debt }]}>Agregar préstamo</Text>
-                </TouchableOpacity>
               </View>
             )}
           </>
@@ -1024,6 +1024,50 @@ export default function TarjetasScreen() {
               ) : (
                 <Text style={actStyles.debtModalEmpty}>Aún no hay abonos registrados</Text>
               )}
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Historial por sección (débito / efectivo / crédito) */}
+      <Modal visible={!!historyModalType} animationType="slide" transparent onRequestClose={() => setHistoryModalType(null)}>
+        <KeyboardAvoidingView style={actStyles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setHistoryModalType(null)} activeOpacity={1} />
+          <View style={actStyles.sheet}>
+            <View style={actStyles.handle} />
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {historyModalType && (() => {
+                const rows = getHistoryRows(historyModalType);
+                const meta = HISTORY_TYPE_META[historyModalType];
+                const accent = historyModalType === 'credit' ? COLORS.credit : COLORS.debit;
+                return (
+                  <>
+                    <Text style={actStyles.debtModalTitle}>{meta.title}</Text>
+                    {rows.length > 0 ? (
+                      <>
+                        <Text style={actStyles.debtModalTotal}>
+                          Total: {formatCOP(rows.reduce((s, r) => s + r.amount, 0))}
+                        </Text>
+                        <View style={actStyles.histSection}>
+                          {rows.map(row => (
+                            <View key={row.key} style={actStyles.histRow}>
+                              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: row.color }} />
+                              <View style={{ flex: 1 }}>
+                                <Text style={[actStyles.histLabel, { flex: 0 }]}>{row.primary}</Text>
+                                {row.secondary ? <Text style={actStyles.histNote}>{row.secondary}</Text> : null}
+                              </View>
+                              <Text style={[actStyles.histAmt, { color: accent }]}>{formatCOP(row.amount)}</Text>
+                              <Text style={actStyles.histDate}>{fmtDate(row.date)}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      </>
+                    ) : (
+                      <Text style={actStyles.debtModalEmpty}>{meta.emptyText}</Text>
+                    )}
+                  </>
+                );
+              })()}
             </ScrollView>
           </View>
         </KeyboardAvoidingView>

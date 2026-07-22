@@ -137,6 +137,12 @@ export default function CategoriasScreen() {
     confirmDeleteBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: COLORS.danger },
     confirmDeleteText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     fabContainer: { position: 'absolute', bottom: 24, right: 24, alignItems: 'center', gap: SPACING.xs },
+    fabLabelPill: {
+      backgroundColor: COLORS.card2, borderRadius: RADIUS.pill,
+      paddingHorizontal: SPACING.md, paddingVertical: 4,
+      borderWidth: 1, borderColor: COLORS.border,
+    },
+    fabLabelText: { color: COLORS.textMuted, fontSize: 11, fontWeight: '600' },
     fab: {
       width: 60, height: 60, borderRadius: 30,
       backgroundColor: COLORS.primary,
@@ -336,6 +342,9 @@ export default function CategoriasScreen() {
 
       {/* FAB */}
       <View style={styles.fabContainer}>
+        <View style={styles.fabLabelPill}>
+          <Text style={styles.fabLabelText}>Nueva categoría</Text>
+        </View>
         <TouchableOpacity
           style={styles.fab}
           onPress={() => { setEditingCat(null); setCatModal(true); }}

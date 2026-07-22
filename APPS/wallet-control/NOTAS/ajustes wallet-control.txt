@@ -12,14 +12,7 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
-poner el deslizable para ver el balance del mes anterior
-quita los botones que están con líneas punteadas en la pantalla de tarjetas, de efectivo de crédito y debito, quita el + pequeño de tarjetas de debito y deja solo el + grande de la abajo derecha
-que desde el + de la pantalla de debito pueda agregar una tarjeta debito y el efectivo desde el mismo + morado
-quita la opción de efectivo cuando uno ingresa al pop up de ingresar nuevo efectivo ya que es mucho ya es intrusivo
-quita el emogi que aparece inicial y donde dice opcional recomiéndale emojis genéricos para efectivo
-pon que sea obligatorio poner el monto al crear cualquier tipo de cuenta sea debito/creito o efectivo y que si se va a salir confirme si quiere dejarlo en 0 o borrar lo que hizo
-pon que quizá pueda poner un avatar en vez de una foto de perfil
-
+ (vacío por ahora)
 
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
@@ -39,6 +32,443 @@ pon que quizá pueda poner un avatar en vez de una foto de perfil
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX — octava ronda de pendientes "por MI" del 2026-07-22 (FIXA)
+    → El pedido original ("que no diga presupuesto... ver resumen, y que se
+      diferencien los gastos por categoría, recurrentes/no recurrentes, e
+      ingresos") era ambiguo — se aclaró con el usuario a qué tarjeta se
+      refería y qué tan grande era el cambio antes de tocar código.
+    → Tarjeta "Presupuesto mensual" (debajo del carrusel de diagramas en
+      Resumen): se agregó la leyenda "Toca para ver el resumen del mes →"
+      al final de la tarjeta, para que quede claro que tocarla abre el
+      popup "Resumen del mes" (ya existía esa navegación, solo faltaba la
+      pista visual — mismo patrón que "Toca para ver detalle →" ya usado en
+      Balance General).
+    → A pedido del usuario en la misma ronda, se quitó la línea
+      "Presupuesto: $X" que estaba al final de esa misma tarjeta (quedaba
+      redundante junto a "Disponible", que ya muestra cuánto queda del
+      presupuesto).
+    → Popup "Resumen del mes": se agregó una sección nueva "🔁 Recurrentes
+      vs no recurrentes", entre "Gastos por categoría" y "Fuentes de
+      ingreso" (mismo orden que pidió el usuario) — muestra el total y % de
+      lo gastado en gastos marcados como recurrentes vs los que no, mismo
+      estilo visual (barra + %) que ya usaba "Gastos por categoría". Las
+      otras dos secciones (categoría, ingresos) ya existían — no hubo que
+      duplicar esa lógica.
+    → Verificado con `npx tsc --noEmit` sin errores y en vivo en la tablet:
+      la leyenda nueva se ve en la tarjeta, la línea de presupuesto ya no
+      aparece, y el popup muestra "Recurrentes $45.000 (35%) / No
+      recurrentes $83.000 (65%)" correctamente calculado sobre los gastos
+      reales del mes.
+
+  ✓ MEJORAX — séptima ronda de pendientes "por MI" del 2026-07-22 (FIXA)
+    → "No pongas 650k sino $650.000": el centro del donut "Billetera general"
+      usaba fmtShort() (abreviaba a "$650k"/"$1.2M"). Se cambió a formatCOP()
+      para mostrar el monto completo, igual que ya hacían los otros 3 donuts
+      del carrusel. fmtShort() quedó sin ningún uso — se eliminó.
+    → "En Quincena 1 y 2, ponle al final un total de lo que se gasta en cada
+      una": se re-agregó (se había quitado en la ronda anterior, ver v1.26)
+      un texto con el total gastado en esa quincena específica, esta vez AL
+      FINAL de la tarjeta (después de la barra de progreso y del contador
+      "X de Y gastos fijos pagados"), no antes como en su primera versión —
+      nueva función quincenaSpent(q).
+    → "Que el diagrama de gastado solo sume lo que se va gastando, sin
+      contar los gastos recurrentes hasta la fecha que suelen pagarse":
+      el donut "Gastos del mes" (y su leyenda + valor central) ahora excluye
+      un gasto recurrente con fecha de pago configurada (recurrenceDueDate)
+      SI esa fecha todavía no ha llegado dentro del mes — aunque el gasto ya
+      esté registrado, no se suma al total "gastado" hasta el día que
+      corresponde. Si el gasto recurrente NO tiene fecha de pago configurada
+      (es un campo opcional), sigue contando de inmediato al registrarse,
+      igual que antes — no había una fecha de referencia para excluirlo.
+      Este cambio quedó acotado SOLO a ese diagrama: la tarjeta "Gastos fijos
+      mensuales", el popup de detalle "Gastos del mes" y el resto de la app
+      (presupuesto, patrimonio neto) siguen sumando el total real sin
+      filtrar, ya que el usuario solo pidió el cambio para "el diagrama de
+      torta" — esos otros lugares son un registro/control, no un indicador
+      de avance de gasto.
+    → "Total gastado y Total disponible siguen en 0, no se ha sincronizado":
+      no era un problema de sincronización — "Total gastado" (arriba de
+      Resumen) estaba sumando SOLO los gastos hechos con tarjeta de crédito
+      (creditSpent), que da $0 si el usuario no ha cargado ningún gasto a una
+      tarjeta de crédito todavía (confirmado en vivo en la tablet: mientras
+      "Total gastado" mostraba $0, la tarjeta de "Presupuesto mensual" un
+      poco más abajo, que sí usa el total real, mostraba correctamente
+      "Gastado $98.000"). Se cambió "Total gastado" para usar el total real
+      (totalSpent, todas las cuentas) en vez de solo crédito — confirmado en
+      vivo que ahora coincide con "Presupuesto mensual". "Total disponible"
+      no tenía este problema (ya mostraba $605.000 real, débito + efectivo)
+      y se dejó igual.
+    → Verificado con `npx tsc --noEmit` sin errores y en vivo en la tablet
+      (Billetera general con monto completo, Quincena 1/2 con su total al
+      final, Total gastado sincronizado con Presupuesto mensual). La
+      exclusión de gastos recurrentes sin fecha vencida todavía (punto 3) se
+      confirmó por revisión de código — reutiliza el mismo parseo de fecha
+      "D/M/AAAA" ya probado en CardFormModal — ya que no había, en este
+      momento, ningún gasto real con fecha de pago futura configurada para
+      verlo en acción en pantalla.
+
+  ✓ Quitada la tarjeta "Total deuda" redundante en Tarjetas (pedido en vivo,
+    2026-07-21, FIXA)
+    → En la pestaña Crédito de Tarjetas, la tarjeta naranja "Total deuda"
+      (con el total y navegación a "Historial de abonos") quedó duplicada
+      desde que se agregó el ícono de reloj junto al título de "Préstamos"
+      (misma ronda anterior, ver "Toggle pequeño en cada sección..." más
+      abajo): el encabezado "Préstamos" ya muestra título + total + ícono de
+      reloj que abre el mismo "Historial de abonos". Se eliminó el bloque
+      completo (debtSummaryCard y sus estilos, sin uso en otro lado).
+    → Verificado con `npx tsc --noEmit` sin errores y en vivo en la tablet:
+      la sección "Préstamos" sigue mostrando el total y abriendo el
+      historial correctamente desde su ícono de reloj.
+
+  ✓ Editar cualquier gasto desde "Gastos del mes" + tarjeta obligatoria
+    (pedido en vivo, 2026-07-21, PECAS)
+    → "En Gastos, en el pop up, deja editar cualquier gasto": el popup
+      "Gastos del mes" (se abre tocando el donut de Gastos en Resumen) era
+      de solo lectura. Ahora cada fila tiene un ícono de lápiz que abre un
+      formulario de edición completo (nombre, monto, tarjeta, recurrente +
+      frecuencia + fecha de pago) para CUALQUIER gasto del mes, sin
+      importar su categoría — antes solo se podía editar entrando a
+      Categorías → la categoría específica del gasto.
+    → "Quita la leyenda de 2da quincena": mismo arreglo ya aplicado en
+      Categorías — un gasto recurrente ahora muestra su propia frecuencia
+      (Semanal/Quincenal/Mensual) en vez de "1ª/2ª Quincena" en este popup
+      también (se había quedado sin corregir aquí en la ronda anterior).
+    → "Que sea obligatorio elegir de dónde salió el dinero y que se vaya
+      descontando": en este formulario de edición, a diferencia del de
+      Categorías (donde la tarjeta quedó opcional a propósito), la tarjeta
+      es OBLIGATORIA — no hay opción "Sin tarjeta", y "Guardar" queda
+      deshabilitado con un aviso en rojo hasta que se elige una. El
+      descuento del saldo de esa cuenta ya pasa automáticamente en cuanto
+      se asigna: no fue necesaria lógica nueva, la app ya restaba el gasto
+      del saldo disponible de cualquier tarjeta con cardId asignado
+      (getCardTotalSpent), solo faltaba forzar que siempre hubiera una.
+    → Nota: se probó en vivo editando el gasto real "Entretenimiento"
+      (Tony) para verificar el flujo completo, y quedó con "Nequi"
+      asignado como tarjeta — el "Total disponible" bajó de $655.000 a
+      $625.000 al guardar, confirmando el descuento. A diferencia de otras
+      pruebas de esta sesión, este cambio NO se revirtió: como la tarjeta
+      ahora es obligatoria, ya no existe la opción de volver a dejarlo sin
+      tarjeta desde la app — si "Nequi" no era la cuenta correcta para ese
+      gasto, cámbiala manualmente tocando el lápiz de esa fila.
+    → Verificado con `npx tsc --noEmit` sin errores y en vivo en la tablet.
+
+  ✓ Quitado el monto gastado de las tarjetas de Quincena (pedido en vivo,
+    2026-07-21, FIXA)
+    → Cada slide de Quincena 1/2 ya no muestra "$X gastado" — se quita el
+      Text y su estilo (quincenaCardSpent) y la función quincenaSpent()
+      que quedó sin uso. Se conserva la barra de progreso (que mide avance
+      de fechas dentro del periodo, no gasto) y el contador "X de Y gastos
+      fijos pagados" agregado en la ronda anterior.
+    → Verificado con `npx tsc --noEmit` sin errores y en vivo en la
+      tablet. Nota aparte: durante la verificación se encontró que el
+      túnel `adb reverse tcp:8081` se había caído en algún momento de la
+      sesión (por eso la app mostraba "Failed to download remote update"
+      al recargar) — se restableció con `adb reverse tcp:8081 tcp:8081`;
+      no era un bug de código, solo de la conexión USB con la tablet.
+
+  ✓ MEJORAX — sexta ronda de pendientes "por MI" del 2026-07-21 (FIXA)
+    → "En el pop up de cada categoría, quita que diga siempre 2da
+      Quincena": bug real, no solo percepción — como la quincena se asigna
+      sola según la fecha de hoy (día 21, ya pasado el 15), CUALQUIER gasto
+      anotado hoy caía en "2ª Quincena", y ese dato no significa nada para
+      un gasto recurrente (que no vive "en una quincena", vive en su propia
+      frecuencia semanal/quincenal/mensual). En la lista de gastos de
+      CategoryDetailModal, un gasto recurrente ahora muestra su propia
+      frecuencia (Semanal/Quincenal/Mensual) en vez de "1ª/2ª Quincena" —
+      los gastos normales (no recurrentes) siguen mostrando la quincena
+      igual que antes, ahí sí es un dato útil.
+    → "Opcional: que un gasto recurrente diga qué día hay que pagarlo, con
+      un calendario": nuevo campo recurrenceDueDate?: string en la
+      interfaz Expense (storage.ts). En CategoryDetailModal, al activar
+      "Gasto recurrente" aparece un campo opcional "¿Qué día lo tienes que
+      pagar?" que abre el calendario nativo del celular (mismo patrón ya
+      usado para la fecha límite de préstamos en CardFormModal). Si se
+      llena, la lista de gastos lo muestra: "Mensual · vence 30/7/2026".
+    → Verificado en la tablet con el gasto real "Comida": se activó
+      temporalmente como recurrente mensual con fecha 30/7/2026 — la lista
+      mostró "Mensual · vence 30/7/2026" correctamente — y se revirtió a su
+      estado original (no recurrente, "2ª Quincena") al terminar la prueba,
+      sin dejar cambios en los datos del usuario.
+    → Verificado con `npx tsc --noEmit` sin errores.
+
+  ✓ MEJORAX — quinta ronda de pendientes "por MI" del 2026-07-21: plan de
+    gastos recurrentes + seguimiento de pagados (FIXA/PECAS)
+    → "En el pop up de agregar una categoría, elimina Quincena y Tarjeta,
+      que solo deje gasto recurrente y agrega una opción quincenal":
+      CategoryDetailModal (agregar/editar gasto dentro de una categoría) ya
+      no muestra los selectores de Quincena ni Tarjeta — la quincena se
+      asigna sola según la fecha de hoy al crear el gasto (igual que ya
+      hacía el registro rápido), y al editar se conserva la quincena/
+      tarjeta que el gasto ya tenía (no se pierde el dato, solo se dejó de
+      poder cambiar desde aquí). El toggle "Gasto recurrente" ahora incluye
+      3 frecuencias: Semanal, Quincenal (nueva) y Mensual. Se agregó
+      'biweekly' a RecurrenceFrequency (storage.ts) y su recordatorio en
+      notifications.ts usa un trigger de intervalo de 15 días (expo-
+      notifications no tiene un trigger nativo "quincenal").
+    → "Que el diagrama de Gastos del mes solo muestre lo que ya completé":
+      ya era así — el diagrama y su leyenda solo cuentan gastos
+      efectivamente registrados, nunca gastos fijos pendientes de pagar.
+      No requirió cambios, solo se confirmó y se explicó al usuario.
+    → "Haz un plan para diferenciar gastos recurrentes de los no
+      recurrentes y poder ir anotando cómo voy" + "en el pill de Quincena
+      1 muestra los gastos recurrentes que aún faltan por pagar esa
+      quincena": en vez de escribir código primero, se presentó el plan al
+      usuario (diagnóstico de cómo funciona hoy "gasto recurrente" —solo
+      agenda un recordatorio, sin seguimiento de pagado/pendiente— y qué se
+      construiría encima de getRecurringTemplates()/"Pendientes por pagar"
+      que ya existían). El usuario confirmó 2 decisiones antes de tocar
+      código: (1) marcar un gasto fijo como pagado sigue siendo a través
+      del popup "Pendientes por pagar" ya existente, sin pantalla nueva; (2)
+      el conteo compara TODOS los gastos recurrentes registrados alguna vez
+      contra lo ya anotado en cada quincena específica, no solo los
+      creados originalmente en esa quincena.
+    → Implementado con esas decisiones: cada slide de la tarjeta Quincena
+      1/2 ahora muestra "X de Y gastos fijos pagados" (nueva función
+      paidCountForQuincena(q) en resumen.tsx, reutilizando exactamente la
+      misma comparación que ya usaba el popup "Pendientes por pagar" — sin
+      lógica nueva duplicada). Tocar la tarjeta sigue abriendo ese mismo
+      popup (ya era así). El texto no aparece si el usuario no tiene
+      ningún gasto recurrente registrado todavía.
+    → Verificado en la tablet: se creó un gasto recurrente de prueba
+      ($150.000, mensual) — la Quincena 1 mostró "0 de 1" (el gasto cayó en
+      la Quincena 2, que es la activa hoy 21 de julio) y la Quincena 2
+      mostró "1 de 1", confirmando que el conteo es correcto por quincena.
+      El gasto de prueba se eliminó al terminar (dato que YO creé, no del
+      usuario). Verificado con `npx tsc --noEmit` sin errores.
+
+  ✓ MEJORAX — cuarta ronda de pendientes "por MI" del 2026-07-21 (PECAS)
+    → "En Categorías, leyenda en el + morado para que se sepa que crea una
+      categoría nueva": agregada una pequeña pastilla "Nueva categoría"
+      justo encima del botón "+" en app/categorias.tsx (mismo patrón visual
+      ya usado en otros botones con leyenda de esta app).
+    → "En el pop up de la categoría en tarjeta, agrega si quieres que sea
+      recurrente o no": el usuario confirmó (se preguntó antes de tocar
+      nada, por el riesgo de romper cálculos existentes) que era AGREGAR el
+      toggle sin quitar Quincena ni Tarjeta. CategoryDetailModal (se abre
+      al agregar/editar un gasto manual dentro de una categoría) ahora
+      tiene el mismo toggle "Gasto recurrente" (+ Semanal/Mensual) que ya
+      existía en el registro rápido (QuickEntryModal) — agenda o cancela el
+      recordatorio correspondiente tanto al crear como al editar un gasto,
+      incluyendo el caso de cambiar la frecuencia de un gasto que ya era
+      recurrente.
+    → "Que el diagrama de torta sea el primero en el desplazable": el
+      usuario confirmó que se refería a mover "Billetera general" (el
+      diagrama con TODAS las cuentas) al primer lugar del carrusel de
+      diagramas en Resumen — antes iba último. Nuevo orden: Billetera
+      general → Gastos del mes → Metas de ahorro → Fuentes de ingreso.
+    → "Arregla el diagrama de Metas de ahorro en la tablet, no solo que se
+      vean los emojis": la leyenda de este diagrama solo mostraba el emoji
+      de cada meta + una barra de color, sin nombre ni monto ahorrado. Se
+      reemplazó por el mismo componente de leyenda ya usado en Billetera
+      general/Fuentes de ingreso (punto de color + nombre + monto), mismo
+      arreglo de ancho que ya se corrigió para esos dos. goalsEmojiLegend/
+      goalsEmojiItem/goalsEmojiChar/goalsEmojiBar eliminados (ya sin uso).
+    → "Que el diagrama de Gastos haga el resumen de los gastos": ese
+      diagrama no tenía ninguna leyenda debajo (a diferencia de los otros
+      3). Se agregó una leyenda por categoría (punto de color + emoji/
+      nombre + monto), usando el mismo catRows que ya alimentaba este
+      donut — sin cálculos nuevos.
+    → De paso, el usuario notó que el título "Julio 2026" del header
+      (deslizable para ver meses anteriores, ya existía desde antes) no
+      tenía ninguna pista visual de que se puede deslizar. Se agregaron
+      dos flechitas (‹ ›) a los lados del título, atenuadas cuando no hay
+      mes anterior/siguiente al que ir. Nota: en la tablet solo hay datos
+      de julio, así que las flechas se ven pero no hay a dónde deslizar
+      todavía — es esperado, no es un bug.
+    → Bug encontrado y corregido de paso: al envolver el título del mes en
+      un contenedor nuevo (para las flechas), el botón "❓" de ayuda quedó
+      comprimido a una fracción de su tamaño normal — mismo tipo de bug de
+      medición de ancho que ya había aparecido antes en esta sesión. Se
+      corrigió dándole un ancho fijo explícito al contenedor del slider de
+      meses en vez de dejar que se calculara solo.
+    → Verificado con `npx tsc --noEmit` sin errores y probado en vivo en la
+      tablet (no solo por código) para los 6 puntos de esta entrada.
+
+  ✓ Corrección real del deslizable y de la leyenda — los arreglos de la
+    ronda anterior NO eran suficientes (FIXA, 2026-07-21)
+    → El usuario confirmó que, tras la 3ra ronda (ver más abajo), tanto el
+      deslizable de Balance General como los montos de la leyenda de los
+      donuts seguían sin funcionar. Se investigó de nuevo desde cero en
+      lugar de repetir el mismo diagnóstico:
+    → Deslizable de Balance General: la causa real no era el contentOffset
+      (ya corregido antes) sino que cada slide entero (mes actual y mes
+      anterior) estaba envuelto en un TouchableOpacity que cubría toda la
+      tarjeta — cualquier intento de deslizar competía con ese botón por
+      el gesto. El carrusel de donuts (que sí funcionaba) solo tiene el
+      donut mismo dentro de un botón pequeño, no la tarjeta completa. Se
+      cambió el envoltorio de cada slide a una View simple, dejando SOLO
+      el texto "Toca para ver detalle →" como botón (con hitSlop para que
+      siga siendo fácil de tocar). Confirmado con swipe manual en ambas
+      direcciones en la tablet (mes anterior ↔ mes actual).
+    → Montos cortados en la leyenda ("$500" en vez de "$500.000"): el
+      intento anterior (minWidth + textAlign) no funcionaba porque el
+      problema real estaba en cómo se repartía el espacio entre el nombre
+      de la cuenta (flex:1) y el monto — en esta versión de React Native/
+      Yoga, esa combinación terminaba midiendo mal el ancho del monto y
+      lo dejaba con unos pocos píxeles de espacio real aunque el texto
+      completo estuviera ahí. Se probaron varias alternativas (ancho fijo
+      solo, justifyContent:space-between, marginLeft:auto) hasta encontrar
+      la combinación que sí respeta el espacio: contenedor izquierdo
+      (ícono + nombre) separado del monto, que ahora tiene marginLeft:auto
+      + ancho fijo, sin numberOfLines ni textAlign:'right' (esas dos
+      últimas, combinadas con el ancho fijo, volvían a cortar el texto).
+      Confirmado visualmente en la tablet: "$500.000", "$50.000",
+      "$36.000", "$69.000", "$25.000" se ven completos.
+    → De paso, pedido nuevo en la misma conversación: la tarjeta "Gastos"
+      de Resumen (accede a Categorías) se renombró a "Gastos fijos
+      mensuales" y se reubicó justo después de la Quincena, antes de
+      Balance General, agrupando todo lo relacionado a gasto/presupuesto
+      del mes en una sola zona de la pantalla antes de pasar a patrimonio
+      neto y metas.
+    → También pedido en la misma conversación: la cápsula de registro
+      (botón "+" de Resumen) ahora muestra una leyenda de texto (Ingreso /
+      Gasto / Meta) encima de cada ícono para que sea claro qué hace cada
+      botón.
+    → Verificado con `npx tsc --noEmit` sin errores y probado en vivo en
+      la tablet (no solo por código) para los 4 puntos de esta entrada.
+
+  ✓ MEJORAX — tercera ronda de pendientes "por MI" del 2026-07-21 (PECAS)
+    → "Selector de fecha para la fecha límite de pago en préstamos, no
+      teclado": CardFormModal usaba un TextInput libre (DD/MM/AAAA). Se
+      reemplazó por el mismo patrón ya usado en metas de ahorro
+      (GoalFormModal): un campo tocable que abre el DateTimePicker nativo
+      del celular. El valor se sigue guardando como "DD/M/AAAA" (formato
+      por defecto de toLocaleDateString('es-CO')) para no romper
+      parseDueDate(), que ya esperaba ese formato para agendar la
+      notificación de vencimiento.
+    → "Toggle pequeño en cada sección para ver el historial (crédito,
+      débito, efectivo, préstamo)": se agregó un ícono de reloj junto al
+      título de cada sección en Tarjetas. Débito/Efectivo abren un modal
+      con los depósitos combinados de todas las cuentas de ese tipo
+      (card.events tipo 'deposit'); Crédito abre un modal con los gastos
+      cargados a cualquier tarjeta de crédito, combinados; Préstamos
+      reutiliza el modal "Historial de abonos" que ya existía, solo se le
+      agregó el mismo ícono para que sea consistente con las otras 3
+      secciones (antes solo se abría tocando la tarjeta resumen "Total
+      deuda").
+    → "Suma el total en cada título, como en Préstamos": de las 4
+      secciones, solo "Tarjetas de débito" no mostraba un total junto al
+      título (Efectivo/Crédito/Préstamos ya lo tenían). Se agregó el saldo
+      disponible total de débito (totalDebitAvail) en verde, mismo patrón
+      que las demás.
+    → "No puedo ver bien el diagrama de Billetera general en la tablet":
+      encontrado con la accessibility tree del dispositivo (no solo
+      mirando el código): el texto del monto en la leyenda de cada cuenta
+      SÍ tenía el valor completo ("$500.000") pero su caja de layout medía
+      apenas 43-57px de ancho — muy angosta para el texto, que quedaba
+      visualmente cortado a "$500" aunque el dato real era correcto. La
+      causa: incomeLegendName (flex:1) no tenía límite y le quitaba todo
+      el espacio a incomeLegendAmt, que no tenía flexShrink ni minWidth.
+      Se le agregó minWidth:92 + textAlign:'right' a incomeLegendAmt —
+      esto también corrige la misma leyenda compartida en los donuts de
+      Metas y Fuentes de ingreso, que iban a tener el mismo problema en
+      cuanto tuvieran datos.
+    → "Títulos de los diagramas arriba de cada uno, con letra más
+      visible": los 4 títulos (Gastos del mes, Metas de ahorro, Fuentes de
+      ingreso, Billetera general) se movieron de abajo del donut (con
+      leyenda incluida) a arriba de todo el slide. heroDonutLabel pasó de
+      color muted/fontSize sm a color de texto normal/fontSize md/peso 800.
+    → Verificado en la tablet: selector de fecha nativo abre y guarda bien
+      la fecha, toggle de historial de débito abre su modal
+      correctamente (vacío, ya que estas cuentas se cargaron con saldo
+      inicial y no con "Agregar dinero"), títulos arriba en los 4 slides
+      confirmados. La leyenda de Billetera general se verificó por medición
+      de la accessibility tree (ancho de caja subió de ~50px a 114px) — la
+      imagen del screenshot en baja resolución no permite confirmarlo a
+      simple vista, pero el dato de layout confirma el arreglo.
+    → Verificado con `npx tsc --noEmit` sin errores.
+
+  ✓ "Pon el título de las tarjetas de crédito" — corrección real (2026-07-21)
+    → El primer intento (arreglar el solapamiento de "••••"/"Disponible" en
+      CardView) no era lo que faltaba. El usuario confirmó que era el
+      encabezado "Tarjetas de crédito": solo aparecía cuando ya había al
+      menos 1 tarjeta creada — en el estado vacío (sin ninguna tarjeta
+      todavía) el título no se mostraba, a diferencia de Efectivo/Préstamos
+      que sí lo tenían fijo siempre. Se movió el título fuera del if/else
+      en app/(tabs)/tarjetas.tsx para que se vea siempre, tanto en Débito
+      como en Crédito, igual que las otras dos secciones.
+
+  ✓ MEJORAX — segunda ronda de pendientes "por MI" del 2026-07-21 (PECAS)
+    → "Pon el título de las tarjetas de crédito" (primer intento, incompleto
+      — ver corrección arriba): el bug real detrás de este pedido era que
+      components/CardView.tsx (después del límite de ancho agregado horas
+      antes en la misma tablet) dejaba el texto "•••• •••• •••• 1234" y
+      "Disponible $X" superpuestos/cortados en la parte de abajo de una
+      tarjeta de crédito — no había espacio suficiente para ambos en el
+      ancho ya limitado. Se acortó el número enmascarado a "•••• 1234" (en
+      vez de repetir 4 grupos de puntos) y se le dio flex:1 + numberOfLines
+      al contenedor izquierdo para que ceda espacio en vez de solaparse con
+      "Disponible". Este arreglo seguía siendo válido, solo no era completo.
+    → "Recuérdale el deslizable entre el mes actual y el anterior": el
+      slider de "Balance General" (resumen.tsx) ya existía, pero usaba
+      contentOffset={{x: cardWidth, y:0}} como prop declarativa — React
+      Native la reevalúa en cada re-render (esta pantalla se re-renderiza
+      seguido), así que cualquier actualización de estado cercana hacía que
+      el slider "regresara" al mes actual, comiéndose el swipe del usuario.
+      Se cambió al mismo patrón ya usado en el slider de meses del header
+      (monthScrollRef): un ref + scrollTo() una sola vez con
+      requestAnimationFrame, guardado por un flag (balanceScrollSynced) para
+      no repetirlo en cada render.
+    → "Arregla la pantalla de Historial, se ve muy fea": era una regresión
+      de esta misma sesión — el ajuste de PECAS de horas antes le había
+      puesto flexGrow+justifyContent:'center' al scroll de Historial para
+      rellenar el espacio vacío en tablets, pero en una lista (a diferencia
+      de una pantalla de onboarding) eso hace que la única tarjeta de mes
+      quede flotando en la mitad de la pantalla, desconectada del
+      encabezado. Revertido a top-anchored (solo padding, sin centrado).
+    → "Que el diagrama de torta no muestre todas las transacciones sino que
+      las clasifique por débito/crédito/efectivo": el modal "Gastos del mes"
+      (se abre tocando el donut de Gastos en el hero de Resumen) mostraba
+      todos los gastos del mes en una sola lista plana ordenada por fecha.
+      Ahora se agrupan primero por tipo de cuenta (🏦 Débito · 💳 Crédito ·
+      💵 Efectivo · 💸 Préstamos, en ese orden, solo los grupos con gastos),
+      cada grupo con su propio subtotal, y dentro de cada grupo se mantiene
+      el orden cronológico. Nueva constante ACCOUNT_TYPE_GROUPS.
+    → Verificado en la tablet: tarjeta de crédito sin solapamiento, Gastos
+      del mes agrupado, Historial vuelto a top-anchored. El swipe de
+      Balance General no se pudo confirmar visualmente por una limitación
+      de la herramienta de automatización (gestos horizontales dentro de un
+      scroll vertical no siempre se detectan bien de forma sintética) — el
+      fix en código replica exactamente el patrón que ya funciona en el
+      slider de meses del header, así que se dejó así; si al probarlo a
+      mano el swipe sigue sin sentirse bien, avisar para revisarlo de nuevo.
+    → Verificado con `npx tsc --noEmit` sin errores.
+
+  ✓ MEJORAX — ronda de pendientes "por MI" del 2026-07-21 (PECAS)
+    → Tarjetas (Balance): quitados los botones con líneas punteadas de los
+      estados vacíos (Débito/Efectivo/Crédito/Préstamos) y los "+" pequeños
+      de cada encabezado de sección — ahora la única forma de agregar es el
+      "+" grande de abajo a la derecha. Estilos muertos addDashedBtn/
+      addDashedText/addMoreBtn/addMoreText/sectionAddBtn eliminados.
+    → Ese mismo "+" grande, estando en la sub-pestaña Débito, ya abría el
+      formulario dejando elegir entre Débito/Efectivo (y en Crédito entre
+      Crédito/Préstamo) — comportamiento existente en openAdd(), no hubo que
+      tocarlo, solo quitar los atajos redundantes de un solo tipo.
+    → CardFormModal: cuando el formulario solo permite un tipo (por ejemplo
+      al editar una tarjeta ya existente), se quitó el bloque "Tipo de
+      cuenta" con la insignia bloqueada — no aporta nada que el título del
+      formulario y la vista previa no digan ya. Sigue mostrándose el
+      selector interactivo cuando hay 2 tipos para elegir.
+    → CardFormModal: el campo de emoji ya no depende de un placeholder fijo
+      (🏦/💳/💵/💸) — ahora muestra 4 emojis sugeridos según el tipo de
+      cuenta (ej. efectivo: 💵💰👛🪙) como chips tocables + un campo "Otro"
+      para escribir uno distinto.
+    → CardFormModal: el saldo/límite ahora es obligatorio para guardar
+      (Guardar queda deshabilitado sin monto, para débito/crédito/efectivo/
+      préstamo). Si se intenta cancelar o cerrar el formulario habiendo
+      puesto un alias pero sin monto, aparece un modal ("Falta el monto")
+      con dos opciones: "Descartar" o "Dejar en $0" — mismo estilo visual
+      que el resto de confirmaciones de la app.
+    → Verificado en la tablet: flujo completo de crear/cancelar/dejar en $0
+      probado en vivo, y `npx tsc --noEmit` sin errores.
+    → "Balance General" con deslizable mes actual/anterior: ya existía
+      (implementado en rondas previas, ver más abajo) — se confirmó que
+      sigue funcionando, no requirió cambios nuevos.
+    → Pendiente de avatar en vez de foto de perfil: quedó sin implementar
+      a propósito — la app ya usa avatar por emoji (no hay foto de perfil
+      que reemplazar) y el pedido venía con "quizá", así que se dejó como
+      idea para retomar si se confirma que se quiere de verdad.
 
   ✓ EAS ya estaba vinculado — nota desactualizada (AUDITA, 2026-07-21)
     → El pendiente "por MAQUINA" de hacer eas login/eas init ya no aplicaba: app.json

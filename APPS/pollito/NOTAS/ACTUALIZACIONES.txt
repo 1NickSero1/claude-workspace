@@ -51,3 +51,36 @@
   hermano, en un hogar con otra IP - no afecta la autenticacion con
   Anthropic, pero el .exe sin firmar probablemente dispare el aviso de
   Windows SmartScreen la primera vez (avisarle a la novia como continuar).
+
+[2026-07-21] Python instalado + primera prueba en vivo + rediseño del menu
+- Instalado Python 3.8.10 real (installer de 64-bit de python.org, no la
+  version de Microsoft Store ni el "Python Install Manager" nuevo que
+  ofrece la web por defecto - hay que bajar el link especifico de la tabla
+  de la pagina de la 3.8.10). Confirmado con la pagina oficial de la 3.8.20
+  que 3.8.10 sigue siendo la ultima con instalador real de Windows (las
+  posteriores son solo codigo fuente).
+- Instaladas las dependencias (requirements.txt). Hizo falta bypassear un
+  proxy local de HTTPS scanning (antivirus, 127.0.0.1) que rompia el pip
+  viejo (21.1.1) con un bug conocido de esa version - ver ajustes
+  pollito.txt para el detalle tecnico.
+- Generados de verdad assets/icons/icon.ico, icon.png y assets/fondo.png -
+  el lazo del primer intento se corrigio (se veia como un rombo suelto).
+- Primera prueba en vivo de la app real (sin key todavia, solo diseño):
+  confirmado que main.py levanta sin errores y la ventana "Pollito" queda
+  estable. A partir de ahi, varias rondas de ajuste de diseño viendo la
+  ventana real:
+  - Titulo interno cambiado a "Hola mi Sofi ♥" (el nombre de la novia es
+    Sofi) - se probo primero un emoji de corazon rosa que no renderizo
+    (muy nuevo para Windows/Tk), se reemplazo por el simbolo clasico "♥".
+  - Tipografia de los 5 botones cambiada a "Segoe Print" (confirmada
+    instalada en el sistema) para que se vea mas cute sin perder
+    legibilidad.
+  - Agregado el pollito como mascota decorativa flotando con .place() -
+    version final: se ve completo de arriba a abajo, recortado solo por el
+    borde derecho de la ventana (~65% del ancho visible), posicionado en
+    tiempo real contra el ultimo boton para nunca superponerse. Se probaron
+    y descartaron: una version de dos columnas (ventana mas ancha) y una
+    version recortada en las dos esquinas (mostraba solo la cara).
+- Confirmado que "POLLITO" (palabra clave, hook proyecto-switch.ps1) sigue
+  siendo el punto de entrada para retomar este proyecto en una sesion
+  nueva - lee este archivo y ajustes pollito.txt para el estado completo.

@@ -19,6 +19,28 @@
 - Verificado que main.py levanta sin errores: sintaxis limpia en todos los
   .py del proyecto, y la ventana "Pollito" abre y queda estable (probado en
   vivo, cerrada manualmente despues).
+- Rediseño del menu principal probado en vivo, varias iteraciones con el
+  usuario viendo la ventana real y pidiendo ajustes:
+  - Titulo dentro de la ventana cambiado de "Pollito" a "Hola mi Sofi <3"
+    (el nombre de la novia es Sofi) - el titulo de la ventana/taskbar sigue
+    siendo "Pollito" (APP_NAME, sin cambios).
+  - Se probo el emoji de corazon rosa (U+1FA77) y no renderizo (se vio como
+    un cuadrito/tofu) - es un emoji muy nuevo (Unicode 2022), no confiar en
+    el para una app que tiene que andar en Windows 7. Se reemplazo por el
+    simbolo clasico "♥" (U+2665), que si renderiza en cualquier Windows.
+  - Tipografia de los botones de las 5 skills cambiada a "Segoe Print"
+    (confirmada instalada por defecto en Windows, incluido Win7) - se ve
+    mas tierna que la tipografia generica sin perder legibilidad.
+  - Agregado el pollito (mismo arte que icon.png) como mascota decorativa
+    flotando en la ventana con .place(), en vez de vivir en una columna
+    fija. Primer intento (esquina inferior derecha, recortado en ambos
+    ejes) mostraba solo la cara - se corrigio para recortar SOLO por el
+    borde derecho (se ve completo de arriba a abajo, ~65% del ancho
+    visible) calculando la posicion en tiempo real contra el ultimo boton
+    para no taparlo.
+  - La ventana volvio a su ancho angosto original (420x580, una sola
+    columna) - se habia probado una version mas ancha de dos columnas y no
+    convencio.
 
 [PENDIENTE]
 - Reemplazar el placeholder de secreto.py con la API key real del usuario

@@ -36,7 +36,7 @@ export interface CustomCategory {
   emoji?: string;
 }
 
-export type RecurrenceFrequency = 'weekly' | 'monthly';
+export type RecurrenceFrequency = 'weekly' | 'biweekly' | 'monthly';
 
 export interface Expense {
   id: string;
@@ -49,6 +49,7 @@ export interface Expense {
   monthKey: string;
   isRecurring?: boolean;
   recurrenceFrequency?: RecurrenceFrequency;
+  recurrenceDueDate?: string;
   notificationId?: string;
 }
 

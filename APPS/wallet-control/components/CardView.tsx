@@ -143,9 +143,9 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
       {/* Bottom row */}
       <View style={styles.bottomRow}>
         {card.type === 'credit' ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, marginRight: 8 }}>
             {card.emoji ? <Text style={{ fontSize: 18 }}>{card.emoji}</Text> : null}
-            <Text style={styles.lastFour}>•••• •••• •••• {card.lastFour}</Text>
+            <Text style={styles.lastFour} numberOfLines={1}>•••• {card.lastFour}</Text>
           </View>
         ) : (
           card.emoji ? <Text style={{ fontSize: 20 }}>{card.emoji}</Text> : <View />
