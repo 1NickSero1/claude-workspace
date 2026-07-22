@@ -306,6 +306,7 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 | 2026-07-11 | Instalado Android Platform Tools (adb, vía winget) y registrado el MCP `mobile-mcp` (`.mcp.json`, scope proyecto) — le da a ESTETIK/IMAGINA control real sobre un celular Android físico conectado por USB (screenshot/tap/swipe reales) en vez de solo leer código; requiere depuración USB activada y el celular autorizado (`adb devices`) en cada máquina que lo use |
 | 2026-07-17 | Lección 3 actualizada — "abre el servidor/qr" de wallet-control/ruta-segura ya no fuerza el puerto 8082: ahora detecta y usa el primer puerto libre a partir de 8081 en el momento de ejecutar |
 | 2026-07-21 | Agregado proyecto `pollito` (app de escritorio, regalo) a Proyectos Activos; agregada palabra clave `POLLITO` en `proyecto-switch.ps1` (mismo patrón que WALLET CONTROL/RUTA SEGURA — git pull + PECAS + recomendación de `/clear`) |
+| 2026-07-22 | Corregido: ESTETIK y AUDITA existían solo como documentación en `SKILLS/` pero nunca se habían registrado como comando real en `.claude/commands/` (a diferencia de KILLER, FINANDO, PAKI, PECAS, FIXA y FIFAS, que sí tenían esa copia) — por eso no se podían invocar como skill. Copiados `SKILLS/ESTETIK.md` y `SKILLS/AUDITA.md` a `.claude/commands/estetik.md` y `.claude/commands/audita.md`; ambas palabras clave ya funcionan como comando de verdad |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise
