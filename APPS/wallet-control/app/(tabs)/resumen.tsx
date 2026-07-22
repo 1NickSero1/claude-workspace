@@ -308,6 +308,12 @@ export default function ResumenScreen() {
   const { totalActivos: prevTotalActivos, totalPasivos: prevTotalPasivos, patrimonioNeto: prevPatrimonioNeto } =
     computeNetWorth(prevExpenses, prevCards ?? cards);
 
+  // Sin snapshot real ni gastos del mes anterior no hay datos reales que
+  // mostrar — el fallback a "cards" de arriba duplicaría el balance del mes
+  // actual bajo el nombre del mes anterior, así que en ese caso se oculta
+  // el slide anterior en vez de mostrar un duplicado engañoso.
+  const hasPrevMonthData = prevCards !== null || prevExpenses.length > 0;
+
   const prevTotalSpent = sumExpenses(prevExpenses);
 
   const totalSaved     = goals.reduce((s, g) => s + g.savedAmount, 0);
@@ -1074,6 +1080,49 @@ export default function ResumenScreen() {
         {(totalActivos > 0 || totalPasivos > 0 || prevTotalActivos > 0 || prevTotalPasivos > 0) && (() => {
           const netoColor = patrimonioNeto >= 0 ? COLORS.debit : COLORS.danger;
           const prevNetoColor = prevPatrimonioNeto >= 0 ? COLORS.debit : COLORS.danger;
+
+          const currentMonthContent = (
+            <>
+              <View style={styles.patrimonioHeader}>
+                <Ionicons name={patrimonioNeto >= 0 ? 'trending-up' : 'trending-down'} size={18} color={netoColor} />
+                <Text style={styles.patrimonioTitle}>Balance General · {formatMonthLabel(monthKey)}</Text>
+              </View>
+              <View style={styles.patrimonioColumns}>
+                <View>
+                  <Text style={styles.patrimonioLabel}>↑ Activos</Text>
+                  <Text style={[styles.patrimonioVal, { color: COLORS.debit }]}>{formatCOP(totalActivos)}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.patrimonioLabel}>↓ Pasivos</Text>
+                  <Text style={[styles.patrimonioVal, { color: COLORS.credit }]}>{formatCOP(totalPasivos)}</Text>
+                </View>
+              </View>
+              <View style={styles.patrimonioDivider} />
+              <View style={styles.patrimonioNetRow}>
+                <Text style={styles.patrimonioNetLabel}>Neto</Text>
+                <Text style={[styles.patrimonioNetVal, { color: netoColor }]}>
+                  {patrimonioNeto >= 0 ? '+' : ''}{formatCOP(patrimonioNeto)}
+                </Text>
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.6}
+                onPress={() => setPatrimonioModal(true)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={{ alignSelf: 'flex-end', marginTop: 6 }}
+              >
+                <Text style={{ color: COLORS.textDim, fontSize: 10 }}>Toca para ver detalle →</Text>
+              </TouchableOpacity>
+            </>
+          );
+
+          if (!hasPrevMonthData) {
+            return (
+              <View style={[styles.patrimonioCard, { borderLeftColor: netoColor, backgroundColor: netoColor + '0D' }]}>
+                {currentMonthContent}
+              </View>
+            );
+          }
+
           return (
             <View style={styles.budgetWrap}>
               <ScrollView
@@ -1122,35 +1171,7 @@ export default function ResumenScreen() {
                 {/* Slide 2 — mes actual (vista inicial "bloqueada" vía scrollTo) */}
                 <View style={{ width: cardWidth }}>
                   <View style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: netoColor, backgroundColor: netoColor + '0D' }]}>
-                    <View style={styles.patrimonioHeader}>
-                      <Ionicons name={patrimonioNeto >= 0 ? 'trending-up' : 'trending-down'} size={18} color={netoColor} />
-                      <Text style={styles.patrimonioTitle}>Balance General · {formatMonthLabel(monthKey)}</Text>
-                    </View>
-                    <View style={styles.patrimonioColumns}>
-                      <View>
-                        <Text style={styles.patrimonioLabel}>↑ Activos</Text>
-                        <Text style={[styles.patrimonioVal, { color: COLORS.debit }]}>{formatCOP(totalActivos)}</Text>
-                      </View>
-                      <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={styles.patrimonioLabel}>↓ Pasivos</Text>
-                        <Text style={[styles.patrimonioVal, { color: COLORS.credit }]}>{formatCOP(totalPasivos)}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.patrimonioDivider} />
-                    <View style={styles.patrimonioNetRow}>
-                      <Text style={styles.patrimonioNetLabel}>Neto</Text>
-                      <Text style={[styles.patrimonioNetVal, { color: netoColor }]}>
-                        {patrimonioNeto >= 0 ? '+' : ''}{formatCOP(patrimonioNeto)}
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      activeOpacity={0.6}
-                      onPress={() => setPatrimonioModal(true)}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      style={{ alignSelf: 'flex-end', marginTop: 6 }}
-                    >
-                      <Text style={{ color: COLORS.textDim, fontSize: 10 }}>Toca para ver detalle →</Text>
-                    </TouchableOpacity>
+                    {currentMonthContent}
                   </View>
                 </View>
               </ScrollView>
