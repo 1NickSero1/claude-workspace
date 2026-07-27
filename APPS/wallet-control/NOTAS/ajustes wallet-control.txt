@@ -12,7 +12,8 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [PENDIENTE] por MI
 ------------------------------------------------------------
- (vacío por ahora)
+
+  — (vacío por ahora)
 
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
@@ -27,11 +28,181 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [EN PROGRESO]
 ------------------------------------------------------------
-  — (vacío por ahora)
+  — Números cortados en la leyenda de "Metas de ahorro" (SOLO en la
+    tablet, no reproduce en el celular) — reportado 2026-07-27.
+    → Durante esta investigación SÍ se encontraron y arreglaron dos bugs
+      reales relacionados:
+      1) El carrusel de diagramas (donutSlider) había perdido su
+         `marginHorizontal: -16` en un arreglo anterior mal aplicado —
+         se restauró (ver ronda del 2026-07-26 más abajo). Confirmado
+         arreglado en celular Y en tablet para 3 de los 4 diagramas
+         (Billetera general, Gastos del mes, Fuentes de ingreso).
+      2) El diagrama de "Metas de ahorro" calculaba el % de cada meta
+         contra `totalTarget` (la suma de las metas de TODAS las metas)
+         en vez de `totalSaved` (lo realmente ahorrado) — con metas
+         grandes y poco ahorro esto dibujaba un diagrama casi invisible
+         (un hilo delgado en vez de una porción). Corregido en
+         resumen.tsx (`total={totalSaved || 1}`).
+    → Lo que SIGUE sin explicación: en esa misma tarjeta de "Metas de
+      ahorro", en la tablet, los montos de la leyenda ("$5.000",
+      "$60.000") se ven cortados (falta el último carácter) de forma
+      100% reproducible — probado con reinicio completo de la app,
+      limpiando el caché de Expo Go, y con varios arreglos de flexbox
+      (minWidth, flexShrink, flexBasis) y de capas nativas de Android
+      (collapsable, renderToHardwareTextureAndroid) — ninguno cambió
+      nada. El árbol de accesibilidad del dispositivo (que refleja el
+      layout real, no lo pintado en pantalla) siempre reporta el monto
+      completo y dentro de los límites de la pantalla, igual que en las
+      otras 3 tarjetas que SÍ se ven bien — lo que apunta a un problema
+      de renderizado específico de esa tablet (posiblemente su GPU/driver
+      Android, es una tablet genérica de gama baja), no a un bug de
+      layout en el código. Los cambios de flexbox que no ayudaron
+      (minWidth:0, flexShrink) se dejaron igual porque son buena práctica
+      y no tienen contra, pero no resolvieron el problema visual.
+    → Se perdió la conexión ADB con ambos dispositivos de prueba
+      (celular y tablet) a mitad de esta investigación — falta reconectar
+      para seguir probando en vivo.
+    → Nota aparte: al intentar descartar un caché de bundle viejo en la
+      tablet, se corrió `pm clear` sobre Expo Go, lo que borró los datos
+      guardados localmente en esa sesión de prueba (cuentas Daviplata/Nu/
+      Cajon/Billetera, metas Iphone/Play). El usuario confirmó que era
+      data de prueba sin importancia — pero queda como recordatorio de
+      que esta app no tiene backend para datos financieros (todo vive en
+      AsyncStorage local), así que ese comando nunca debe correrse sobre
+      un dispositivo con datos reales sin confirmar antes.
 
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ MEJORAX — décima ronda de pendientes "por MI" del 2026-07-26 (FIXA/PECAS)
+    → "Mismo swipe de editar/eliminar en Efectivo": en tarjetas.tsx, las
+      filas de la sección Efectivo quedaron envueltas en SwipeableRow
+      (onEdit/onDelete), igual que ya se había hecho con Préstamos en la
+      ronda anterior.
+    → "Swipe de editar/eliminar en cada transacción del popup de Gastos del
+      mes": el gesto ya estaba implementado en el código (SwipeableRow por
+      fila), pero no funcionaba en Android — causa real: ese popup es un
+      <Modal>, que en Android se monta en su propia ventana nativa aparte,
+      y el GestureHandlerRootView que envuelve toda la app (en _layout.tsx)
+      no llega a cubrirla. Se agregó un GestureHandlerRootView propio
+      envolviendo el contenido del modal en resumen.tsx — con eso el swipe
+      sí responde dentro del popup.
+    → "Arreglar el destello en toda la app": se agregó android.backgroundColor
+      ("#0A0E1A", el mismo fondo oscuro de la app) en app.json, que fija el
+      color de fondo nativo de la Activity de Android (distinto del
+      backgroundColor del plugin expo-splash-screen, que solo aplica al
+      splash inicial). Ojo: esto requiere un build nativo (EAS build) para
+      tomar efecto — en Expo Go no se nota ningún cambio, es esperado.
+    → Bug real encontrado en vivo (no estaba en ningún pendiente): en la
+      tablet, al deslizar entre los diagramas de Resumen (Billetera general
+      / Gastos del mes / Metas de ahorro / Fuentes de ingreso), quedaban
+      pegados fragmentos de números de la leyenda del diagrama anterior,
+      visibles incluso sin tocar la pantalla. Causa real: el carrusel
+      (ScrollView con pagingEnabled) mide su ancho de página según su propio
+      recuadro renderizado, que dependía del contenedor donde vive cada uno:
+        · Los diagramas (donutSlider) viven dentro de heroCard, que tiene
+          margen Y padding horizontal (32px en total) — su recuadro real
+          quedaba 32px más angosto que el ancho declarado en cada slide
+          (cardWidth = ancho de pantalla - 32), así que cada diagrama se
+          desbordaba sobre el siguiente.
+        · Los carruseles de Quincena y Balance General (quincenaSlider/
+          balanceSlider) viven dentro de budgetWrap, que solo tiene margen
+          (sin padding aparte) — ahí el recuadro real ya coincidía con
+          cardWidth sin ajuste extra.
+      Primer intento de arreglo (quitar el margen negativo de los tres por
+      igual, asumiendo que compartían la misma estructura) fue incorrecto y
+      alcanzó a subirse sin detectarlo — quedó "arreglado" en Quincena/
+      Balance pero SIGUIÓ desbordándose en los diagramas (fue lo que el
+      usuario detectó de nuevo en su celular físico, pensando que era un
+      cambio de "centrado"). Arreglo real: devolver el margen negativo
+      (marginHorizontal: -16) SOLO al carrusel de diagramas (donutSlider),
+      que es el único cuyo contenedor padre necesita esa compensación.
+      Verificado deslizando las 4 páginas en la tablet Y en el celular
+      físico (Samsung A24): ningún fragmento pegado, números completos.
+    → Verificado con `npx tsc --noEmit` sin errores y en vivo en ambos
+      dispositivos conectados (tablet por USB, celular por wifi).
+
+  ✓ MEJORAX — novena ronda de pendientes "por MI" del 2026-07-26 (FIXA/PECAS)
+    → "Pantalla de personalización de vida financiera": nueva pantalla
+      app/personalizacion.tsx ("Personaliza tu vida financiera"), navegable
+      desde Perfil (tarjeta "Tu experiencia"). Se sacaron de Perfil y se
+      movieron ahí las 3 secciones que trataban de la cuenta financiera en
+      sí (Periodicidad de cuenta, Presupuesto mensual, Gasto hormiga) — en
+      Perfil quedó solo lo de identidad/app (nombre, tema, idioma, versión,
+      notificación de saldo, cerrar sesión).
+    → "Icono de volver/deshacer por una X, y donde está la X de pagados
+      pon el de deshacer": en gastos-recurrentes.tsx se intercambiaron los
+      íconos entre "Reversar" (Pendientes, antes arrow-undo-outline) y
+      "Marcar no pagado" (Pagados, antes close) — mismas acciones, íconos
+      cruzados.
+    → "Pop up al pagar si la tarjeta no tiene esa plata, para recargar o
+      cambiar método": PayRecurringModal ya no recibe solo las cuentas con
+      saldo suficiente (getPayableCards) — ahora recibe TODAS las cuentas
+      gastables sin filtrar por saldo (nueva getSpendableCards en
+      recurringPayments.ts) y valida al tocar "Confirmar": si el disponible
+      de la cuenta elegida es menor al monto del gasto fijo, muestra un
+      paso nuevo "Fondos insuficientes" con dos botones — "Recargar cuenta"
+      (cierra el modal y navega a Tarjetas) y "Cambiar método de pago"
+      (vuelve al selector de cuentas sin perder el gasto fijo elegido).
+      Aplicado en los 3 lugares que abren este modal (resumen.tsx,
+      categorias.tsx, gastos-recurrentes.tsx).
+    → "Montos del diagrama de Gastos del mes en rojo y negativo": la
+      leyenda por categoría de ese donut (resumen.tsx) usaba el color verde
+      por defecto de incomeLegendAmt — ahora fuerza COLORS.danger y un "-"
+      antes del monto, igual que ya hacían las filas de deuda del mismo
+      diagrama.
+    → "Calendario opcional al registrar un ingreso": QuickEntryModal ahora
+      muestra un ícono de calendario junto al campo Descripción (solo en la
+      pestaña Ingreso) que abre el DateTimePicker nativo; si se elige una
+      fecha, el ingreso se guarda con esa fecha (createdAt) y su quincena
+      correspondiente en vez de la fecha de hoy.
+    → "Desplazable en Gastos del mes para editar/eliminar": ya estaba
+      implementado (SwipeableRow con onEdit/onDelete en cada fila del popup
+      de resumen.tsx) — no requirió cambios, solo se confirmó en código y
+      en vivo.
+    → "Quitar el + de Metas de ahorro": se quitó el botón "+" pequeño del
+      encabezado de la sección "Metas de ahorro" en Resumen — crear una
+      meta nueva sigue disponible desde la cápsula del botón "+" morado
+      principal (🎯 Nueva meta de ahorro), que ya cubría lo mismo.
+    → "Quitar el pop up de préstamo, usar el desplazable de editar/
+      eliminar": en tarjetas.tsx, cada fila de Préstamos ahora está envuelta
+      en SwipeableRow (onEdit abre CardFormModal, onDelete abre la
+      confirmación de eliminar). El popup que se abre al tocar la fila
+      sigue existiendo (para ver deuda inicial/pendiente/fecha límite y
+      abonar), pero ya NO muestra los botones "Editar"/"Eliminar" cuando la
+      tarjeta es un préstamo — esos dos quedaron solo en el swipe. Los
+      demás tipos de cuenta (débito/crédito/efectivo) no cambiaron: siguen
+      con Editar/Eliminar dentro del popup, igual que antes.
+    → "Bloquear que una tarjeta quede en negativo": nueva getCardAvailable
+      en recurringPayments.ts (disponible real de una cuenta = cupo o saldo
+      menos lo gastado). Se usa para validar el monto contra la cuenta
+      elegida en QuickEntryModal (registro rápido de gasto) y en el modal
+      "Editar gasto" de resumen.tsx (que antes dejaba elegir cualquier
+      tarjeta sin límite) — si el monto supera lo disponible, "Guardar"
+      queda deshabilitado con un aviso en rojo. Al editar, el disponible le
+      devuelve primero el monto viejo de ese mismo gasto antes de comparar,
+      para no bloquear guardar un gasto sin cambios reales de monto.
+    → "Editar manteniendo presionado en Historial reciente": las filas de
+      gasto ahí ya se podían editar (con un tap, desde antes). Lo que
+      faltaba de verdad eran los abonos/depósitos (CardEvent), que no tenían
+      ninguna forma de editarse o borrarse. Nuevas updateCardEvent/
+      deleteCardEvent en storage.ts + long press sobre cualquier abono o
+      depósito del historial reciente (tarjetas.tsx) abre un formulario para
+      cambiar el monto/nota o eliminarlo — ajustando el saldo/deuda de la
+      tarjeta según corresponda (revierte el efecto del monto viejo antes
+      de aplicar el nuevo).
+    → Verificado con `npx tsc --noEmit` sin errores en cada paso y en vivo
+      en la tablet: pantalla de Personalización con sus 3 valores reales,
+      íconos intercambiados en Gastos recurrentes, montos en rojo/negativo
+      en el diagrama, "Metas de ahorro" sin el + redundante, calendario del
+      ingreso mostrando el día elegido junto al ícono, el popup de préstamo
+      sin Editar/Eliminar (solo Abonar), y el flujo completo de "Fondos
+      insuficientes" (Daviplata $50.000 vs ARRIENDO $450.000) mostrando el
+      aviso y volviendo al selector de cuentas con "Cambiar método de pago".
+      El swipe en sí (gesto) no se pudo confirmar visualmente por la misma
+      limitación de automatización ya documentada en rondas anteriores —
+      se confirmó por código y por el popup de préstamo ya sin los botones.
 
   ✓ MEJORAX — octava ronda de pendientes "por MI" del 2026-07-22 (FIXA)
     → El pedido original ("que no diga presupuesto... ver resumen, y que se

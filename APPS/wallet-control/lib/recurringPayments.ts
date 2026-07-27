@@ -50,6 +50,21 @@ export function getPayableCards(cards: Card[], expenses: Expense[]): Card[] {
   });
 }
 
+// Disponible real de una cuenta/tarjeta (cupo o saldo, menos lo ya gastado).
+// Los préstamos no son una fuente de pago — su "disponible" no aplica.
+export function getCardAvailable(card: Card, expenses: Expense[]): number {
+  if (card.type === 'debt') return 0;
+  const base = card.type === 'credit' ? (card.limit ?? 0) : (card.balance ?? 0);
+  return base - getCardTotalSpent(expenses, card.id);
+}
+
+// Cuentas que sí son una fuente de pago válida (todo menos préstamos), sin
+// filtrar por saldo disponible — a diferencia de getPayableCards, se usa
+// donde se quiere dejar elegir cualquier cuenta y avisar aparte si no alcanza.
+export function getSpendableCards(cards: Card[]): Card[] {
+  return cards.filter(c => c.type !== 'debt');
+}
+
 // Registra el gasto real de un gasto fijo pendiente — mismo efecto que
 // loggearlo a mano, pero en un paso. No lleva fecha de pago: al marcarlo
 // pagado ya se confirma que se pagó, así que cuenta de inmediato en

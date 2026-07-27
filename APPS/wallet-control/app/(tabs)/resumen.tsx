@@ -18,9 +18,9 @@ import {
   CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile, MonthData,
   getCardTotalSpent, sumIncomes, updateExpense, deleteExpense, RecurrenceFrequency,
 } from '@/lib/storage';
-import { sumExpenses, formatCOP, formatThousands } from '@/lib/expenseParser';
+import { sumExpenses, formatCOP, formatThousands, GASTO_HORMIGA_MAX } from '@/lib/expenseParser';
 import { checkBudgetThreshold, updateBalanceNotification, cancelNotification, scheduleRecurringReminder } from '@/lib/notifications';
-import { splitRecurringByPaid, getPayableCards, payRecurringTemplate, unpayRecurringTemplate } from '@/lib/recurringPayments';
+import { splitRecurringByPaid, getPayableCards, getSpendableCards, getCardAvailable, payRecurringTemplate, unpayRecurringTemplate } from '@/lib/recurringPayments';
 import DonutChart, { DonutSlice } from '@/components/DonutChart';
 import QuickEntryModal from '@/components/QuickEntryModal';
 import BudgetProgressBar from '@/components/BudgetProgressBar';
@@ -36,6 +36,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { buildFinancialReportHtml, buildBankStatementHtml } from '@/lib/financialReport';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const GOAL_COLORS = ['#6C5CE7','#00C896','#FF5C5C','#FDCB6E','#0984E3','#A29BFE','#00B894','#E17055'];
 const INCOME_COLORS = ['#00C896','#0984E3','#6C5CE7','#FDCB6E','#00B894','#A29BFE','#E17055','#FF5C5C'];
@@ -229,7 +230,15 @@ export default function ResumenScreen() {
   };
 
   const editExpAmountNum = Number(editExpAmount.replace(/\D/g, ''));
-  const canSaveEditExpense = !!editExpName.trim() && !!editExpAmountNum && !!editExpCardId;
+  const editExpCard = editExpCardId ? cards.find(c => c.id === editExpCardId) : undefined;
+  // Al editar, el disponible de la tarjeta ya descuenta el monto viejo de este
+  // mismo gasto — se lo devolvemos antes de comparar contra el monto nuevo,
+  // así no se bloquea guardar el mismo gasto sin cambios reales de monto.
+  const editExpAvailable = editExpCard
+    ? getCardAvailable(editExpCard, expenses) + (editExpTarget?.cardId === editExpCard.id ? editExpTarget.amount : 0)
+    : 0;
+  const editExpExceeds = !!editExpCard && editExpAmountNum > editExpAvailable;
+  const canSaveEditExpense = !!editExpName.trim() && !!editExpAmountNum && !!editExpCardId && !editExpExceeds;
 
   const handleEditExpDueDateChange = (event: any, selected?: Date) => {
     setEditExpShowDatePicker(false);
@@ -462,6 +471,7 @@ export default function ResumenScreen() {
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
   const period = profile?.budgetPeriod ?? 'biweekly';
+  const hormigaMax = profile?.hormigaThreshold ?? GASTO_HORMIGA_MAX;
   // Para quincenal, el popup de pendientes refleja la quincena que el
   // usuario está mirando en el slider (no siempre la de hoy).
   const periodLabel = period === 'weekly' ? 'esta semana' : period === 'monthly' ? 'este mes' : `la quincena ${viewedQuincena}`;
@@ -472,6 +482,9 @@ export default function ResumenScreen() {
   // Cuentas con plata real disponible para pagar un gasto fijo — sin
   // préstamos (no son una fuente de dinero) y sin cuentas en $0.
   const payableCards = getPayableCards(cards, expenses);
+  // Todas las cuentas gastables (sin préstamos), sin filtrar por saldo — se
+  // deja elegir cualquiera y se avisa aparte si no alcanza (PayRecurringModal).
+  const spendableCards = getSpendableCards(cards);
 
   // Conteo de gastos fijos pagados/pendientes por quincena específica (para el
   // badge inline en cada slide del slider Quincena 1/2, independiente de cuál
@@ -519,7 +532,7 @@ export default function ResumenScreen() {
     creditSummaryLabel: { color: COLORS.textMuted, fontSize: FONT.xs, marginBottom: SPACING.xs },
     creditSummaryVal: { fontWeight: '700', fontSize: FONT.base },
     donutTap: { alignItems: 'center' },
-    donutSlider: { marginHorizontal: -16, marginTop: 14 },
+    donutSlider: { marginTop: 14, marginHorizontal: -16 },
     donutSlide: { alignItems: 'center', paddingVertical: SPACING.sm },
     heroDonutLabel: { color: COLORS.text, fontSize: FONT.md, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
     dotRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 10 },
@@ -532,10 +545,10 @@ export default function ResumenScreen() {
     balanceFilterChipTextActive: { color: '#fff' },
     incomeLegend: { alignSelf: 'stretch', paddingHorizontal: SPACING.xl, marginTop: 10, gap: SPACING.xs },
     incomeLegendRow: { flexDirection: 'row', alignItems: 'center' },
-    incomeLegendLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, flexShrink: 1, marginRight: SPACING.sm },
+    incomeLegendLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, flexShrink: 1, minWidth: 0, marginRight: SPACING.sm },
     incomeLegendDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
-    incomeLegendName: { color: COLORS.textMuted, fontSize: FONT.xs, fontWeight: '600', flexShrink: 1 },
-    incomeLegendAmt: { color: COLORS.debit, fontWeight: '700', fontSize: FONT.xs, marginLeft: 'auto', width: 110 },
+    incomeLegendName: { color: COLORS.textMuted, fontSize: FONT.xs, fontWeight: '600', flexShrink: 1, minWidth: 0 },
+    incomeLegendAmt: { color: COLORS.debit, fontWeight: '700', fontSize: FONT.xs, marginLeft: 'auto', flexShrink: 0 },
     heroGoalsWidget: { marginTop: SPACING.md },
     heroGoalsDivider: { height: 1, backgroundColor: COLORS.border, marginBottom: 10 },
     heroGoalsRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
@@ -548,8 +561,8 @@ export default function ResumenScreen() {
     heroGoalsOf: { color: COLORS.textMuted, fontSize: FONT.xs },
     budgetWrap: { marginHorizontal: SPACING.lg, marginBottom: SPACING.xl },
     heroBudgetWrap: { width: '100%', marginTop: 14 },
-    quincenaSlider: { marginHorizontal: -16 },
-    balanceSlider: { marginHorizontal: -16 },
+    quincenaSlider: {},
+    balanceSlider: {},
     quincenaCardBox: {
       marginHorizontal: SPACING.lg,
       backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: SPACING.lg,
@@ -586,7 +599,6 @@ export default function ResumenScreen() {
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
     sectionTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg },
     sectionHint: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 14, marginTop: -8 },
-    sectionAddBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
     goalCard: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 14, marginBottom: 10, elevation: 2, shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 1, shadowRadius: 4 },
     goalDot: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: SPACING.md, marginTop: 2 },
     goalBody: { flex: 1 },
@@ -705,6 +717,8 @@ export default function ResumenScreen() {
     expCardMeta: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
     recurringTag: { backgroundColor: COLORS.debitBg, borderRadius: RADIUS.pill, paddingHorizontal: 6, paddingVertical: 1 },
     recurringTagText: { color: COLORS.debit, fontWeight: '700', fontSize: 9 },
+    hormigaTag: { backgroundColor: COLORS.warning + '22', borderRadius: RADIUS.pill, paddingHorizontal: 6, paddingVertical: 1 },
+    hormigaTagText: { color: COLORS.warning, fontWeight: '700', fontSize: 9 },
     expCardAmt: { fontWeight: '800', fontSize: FONT.md, maxWidth: 110 },
     expCardEditBtn: { width: 30, height: 30, borderRadius: RADIUS.sm, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
     summaryCloseBtn: { marginTop: SPACING.lg, backgroundColor: COLORS.primary, borderRadius: 14, padding: 14, alignItems: 'center' },
@@ -955,7 +969,7 @@ export default function ResumenScreen() {
                           {r.cat.emoji ? `${r.cat.emoji} ` : ''}{r.cat.name}
                         </Text>
                       </View>
-                      <Text style={styles.incomeLegendAmt}>{formatCOP(r.total)}</Text>
+                      <Text style={[styles.incomeLegendAmt, { color: COLORS.danger }]}>-{formatCOP(r.total)}</Text>
                     </View>
                   ))}
                   {chartDebtCards.map(c => (
@@ -979,7 +993,7 @@ export default function ResumenScreen() {
               <TouchableOpacity onPress={() => goals.length > 0 && setMetasModal(true)} activeOpacity={0.85} style={styles.donutTap}>
                 <DonutChart
                   data={goalsDonutData}
-                  total={totalTarget || 1}
+                  total={totalSaved || 1}
                   size={donutSize}
                   centerValue={goals.length > 0 ? formatCOP(totalSaved) : ''}
                   centerLabel={goals.length > 0 ? `de ${formatCOP(totalTarget)}` : 'Sin metas'}
@@ -1246,14 +1260,6 @@ export default function ResumenScreen() {
         <View style={[styles.section, { marginTop: 8 }]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Metas de ahorro</Text>
-            <TouchableOpacity
-              onPress={() => { setEditingGoal(null); setGoalModal(true); }}
-              style={styles.sectionAddBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Agregar meta de ahorro"
-            >
-              <Ionicons name="add" size={16} color={COLORS.primary} />
-            </TouchableOpacity>
           </View>
           {goals.length === 0 ? (
             <TouchableOpacity onPress={() => { setEditingGoal(null); setGoalModal(true); }} style={styles.emptyGoal}>
@@ -1548,6 +1554,7 @@ export default function ResumenScreen() {
 
       {/* ── Gastos del mes (independiente, tap en donut de Gastos) ── */}
       <Modal visible={expensesModal} animationType="slide" transparent onRequestClose={() => setExpensesModal(false)}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
         <View style={styles.sheetOverlay}>
           <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setExpensesModal(false)} />
           <View style={[styles.regSheet, { maxHeight: '85%' }]}>
@@ -1599,17 +1606,19 @@ export default function ResumenScreen() {
                               <View style={{ flex: 1 }}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                                   <Text style={styles.expCardName} numberOfLines={1}>{e.name}</Text>
-                                  {e.isRecurring && (
+                                  {e.isRecurring ? (
                                     <View style={styles.recurringTag}>
                                       <Text style={styles.recurringTagText}>🔁 Fijo</Text>
                                     </View>
-                                  )}
+                                  ) : e.amount <= hormigaMax ? (
+                                    <View style={styles.hormigaTag}>
+                                      <Text style={styles.hormigaTagText}>🐜 Hormiga</Text>
+                                    </View>
+                                  ) : null}
                                 </View>
                                 <Text style={styles.expCardMeta}>
-                                  {cat?.name ?? 'Sin categoría'} ·{' '}
-                                  {e.isRecurring
-                                    ? (e.recurrenceFrequency === 'weekly' ? 'Semanal' : e.recurrenceFrequency === 'biweekly' ? 'Quincenal' : 'Mensual')
-                                    : (e.quincena === 1 ? '1ª Quincena' : '2ª Quincena')}
+                                  {cat?.name ?? 'Sin categoría'}
+                                  {e.isRecurring ? ` · ${e.recurrenceFrequency === 'weekly' ? 'Semanal' : e.recurrenceFrequency === 'biweekly' ? 'Quincenal' : 'Mensual'}` : ''}
                                   {card ? ` · ${card.name}` : ''}
                                 </Text>
                               </View>
@@ -1630,6 +1639,7 @@ export default function ResumenScreen() {
             </TouchableOpacity>
           </View>
         </View>
+        </GestureHandlerRootView>
       </Modal>
 
       {/* ── Editar gasto (desde "Gastos del mes") ─────── */}
@@ -1689,6 +1699,11 @@ export default function ResumenScreen() {
                   </ScrollView>
                   {!editExpCardId && (
                     <Text style={styles.cardRequiredHint}>Elige de dónde salió el dinero.</Text>
+                  )}
+                  {editExpExceeds && (
+                    <Text style={styles.cardRequiredHint}>
+                      Ese monto supera lo disponible en {editExpCard?.name} ({formatCOP(editExpAvailable)}).
+                    </Text>
                   )}
                 </>
               )}
@@ -2000,11 +2015,13 @@ export default function ResumenScreen() {
       <PayRecurringModal
         target={payTarget}
         cardId={payCardId}
-        payableCards={payableCards}
+        cards={spendableCards}
+        expenses={expenses}
         saving={paySaving}
         onSelectCard={setPayCardId}
         onConfirm={confirmMarkPaid}
         onCancel={() => setPayTarget(null)}
+        onRecharge={() => { setPayTarget(null); router.push('/tarjetas'); }}
       />
 
       {/* ── Patrimonio detail modal (mes anterior) ── */}

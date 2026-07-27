@@ -13,7 +13,7 @@ import {
   addIncomes, addExpenses, getCurrentMonthKey,
 } from '@/lib/storage';
 import { scheduleRecurringReminder } from '@/lib/notifications';
-import { formatThousands } from '@/lib/expenseParser';
+import { formatThousands, GASTO_HORMIGA_MAX } from '@/lib/expenseParser';
 import { trackSignup } from '@/lib/userTracking';
 import { supabase } from '@/lib/supabase';
 import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
@@ -32,7 +32,7 @@ const RECOMMENDED_EMOJIS = ['💵', '😀', '😎', '🚀', '🐱', '⭐', '🔥
 const EMOJI_ONLY_REGEX = /\p{Extended_Pictographic}/gu;
 const filterEmojiOnly = (text: string) => (text.match(EMOJI_ONLY_REGEX) ?? []).join('');
 
-type Step = 'welcome' | 'choice' | 'register' | 'login' | 'periodicity' | 'fixedIncome' | 'fixedExpense' | 'done';
+type Step = 'welcome' | 'choice' | 'register' | 'login' | 'periodicity' | 'fixedIncome' | 'fixedExpense' | 'hormigaThreshold' | 'done';
 
 const SUGGESTED_FIXED_EXPENSES = [
   'Arriendo', 'Servicios (luz/agua/gas)', 'Internet / Celular', 'Suscripciones', 'Transporte', 'Seguro',
@@ -82,6 +82,7 @@ export default function OnboardingScreen() {
   const [fixedExpenseItems, setFixedExpenseItems] = useState<{ name: string; amount: number }[]>([]);
   const [newExpenseName, setNewExpenseName]   = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
+  const [hormigaThreshold, setHormigaThreshold] = useState(String(GASTO_HORMIGA_MAX));
   const [setupSaving, setSetupSaving]         = useState(false);
 
   const avatarGlyph = avatarEmoji.trim() || '🙂';
@@ -270,7 +271,7 @@ export default function OnboardingScreen() {
 
   const addFixedExpenseItem = () => {
     const amount = Number(newExpenseAmount.replace(/\D/g, ''));
-    const name = newExpenseName.trim();
+    const name = newExpenseName.trim().toUpperCase();
     if (!name || amount <= 0) return;
     setFixedExpenseItems(items => [...items, { name, amount }]);
     setNewExpenseName('');
@@ -308,8 +309,22 @@ export default function OnboardingScreen() {
       if (pendingAnonymous) {
         goToApp();
       } else {
-        setStep('done');
+        setStep('hormigaThreshold');
       }
+    } finally {
+      setSetupSaving(false);
+    }
+  };
+
+  const handleHormigaThresholdContinue = async () => {
+    if (!createdProfile) return;
+    setSetupSaving(true);
+    try {
+      const amount = Number(hormigaThreshold.replace(/\D/g, '')) || GASTO_HORMIGA_MAX;
+      const updated: UserProfile = { ...createdProfile, hormigaThreshold: amount };
+      await saveUserProfile(updated);
+      setCreatedProfile(updated);
+      setStep('done');
     } finally {
       setSetupSaving(false);
     }
@@ -763,8 +778,9 @@ export default function OnboardingScreen() {
               style={styles.input}
               value={newExpenseName}
               onChangeText={setNewExpenseName}
-              placeholder="Ej: Arriendo"
+              placeholder="Ej: ARRIENDO"
               placeholderTextColor={COLORS.textDim}
+              autoCapitalize="characters"
             />
 
             <Text style={styles.label}>Monto mensual (COP)</Text>
@@ -813,11 +829,48 @@ export default function OnboardingScreen() {
               disabled={setupSaving}
               style={[styles.primaryBtn, styles.primaryBtnSpaced, setupSaving && styles.primaryBtnOff]}
             >
-              <Text style={styles.primaryBtnText}>{setupSaving ? 'Guardando...' : 'Finalizar'}</Text>
-              {!setupSaving && <Ionicons name="checkmark" size={18} color="#fff" />}
+              <Text style={styles.primaryBtnText}>{setupSaving ? 'Guardando...' : 'Continuar'}</Text>
+              {!setupSaving && <Ionicons name="arrow-forward" size={18} color="#fff" />}
             </TouchableOpacity>
             <TouchableOpacity onPress={() => handleFixedExpenseFinish(true)} disabled={setupSaving} style={{ marginTop: 14, alignItems: 'center' }}>
               <Text style={{ color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm }}>Omitir</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── GASTO HORMIGA ────────────────────────────────────────────────────────────
+  if (step === 'hormigaThreshold') {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView style={styles.flex} contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
+            <Text style={styles.formTitle}>¿Desde cuánto es un gasto hormiga para ti?</Text>
+            <Text style={styles.formSub}>
+              Gastos pequeños como café, snacks o domicilios que no son fijos pero se acumulan.
+              Los marcamos con "🐜 Hormiga" para que los identifiques fácil — puedes cambiar este
+              monto cuando quieras desde Perfil.
+            </Text>
+
+            <Text style={styles.label}>Monto máximo (COP)</Text>
+            <TextInput
+              style={styles.input}
+              value={formatThousands(hormigaThreshold)}
+              onChangeText={v => setHormigaThreshold(v.replace(/\D/g, ''))}
+              placeholder="Ej: 30.000"
+              placeholderTextColor={COLORS.textDim}
+              keyboardType="number-pad"
+            />
+
+            <TouchableOpacity
+              onPress={handleHormigaThresholdContinue}
+              disabled={setupSaving}
+              style={[styles.primaryBtn, styles.primaryBtnSpaced, setupSaving && styles.primaryBtnOff]}
+            >
+              <Text style={styles.primaryBtnText}>{setupSaving ? 'Guardando...' : 'Finalizar'}</Text>
+              {!setupSaving && <Ionicons name="checkmark" size={18} color="#fff" />}
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>

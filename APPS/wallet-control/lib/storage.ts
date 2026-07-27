@@ -96,6 +96,7 @@ export interface UserProfile {
   isAnonymous?: boolean;
   createdAt: string;
   budgetPeriod?: BudgetPeriod;
+  hormigaThreshold?: number;
 }
 
 export interface MonthData {
@@ -230,6 +231,31 @@ export async function appendCardEvent(cardId: string, event: CardEvent): Promise
   const idx = cards.findIndex(c => c.id === cardId);
   if (idx < 0) return;
   cards[idx] = { ...cards[idx], events: [...(cards[idx].events ?? []), event] };
+  await AsyncStorage.setItem(K_CARDS(ns), JSON.stringify(cards));
+}
+
+// eventIndex es la posición dentro del array CardEvent[] tal como se guarda
+// (orden cronológico, más viejo primero) — no el índice de una lista ya
+// invertida/recortada para mostrar en pantalla.
+export async function updateCardEvent(cardId: string, eventIndex: number, updates: Partial<CardEvent>): Promise<void> {
+  const ns = await getActiveNamespace();
+  const cards = await getCards();
+  const idx = cards.findIndex(c => c.id === cardId);
+  if (idx < 0) return;
+  const events = [...(cards[idx].events ?? [])];
+  if (!events[eventIndex]) return;
+  events[eventIndex] = { ...events[eventIndex], ...updates };
+  cards[idx] = { ...cards[idx], events };
+  await AsyncStorage.setItem(K_CARDS(ns), JSON.stringify(cards));
+}
+
+export async function deleteCardEvent(cardId: string, eventIndex: number): Promise<void> {
+  const ns = await getActiveNamespace();
+  const cards = await getCards();
+  const idx = cards.findIndex(c => c.id === cardId);
+  if (idx < 0) return;
+  const events = (cards[idx].events ?? []).filter((_, i) => i !== eventIndex);
+  cards[idx] = { ...cards[idx], events };
   await AsyncStorage.setItem(K_CARDS(ns), JSON.stringify(cards));
 }
 

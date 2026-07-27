@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, TouchableOpacity, KeyboardAvoidingView, Platform, StyleSheet, ViewStyle } from 'react-native';
+import { Modal, View, TouchableOpacity, KeyboardAvoidingView, StyleSheet, ViewStyle } from 'react-native';
 import { useColors } from '@/constants/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/theme';
 
@@ -30,7 +30,7 @@ export default function BottomSheet({
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={[styles.overlay, { backgroundColor: `rgba(0,0,0,${overlayOpacity})` }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
       >
         <TouchableOpacity
           style={styles.dismissArea}

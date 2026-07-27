@@ -1,5 +1,9 @@
 import { Expense, Income } from '@/lib/storage';
 
+// Gasto hormiga: un gasto pequeño y frecuente (café, snacks, domicilios) que no
+// es recurrente pero conviene señalar porque suele pasar desapercibido en la suma del mes.
+export const GASTO_HORMIGA_MAX = 30000;
+
 export interface RawExpense {
   name: string;
   amount: number;

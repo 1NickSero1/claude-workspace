@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import BottomSheet from './BottomSheet';
@@ -9,11 +9,21 @@ interface Props {
   budget: number | null;
   onSave: (budget: number) => void;
   onClose: () => void;
+  title?: string;
+  hint?: string;
+  placeholder?: string;
+  accessibilityLabel?: string;
 }
 
 const fmt = (n: number) => n.toLocaleString('es-CO');
 
-export default function BudgetFormModal({ visible, budget, onSave, onClose }: Props) {
+export default function BudgetFormModal({
+  visible, budget, onSave, onClose,
+  title = 'Presupuesto mensual',
+  hint = 'Te avisaremos al llegar al 80% y al 100%.',
+  placeholder = 'Ej: 2.000.000',
+  accessibilityLabel = 'Monto del presupuesto mensual',
+}: Props) {
   const [amount, setAmount] = useState('');
 
   useEffect(() => {
@@ -41,34 +51,36 @@ export default function BudgetFormModal({ visible, budget, onSave, onClose }: Pr
   }), [COLORS]);
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} sheetStyle={{ paddingBottom: 28 }}>
-      <Text style={styles.title}>Presupuesto mensual</Text>
-      <Text style={styles.hint}>Te avisaremos al llegar al 80% y al 100%.</Text>
-      <TextInput
-        style={styles.input}
-        value={amount ? fmt(numeric) : ''}
-        onChangeText={v => setAmount(v.replace(/\D/g, ''))}
-        placeholder="Ej: 2.000.000"
-        placeholderTextColor={COLORS.textDim}
-        keyboardType="number-pad"
-        autoFocus
-        accessibilityLabel="Monto del presupuesto mensual"
-      />
-      <View style={styles.actions}>
-        <TouchableOpacity onPress={onClose} style={styles.cancelBtn} accessibilityRole="button" accessibilityLabel="Cancelar">
-          <Text style={styles.cancelText}>Cancelar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => valid && onSave(numeric)}
-          disabled={!valid}
-          style={[styles.saveBtn, !valid && styles.saveBtnOff]}
-          accessibilityRole="button"
-          accessibilityLabel="Guardar presupuesto"
-          accessibilityState={{ disabled: !valid }}
-        >
-          <Text style={styles.saveText}>Guardar</Text>
-        </TouchableOpacity>
-      </View>
+    <BottomSheet visible={visible} onClose={onClose} maxHeight="70%" sheetStyle={{ paddingBottom: 28 }}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.hint}>{hint}</Text>
+        <TextInput
+          style={styles.input}
+          value={amount ? fmt(numeric) : ''}
+          onChangeText={v => setAmount(v.replace(/\D/g, ''))}
+          placeholder={placeholder}
+          placeholderTextColor={COLORS.textDim}
+          keyboardType="number-pad"
+          autoFocus
+          accessibilityLabel={accessibilityLabel}
+        />
+        <View style={styles.actions}>
+          <TouchableOpacity onPress={onClose} style={styles.cancelBtn} accessibilityRole="button" accessibilityLabel="Cancelar">
+            <Text style={styles.cancelText}>Cancelar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => valid && onSave(numeric)}
+            disabled={!valid}
+            style={[styles.saveBtn, !valid && styles.saveBtnOff]}
+            accessibilityRole="button"
+            accessibilityLabel="Guardar presupuesto"
+            accessibilityState={{ disabled: !valid }}
+          >
+            <Text style={styles.saveText}>Guardar</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </BottomSheet>
   );
 }

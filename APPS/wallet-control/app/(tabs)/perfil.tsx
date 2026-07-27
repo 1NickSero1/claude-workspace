@@ -9,13 +9,10 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import {
   getUserProfile, deleteUserProfile, saveUserProfile, UserProfile,
-  getShowBalanceNotification, saveShowBalanceNotification, BudgetPeriod,
-  getMonthData, getCurrentMonthKey, saveBudget,
+  getShowBalanceNotification, saveShowBalanceNotification,
 } from '@/lib/storage';
 import { requestNotificationPermission, cancelBalanceNotification } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
-import { formatCOP } from '@/lib/expenseParser';
-import BudgetFormModal from '@/components/BudgetFormModal';
 import BottomSheet from '@/components/BottomSheet';
 import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors, useThemeInfo } from '@/constants/ThemeContext';
@@ -28,12 +25,6 @@ const THEME_OPTIONS: { id: ThemeMode; label: string; icon: string }[] = [
   { id: 'dark',   label: 'Oscuro',  icon: '🌙' },
 ];
 
-const PERIOD_OPTIONS: { id: BudgetPeriod; label: string; icon: string }[] = [
-  { id: 'weekly',   label: 'Semanal',   icon: '📆' },
-  { id: 'biweekly', label: 'Quincenal', icon: '🗓️' },
-  { id: 'monthly',  label: 'Mensual',   icon: '📅' },
-];
-
 export default function PerfilScreen() {
   const COLORS = useColors();
   const { moderateScale } = useResponsive();
@@ -42,29 +33,12 @@ export default function PerfilScreen() {
   const [editModal, setEditModal]   = useState(false);
   const [editName, setEditName]     = useState('');
   const [showBalanceNotif, setShowBalanceNotif] = useState(false);
-  const [budget, setBudget]         = useState<number | null>(null);
-  const [budgetModal, setBudgetModal] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
-  const monthKey = getCurrentMonthKey();
 
   useEffect(() => {
     getUserProfile().then(setProfile);
     getShowBalanceNotification().then(setShowBalanceNotif);
-    getMonthData(monthKey).then(d => setBudget(d.budget));
-  }, [monthKey]);
-
-  const handleChangePeriod = async (period: BudgetPeriod) => {
-    if (!profile) return;
-    const updated = { ...profile, budgetPeriod: period };
-    await saveUserProfile(updated);
-    setProfile(updated);
-  };
-
-  const handleSaveBudget = async (amount: number) => {
-    await saveBudget(monthKey, amount);
-    setBudget(amount);
-    setBudgetModal(false);
-  };
+  }, []);
 
   const handleToggleBalanceNotif = async (value: boolean) => {
     setShowBalanceNotif(value);
@@ -255,44 +229,19 @@ export default function PerfilScreen() {
           </View>
         </View>
 
-        {/* ── Periodicidad de cuenta ───────────────────── */}
-        <Text style={styles.sectionLabel}>Periodicidad de cuenta</Text>
-        <View style={styles.section}>
+        {/* ── Personalización financiera ───────────────── */}
+        <Text style={styles.sectionLabel}>Tu experiencia</Text>
+        <TouchableOpacity style={styles.section} onPress={() => router.push('/personalizacion')}>
           <View style={styles.row}>
             <View style={[styles.rowIcon, { backgroundColor: COLORS.primaryBg }]}>
-              <Ionicons name="calendar-outline" size={18} color={COLORS.primary} />
+              <Ionicons name="sparkles-outline" size={18} color={COLORS.primary} />
             </View>
-            <Text style={styles.rowLabel}>Cómo manejas tu dinero</Text>
-          </View>
-          <View style={[styles.row, styles.rowDivider, { paddingTop: 8 }]}>
-            <View style={styles.themeRow}>
-              {PERIOD_OPTIONS.map(opt => {
-                const active = (profile?.budgetPeriod ?? 'biweekly') === opt.id;
-                return (
-                  <TouchableOpacity
-                    key={opt.id}
-                    onPress={() => handleChangePeriod(opt.id)}
-                    style={[styles.themeBtn, active && styles.themeBtnActive]}
-                  >
-                    <Text style={styles.themeBtnEmoji}>{opt.icon}</Text>
-                    <Text style={[styles.themeBtnText, active && styles.themeBtnTextActive]}>{opt.label}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowLabel}>Personaliza tu vida financiera</Text>
+              <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 2 }}>
+                Periodicidad, presupuesto y gasto hormiga
+              </Text>
             </View>
-          </View>
-        </View>
-
-        {/* ── Presupuesto mensual ───────────────────────── */}
-        <Text style={styles.sectionLabel}>Presupuesto mensual</Text>
-        <TouchableOpacity style={styles.section} onPress={() => setBudgetModal(true)}>
-          <View style={styles.row}>
-            <View style={[styles.rowIcon, { backgroundColor: COLORS.primaryBg }]}>
-              <Ionicons name="wallet-outline" size={18} color={COLORS.primary} />
-            </View>
-            <Text style={styles.rowLabel}>
-              {budget && budget > 0 ? formatCOP(budget) : 'Sin configurar'}
-            </Text>
             <Ionicons name="chevron-forward" size={16} color={COLORS.textDim} />
           </View>
         </TouchableOpacity>
@@ -359,34 +308,29 @@ export default function PerfilScreen() {
       </ScrollView>
 
       {/* Modal editar nombre */}
-      <BottomSheet visible={editModal} onClose={() => setEditModal(false)}>
-        <Text style={styles.modalTitle}>Editar nombre</Text>
-        <Text style={styles.modalLabel}>Nombre</Text>
-        <TextInput
-          style={styles.input}
-          value={editName}
-          onChangeText={setEditName}
-          placeholder="Tu nombre"
-          placeholderTextColor={COLORS.textDim}
-          autoFocus
-          autoCapitalize="words"
-        />
-        <View style={styles.modalActions}>
-          <TouchableOpacity onPress={() => setEditModal(false)} style={styles.cancelBtn}>
-            <Text style={styles.cancelText}>Cancelar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleSaveName} style={styles.saveBtn}>
-            <Text style={styles.saveText}>Guardar</Text>
-          </TouchableOpacity>
-        </View>
+      <BottomSheet visible={editModal} onClose={() => setEditModal(false)} maxHeight="70%">
+        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <Text style={styles.modalTitle}>Editar nombre</Text>
+          <Text style={styles.modalLabel}>Nombre</Text>
+          <TextInput
+            style={styles.input}
+            value={editName}
+            onChangeText={setEditName}
+            placeholder="Tu nombre"
+            placeholderTextColor={COLORS.textDim}
+            autoFocus
+            autoCapitalize="words"
+          />
+          <View style={styles.modalActions}>
+            <TouchableOpacity onPress={() => setEditModal(false)} style={styles.cancelBtn}>
+              <Text style={styles.cancelText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSaveName} style={styles.saveBtn}>
+              <Text style={styles.saveText}>Guardar</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </BottomSheet>
-
-      <BudgetFormModal
-        visible={budgetModal}
-        budget={budget}
-        onSave={handleSaveBudget}
-        onClose={() => setBudgetModal(false)}
-      />
 
       {/* Confirmación de cerrar sesión (reemplaza Alert.alert nativo) */}
       <Modal visible={confirmLogout} animationType="fade" transparent onRequestClose={() => setConfirmLogout(false)}>

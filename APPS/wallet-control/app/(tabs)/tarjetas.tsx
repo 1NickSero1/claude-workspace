@@ -10,12 +10,13 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   getCards, saveCard, deleteCard, getMonthData, getCurrentMonthKey,
   getCardTotalSpent, getCategories, updateExpense, deleteExpense,
-  appendCardEvent,
-  Card, Expense, CustomCategory,
+  appendCardEvent, updateCardEvent, deleteCardEvent,
+  Card, CardEvent, Expense, CustomCategory,
 } from '@/lib/storage';
 import { formatCOP } from '@/lib/expenseParser';
 import CardView from '@/components/CardView';
 import CardFormModal from '@/components/CardFormModal';
+import SwipeableRow from '@/components/SwipeableRow';
 import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
@@ -42,14 +43,16 @@ export default function TarjetasScreen() {
   const [pendingTypes, setPendingTypes] = useState<Card['type'][]>(['debit', 'cash']);
 
   const [actionCard, setActionCard]     = useState<Card | null>(null);
-  const [actionStep, setActionStep]     = useState<'menu' | 'money'>('menu');
+  const [actionStep, setActionStep]     = useState<'menu' | 'money' | 'editEvent'>('menu');
   const [actionAmount, setActionAmount] = useState('');
   const [actionNote, setActionNote]     = useState('');
+  const [editEventIndex, setEditEventIndex] = useState<number | null>(null);
   const [debtHistModal, setDebtHistModal] = useState(false);
   const [historyModalType, setHistoryModalType] = useState<'debit' | 'credit' | 'cash' | null>(null);
   const [overflowModal, setOverflowModal] = useState(false);
   const [overflowInfo, setOverflowInfo]   = useState({ entered: 0, pending: 0 });
   const [confirmDeleteCard, setConfirmDeleteCard] = useState<Card | null>(null);
+  const [openSwipeRowId, setOpenSwipeRowId]         = useState<string | null>(null);
 
   const [expModal, setExpModal]         = useState(false);
   const [editingExp, setEditingExp]     = useState<Expense | null>(null);
@@ -375,6 +378,7 @@ export default function TarjetasScreen() {
     setActionStep('menu');
     setActionAmount('');
     setActionNote('');
+    setEditEventIndex(null);
   };
 
   const handleAddMoney = async () => {
@@ -399,6 +403,41 @@ export default function TarjetasScreen() {
       date: new Date().toISOString(),
       note: actionNote.trim() || undefined,
     });
+    closeAction();
+    await load();
+  };
+
+  const openEditEvent = (ev: CardEvent, realIndex: number) => {
+    setEditEventIndex(realIndex);
+    setActionAmount(String(ev.amount));
+    setActionNote(ev.note ?? '');
+    setActionStep('editEvent');
+  };
+
+  const handleSaveEvent = async () => {
+    if (!actionCard || editEventIndex === null) return;
+    const oldEvent = (actionCard.events ?? [])[editEventIndex];
+    const newAmount = Number(actionAmount);
+    if (!oldEvent || !newAmount) return;
+    const isDebt = actionCard.type === 'debt';
+    // Un abono (pay) resta al saldo pendiente; un depósito lo suma — al
+    // editar, primero se revierte el efecto del monto viejo y se aplica el
+    // nuevo, en vez de sumar/restar la diferencia a ciegas.
+    const delta = isDebt ? (oldEvent.amount - newAmount) : (newAmount - oldEvent.amount);
+    await saveCard({ ...actionCard, balance: Math.max((actionCard.balance ?? 0) + delta, 0) });
+    await updateCardEvent(actionCard.id, editEventIndex, { amount: newAmount, note: actionNote.trim() || undefined });
+    closeAction();
+    await load();
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!actionCard || editEventIndex === null) return;
+    const oldEvent = (actionCard.events ?? [])[editEventIndex];
+    if (!oldEvent) return;
+    const isDebt = actionCard.type === 'debt';
+    const delta = isDebt ? oldEvent.amount : -oldEvent.amount;
+    await saveCard({ ...actionCard, balance: Math.max((actionCard.balance ?? 0) + delta, 0) });
+    await deleteCardEvent(actionCard.id, editEventIndex);
     closeAction();
     await load();
   };
@@ -565,9 +604,18 @@ export default function TarjetasScreen() {
             ) : (
               <View style={styles.listSection}>
                 {cashCards.map(card => (
-                  <TouchableOpacity key={card.id} onPress={() => openAction(card)} activeOpacity={0.85}>
-                    <AccountRow card={card} spent={getCardTotalSpent(expenses, card.id)} />
-                  </TouchableOpacity>
+                  <SwipeableRow
+                    key={card.id}
+                    rowId={card.id}
+                    openRowId={openSwipeRowId}
+                    onOpenChange={setOpenSwipeRowId}
+                    onDelete={() => handleDeleteCard(card)}
+                    onEdit={() => { setEditingCard(card); setPendingTypes([card.type]); setModalVisible(true); }}
+                  >
+                    <TouchableOpacity onPress={() => openAction(card)} activeOpacity={0.85}>
+                      <AccountRow card={card} spent={getCardTotalSpent(expenses, card.id)} />
+                    </TouchableOpacity>
+                  </SwipeableRow>
                 ))}
               </View>
             )}
@@ -648,9 +696,18 @@ export default function TarjetasScreen() {
             ) : (
               <View style={styles.listSection}>
                 {debts.map(card => (
-                  <TouchableOpacity key={card.id} onPress={() => openAction(card)} activeOpacity={0.85}>
-                    <AccountRow card={card} spent={0} />
-                  </TouchableOpacity>
+                  <SwipeableRow
+                    key={card.id}
+                    rowId={card.id}
+                    openRowId={openSwipeRowId}
+                    onOpenChange={setOpenSwipeRowId}
+                    onDelete={() => handleDeleteCard(card)}
+                    onEdit={() => { setEditingCard(card); setPendingTypes([card.type]); setModalVisible(true); }}
+                  >
+                    <TouchableOpacity onPress={() => openAction(card)} activeOpacity={0.85}>
+                      <AccountRow card={card} spent={0} />
+                    </TouchableOpacity>
+                  </SwipeableRow>
                 ))}
               </View>
             )}
@@ -670,7 +727,7 @@ export default function TarjetasScreen() {
       <Modal visible={!!actionCard} animationType="slide" transparent onRequestClose={closeAction}>
         <KeyboardAvoidingView
           style={actStyles.overlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
         >
           <TouchableOpacity style={{ flex: 1 }} onPress={closeAction} activeOpacity={1} />
           <View style={actStyles.sheet}>
@@ -781,25 +838,35 @@ export default function TarjetasScreen() {
                         <View style={actStyles.divider} />
                         <View style={actStyles.histSection}>
                           <Text style={actStyles.histTitle}>Historial reciente</Text>
-                          {actionEvents.map((ev, i) => (
-                            <View key={`ev-${i}`} style={actStyles.histRow}>
-                              <Ionicons
-                                name={ev.type === 'pay' ? 'arrow-down-circle-outline' : 'add-circle-outline'}
-                                size={14}
-                                color={ev.type === 'pay' ? COLORS.debt : COLORS.debit}
-                              />
-                              <View style={{ flex: 1 }}>
-                                <Text style={[actStyles.histLabel, { flex: 0 }]}>
-                                  {ev.type === 'pay' ? 'Abono' : 'Depósito'}
+                          {actionEvents.map((ev, i) => {
+                            const realIndex = (actionCard.events?.length ?? 0) - 1 - i;
+                            return (
+                              <TouchableOpacity
+                                key={`ev-${i}`}
+                                style={actStyles.histRow}
+                                onLongPress={() => openEditEvent(ev, realIndex)}
+                                delayLongPress={350}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Editar ${ev.type === 'pay' ? 'abono' : 'depósito'} de ${formatCOP(ev.amount)}`}
+                              >
+                                <Ionicons
+                                  name={ev.type === 'pay' ? 'arrow-down-circle-outline' : 'add-circle-outline'}
+                                  size={14}
+                                  color={ev.type === 'pay' ? COLORS.debt : COLORS.debit}
+                                />
+                                <View style={{ flex: 1 }}>
+                                  <Text style={[actStyles.histLabel, { flex: 0 }]}>
+                                    {ev.type === 'pay' ? 'Abono' : 'Depósito'}
+                                  </Text>
+                                  {ev.note ? <Text style={actStyles.histNote}>{ev.note}</Text> : null}
+                                </View>
+                                <Text style={[actStyles.histAmt, { color: ev.type === 'pay' ? COLORS.debt : COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>
+                                  {formatCOP(ev.amount)}
                                 </Text>
-                                {ev.note ? <Text style={actStyles.histNote}>{ev.note}</Text> : null}
-                              </View>
-                              <Text style={[actStyles.histAmt, { color: ev.type === 'pay' ? COLORS.debt : COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>
-                                {formatCOP(ev.amount)}
-                              </Text>
-                              <Text style={actStyles.histDate}>{fmtDate(ev.date)}</Text>
-                            </View>
-                          ))}
+                                <Text style={actStyles.histDate}>{fmtDate(ev.date)}</Text>
+                              </TouchableOpacity>
+                            );
+                          })}
                           {actionExpenses.map(e => (
                             <TouchableOpacity
                               key={`exp-${e.id}`}
@@ -820,32 +887,36 @@ export default function TarjetasScreen() {
                       </>
                     )}
 
-                    <View style={actStyles.divider} />
-
-                    <View style={actStyles.optionsRow}>
-                      <TouchableOpacity
-                        style={actStyles.optBtn}
-                        onPress={() => {
-                          const card = actionCard;
-                          closeAction();
-                          setTimeout(() => {
-                            setEditingCard(card);
-                            setPendingTypes([card.type]);
-                            setModalVisible(true);
-                          }, 350);
-                        }}
-                      >
-                        <Ionicons name="pencil-outline" size={18} color={COLORS.primary} />
-                        <Text style={[actStyles.optBtnText, { color: COLORS.primary }]}>Editar</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[actStyles.optBtn, actStyles.optBtnDanger]}
-                        onPress={() => handleDeleteCard(actionCard)}
-                      >
-                        <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
-                        <Text style={[actStyles.optBtnText, actStyles.optBtnTextDanger]}>Eliminar</Text>
-                      </TouchableOpacity>
-                    </View>
+                    {!isDebt && (
+                      <>
+                        <View style={actStyles.divider} />
+                        <View style={actStyles.optionsRow}>
+                          <TouchableOpacity
+                            style={actStyles.optBtn}
+                            onPress={() => {
+                              const card = actionCard;
+                              closeAction();
+                              setTimeout(() => {
+                                setEditingCard(card);
+                                setPendingTypes([card.type]);
+                                setModalVisible(true);
+                              }, 350);
+                            }}
+                          >
+                            <Ionicons name="pencil-outline" size={18} color={COLORS.primary} />
+                            <Text style={[actStyles.optBtnText, { color: COLORS.primary }]}>Editar</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[actStyles.optBtn, actStyles.optBtnDanger]}
+                            onPress={() => handleDeleteCard(actionCard)}
+                          >
+                            <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
+                            <Text style={[actStyles.optBtnText, actStyles.optBtnTextDanger]}>Eliminar</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </>
+                    )}
+                    {isDebt && <View style={actStyles.divider} />}
 
                     {!isCredit && (
                       <TouchableOpacity
@@ -904,6 +975,48 @@ export default function TarjetasScreen() {
                   </TouchableOpacity>
                 </>
               )}
+
+              {actionStep === 'editEvent' && actionCard && (
+                <>
+                  <TouchableOpacity style={actStyles.backBtn} onPress={() => { setActionStep('menu'); setEditEventIndex(null); }}>
+                    <Ionicons name="arrow-back" size={16} color={COLORS.textMuted} />
+                    <Text style={actStyles.backBtnText}>Volver</Text>
+                  </TouchableOpacity>
+                  <Text style={actStyles.moneyTitle}>
+                    Editar {actionCard.type === 'debt' ? 'abono' : 'depósito'}
+                  </Text>
+                  <TextInput
+                    style={actStyles.moneyInput}
+                    value={actionAmount ? fmt(Number(actionAmount)) : ''}
+                    onChangeText={v => setActionAmount(v.replace(/\D/g, '').replace(/\./g, ''))}
+                    placeholder="$0"
+                    placeholderTextColor={COLORS.textDim}
+                    keyboardType="number-pad"
+                    autoFocus
+                  />
+                  <TextInput
+                    style={actStyles.noteInput}
+                    value={actionNote}
+                    onChangeText={setActionNote}
+                    placeholder="Observación (opcional)"
+                    placeholderTextColor={COLORS.textDim}
+                    maxLength={80}
+                  />
+                  <TouchableOpacity
+                    style={[actStyles.confirmBtn, { backgroundColor: COLORS.primary, marginBottom: 8 }]}
+                    onPress={handleSaveEvent}
+                  >
+                    <Text style={actStyles.confirmBtnText}>Guardar cambios</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[actStyles.optBtn, actStyles.optBtnDanger, { marginBottom: 4 }]}
+                    onPress={handleDeleteEvent}
+                  >
+                    <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
+                    <Text style={[actStyles.optBtnText, actStyles.optBtnTextDanger]}>Eliminar</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
@@ -913,7 +1026,7 @@ export default function TarjetasScreen() {
       <Modal visible={expModal} animationType="slide" transparent onRequestClose={() => setExpModal(false)}>
         <KeyboardAvoidingView
           style={expStyles.overlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
         >
           <TouchableOpacity style={{ flex: 1 }} onPress={() => { setExpModal(false); setEditingExp(null); }} activeOpacity={1} />
           <View style={expStyles.sheet}>
@@ -998,7 +1111,7 @@ export default function TarjetasScreen() {
 
       {/* Debt payments history modal */}
       <Modal visible={debtHistModal} animationType="slide" transparent onRequestClose={() => setDebtHistModal(false)}>
-        <KeyboardAvoidingView style={actStyles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView style={actStyles.overlay} behavior="padding">
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setDebtHistModal(false)} activeOpacity={1} />
           <View style={actStyles.sheet}>
             <View style={actStyles.handle} />
@@ -1035,7 +1148,7 @@ export default function TarjetasScreen() {
 
       {/* Historial por sección (débito / efectivo / crédito) */}
       <Modal visible={!!historyModalType} animationType="slide" transparent onRequestClose={() => setHistoryModalType(null)}>
-        <KeyboardAvoidingView style={actStyles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView style={actStyles.overlay} behavior="padding">
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setHistoryModalType(null)} activeOpacity={1} />
           <View style={actStyles.sheet}>
             <View style={actStyles.handle} />

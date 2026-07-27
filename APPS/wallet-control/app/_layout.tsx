@@ -67,6 +67,7 @@ function InnerLayout() {
         <Stack.Screen name="ayuda" options={{ headerShown: false }} />
         <Stack.Screen name="busqueda" options={{ headerShown: false }} />
         <Stack.Screen name="categorias" options={{ headerShown: false }} />
+        <Stack.Screen name="personalizacion" options={{ headerShown: false }} />
         <Stack.Screen name="gastos-recurrentes" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="+not-found" />
       </Stack>

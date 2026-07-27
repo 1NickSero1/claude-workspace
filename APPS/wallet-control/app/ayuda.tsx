@@ -370,10 +370,20 @@ const SECTIONS: Section[] = [
     icon: '📊',
     title: 'Resumen — Ver tus finanzas',
     items: [
-      'Gráfica de torta por tipo de gasto',
-      'Toca una categoría para ver su detalle',
-      'Toca una meta para agregar aportes',
-      'Presiona largo para editar o eliminar',
+      'Diagramas de billetera, gastos y fuentes de ingreso — tócalos para ver el detalle',
+      'Toca una categoría o meta para ver su detalle',
+      'Presiona largo una categoría o meta para editarla o eliminarla',
+      'La tarjeta "Presupuesto mensual" abre el resumen completo del mes',
+    ],
+  },
+  {
+    icon: '🔁',
+    title: 'Gastos recurrentes',
+    items: [
+      'Agrupa tus gastos fijos (arriendo, suscripciones) en Pendientes y Pagados',
+      'Toca "Pagar" para registrar el pago real desde la cuenta que elijas',
+      'Botón "+" para crear un gasto fijo nuevo sin pagarlo todavía',
+      'La etiqueta "🐜 Hormiga" marca gastos pequeños que no son fijos pero se acumulan',
     ],
   },
   {
@@ -393,6 +403,16 @@ const SECTIONS: Section[] = [
       'Ver gastos de meses anteriores',
       'Toca un mes para expandir su resumen',
       'Se guarda automáticamente cada mes',
+    ],
+  },
+  {
+    icon: '⚙️',
+    title: 'Perfil y ajustes',
+    items: [
+      'Edita tu nombre y el tema (claro/oscuro/sistema)',
+      'Configura cada cuánto manejas tu dinero (semanal, quincenal, mensual)',
+      'Ajusta tu presupuesto mensual y el monto de "gasto hormiga" cuando quieras',
+      'Ahí también cierras sesión',
     ],
   },
 ];
@@ -480,13 +500,6 @@ export default function AyudaScreen() {
     tipRow: { flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'flex-start' },
     tipDot: { color: COLORS.debit, fontWeight: '900', fontSize: 18, lineHeight: 20 },
     tipText: { flex: 1, color: COLORS.text, fontSize: FONT.sm, lineHeight: 18 },
-
-    pdfCta: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-      backgroundColor: COLORS.card, borderRadius: 14, padding: 16,
-      borderWidth: 1.5, borderColor: COLORS.primary, borderStyle: 'dashed',
-    },
-    pdfCtaText: { color: COLORS.primary, fontWeight: '700', fontSize: FONT.base },
   }, moderateScale)), [COLORS, moderateScale]);
 
   const handleGeneratePDF = async () => {
@@ -615,14 +628,9 @@ export default function AyudaScreen() {
         <View style={styles.tipsCard}>
           <Text style={styles.tipsTitle}>💡 Tips rápidos</Text>
           {[
-            'Toca una categoría o meta para ver el detalle; mantenla presionada para editarla o eliminarla',
-            'Puedes registrar varios gastos en un solo mensaje',
-            'Di "analizar" para que Finando revise tus finanzas',
             'Marca un gasto como "recurrente" para llevar el conteo de cuáles ya pagaste cada quincena',
             'Exporta el PDF del mes o tu extracto de cuenta desde el ícono "?" en Resumen',
             'Desliza el título del mes (junto a las flechitas) para revisar meses anteriores',
-            'Toca cualquier diagrama de Resumen para ver el detalle completo con nombres y montos',
-            'El historial se guarda automáticamente cada mes',
             'Tus datos nunca salen de este dispositivo',
           ].map((tip, i) => (
             <View key={i} style={styles.tipRow}>
@@ -631,17 +639,6 @@ export default function AyudaScreen() {
             </View>
           ))}
         </View>
-
-        {/* PDF CTA */}
-        <TouchableOpacity onPress={handleGeneratePDF} disabled={generating} style={styles.pdfCta}>
-          {generating
-            ? <ActivityIndicator size="small" color={COLORS.primary} />
-            : <Ionicons name="download-outline" size={20} color={COLORS.primary} />
-          }
-          <Text style={styles.pdfCtaText}>
-            {generating ? 'Generando PDF...' : 'Descargar guía completa en PDF'}
-          </Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

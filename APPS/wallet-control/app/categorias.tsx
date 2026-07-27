@@ -8,8 +8,8 @@ import {
   getCurrentMonthKey, getRecurringTemplates, getUserProfile,
   CustomCategory, Expense, Card, RecurringTemplate, UserProfile,
 } from '@/lib/storage';
-import { splitRecurringByPaid, getPayableCards, payRecurringTemplate } from '@/lib/recurringPayments';
-import { formatCOP } from '@/lib/expenseParser';
+import { splitRecurringByPaid, getPayableCards, getSpendableCards, payRecurringTemplate } from '@/lib/recurringPayments';
+import { formatCOP, GASTO_HORMIGA_MAX } from '@/lib/expenseParser';
 import CategoryFormModal from '@/components/CategoryFormModal';
 import CategoryDetailModal from '@/components/CategoryDetailModal';
 import PayRecurringModal from '@/components/PayRecurringModal';
@@ -54,6 +54,7 @@ export default function CategoriasScreen() {
   const period = profile?.budgetPeriod ?? 'biweekly';
   const { pending: pendingTemplates } = splitRecurringByPaid(templates, expenses, period, quincena);
   const payableCards = getPayableCards(cards, expenses);
+  const spendableCards = getSpendableCards(cards);
 
   const openPay = (t: RecurringTemplate) => {
     setPayTarget(t);
@@ -320,6 +321,7 @@ export default function CategoriasScreen() {
         categories={categories}
         monthKey={monthKey}
         pendingTemplates={pendingTemplates.filter(t => detailCat ? t.categoryId === detailCat.id : false)}
+        hormigaThreshold={profile?.hormigaThreshold ?? GASTO_HORMIGA_MAX}
         onPay={openPay}
         onRefresh={load}
         onClose={() => setDetailVisible(false)}
@@ -328,11 +330,13 @@ export default function CategoriasScreen() {
       <PayRecurringModal
         target={payTarget}
         cardId={payCardId}
-        payableCards={payableCards}
+        cards={spendableCards}
+        expenses={expenses}
         saving={paySaving}
         onSelectCard={setPayCardId}
         onConfirm={confirmPay}
         onCancel={() => setPayTarget(null)}
+        onRecharge={() => { setPayTarget(null); router.push('/tarjetas'); }}
       />
 
       {/* Menú de acciones de categoría (reemplaza Alert.alert nativo) */}

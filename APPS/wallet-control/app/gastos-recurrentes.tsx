@@ -8,7 +8,7 @@ import {
   saveRecurringDefinition, deleteRecurringDefinition,
   getCurrentMonthKey, CustomCategory, Expense, Card, RecurringTemplate, RecurrenceFrequency, UserProfile,
 } from '@/lib/storage';
-import { splitRecurringByPaid, getPayableCards, payRecurringTemplate, unpayRecurringTemplate } from '@/lib/recurringPayments';
+import { splitRecurringByPaid, getPayableCards, getSpendableCards, payRecurringTemplate, unpayRecurringTemplate } from '@/lib/recurringPayments';
 import { formatCOP, formatThousands } from '@/lib/expenseParser';
 import PayRecurringModal from '@/components/PayRecurringModal';
 import BottomSheet from '@/components/BottomSheet';
@@ -54,6 +54,7 @@ export default function GastosRecurrentesScreen() {
   const period = profile?.budgetPeriod ?? 'biweekly';
   const { pending, paid } = splitRecurringByPaid(templates, expenses, period, quincena);
   const payableCards = getPayableCards(cards, expenses);
+  const spendableCards = getSpendableCards(cards);
   const periodLabel = period === 'weekly' ? 'esta semana' : period === 'monthly' ? 'este mes' : `la quincena ${quincena}`;
 
   const getCat = (id: string) => categories.find(c => c.id === id);
@@ -257,7 +258,7 @@ export default function GastosRecurrentesScreen() {
                         accessibilityRole="button"
                         accessibilityLabel={`Reversar ${t.name}`}
                       >
-                        <Ionicons name="arrow-undo-outline" size={15} color={COLORS.textMuted} />
+                        <Ionicons name="close" size={15} color={COLORS.textMuted} />
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity
@@ -299,7 +300,7 @@ export default function GastosRecurrentesScreen() {
                       accessibilityRole="button"
                       accessibilityLabel={`Marcar ${t.name} como no pagado`}
                     >
-                      <Ionicons name="close" size={16} color={COLORS.textMuted} />
+                      <Ionicons name="arrow-undo-outline" size={16} color={COLORS.textMuted} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -321,78 +322,82 @@ export default function GastosRecurrentesScreen() {
       <PayRecurringModal
         target={payTarget}
         cardId={payCardId}
-        payableCards={payableCards}
+        cards={spendableCards}
+        expenses={expenses}
         saving={paySaving}
         onSelectCard={setPayCardId}
         onConfirm={confirmPay}
         onCancel={() => setPayTarget(null)}
+        onRecharge={() => { setPayTarget(null); router.push('/tarjetas'); }}
       />
 
-      <BottomSheet visible={addModal} onClose={() => setAddModal(false)}>
-        <Text style={styles.sheetTitle}>Nuevo gasto recurrente</Text>
-        <Text style={styles.sheetHint}>Se agrega como pendiente — lo marcas pagado cuando lo pagues de verdad.</Text>
+      <BottomSheet visible={addModal} onClose={() => setAddModal(false)} maxHeight="88%">
+        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <Text style={styles.sheetTitle}>Nuevo gasto recurrente</Text>
+          <Text style={styles.sheetHint}>Se agrega como pendiente — lo marcas pagado cuando lo pagues de verdad.</Text>
 
-        <Text style={styles.label}>Nombre del gasto</Text>
-        <TextInput
-          style={styles.input}
-          value={newName}
-          onChangeText={setNewName}
-          placeholder="Ej: NETFLIX, ARRIENDO"
-          placeholderTextColor={COLORS.textDim}
-          autoCapitalize="characters"
-        />
+          <Text style={styles.label}>Nombre del gasto</Text>
+          <TextInput
+            style={styles.input}
+            value={newName}
+            onChangeText={setNewName}
+            placeholder="Ej: NETFLIX, ARRIENDO"
+            placeholderTextColor={COLORS.textDim}
+            autoCapitalize="characters"
+          />
 
-        <Text style={styles.label}>Monto (COP)</Text>
-        <TextInput
-          style={styles.input}
-          value={formatThousands(newAmount)}
-          onChangeText={v => setNewAmount(v.replace(/\D/g, ''))}
-          placeholder="0"
-          placeholderTextColor={COLORS.textDim}
-          keyboardType="number-pad"
-        />
+          <Text style={styles.label}>Monto (COP)</Text>
+          <TextInput
+            style={styles.input}
+            value={formatThousands(newAmount)}
+            onChangeText={v => setNewAmount(v.replace(/\D/g, ''))}
+            placeholder="0"
+            placeholderTextColor={COLORS.textDim}
+            keyboardType="number-pad"
+          />
 
-        <Text style={styles.label}>Categoría</Text>
-        <View style={styles.chipRow}>
-          {categories.map(c => (
-            <TouchableOpacity
-              key={c.id}
-              onPress={() => setNewCategoryId(c.id)}
-              style={[styles.catChip, newCategoryId === c.id && styles.catChipActive,
-                      newCategoryId === c.id && { backgroundColor: c.color + '22', borderColor: c.color }]}
-            >
-              <Text style={[styles.catChipText, newCategoryId === c.id && { color: c.color }]}>{c.name}</Text>
+          <Text style={styles.label}>Categoría</Text>
+          <View style={styles.chipRow}>
+            {categories.map(c => (
+              <TouchableOpacity
+                key={c.id}
+                onPress={() => setNewCategoryId(c.id)}
+                style={[styles.catChip, newCategoryId === c.id && styles.catChipActive,
+                        newCategoryId === c.id && { backgroundColor: c.color + '22', borderColor: c.color }]}
+              >
+                <Text style={[styles.catChipText, newCategoryId === c.id && { color: c.color }]}>{c.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.label}>Frecuencia</Text>
+          <View style={styles.freqRow}>
+            {(['weekly', 'biweekly', 'monthly'] as const).map(f => (
+              <TouchableOpacity
+                key={f}
+                onPress={() => setNewFrequency(f)}
+                style={[styles.freqBtn, newFrequency === f && styles.freqBtnActive]}
+              >
+                <Text style={[styles.freqBtnText, newFrequency === f && styles.freqBtnTextActive]}>
+                  {f === 'weekly' ? 'Semanal' : f === 'biweekly' ? 'Quincenal' : 'Mensual'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.formActions}>
+            <TouchableOpacity onPress={() => setAddModal(false)} style={styles.cancelBtn}>
+              <Text style={styles.cancelText}>Cancelar</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text style={styles.label}>Frecuencia</Text>
-        <View style={styles.freqRow}>
-          {(['weekly', 'biweekly', 'monthly'] as const).map(f => (
             <TouchableOpacity
-              key={f}
-              onPress={() => setNewFrequency(f)}
-              style={[styles.freqBtn, newFrequency === f && styles.freqBtnActive]}
+              onPress={confirmAddNew}
+              disabled={!canSaveNew || newSaving}
+              style={[styles.saveBtn, (!canSaveNew || newSaving) && styles.saveBtnOff]}
             >
-              <Text style={[styles.freqBtnText, newFrequency === f && styles.freqBtnTextActive]}>
-                {f === 'weekly' ? 'Semanal' : f === 'biweekly' ? 'Quincenal' : 'Mensual'}
-              </Text>
+              <Text style={styles.saveText}>{newSaving ? 'Guardando...' : 'Guardar'}</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.formActions}>
-          <TouchableOpacity onPress={() => setAddModal(false)} style={styles.cancelBtn}>
-            <Text style={styles.cancelText}>Cancelar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={confirmAddNew}
-            disabled={!canSaveNew || newSaving}
-            style={[styles.saveBtn, (!canSaveNew || newSaving) && styles.saveBtnOff]}
-          >
-            <Text style={styles.saveText}>{newSaving ? 'Guardando...' : 'Guardar'}</Text>
-          </TouchableOpacity>
-        </View>
+          </View>
+        </ScrollView>
       </BottomSheet>
     </SafeAreaView>
   );

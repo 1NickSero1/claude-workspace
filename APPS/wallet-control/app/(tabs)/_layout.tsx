@@ -12,8 +12,7 @@ export default function TabLayout() {
         sceneStyle: { backgroundColor: COLORS.bg },
         tabBarStyle: {
           backgroundColor: COLORS.tabBar,
-          borderTopColor: COLORS.border,
-          borderTopWidth: 1,
+          borderTopWidth: 0,
           height: 64,
           paddingBottom: 10,
           paddingTop: 6,

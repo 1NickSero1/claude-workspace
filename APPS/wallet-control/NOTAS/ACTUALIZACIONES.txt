@@ -803,6 +803,113 @@ v1.34 — 2026-07-23 · Crear gastos recurrentes sin pagarlos todavía
   la tablet se desconectó a mitad de esta ronda.
 
 ------------------------------------------------------------
+v1.35 — 2026-07-26 · Botones tapados por el teclado en varios formularios
+------------------------------------------------------------
+• Bug encontrado por el usuario al fin probar en la tablet real lo de
+  v1.34 (botón "+" de Gastos recurrentes): al abrir el teclado en ese
+  formulario, "Cancelar"/"Guardar" quedaban completamente tapados sin
+  forma de llegar a ellos. Revisando, pasaba en varios formularios más de
+  la app, no solo ahí.
+• Causa: el componente compartido BottomSheet.tsx (la hoja inferior que
+  usan casi todos los formularios) envuelve su contenido en un
+  KeyboardAvoidingView, pero al vivir dentro de un <Modal> de React
+  Native, ese Modal se renderiza en su propia ventana nativa de Android —
+  y ahí el KeyboardAvoidingView no reacciona nada al teclado (probado en
+  la tablet real: con behavior "height" y luego "padding" el sheet no se
+  movía ni un píxel). Los formularios que sí funcionaban bien
+  (QuickEntryModal, CategoryDetailModal, CardFormModal, CategoryFormModal)
+  se salvaban por su propia cuenta, no por BottomSheet: ya limitaban su
+  alto con maxHeight y metían el contenido en su propio ScrollView interno.
+• Arreglo: BottomSheet.tsx ahora usa behavior="padding" en ambas
+  plataformas (antes solo iOS; Android usaba "height", que es el que
+  fallaba dentro del Modal). Y se llevó el patrón que ya funcionaba
+  (maxHeight + ScrollView propio con keyboardShouldPersistTaps="handled")
+  a los 3 formularios que no lo tenían: el sheet de "Nuevo gasto
+  recurrente" en gastos-recurrentes.tsx, BudgetFormModal.tsx (editar
+  presupuesto) y el modal "Editar nombre" de Perfil.
+• npx tsc --noEmit: 0 errores. Verificado en la tablet real en los 3
+  formularios arreglados — el reload normal de Expo Go no bastaba para
+  probar el cambio (se quedaba con el bundle viejo en caché); hubo que
+  forzar `adb shell am force-stop host.exp.exponent` antes de relanzar
+  para confirmar que sí funcionaba.
+
+------------------------------------------------------------
+v1.36 — 2026-07-26 · Nuevo ícono de app + arreglos encontrados en celular real
+------------------------------------------------------------
+• Ícono de la app renovado: se eligió el concepto "Anillo de Progreso" (#7 de
+  las 10 propuestas del PDF de ESTETIK del 22 de julio) — un anillo blanco al
+  72% sobre fondo morado de marca (#6C5CE7). Regenerados los 6 archivos que
+  pide app.json (icon.png, android-icon-foreground/background/monochrome.png,
+  splash-icon.png, favicon.png) con un script de un solo uso
+  (scripts/generate-icons.js + sharp instalado temporalmente con --no-save).
+  De paso se corrigió backgroundColor del ícono adaptativo de Android: tenía
+  un azul pálido (#E6F4FE) que no correspondía a la marca — probablemente
+  quedó así desde la plantilla inicial de Expo sin personalizar. El ícono
+  nuevo solo se verá en un build real (SUBIR PROYECTO / eas build) — Expo Go
+  siempre muestra su propio ícono en desarrollo, no el de la app.
+• Tab bar: se quitó el borde superior de 1px (antes borde + sombra a la vez)
+  — en el celular real (Samsung A24) se veía como una línea marcada
+  separando el contenido de las pestañas. Ahora solo queda la sombra sutil.
+• Diagramas de torta (Billetera general / Gastos del mes / Metas / Fuentes de
+  ingreso): el monto de la leyenda tenía ancho fijo pero el texto no estaba
+  alineado dentro de esa columna, así que los montos cortos quedaban pegados
+  a la izquierda en vez de formar una columna prolija. Alineados a la
+  derecha.
+• Ambos encontrados y verificados en vivo conectando por primera vez un
+  celular físico por WiFi (`adb pair` + `adb connect`, sin cable) en paralelo
+  a la tablet ya conectada por USB — los dos dispositivos quedaron
+  disponibles a la vez para MCP.
+• npx tsc --noEmit: 0 errores.
+
+------------------------------------------------------------
+v1.37 — 2026-07-26 · MEJORAX — 10 pendientes resueltos de un tirón
+------------------------------------------------------------
+• Nueva pantalla "Personaliza tu vida financiera" (desde Perfil → Tu
+  experiencia): agrupa Periodicidad de cuenta, Presupuesto mensual y Gasto
+  hormiga, que antes vivían sueltos en Perfil junto con nombre/tema/idioma.
+• Gastos recurrentes: se intercambiaron los íconos de "Reversar" (ahora ✕)
+  y "Marcar no pagado" (ahora ↩) entre Pendientes y Pagados.
+• Al marcar un gasto fijo como pagado, ahora se puede elegir cualquier
+  cuenta (no solo las que ya alcanzan) — si no tiene fondos suficientes,
+  aparece un aviso de "Fondos insuficientes" para recargar la cuenta o
+  cambiar de método de pago sin perder el gasto que se estaba pagando.
+• Diagrama "Gastos del mes": los montos por categoría ahora se ven en rojo
+  y en negativo, como corresponde a un gasto (antes salían en verde).
+• Registrar un ingreso: nuevo calendario opcional junto a "Descripción"
+  para elegir un día específico del mes en vez de usar siempre hoy.
+• Se quitó el "+" chiquito de la sección "Metas de ahorro" — el botón "+"
+  morado principal ya cubre crear una meta nueva.
+• Préstamos: tocar uno sigue abriendo el detalle para abonar, pero editar
+  y eliminar ahora se hacen deslizando la fila hacia los lados, igual que
+  en Gastos recurrentes.
+• Nueva protección: ya no se puede asignar a una cuenta un gasto mayor a
+  lo que tiene disponible (ni al registrar uno nuevo, ni al editar uno
+  existente) — antes esto dejaba la cuenta en números negativos sin avisar.
+• Historial reciente de una tarjeta: los abonos y depósitos (no solo los
+  gastos) ya se pueden editar o eliminar manteniendo presionado.
+• Verificado con `npx tsc --noEmit` (0 errores) y en vivo en la tablet en
+  cada uno de los 10 puntos.
+
+------------------------------------------------------------
+v1.38 — 2026-07-27 · Efectivo deslizable + arreglo de carrusel
+------------------------------------------------------------
+• Efectivo: las cuentas ya se pueden editar/eliminar deslizando la fila,
+  igual que Préstamos.
+• Popup "Gastos del mes": el deslizar para editar/eliminar cada gasto ya
+  funciona en Android (antes el gesto no respondía dentro del popup).
+• Corregido un desfase en el carrusel de diagramas de Resumen (Billetera
+  general / Gastos del mes / Metas de ahorro / Fuentes de ingreso): al
+  deslizar quedaban pegados fragmentos del diagrama anterior. Confirmado
+  arreglado en celular y en tablet.
+• Corregido el diagrama de "Metas de ahorro": calculaba mal el tamaño de
+  cada porción cuando el ahorro real era mucho menor que la meta total,
+  dibujando un anillo casi invisible.
+• Pendiente: en una tablet específica, los montos de la leyenda de "Metas
+  de ahorro" todavía se ven cortados — no reproduce en celular, se
+  investigó a fondo sin encontrar la causa raíz; sigue en la lista como
+  "en progreso".
+
+------------------------------------------------------------
 [PRÓXIMO]
 ------------------------------------------------------------
 • Política de tratamiento de datos formal y publicada (después de la

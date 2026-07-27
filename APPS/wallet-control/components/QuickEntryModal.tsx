@@ -4,6 +4,7 @@ import {
   ScrollView, StyleSheet, Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import BottomSheet from './BottomSheet';
@@ -11,9 +12,9 @@ import {
   CustomCategory, Card, Expense, Income, RecurrenceFrequency,
   getCurrentMonthKey, addExpenses, addIncomes,
 } from '@/lib/storage';
-import { getPayableCards } from '@/lib/recurringPayments';
+import { getPayableCards, getCardAvailable } from '@/lib/recurringPayments';
 import { scheduleRecurringReminder } from '@/lib/notifications';
-import { formatThousands } from '@/lib/expenseParser';
+import { formatThousands, formatCOP } from '@/lib/expenseParser';
 
 type EntryType = 'gasto' | 'ingreso';
 
@@ -36,6 +37,8 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
   const [saving, setSaving] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState<RecurrenceFrequency>('monthly');
+  const [incomeDate, setIncomeDate] = useState<Date | null>(null);
+  const [showIncomeDatePicker, setShowIncomeDatePicker] = useState(false);
 
   const payableCards = useMemo(() => getPayableCards(cards, expenses), [cards, expenses]);
 
@@ -49,13 +52,18 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
       setSaving(false);
       setIsRecurring(false);
       setFrequency('monthly');
+      setIncomeDate(null);
+      setShowIncomeDatePicker(false);
     }
   }, [visible, initialType]);
 
   const numericAmount = parseFloat(amount.replace(/\./g, '').replace(',', '.')) || 0;
+  const selectedCard = selectedCardId ? cards.find(c => c.id === selectedCardId) ?? null : null;
+  const cardAvailable = selectedCard ? getCardAvailable(selectedCard, expenses) : 0;
+  const exceedsAvailable = type === 'gasto' && !!selectedCard && numericAmount > cardAvailable;
   const canSave =
     numericAmount > 0 &&
-    (type === 'ingreso' || (selectedCategoryId !== null && selectedCardId !== null));
+    (type === 'ingreso' || (selectedCategoryId !== null && selectedCardId !== null && !exceedsAvailable));
 
   function handleAmountChange(text: string) {
     const cleaned = text.replace(/[^0-9]/g, '');
@@ -93,12 +101,13 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
         };
         await addExpenses(monthKey, [expense]);
       } else {
+        const incomeQuincena: 1 | 2 = incomeDate ? (incomeDate.getDate() <= 15 ? 1 : 2) : quincena;
         const income: Income = {
           id: `inc_${Date.now()}`,
           description: description.trim() || 'Ingreso',
           amount: finalAmount,
-          quincena,
-          createdAt: now,
+          quincena: incomeQuincena,
+          createdAt: incomeDate ? incomeDate.toISOString() : now,
           monthKey,
         };
         await addIncomes(monthKey, [income]);
@@ -144,8 +153,14 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
     descInput: {
       backgroundColor: COLORS.bg, borderRadius: RADIUS.md, padding: SPACING.md,
       color: COLORS.text, fontSize: FONT.md,
-      borderWidth: 1, borderColor: COLORS.border, marginBottom: 14,
+      borderWidth: 1, borderColor: COLORS.border,
     },
+    descRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: 14 },
+    dateIconBtn: {
+      width: 44, height: 44, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+      backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 2,
+    },
+    dateIconText: { color: COLORS.debit, fontSize: 10, fontWeight: '700' },
     categoryScroll: { maxHeight: 240, marginBottom: SPACING.md },
     fieldLabel: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 8 },
     cardScroll: { marginBottom: SPACING.md },
@@ -315,6 +330,14 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
                     })}
                   </View>
                 </ScrollView>
+                {exceedsAvailable && (
+                  <View style={styles.noFundsBox}>
+                    <Ionicons name="warning" size={16} color={COLORS.danger} />
+                    <Text style={styles.noFundsText}>
+                      Ese monto supera lo disponible en {selectedCard?.name} ({formatCOP(cardAvailable)}). Reduce el monto o elige otra cuenta.
+                    </Text>
+                  </View>
+                )}
               </>
             )
           )}
@@ -334,14 +357,41 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
           </View>
 
           {/* Description */}
-          <TextInput
-            style={styles.descInput}
-            value={description}
-            onChangeText={setDescription}
-            placeholder={isGasto ? 'Descripción (opcional)' : 'Descripción'}
-            placeholderTextColor={COLORS.textDim}
-            returnKeyType="done"
-          />
+          <View style={styles.descRow}>
+            <TextInput
+              style={[styles.descInput, { flex: 1 }]}
+              value={description}
+              onChangeText={setDescription}
+              placeholder={isGasto ? 'Descripción (opcional)' : 'Descripción'}
+              placeholderTextColor={COLORS.textDim}
+              returnKeyType="done"
+            />
+            {!isGasto && (
+              <TouchableOpacity
+                onPress={() => setShowIncomeDatePicker(true)}
+                style={styles.dateIconBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Elegir día del ingreso (opcional)"
+              >
+                <Ionicons name="calendar-outline" size={18} color={incomeDate ? COLORS.debit : COLORS.textMuted} />
+                {incomeDate && (
+                  <Text style={styles.dateIconText}>{incomeDate.getDate()}</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+          {showIncomeDatePicker && (
+            <DateTimePicker
+              value={incomeDate ?? new Date()}
+              mode="date"
+              display="default"
+              onChange={(event, selected) => {
+                setShowIncomeDatePicker(false);
+                if (event.type === 'dismissed' || !selected) return;
+                setIncomeDate(selected);
+              }}
+            />
+          )}
 
           {/* Gasto recurrente */}
           {isGasto && (

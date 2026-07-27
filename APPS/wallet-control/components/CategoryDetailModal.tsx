@@ -20,12 +20,13 @@ interface CatDetailProps {
   categories: CustomCategory[];
   monthKey: string;
   pendingTemplates: RecurringTemplate[];
+  hormigaThreshold: number;
   onPay: (t: RecurringTemplate) => void;
   onRefresh: () => void;
   onClose: () => void;
 }
 
-export default function CategoryDetailModal({ visible, cat, expenses, cards, monthKey, pendingTemplates, onPay, onRefresh, onClose }: CatDetailProps) {
+export default function CategoryDetailModal({ visible, cat, expenses, cards, monthKey, pendingTemplates, hormigaThreshold, onPay, onRefresh, onClose }: CatDetailProps) {
   type Mode = 'list' | 'add' | 'edit';
   const [mode, setMode]         = useState<Mode>('list');
   const [editExp, setEditExp]   = useState<Expense | null>(null);
@@ -67,6 +68,8 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     payBtn: { width: 30, height: 30, borderRadius: RADIUS.sm, backgroundColor: COLORS.debitBg, alignItems: 'center', justifyContent: 'center' },
     paidTag: { backgroundColor: COLORS.debitBg, borderRadius: RADIUS.pill, paddingHorizontal: 8, paddingVertical: 1 },
     paidTagText: { color: COLORS.debit, fontWeight: '700', fontSize: 10 },
+    hormigaTag: { backgroundColor: COLORS.warning + '22', borderRadius: RADIUS.pill, paddingHorizontal: 8, paddingVertical: 1 },
+    hormigaTagText: { color: COLORS.warning, fontWeight: '700', fontSize: 10 },
     addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, backgroundColor: COLORS.primary, borderRadius: 14, padding: 14, marginTop: SPACING.lg },
     addBtnText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 14, marginBottom: 6 },
@@ -281,11 +284,15 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
                           <View style={dStyles.expLeft}>
                             <View style={dStyles.expNameRow}>
                               <Text style={dStyles.expName}>{e.name}</Text>
-                              {e.isRecurring && (
+                              {e.isRecurring ? (
                                 <View style={dStyles.paidTag}>
                                   <Text style={dStyles.paidTagText}>Pagado</Text>
                                 </View>
-                              )}
+                              ) : e.amount <= hormigaThreshold ? (
+                                <View style={dStyles.hormigaTag}>
+                                  <Text style={dStyles.hormigaTagText}>🐜 Hormiga</Text>
+                                </View>
+                              ) : null}
                             </View>
                             <Text style={dStyles.expMeta}>
                               {e.isRecurring
