@@ -16,14 +16,17 @@ import {
   getRecurringTemplates, RecurringTemplate,
   syncCardBalanceSnapshot, getCardBalanceSnapshot,
   CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile, MonthData,
-  getCardTotalSpent, sumIncomes, updateExpense, RecurrenceFrequency,
+  getCardTotalSpent, sumIncomes, updateExpense, deleteExpense, RecurrenceFrequency,
 } from '@/lib/storage';
 import { sumExpenses, formatCOP, formatThousands } from '@/lib/expenseParser';
 import { checkBudgetThreshold, updateBalanceNotification, cancelNotification, scheduleRecurringReminder } from '@/lib/notifications';
+import { splitRecurringByPaid, getPayableCards, payRecurringTemplate, unpayRecurringTemplate } from '@/lib/recurringPayments';
 import DonutChart, { DonutSlice } from '@/components/DonutChart';
 import QuickEntryModal from '@/components/QuickEntryModal';
 import BudgetProgressBar from '@/components/BudgetProgressBar';
 import BottomSheet from '@/components/BottomSheet';
+import PayRecurringModal from '@/components/PayRecurringModal';
+import SwipeableRow from '@/components/SwipeableRow';
 import SemanaCard from '@/components/SemanaCard';
 import MesCard from '@/components/MesCard';
 import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
@@ -108,6 +111,9 @@ export default function ResumenScreen() {
   const [editExpDueDate, setEditExpDueDate]         = useState('');
   const [editExpDueDateObj, setEditExpDueDateObj]   = useState<Date | null>(null);
   const [editExpShowDatePicker, setEditExpShowDatePicker] = useState(false);
+  const [payTarget, setPayTarget]     = useState<RecurringTemplate | null>(null);
+  const [payCardId, setPayCardId]     = useState<string | undefined>(undefined);
+  const [paySaving, setPaySaving]     = useState(false);
   const monthScrollRef = useRef<ScrollView>(null);
   const monthScrollSynced = useRef(false);
   const balanceScrollRef = useRef<ScrollView>(null);
@@ -201,6 +207,14 @@ export default function ResumenScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  // ── Eliminar cualquier gasto desde el popup "Gastos del mes" (swipe der.) ──
+  const [openExpRowId, setOpenExpRowId] = useState<string | null>(null);
+  const deleteExpenseRow = async (e: Expense) => {
+    if (e.notificationId) await cancelNotification(e.notificationId);
+    await deleteExpense(monthKey, e.id);
+    await load();
+  };
+
   // ── Editar cualquier gasto desde el popup "Gastos del mes" ────────────────
   const startEditExpense = (e: Expense) => {
     setEditExpTarget(e);
@@ -244,6 +258,29 @@ export default function ResumenScreen() {
       notificationId,
     });
     setEditExpTarget(null);
+    await load();
+  };
+
+  // ── Marcar/desmarcar "pagado" un gasto fijo recurrente en una quincena ────
+  const openMarkPaid = (t: RecurringTemplate) => {
+    setPayTarget(t);
+    setPayCardId(t.lastCardId && payableCards.some(c => c.id === t.lastCardId) ? t.lastCardId : undefined);
+  };
+
+  const confirmMarkPaid = async () => {
+    if (!payTarget || !payCardId || paySaving) return;
+    setPaySaving(true);
+    try {
+      await payRecurringTemplate(monthKey, viewedQuincena, payTarget, payCardId);
+      setPayTarget(null);
+      await load();
+    } finally {
+      setPaySaving(false);
+    }
+  };
+
+  const unmarkPaid = async (t: RecurringTemplate) => {
+    await unpayRecurringTemplate(monthKey, viewedQuincena, t, expenses);
     await load();
   };
 
@@ -387,7 +424,10 @@ export default function ResumenScreen() {
   }));
 
   // ── Balance (donut de cuentas, reemplaza las cards Débito/Crédito) ───────
-  const balanceItemsAll = [...activoItems, ...pasivoItems].filter(it => it.value > 0);
+  // Los préstamos (type === 'debt') no son plata disponible ni un movimiento
+  // más para sumar acá — son una deuda pendiente de reponer, así que no
+  // entran en este donut (sí siguen contando como Pasivo en Balance General).
+  const balanceItemsAll = [...activoItems, ...pasivoItems].filter(it => it.value > 0 && it.type !== 'debt');
   const balanceItems = balanceFilter === 'all' ? balanceItemsAll : balanceItemsAll.filter(it => it.type === balanceFilter);
   const balanceDonutData: DonutSlice[] = balanceItems.map(it => ({ id: it.id, color: it.color, amount: it.value }));
   const totalBalance = balanceItems.reduce((s, it) => s + it.value, 0);
@@ -398,33 +438,26 @@ export default function ResumenScreen() {
   const today = new Date();
   const day = today.getDate();
 
-  // "Gastos del mes" (diagrama de torta): un gasto recurrente con fecha de
-  // pago configurada solo cuenta como ya gastado desde ese día en adelante —
-  // si se registró antes de su fecha de pago, todavía no se suma al total
-  // del diagrama (sí sigue apareciendo en el popup de detalle, que es un
-  // registro de lo anotado, no un indicador de "cuánto llevo gastado").
-  const parseDMY = (raw: string): Date | null => {
-    const parts = raw.trim().split('/');
-    if (parts.length !== 3) return null;
-    const [d, m, y] = parts.map(Number);
-    if (!d || !m || !y) return null;
-    const date = new Date(y, m - 1, d);
-    return isNaN(date.getTime()) ? null : date;
-  };
-  const chartExpenses = expenses.filter(e => {
-    if (!e.isRecurring || !e.recurrenceDueDate) return true;
-    const due = parseDMY(e.recurrenceDueDate);
-    return !due || due <= today;
-  });
+  // "Gastos del mes" (diagrama de torta): cuenta lo mismo que se ve como
+  // "Pagado" en Categorías/Gastos recurrentes — cualquier gasto ya
+  // registrado, sin excepción por fecha de pago (antes un gasto recurrente
+  // con fecha de pago futura quedaba fuera del diagrama aunque ya
+  // apareciera como pagado en el resto de la app; ahora es consistente).
+  const chartExpenses = expenses;
   const chartCatRows = categories
     .map(cat => ({ cat, total: chartExpenses.filter(e => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0) }))
     .filter(r => r.total > 0)
     .sort((a, b) => b.total - a.total);
-  const chartDonutData: DonutSlice[] = chartCatRows.map(r => ({ id: r.cat.id, color: r.cat.color, amount: r.total }));
-  const chartTotalSpent = chartCatRows.reduce((s, r) => s + r.total, 0);
-  const dow = today.getDay();
-  const mondayIndex = dow === 0 ? 6 : dow - 1;
-  const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayIndex);
+  // Préstamos: se suman al total como si fueran un gasto más (es plata que
+  // salió/se debe), pero en rojo y aparte para que se note que es deuda y
+  // no un gasto normal de una categoría.
+  const chartDebtCards = cards.filter(c => c.type === 'debt' && (c.balance ?? 0) > 0);
+  const chartDebtTotal = chartDebtCards.reduce((s, c) => s + (c.balance ?? 0), 0);
+  const chartDonutData: DonutSlice[] = [
+    ...chartCatRows.map(r => ({ id: r.cat.id, color: r.cat.color, amount: r.total })),
+    ...chartDebtCards.map(c => ({ id: c.id, color: _COLORS.danger, amount: c.balance ?? 0 })),
+  ];
+  const chartTotalSpent = chartCatRows.reduce((s, r) => s + r.total, 0) + chartDebtTotal;
   const currentQuincena: 1 | 2 = day <= 15 ? 1 : 2;
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
@@ -433,14 +466,12 @@ export default function ResumenScreen() {
   // usuario está mirando en el slider (no siempre la de hoy).
   const periodLabel = period === 'weekly' ? 'esta semana' : period === 'monthly' ? 'este mes' : `la quincena ${viewedQuincena}`;
 
-  const expensesInPeriodWindow = period === 'weekly'
-    ? expenses.filter(e => new Date(e.createdAt).getTime() >= weekStart.getTime())
-    : period === 'monthly'
-    ? expenses
-    : expenses.filter(e => e.quincena === viewedQuincena);
+  const { pending: pendingTemplates, paid: paidTemplates } =
+    splitRecurringByPaid(recurringTemplates, expenses, period, viewedQuincena);
 
-  const loggedNames = new Set(expensesInPeriodWindow.map(e => e.name.trim().toLowerCase()));
-  const pendingTemplates = recurringTemplates.filter(t => !loggedNames.has(t.name.trim().toLowerCase()));
+  // Cuentas con plata real disponible para pagar un gasto fijo — sin
+  // préstamos (no son una fuente de dinero) y sin cuentas en $0.
+  const payableCards = getPayableCards(cards, expenses);
 
   // Conteo de gastos fijos pagados/pendientes por quincena específica (para el
   // badge inline en cada slide del slider Quincena 1/2, independiente de cuál
@@ -672,6 +703,8 @@ export default function ResumenScreen() {
     expCardIcon: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
     expCardName: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base },
     expCardMeta: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+    recurringTag: { backgroundColor: COLORS.debitBg, borderRadius: RADIUS.pill, paddingHorizontal: 6, paddingVertical: 1 },
+    recurringTagText: { color: COLORS.debit, fontWeight: '700', fontSize: 9 },
     expCardAmt: { fontWeight: '800', fontSize: FONT.md, maxWidth: 110 },
     expCardEditBtn: { width: 30, height: 30, borderRadius: RADIUS.sm, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
     summaryCloseBtn: { marginTop: SPACING.lg, backgroundColor: COLORS.primary, borderRadius: 14, padding: 14, alignItems: 'center' },
@@ -691,6 +724,16 @@ export default function ResumenScreen() {
     patRowEmoji: { fontSize: 20, width: 28 },
     patRowName: { flex: 1, color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
     patRowVal: { fontWeight: '700', fontSize: FONT.sm },
+    payToggleBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      backgroundColor: COLORS.debitBg, borderRadius: RADIUS.pill,
+      paddingHorizontal: SPACING.md, paddingVertical: 7,
+    },
+    payToggleText: { color: COLORS.debit, fontWeight: '700', fontSize: 12 },
+    payToggleBtnOff: {
+      width: 30, height: 30, borderRadius: 15,
+      backgroundColor: COLORS.card2, alignItems: 'center', justifyContent: 'center',
+    },
     patTotal: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 10, marginBottom: 6 },
     patTotalLabel: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base },
     patTotalVal: { fontWeight: '800', fontSize: FONT.base },
@@ -896,13 +939,13 @@ export default function ResumenScreen() {
                   data={chartDonutData}
                   total={chartTotalSpent || 1}
                   size={donutSize}
-                  centerLabel="💸 toca para ver"
+                  centerLabel="toca para ver"
                   centerValue={formatCOP(chartTotalSpent)}
                   centerValueColor={COLORS.credit}
                 />
               </TouchableOpacity>
               {/* Leyenda por categoría */}
-              {chartCatRows.length > 0 && (
+              {(chartCatRows.length > 0 || chartDebtCards.length > 0) && (
                 <View style={styles.incomeLegend}>
                   {chartCatRows.slice(0, 6).map(r => (
                     <View key={r.cat.id} style={styles.incomeLegendRow}>
@@ -913,6 +956,17 @@ export default function ResumenScreen() {
                         </Text>
                       </View>
                       <Text style={styles.incomeLegendAmt}>{formatCOP(r.total)}</Text>
+                    </View>
+                  ))}
+                  {chartDebtCards.map(c => (
+                    <View key={c.id} style={styles.incomeLegendRow}>
+                      <View style={styles.incomeLegendLeft}>
+                        <View style={[styles.incomeLegendDot, { backgroundColor: COLORS.danger }]} />
+                        <Text style={styles.incomeLegendName} numberOfLines={1}>
+                          {c.emoji ? `${c.emoji} ` : '💸 '}{c.name} (deuda)
+                        </Text>
+                      </View>
+                      <Text style={[styles.incomeLegendAmt, { color: COLORS.danger }]}>-{formatCOP(c.balance ?? 0)}</Text>
                     </View>
                   ))}
                 </View>
@@ -959,7 +1013,7 @@ export default function ResumenScreen() {
                   total={totalIncome || 1}
                   size={donutSize}
                   centerValue={formatCOP(totalIncome)}
-                  centerLabel="Total ingresos"
+                  centerLabel={incomes.length > 0 ? 'toca para ver' : 'Sin ingresos'}
                   centerValueColor={COLORS.debit}
                   emptyLabel="Sin ingresos"
                   emptyHint="Toca + para registrar un ingreso"
@@ -1063,13 +1117,13 @@ export default function ResumenScreen() {
           </View>
         )}
 
-        {/* ── Gastos fijos mensuales (entra a la pantalla de categorías) ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/categorias')} style={styles.gastosCard}>
+        {/* ── Gastos recurrentes (entra al hub de pendientes/pagados) ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/gastos-recurrentes')} style={styles.gastosCard}>
           <View style={styles.gastosCardIcon}>
             <Ionicons name="pricetags" size={22} color={COLORS.credit} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.gastosCardTitle}>Gastos fijos mensuales</Text>
+            <Text style={styles.gastosCardTitle}>Gastos recurrentes</Text>
             <Text style={styles.gastosCardSub}>
               {catRows.filter(r => r.total > 0).length} categorías · {formatCOP(totalSpent)}
             </Text>
@@ -1105,22 +1159,21 @@ export default function ResumenScreen() {
                   {patrimonioNeto >= 0 ? '+' : ''}{formatCOP(patrimonioNeto)}
                 </Text>
               </View>
-              <TouchableOpacity
-                activeOpacity={0.6}
-                onPress={() => setPatrimonioModal(true)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                style={{ alignSelf: 'flex-end', marginTop: 6 }}
-              >
-                <Text style={{ color: COLORS.textDim, fontSize: 10 }}>Toca para ver detalle →</Text>
-              </TouchableOpacity>
+              <Text style={{ color: COLORS.textDim, fontSize: 10, alignSelf: 'flex-end', marginTop: 6 }}>Toca para ver detalle →</Text>
             </>
           );
 
           if (!hasPrevMonthData) {
             return (
-              <View style={[styles.patrimonioCard, { borderLeftColor: netoColor, backgroundColor: netoColor + '0D' }]}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => setPatrimonioModal(true)}
+                accessibilityRole="button"
+                accessibilityLabel={`Balance general de ${formatMonthLabel(monthKey)}, neto ${formatCOP(patrimonioNeto)}, toca para ver detalle`}
+                style={[styles.patrimonioCard, { borderLeftColor: netoColor, backgroundColor: netoColor + '0D' }]}
+              >
                 {currentMonthContent}
-              </View>
+              </TouchableOpacity>
             );
           }
 
@@ -1136,7 +1189,13 @@ export default function ResumenScreen() {
               >
                 {/* Slide 1 — mes anterior */}
                 <View style={{ width: cardWidth }}>
-                  <View style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: prevNetoColor, backgroundColor: prevNetoColor + '0D' }]}>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => setPrevPatrimonioModal(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Balance general de ${formatMonthLabel(prevMonthKey)}, neto ${formatCOP(prevPatrimonioNeto)}, toca para ver detalle`}
+                    style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: prevNetoColor, backgroundColor: prevNetoColor + '0D' }]}
+                  >
                     <View style={styles.patrimonioHeader}>
                       <Ionicons name={prevPatrimonioNeto >= 0 ? 'trending-up' : 'trending-down'} size={18} color={prevNetoColor} />
                       <Text style={styles.patrimonioTitle}>Balance General · {formatMonthLabel(prevMonthKey)}</Text>
@@ -1158,22 +1217,21 @@ export default function ResumenScreen() {
                         {prevPatrimonioNeto >= 0 ? '+' : ''}{formatCOP(prevPatrimonioNeto)}
                       </Text>
                     </View>
-                    <TouchableOpacity
-                      activeOpacity={0.6}
-                      onPress={() => setPrevPatrimonioModal(true)}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      style={{ alignSelf: 'flex-end', marginTop: 6 }}
-                    >
-                      <Text style={{ color: COLORS.textDim, fontSize: 10 }}>Toca para ver detalle →</Text>
-                    </TouchableOpacity>
-                  </View>
+                    <Text style={{ color: COLORS.textDim, fontSize: 10, alignSelf: 'flex-end', marginTop: 6 }}>Toca para ver detalle →</Text>
+                  </TouchableOpacity>
                 </View>
 
                 {/* Slide 2 — mes actual (vista inicial "bloqueada" vía scrollTo) */}
                 <View style={{ width: cardWidth }}>
-                  <View style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: netoColor, backgroundColor: netoColor + '0D' }]}>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => setPatrimonioModal(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Balance general de ${formatMonthLabel(monthKey)}, neto ${formatCOP(patrimonioNeto)}, toca para ver detalle`}
+                    style={[styles.patrimonioCard, { marginBottom: 0, borderLeftColor: netoColor, backgroundColor: netoColor + '0D' }]}
+                  >
                     {currentMonthContent}
-                  </View>
+                  </TouchableOpacity>
                 </View>
               </ScrollView>
               <View style={styles.dotRow}>
@@ -1524,34 +1582,42 @@ export default function ResumenScreen() {
                         const cat = categories.find(c => c.id === e.categoryId);
                         const card = cards.find(c => c.id === e.cardId);
                         return (
-                          <View key={e.id} style={styles.expCard}>
-                            <View style={[styles.expCardIcon, { backgroundColor: (cat?.color ?? COLORS.textDim) + '22' }]}>
-                              {cat?.emoji
-                                ? <Text style={{ fontSize: 20 }}>{cat.emoji}</Text>
-                                : <Ionicons name={(cat?.icon ?? 'pricetag') as any} size={20} color={cat?.color ?? COLORS.textMuted} />}
-                            </View>
-                            <View style={{ flex: 1 }}>
-                              <Text style={styles.expCardName} numberOfLines={1}>{e.name}</Text>
-                              <Text style={styles.expCardMeta}>
-                                {cat?.name ?? 'Sin categoría'} ·{' '}
-                                {e.isRecurring
-                                  ? (e.recurrenceFrequency === 'weekly' ? 'Semanal' : e.recurrenceFrequency === 'biweekly' ? 'Quincenal' : 'Mensual')
-                                  : (e.quincena === 1 ? '1ª Quincena' : '2ª Quincena')}
-                                {card ? ` · ${card.name}` : ''}
+                          <SwipeableRow
+                            key={e.id}
+                            rowId={e.id}
+                            openRowId={openExpRowId}
+                            onOpenChange={setOpenExpRowId}
+                            onDelete={() => deleteExpenseRow(e)}
+                            onEdit={() => startEditExpense(e)}
+                          >
+                            <View style={styles.expCard}>
+                              <View style={[styles.expCardIcon, { backgroundColor: (cat?.color ?? COLORS.textDim) + '22' }]}>
+                                {cat?.emoji
+                                  ? <Text style={{ fontSize: 20 }}>{cat.emoji}</Text>
+                                  : <Ionicons name={(cat?.icon ?? 'pricetag') as any} size={20} color={cat?.color ?? COLORS.textMuted} />}
+                              </View>
+                              <View style={{ flex: 1 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                  <Text style={styles.expCardName} numberOfLines={1}>{e.name}</Text>
+                                  {e.isRecurring && (
+                                    <View style={styles.recurringTag}>
+                                      <Text style={styles.recurringTagText}>🔁 Fijo</Text>
+                                    </View>
+                                  )}
+                                </View>
+                                <Text style={styles.expCardMeta}>
+                                  {cat?.name ?? 'Sin categoría'} ·{' '}
+                                  {e.isRecurring
+                                    ? (e.recurrenceFrequency === 'weekly' ? 'Semanal' : e.recurrenceFrequency === 'biweekly' ? 'Quincenal' : 'Mensual')
+                                    : (e.quincena === 1 ? '1ª Quincena' : '2ª Quincena')}
+                                  {card ? ` · ${card.name}` : ''}
+                                </Text>
+                              </View>
+                              <Text style={[styles.expCardAmt, { color: cat?.color ?? COLORS.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                                {formatCOP(e.amount)}
                               </Text>
                             </View>
-                            <Text style={[styles.expCardAmt, { color: cat?.color ?? COLORS.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-                              {formatCOP(e.amount)}
-                            </Text>
-                            <TouchableOpacity
-                              onPress={() => startEditExpense(e)}
-                              style={styles.expCardEditBtn}
-                              accessibilityRole="button"
-                              accessibilityLabel={`Editar ${e.name}`}
-                            >
-                              <Ionicons name="pencil" size={14} color={COLORS.primary} />
-                            </TouchableOpacity>
-                          </View>
+                          </SwipeableRow>
                         );
                       })}
                     </View>
@@ -1864,30 +1930,82 @@ export default function ResumenScreen() {
                   <Text style={styles.emptyText}>Sin gastos fijos configurados</Text>
                   <Text style={styles.emptyHint}>Actívalos con el toggle "Gasto recurrente" al registrar un gasto</Text>
                 </View>
-              ) : pendingTemplates.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Ionicons name="checkmark-circle-outline" size={36} color={COLORS.debit} />
-                  <Text style={styles.emptyText}>¡Al día!</Text>
-                  <Text style={styles.emptyHint}>No tienes gastos fijos pendientes en {periodLabel}</Text>
-                </View>
               ) : (
-                <View style={styles.patSection}>
-                  {pendingTemplates.map(t => {
-                    const cat = categories.find(c => c.id === t.categoryId);
-                    return (
-                      <View key={t.name} style={styles.patRow}>
-                        <Text style={styles.patRowEmoji}>{cat?.emoji ?? '💸'}</Text>
-                        <Text style={styles.patRowName}>{t.name}</Text>
-                        <Text style={[styles.patRowVal, { color: cat?.color ?? COLORS.credit }]}>{formatCOP(t.amount)}</Text>
-                      </View>
-                    );
-                  })}
-                </View>
+                <>
+                  {pendingTemplates.length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <Ionicons name="checkmark-circle-outline" size={36} color={COLORS.debit} />
+                      <Text style={styles.emptyText}>¡Al día!</Text>
+                      <Text style={styles.emptyHint}>No tienes gastos fijos pendientes en {periodLabel}</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.patSection}>
+                      {pendingTemplates.map(t => {
+                        const cat = categories.find(c => c.id === t.categoryId);
+                        return (
+                          <View key={t.name} style={styles.patRow}>
+                            <Text style={styles.patRowEmoji}>{cat?.emoji ?? '💸'}</Text>
+                            <View style={{ flex: 1 }}>
+                              <Text style={styles.patRowName}>{t.name}</Text>
+                              <Text style={[styles.patRowVal, { color: cat?.color ?? COLORS.credit }]}>{formatCOP(t.amount)}</Text>
+                            </View>
+                            <TouchableOpacity
+                              onPress={() => openMarkPaid(t)}
+                              style={styles.payToggleBtn}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Marcar ${t.name} como pagado`}
+                            >
+                              <Ionicons name="checkmark" size={16} color={COLORS.debit} />
+                              <Text style={styles.payToggleText}>Pagar</Text>
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {paidTemplates.length > 0 && (
+                    <View style={[styles.patSection, { marginTop: 18 }]}>
+                      <Text style={styles.patSectionTitle}>Pagados en {periodLabel}</Text>
+                      {paidTemplates.map(t => {
+                        const cat = categories.find(c => c.id === t.categoryId);
+                        return (
+                          <View key={t.name} style={styles.patRow}>
+                            <Text style={styles.patRowEmoji}>{cat?.emoji ?? '💸'}</Text>
+                            <View style={{ flex: 1 }}>
+                              <Text style={styles.patRowName}>{t.name}</Text>
+                              <Text style={[styles.patRowVal, { color: COLORS.textMuted }]}>{formatCOP(t.amount)}</Text>
+                            </View>
+                            <TouchableOpacity
+                              onPress={() => unmarkPaid(t)}
+                              style={styles.payToggleBtnOff}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Marcar ${t.name} como no pagado`}
+                            >
+                              <Ionicons name="close" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+                </>
               )}
             </ScrollView>
           </View>
         </View>
       </Modal>
+
+      {/* ── Confirmar cuenta al marcar un gasto fijo como pagado ── */}
+      <PayRecurringModal
+        target={payTarget}
+        cardId={payCardId}
+        payableCards={payableCards}
+        saving={paySaving}
+        onSelectCard={setPayCardId}
+        onConfirm={confirmMarkPaid}
+        onCancel={() => setPayTarget(null)}
+      />
 
       {/* ── Patrimonio detail modal (mes anterior) ── */}
       <Modal visible={prevPatrimonioModal} animationType="slide" transparent onRequestClose={() => setPrevPatrimonioModal(false)}>
@@ -1947,6 +2065,8 @@ export default function ResumenScreen() {
       <QuickEntryModal
         visible={quickEntry}
         categories={categories}
+        cards={cards}
+        expenses={expenses}
         initialType={quickEntryType}
         onSave={() => { setQuickEntry(false); load(); }}
         onClose={() => setQuickEntry(false)}

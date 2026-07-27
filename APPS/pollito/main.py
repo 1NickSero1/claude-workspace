@@ -42,6 +42,7 @@ class MenuPrincipal(ctk.CTk):
         self.configure(fg_color=tema.FONDO)
         self._ventanas_abiertas = {}
         self._aplicar_icono()
+        self._agregar_fondo_sakura()
         self._construir_ui()
         self._agregar_mascota()
 
@@ -52,6 +53,21 @@ class MenuPrincipal(ctk.CTk):
                 self.iconbitmap(str(icono))
             except Exception:
                 pass  # sin icono no rompe la app, solo se ve el default de Tk
+
+    def _agregar_fondo_sakura(self):
+        """Ramas de sakura decorativas en dos esquinas opuestas (ver
+        assets/generar_fondo_sakura.py) - se crea antes que el resto de la
+        UI para quedar detras en el orden de apilado de Tk, sin competir
+        con la lectura de los botones."""
+        ruta_imagen = get_base_path() / "assets" / "fondo_sakura.png"
+        if not ruta_imagen.exists():
+            return
+        imagen_pil = Image.open(ruta_imagen)
+        imagen = ctk.CTkImage(
+            light_image=imagen_pil, dark_image=imagen_pil, size=TAMANO_VENTANA
+        )
+        etiqueta = ctk.CTkLabel(self, image=imagen, text="", fg_color="transparent")
+        etiqueta.place(x=0, y=0)
 
     def _construir_ui(self):
         titulo = ctk.CTkLabel(

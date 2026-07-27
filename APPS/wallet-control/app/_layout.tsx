@@ -6,6 +6,7 @@ import * as Notifications from 'expo-notifications';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { COLORS, DARK_COLORS } from '@/constants/theme';
 import { ThemeProvider as ColorsProvider, useThemeInfo } from '@/constants/ThemeContext';
@@ -66,6 +67,7 @@ function InnerLayout() {
         <Stack.Screen name="ayuda" options={{ headerShown: false }} />
         <Stack.Screen name="busqueda" options={{ headerShown: false }} />
         <Stack.Screen name="categorias" options={{ headerShown: false }} />
+        <Stack.Screen name="gastos-recurrentes" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>
@@ -131,10 +133,12 @@ export default function RootLayout() {
   if (!loaded || !checked) return null;
 
   return (
-    <SafeAreaProvider>
-      <ColorsProvider>
-        <InnerLayout />
-      </ColorsProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ColorsProvider>
+          <InnerLayout />
+        </ColorsProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

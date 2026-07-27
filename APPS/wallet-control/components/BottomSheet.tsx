@@ -32,7 +32,13 @@ export default function BottomSheet({
         style={[styles.overlay, { backgroundColor: `rgba(0,0,0,${overlayOpacity})` }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <TouchableOpacity style={styles.dismissArea} onPress={onClose} activeOpacity={1} />
+        <TouchableOpacity
+          style={styles.dismissArea}
+          onPress={onClose}
+          activeOpacity={1}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar"
+        />
         <View
           style={[
             styles.sheet,

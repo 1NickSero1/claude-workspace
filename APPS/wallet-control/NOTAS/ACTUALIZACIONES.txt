@@ -665,8 +665,148 @@ v1.29 — 2026-07-22 · Recurrentes vs no recurrentes en el resumen del mes
   lo gastado en gastos fijos/recurrentes vs el resto.
 
 ------------------------------------------------------------
+v1.30 — 2026-07-22 · Ajustes de la auditoría del 21 de julio
+------------------------------------------------------------
+• Accesibilidad: agregado accessibilityLabel/Role a los 3 componentes
+  reutilizables que quedaron fuera de la ronda del 2026-07-06 —
+  BottomSheet.tsx (tocar afuera para cerrar), CardView.tsx (tarjeta
+  completa y versión compacta, con nombre/banco/tipo/saldo en el label),
+  y BudgetFormModal.tsx (campo de monto y botones Cancelar/Guardar).
+• Alineado el parche menor de Expo: 54.0.35 → 54.0.36 (el que esperaba
+  el SDK instalado, detectado por expo-doctor). expo-doctor pasó de
+  16/18 a 18/18 checks. npx tsc --noEmit sigue en 0 errores.
+• Nota de EAS ya vinculado y accesibilidad parcial ya estaban marcadas
+  como resueltas al revisar — no requerían cambios nuevos.
+• Pendiente a propósito: la política de tratamiento de datos formal
+  (hallazgo Alta de la auditoría) se deja para después de la fase de
+  prueba con amigos, por pedido explícito del usuario.
+
+------------------------------------------------------------
+v1.31 — 2026-07-22 · Ajustes de los IMAGINA del 21 y 22 de julio
+------------------------------------------------------------
+• Onboarding: los pasos "¿Cómo quieres empezar?", "¿Cómo manejas tu
+  dinero?", "¿Tienes un ingreso fijo?" y "¿Cuánto gastas en cosas fijas?"
+  dejaban vacía la mitad inferior de la pantalla en tablet — el
+  ScrollView de cada paso no tenía flex:1 propio, así que el
+  justifyContent:'center' de su contentContainerStyle no tenía espacio
+  real para centrar. Agregado style={styles.flex} a los 4 ScrollView.
+• Resumen: la tarjeta "Balance General" (mes actual y mes anterior) solo
+  se podía abrir tocando el textito "Toca para ver detalle →" — un área
+  muy chica que además el botón flotante de registrar gasto/ingreso podía
+  tapar en ciertas posiciones de scroll en tablet. Ahora toda la tarjeta
+  es tocable (mismo patrón que el resto de tarjetas de la app).
+• Tarjetas: los botones de "ver historial" (ícono de reloj) de las 4
+  secciones (Débito, Efectivo, Crédito, Préstamos) tenían un área táctil
+  real de ~24×24px. Agregado hitSlop de 10px por lado para acercarlos al
+  mínimo recomendado de 44×44px sin cambiar el tamaño visual del ícono.
+• Evaluado a propósito y descartado por ahora: limitar el ancho del
+  contenido en Resumen/Historial en tablets (hallazgo Baja del IMAGINA
+  del 21 de julio) — el reporte lo marcaba como opcional/cosmético y
+  hacerlo bien requeriría revisar todos los cálculos de ancho que ya
+  dependen de useWindowDimensions en esas pantallas; se deja pendiente
+  para una ronda dedicada en vez de un cambio apurado.
+• npx tsc --noEmit: 0 errores tras los 4 cambios.
+
+------------------------------------------------------------
+v1.32 — 2026-07-22 · Marcar gastos fijos como pagados con un toque
+------------------------------------------------------------
+• Resumen: la tarjeta "Gastos recurrentes" (antes "Gastos fijos
+  mensuales", renombrada) ya no es el único lugar para gestionarlos — el
+  popup "Pendientes por pagar" (se abre desde la tarjeta de Quincena)
+  ahora tiene un botón "Pagar" junto a cada gasto fijo pendiente. Al
+  tocarlo, solo pide elegir de qué cuenta salió el dinero (recuerda la
+  última usada) y registra el gasto real — mismo efecto que registrarlo
+  a mano, pero en un paso.
+• El mismo popup ahora también lista los gastos fijos ya pagados en la
+  quincena que se está viendo, cada uno con un botón "✕" para
+  deshacerlo (borra el gasto y cancela su notificación si tenía).
+• El contador "X de Y gastos fijos pagados" de la tarjeta Quincena 1/2 y
+  el diagrama "Gastos del mes" no necesitaron cambios de lógica — ambos
+  ya se basaban en si existe un gasto real registrado con ese nombre, así
+  que reflejan el nuevo botón "Pagar"/"✕" automáticamente. A diferencia
+  de un gasto fijo registrado a mano con fecha de pago (que solo cuenta
+  en el diagrama desde esa fecha, v1.28), el gasto creado por "Pagar" no
+  lleva fecha de pago — al marcarlo pagado ya se confirma que se pagó, así
+  que cuenta de inmediato en el diagrama.
+• lib/storage.ts: RecurringTemplate ahora incluye frequency, dueDate
+  (opcional) y lastCardId (opcional, para preseleccionar la cuenta al
+  pagar). app/(tabs)/index.tsx ajustado (el "último gasto" de la
+  pantalla de inicio usaba este tipo por conveniencia sin necesitarlo del
+  todo — se le dio su propio tipo mínimo).
+• npx tsc --noEmit: 0 errores.
+• Verificado en la tablet real: pagar descuenta la cuenta elegida al
+  instante (Nequi $450.000 → $420.000), el contador de la quincena y el
+  presupuesto mensual se actualizan solos, y deshacer restaura todo
+  exactamente igual. Probado en ambos sentidos sin problemas.
+• El selector "¿De dónde salió el dinero?" del botón Pagar ahora solo
+  muestra cuentas con plata disponible de verdad — se filtran los
+  préstamos (nunca son una fuente de pago) y las cuentas débito/efectivo
+  en $0; las tarjetas de crédito se muestran si aún tienen cupo
+  disponible. Mismo cálculo que ya usaba el resto de la app
+  (saldo/cupo − gastado del mes).
+
+------------------------------------------------------------
+v1.33 — 2026-07-22 · Hub de Gastos recurrentes + limpieza visual
+------------------------------------------------------------
+• Pedido del usuario: en toda la app costaba distinguir gastos fijos
+  pendientes de pagar vs. ya pagados. Se creó lib/recurringPayments.ts
+  con la lógica compartida (antes vivía solo dentro de resumen.tsx) para
+  no repetirla en cada pantalla nueva.
+• Pantalla nueva app/gastos-recurrentes.tsx: agrupa todos los gastos
+  fijos por categoría en dos secciones, Pendientes y Pagados, con los
+  mismos botones "Pagar"/"✕" ya probados en Resumen. La tarjeta "Gastos
+  recurrentes" en Resumen ahora entra aquí en vez de a Categorías.
+• Categorías (CategoryDetailModal): los gastos fijos pendientes de la
+  categoría aparecen como fila punteada color ámbar con botón "Pagar"
+  inline; los ya registrados muestran una etiqueta "Pagado" junto al
+  nombre cuando son recurrentes.
+• Popup "Gastos del mes" (Resumen): los gastos recurrentes ya
+  registrados muestran una etiqueta "🔁 Fijo" junto al nombre.
+• Diagramas de torta: se unificó la leyenda del centro a "toca para
+  ver" (antes "💸 toca para ver" en Gastos del mes y "Total ingresos" en
+  Fuentes de ingreso) en los 3 diagramas tocables — Billetera general,
+  Gastos del mes, Fuentes de ingreso. Metas de ahorro no se tocó (su
+  leyenda "de $X" no es un hint de toque).
+• Bug encontrado por el usuario: al cambiar de pestaña (Resumen ↔
+  Tarjetas ↔ Finando ↔ Historial ↔ Perfil) se veía un destello blanco de
+  una fracción de segundo antes de pintar el fondo oscuro. El navegador
+  de pestañas no tenía fondo configurado (screenOptions.sceneStyle) —
+  agregado, ya no destella.
+• Bug encontrado por el usuario: en Tarjetas, el nombre de la tarjeta
+  (ej. "Nequi") quedaba más arriba que el de otra tarjeta con banco
+  configurado (ej. "Daviplata") en la misma fila — el texto del banco,
+  al estar vacío, colapsaba a 0px en vez de reservar su espacio.
+  CardView.tsx ahora reserva una altura fija (bankSlot) para esa línea
+  siempre, tenga texto o no.
+• npx tsc --noEmit: 0 errores. Todo verificado tocando la pantalla real
+  en la tablet, no solo revisando código.
+
+------------------------------------------------------------
+v1.34 — 2026-07-23 · Crear gastos recurrentes sin pagarlos todavía
+------------------------------------------------------------
+• "Gastos del mes" (diagrama de torta): ya no excluye un gasto recurrente
+  con fecha de pago futura aunque ya esté registrado — antes eso lo
+  dejaba fuera del diagrama pese a aparecer como "Pagado" en el resto de
+  la app (Categorías, Gastos recurrentes). Ahora el diagrama cuenta
+  exactamente lo mismo que se ve como pagado en todos lados.
+• Botón "+" nuevo en Gastos recurrentes: crea un gasto fijo desde cero
+  (nombre, monto, categoría, frecuencia) sin pedir cuenta — queda como
+  Pendiente de una vez, y se marca pagado normalmente con el botón
+  "Pagar" cuando corresponda. Antes un gasto recurrente solo podía nacer
+  registrándolo como un gasto real ya pagado.
+• lib/storage.ts: nuevo tipo RecurringDefinition (persistido aparte,
+  namespaced por cuenta como el resto de los datos) para estos gastos
+  fijos que todavía no tienen ni un solo pago real — getRecurringTemplates
+  ahora combina el historial de gastos con estas definiciones, prefiriendo
+  el historial real si un nombre ya existe en ambos lados.
+• npx tsc --noEmit: 0 errores. Pendiente de probar en dispositivo real —
+  la tablet se desconectó a mitad de esta ronda.
+
+------------------------------------------------------------
 [PRÓXIMO]
 ------------------------------------------------------------
+• Política de tratamiento de datos formal y publicada (después de la
+  fase de prueba con amigos)
 • Build permanente (APK) para compartir sin servidor
 • Notificaciones de presupuesto al 80% y 100%
 • Widget de saldo rápido para pantalla de inicio

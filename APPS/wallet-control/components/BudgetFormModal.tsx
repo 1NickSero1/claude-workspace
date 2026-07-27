@@ -52,15 +52,19 @@ export default function BudgetFormModal({ visible, budget, onSave, onClose }: Pr
         placeholderTextColor={COLORS.textDim}
         keyboardType="number-pad"
         autoFocus
+        accessibilityLabel="Monto del presupuesto mensual"
       />
       <View style={styles.actions}>
-        <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+        <TouchableOpacity onPress={onClose} style={styles.cancelBtn} accessibilityRole="button" accessibilityLabel="Cancelar">
           <Text style={styles.cancelText}>Cancelar</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => valid && onSave(numeric)}
           disabled={!valid}
           style={[styles.saveBtn, !valid && styles.saveBtnOff]}
+          accessibilityRole="button"
+          accessibilityLabel="Guardar presupuesto"
+          accessibilityState={{ disabled: !valid }}
         >
           <Text style={styles.saveText}>Guardar</Text>
         </TouchableOpacity>

@@ -5,9 +5,9 @@ SIEMPRE debe aclarar que no reemplaza terapia profesional, y debe sugerir
 ayuda real si detecta algo serio (crisis, riesgo, senales graves).
 
 Tiene memoria persistente entre sesiones (herramienta memory_20250818,
-manejada en skills/memoria_psicologia.py) para que "la vaya conociendo" con
-el tiempo, y para trackear que conceptos de psicologia ya le fue ensenando
-(ella quiere aprender sobre el tema de a poco).
+manejada en skills/memoria.py, compartida por las 5 skills) para que "la vaya
+conociendo" con el tiempo, y para trackear que conceptos de psicologia ya le
+fue ensenando (ella quiere aprender sobre el tema de a poco).
 
 TODO: nombre personalizado de esta skill pendiente - el usuario lo dara
 mas adelante, antes de cerrar el proyecto.
@@ -15,7 +15,7 @@ mas adelante, antes de cerrar el proyecto.
 import tema
 from config import MEMORY_TOOL, WEB_SEARCH_TOOL
 from skills.base import VentanaChat
-from skills.memoria_psicologia import ejecutar_comando_memoria
+from skills.memoria import crear_manejador_memoria
 
 TITULO = "Psicologia"  # TODO: reemplazar por nombre personalizado
 
@@ -42,7 +42,13 @@ le explicaste para poder construir sobre eso mas adelante en vez de repetir.
 SIEMPRE dejas claro, de forma natural y no repetitiva, que no reemplazas una
 terapia profesional. Si detectas senales de crisis, riesgo o algo serio,
 sugiere explicitamente y sin alarmar buscar ayuda profesional real (un
-psicologo, una linea de ayuda, un servicio de emergencia si aplica)."""
+psicologo, una linea de ayuda, un servicio de emergencia si aplica).
+
+La persona que usa esta app es Sofi - toda la memoria que guardes en
+/memories es sobre ella especificamente. Si en algun momento la conversacion
+no parece ser con ella (quien te escribe se identifica como otra persona, o
+lo que cuenta no encaja con lo que ya sabes de ella), no lo guardes como si
+fuera de Sofi para no mezclar su informacion con la de alguien mas."""
 
 
 def abrir_ventana(parent):
@@ -52,5 +58,5 @@ def abrir_ventana(parent):
         system_prompt=SYSTEM_PROMPT,
         tools=[WEB_SEARCH_TOOL, MEMORY_TOOL],
         acento=tema.ACENTOS[TITULO],
-        manejador_herramienta_cliente=ejecutar_comando_memoria,
+        manejador_herramienta_cliente=crear_manejador_memoria("psicologia"),
     )

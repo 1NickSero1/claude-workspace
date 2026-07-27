@@ -84,3 +84,104 @@
 - Confirmado que "POLLITO" (palabra clave, hook proyecto-switch.ps1) sigue
   siendo el punto de entrada para retomar este proyecto en una sesion
   nueva - lee este archivo y ajustes pollito.txt para el estado completo.
+
+[2026-07-22] Fondo de sakura en el menu principal
+- El usuario pidio un fondo de arboles de sakura para la ventana principal,
+  pero sin que se viera "cargado". Se descarto assets/fondo.png (la silueta
+  tenue del pollito, generada pero nunca usada) y en su lugar se creo
+  assets/generar_fondo_sakura.py: dibuja con Pillow (mismo metodo 4x +
+  LANCZOS que el icono) dos ramas de flores de sakura en esquinas opuestas
+  (arriba-derecha y abajo-izquierda, dejando libre la esquina abajo-derecha
+  donde vive la mascota pollito) mas un puñado de petalos sueltos, todo a
+  55% de opacidad para que sea un acento de esquina y no un papel tapiz.
+- Conectado en main.py (_agregar_fondo_sakura, se crea antes que el titulo y
+  los botones para quedar detras en el orden de apilado de Tk).
+- Verificado abriendo la ventana real y capturando una screenshot
+  automatica (PIL.ImageGrab) en vez de pedirle al usuario que la revise a
+  ciegas: las ramas no tapan el titulo ni los botones, y no chocan con la
+  mascota. assets/fondo.png queda generado pero sin usar (se puede borrar
+  si no se piensa aplicar en otro lado).
+
+[2026-07-22] Memoria persistente en las 5 skills + reforzada veracidad
+- El usuario pidio que cada skill vaya conociendo a Sofi con el tiempo (no
+  solo Psicologia, que ya lo tenia) y que las respuestas se apoyen en
+  informacion verificada, no inventada.
+- skills/memoria_psicologia.py se generalizo a skills/memoria.py:
+  crear_manejador_memoria(nombre_skill) devuelve un manejador de la
+  herramienta memory_20250818 con su propia carpeta
+  (%APPDATA%/Pollito/memoria_<skill>/), reusando la misma logica de
+  validacion de rutas (evita path traversal) sin duplicar el archivo 5
+  veces.
+- Finanzas, Moda, Maquillaje/Skincare y Gym/Nutricion ahora pasan
+  tools=[WEB_SEARCH_TOOL, MEMORY_TOOL] y su propio manejador de memoria a
+  VentanaChat (mismo patron que ya usaba Psicologia), con instrucciones en
+  el prompt para revisar /memories al empezar y guardar detalles nuevos sin
+  repetir preguntas ya respondidas. Finanzas se mantiene reactiva (nunca
+  pide datos economicos, solo guarda lo que ella comparta espontaneamente).
+- Maquillaje/Skincare y Gym/Nutricion suman la misma instruccion que ya
+  tenia Moda: verificar con busqueda web antes de afirmar datos concretos
+  (ingredientes/seguridad de productos; info nutricional) en vez de
+  inventar.
+- Las 5 skills dejan explicito que la usuaria es Sofi y que informacion de
+  una conversacion que no parezca ser con ella no se guarda como si lo
+  fuera - el usuario aviso que el tambien va a usar la app con sus propios
+  tokens (para probar) y no quiere que eso contamine la memoria real de
+  Sofi.
+- Verificado con `python -c "import main"` + imports de las 5 skills
+  (Python 3.8) que no quedo ningun error tras el refactor. No se pudo
+  probar la llamada real a la API ni la persistencia en disco - sigue
+  bloqueado por el mismo pendiente de siempre (falta la API key real en
+  secreto.py).
+
+[2026-07-22] Chat rediseñado con burbujas (estilo WhatsApp)
+- El usuario pidio una interfaz de chat mas "tipo chatbot" - antes
+  skills/base.py mostraba toda la conversacion como un log de texto plano
+  en un solo CTkTextbox ("Tu: mensaje" uno debajo del otro).
+- Reemplazado por un CTkScrollableFrame con una burbuja (CTkLabel redondeado)
+  por mensaje: los propios ("Tu") a la derecha en rosa principal, las
+  respuestas de la skill a la izquierda con el color de acento de esa skill,
+  y los avisos del sistema (limites, errores) centrados en texto italico sin
+  burbuja, para no confundirlos con una respuesta real. El area de chat sigue
+  con el borde del color de acento, igual que antes.
+- De paso se corrigio la caja de texto de abajo, que tenia el gris oscuro
+  por defecto de customtkinter (desentonaba con el tema rosa) - ahora usa
+  los colores de tema.py con borde del acento de la skill.
+- Verificado en vivo: se creo una VentanaChat de prueba con el root oculto
+  (ctk root.withdraw(), solo la ventana de chat visible) y se le agregaron
+  mensajes de prueba a mano (sin llamar a la API real) para confirmar
+  visualmente el diseño de las burbujas - capturado con PIL.ImageGrab. El
+  intento anterior de capturar con la app completa (menu + ventana de skill
+  a la vez) fallo por un problema de mi metodo de captura en esta maquina
+  (terminaba mostrando contenido de otra ventana real en pantalla en vez de
+  la de Pollito) - con una sola ventana visible (root oculto) la captura fue
+  confiable.
+- Agregado el nombre del remitente arriba de cada burbuja (chiquito, negrita,
+  color secundario): "Sofi" arriba de sus propios mensajes (antes decia "Tu"
+  generico) y el nombre de la skill arriba de las suyas.
+
+[2026-07-22] Bug real encontrado al probar el chat de verdad: no era la API key
+- El usuario probo el chat de Maquillaje y Skincare con la key placeholder de
+  secreto.py y le aparecio "Sistema: Ocurrio un error inesperado" (el catch-all
+  generico de skills/base.py, no el mensaje especifico de "falta la API key").
+  Eso encendio la alarma - un error de key invalida deberia caer en el except
+  anthropic.AuthenticationError especifico, no en el generico.
+- Diagnostico: skills/base.py mandaba output_config=OUTPUT_CONFIG a
+  cliente.messages.create(), pero el paquete "anthropic" real de PyPI que
+  soporta ese parametro requiere Python >=3.9. Este proyecto esta fijado a
+  Python 3.8 a proposito (compatibilidad con Windows 7). La ultima version de
+  anthropic instalable en Python 3.8 es 0.72.0 (confirmado contra el indice de
+  PyPI), y esa version no tiene output_config en su firma - mandarlo tira un
+  TypeError local ("unexpected keyword argument") antes de llegar siquiera a
+  la red, y ese TypeError generico es justo lo que el usuario vio.
+- Arreglado: se saco output_config de la llamada en skills/base.py y se borro
+  la constante OUTPUT_CONFIG de config.py (dejando un comentario explicando
+  por que no se puede usar mientras el proyecto siga en Python 3.8). Sin
+  output_config no hay control de "effort" - el chat corre con el effort por
+  defecto del modelo, no en modo bajo. LIMITE_TOKENS_DIARIOS y
+  LIMITE_MENSAJES_SESION siguen siendo el control de costo real.
+- Verificado reproduciendo la llamada real a la API con la key placeholder:
+  antes del fix tiraba TypeError de inmediato (sin red); despues del fix llega
+  hasta el servidor y devuelve anthropic.AuthenticationError (401, invalid
+  x-api-key) - exactamente el error que skills/base.py ya sabe manejar con el
+  mensaje "Falta configurar la API key correctamente". Con la key real puesta
+  en secreto.py, el chat deberia funcionar de punta a punta.

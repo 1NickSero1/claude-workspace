@@ -15,7 +15,6 @@ from config import (
     LIMITE_MENSAJES_SESION,
     MAX_TOKENS_RESPUESTA,
     MODEL_ID,
-    OUTPUT_CONFIG,
     THINKING_CONFIG,
     WEB_SEARCH_TOOL,
     get_api_key,
@@ -60,29 +59,34 @@ class VentanaChat(ctk.CTkToplevel):
         # Por defecto, las 5 skills tienen busqueda web habilitada.
         self.tools = tools if tools is not None else [WEB_SEARCH_TOOL]
         self.acento = acento or tema.BOTON_PRINCIPAL
-        # Solo la skill de Psicologia pasa esto (herramienta de memoria,
-        # ejecutada del lado cliente - ver skills/memoria_psicologia.py).
+        # Herramienta de memoria, ejecutada del lado cliente - cada skill
+        # pasa su propio manejador (ver skills/memoria.py).
         self.manejador_herramienta_cliente = manejador_herramienta_cliente
         self.historial = []
         self._mensajes_enviados = 0
         self._construir_ui()
 
     def _construir_ui(self):
-        self.area_chat = ctk.CTkTextbox(
+        self.area_chat = ctk.CTkScrollableFrame(
             self,
-            wrap="word",
             fg_color=tema.FONDO_SECUNDARIO,
-            text_color=tema.TEXTO,
             border_color=self.acento,
             border_width=2,
         )
         self.area_chat.pack(fill="both", expand=True, padx=16, pady=(16, 8))
-        self.area_chat.configure(state="disabled")
 
         frame_input = ctk.CTkFrame(self, fg_color="transparent")
         frame_input.pack(fill="x", padx=16, pady=(0, 16))
 
-        self.entrada = ctk.CTkEntry(frame_input, placeholder_text="Escribe tu mensaje...")
+        self.entrada = ctk.CTkEntry(
+            frame_input,
+            placeholder_text="Escribe tu mensaje...",
+            fg_color=tema.FONDO,
+            text_color=tema.TEXTO,
+            placeholder_text_color=tema.TEXTO_SECUNDARIO,
+            border_color=self.acento,
+            border_width=1,
+        )
         self.entrada.pack(side="left", fill="x", expand=True, padx=(0, 8))
         self.entrada.bind("<Return>", lambda evento: self._enviar())
 
@@ -97,10 +101,58 @@ class VentanaChat(ctk.CTkToplevel):
         boton_enviar.pack(side="right")
 
     def _agregar_mensaje(self, remitente: str, texto: str):
-        self.area_chat.configure(state="normal")
-        self.area_chat.insert("end", "{}: {}\n\n".format(remitente, texto))
-        self.area_chat.configure(state="disabled")
-        self.area_chat.see("end")
+        """Agrega un mensaje al chat como burbuja (estilo WhatsApp): los
+        propios a la derecha, las respuestas de la skill a la izquierda. Los
+        avisos del sistema (errores, limites) van centrados y sin burbuja,
+        para no confundirlos con una respuesta real de la skill."""
+        fila = ctk.CTkFrame(self.area_chat, fg_color="transparent")
+        fila.pack(fill="x", pady=4)
+
+        if remitente == "Sistema":
+            ctk.CTkLabel(
+                fila,
+                text=texto,
+                text_color=tema.TEXTO_SECUNDARIO,
+                font=ctk.CTkFont(size=12, slant="italic"),
+                wraplength=340,
+                justify="center",
+            ).pack(anchor="center")
+        else:
+            es_propio = remitente == "Sofi"
+            contenedor = ctk.CTkFrame(fila, fg_color="transparent")
+            contenedor.pack(
+                side="right" if es_propio else "left",
+                anchor="e" if es_propio else "w",
+            )
+
+            ctk.CTkLabel(
+                contenedor,
+                text=remitente,
+                text_color=tema.TEXTO_SECUNDARIO,
+                font=ctk.CTkFont(size=11, weight="bold"),
+            ).pack(anchor="e" if es_propio else "w", padx=4)
+
+            burbuja = ctk.CTkLabel(
+                contenedor,
+                text=texto,
+                fg_color=tema.BOTON_PRINCIPAL if es_propio else self.acento,
+                text_color=tema.TEXTO,
+                corner_radius=16,
+                wraplength=300,
+                justify="left",
+                anchor="w",
+            )
+            burbuja.pack(
+                anchor="e" if es_propio else "w",
+                ipadx=10,
+                ipady=6,
+            )
+
+        # CTkScrollableFrame no tiene un metodo publico para bajar el scroll
+        # al final - _parent_canvas es el Canvas interno real que lo maneja.
+        # Se agenda con after() porque hace falta que pack() ya haya
+        # actualizado la region de scroll antes de moverlo.
+        self.after(10, lambda: self.area_chat._parent_canvas.yview_moveto(1.0))
 
     def _enviar(self):
         mensaje = self.entrada.get().strip()
@@ -125,7 +177,7 @@ class VentanaChat(ctk.CTkToplevel):
             return
 
         self.entrada.delete(0, "end")
-        self._agregar_mensaje("Tu", mensaje)
+        self._agregar_mensaje("Sofi", mensaje)
         self.historial.append({"role": "user", "content": mensaje})
         self._mensajes_enviados += 1
 
@@ -147,7 +199,6 @@ class VentanaChat(ctk.CTkToplevel):
                     system=self.system_prompt,
                     tools=self.tools,
                     thinking=THINKING_CONFIG,
-                    output_config=OUTPUT_CONFIG,
                     messages=mensajes,
                 )
                 tokens_totales += respuesta.usage.input_tokens + respuesta.usage.output_tokens

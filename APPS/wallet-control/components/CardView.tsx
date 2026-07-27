@@ -58,7 +58,8 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
       backgroundColor: 'rgba(255,255,255,0.05)',
     },
     topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    bank: { color: 'rgba(255,255,255,0.75)', fontSize: FONT.sm, fontWeight: '500' },
+    bankSlot: { height: 16, justifyContent: 'center' },
+    bank: { color: 'rgba(255,255,255,0.75)', fontSize: FONT.sm, lineHeight: 16, fontWeight: '500' },
     cardName: { color: '#fff', fontSize: FONT.base, fontWeight: '700', marginTop: 2 },
     typeBadge: {
       backgroundColor: 'rgba(255,255,255,0.2)',
@@ -94,6 +95,7 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
 
   const available = card.type === 'credit' && card.limit ? card.limit - totalSpent : null;
   const balanceLeft = card.type === 'debit' && card.balance != null ? card.balance - totalSpent : null;
+  const typeLabel = card.type === 'credit' ? 'crédito' : card.type === 'debit' ? 'débito' : card.type === 'cash' ? 'efectivo' : 'préstamo';
 
   if (compact) {
     return (
@@ -101,6 +103,8 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
         onPress={onPress}
         style={[styles.compact, { backgroundColor: card.color }, selected && styles.compactSelected]}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`${card.name}, ${typeLabel}${selected ? ', seleccionada' : ''}`}
       >
         <View style={styles.compactChip}>
           <Ionicons name={card.type === 'credit' ? 'card' : 'card-outline'} size={14} color="#fff" />
@@ -111,6 +115,12 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
     );
   }
 
+  const amountLabel = available !== null
+    ? `disponible ${formatCOP(Math.max(available, 0))}`
+    : balanceLeft !== null
+      ? `saldo ${formatCOP(Math.max(balanceLeft, 0))}`
+      : '';
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -118,6 +128,8 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
       activeOpacity={0.88}
       style={[styles.card, { width: CARD_W, height: CARD_H, backgroundColor: card.color },
               selected && styles.selectedRing]}
+      accessibilityRole="button"
+      accessibilityLabel={`${card.name}, ${card.bank}, ${typeLabel}${amountLabel ? ', ' + amountLabel : ''}`}
     >
       {/* Shine overlay */}
       <View style={styles.shine} />
@@ -127,7 +139,9 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
       {/* Top row */}
       <View style={styles.topRow}>
         <View>
-          <Text style={styles.bank}>{card.bank}</Text>
+          <View style={styles.bankSlot}>
+            {!!card.bank && <Text style={styles.bank} numberOfLines={1}>{card.bank}</Text>}
+          </View>
           <Text style={styles.cardName}>{card.name}</Text>
         </View>
         <View style={styles.typeBadge}>

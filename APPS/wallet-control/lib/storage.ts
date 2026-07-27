@@ -508,14 +508,62 @@ export interface RecurringTemplate {
   name: string;
   categoryId: string;
   amount: number;
+  frequency: RecurrenceFrequency;
+  dueDate?: string;
+  lastCardId?: string;
+  defId?: string;
+}
+
+// ── Definiciones de gastos recurrentes sin pagar todavía ────────────────────
+// Un gasto fijo nuevo que el usuario define desde "Gastos recurrentes" antes
+// de haberlo pagado ni una sola vez — no existe como Expense real (no tiene
+// cuenta ni quincena asignada), así que no puede inferirse del historial
+// como el resto de RecurringTemplate. Vive aparte hasta la primera vez que
+// se marca "Pagado", momento en el que el historial de gastos toma el
+// control normal (ver getRecurringTemplates).
+export interface RecurringDefinition {
+  id: string;
+  name: string;
+  categoryId: string;
+  amount: number;
+  frequency: RecurrenceFrequency;
+  createdAt: string;
+}
+
+const K_RECURRING_DEFS = (ns: string) => `wc_recurring_defs_${ns}`;
+
+export async function getRecurringDefinitions(): Promise<RecurringDefinition[]> {
+  try {
+    const ns = await getActiveNamespace();
+    const raw = await AsyncStorage.getItem(K_RECURRING_DEFS(ns));
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+export async function saveRecurringDefinition(def: RecurringDefinition): Promise<void> {
+  const ns = await getActiveNamespace();
+  const defs = await getRecurringDefinitions();
+  defs.push(def);
+  await AsyncStorage.setItem(K_RECURRING_DEFS(ns), JSON.stringify(defs));
+}
+
+export async function deleteRecurringDefinition(id: string): Promise<void> {
+  const ns = await getActiveNamespace();
+  const defs = await getRecurringDefinitions();
+  await AsyncStorage.setItem(K_RECURRING_DEFS(ns), JSON.stringify(defs.filter(d => d.id !== id)));
 }
 
 // Gastos fijos/recurrentes que el usuario ha registrado alguna vez (onboarding
 // o toggle "Gasto recurrente" en QuickEntryModal), deduplicados por nombre
-// quedándose con la ocurrencia más reciente.
+// quedándose con la ocurrencia más reciente. Incluye además las definiciones
+// nuevas que todavía no se han pagado ni una vez (ver RecurringDefinition) —
+// si un nombre ya tiene historial real, el historial manda.
 export async function getRecurringTemplates(): Promise<RecurringTemplate[]> {
   const keys = await getAllMonthKeys();
-  const allData = await Promise.all(keys.map(k => getMonthData(k)));
+  const [allData, defs] = await Promise.all([
+    Promise.all(keys.map(k => getMonthData(k))),
+    getRecurringDefinitions(),
+  ]);
 
   const byName = new Map<string, Expense>();
   for (const data of allData) {
@@ -526,7 +574,16 @@ export async function getRecurringTemplates(): Promise<RecurringTemplate[]> {
       if (!existing || existing.createdAt < e.createdAt) byName.set(key, e);
     }
   }
-  return [...byName.values()].map(e => ({ name: e.name, categoryId: e.categoryId, amount: e.amount }));
+  const fromHistory: RecurringTemplate[] = [...byName.values()].map(e => ({
+    name: e.name, categoryId: e.categoryId, amount: e.amount,
+    frequency: e.recurrenceFrequency ?? 'monthly',
+    dueDate: e.recurrenceDueDate,
+    lastCardId: e.cardId,
+  }));
+  const fromDefsOnly: RecurringTemplate[] = defs
+    .filter(d => !byName.has(d.name.trim().toLowerCase()))
+    .map(d => ({ name: d.name, categoryId: d.categoryId, amount: d.amount, frequency: d.frequency, defId: d.id }));
+  return [...fromHistory, ...fromDefsOnly];
 }
 
 // ── Balance Notification Toggle ─────────────────────────────────────────────

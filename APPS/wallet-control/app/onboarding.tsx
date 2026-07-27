@@ -552,7 +552,7 @@ export default function OnboardingScreen() {
   if (step === 'choice') {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.choiceContainer} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.flex} contentContainerStyle={styles.choiceContainer} showsVerticalScrollIndicator={false}>
           <TouchableOpacity
             onPress={() => setStep('welcome')}
             style={styles.backBtn}
@@ -671,7 +671,7 @@ export default function OnboardingScreen() {
   if (step === 'periodicity') {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.choiceContainer} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.flex} contentContainerStyle={styles.choiceContainer} showsVerticalScrollIndicator={false}>
           <Text style={styles.formTitle}>¿Cómo manejas tu dinero?</Text>
           <Text style={styles.formSub}>Así te mostramos la información en el periodo que prefieras</Text>
 
@@ -709,7 +709,7 @@ export default function OnboardingScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <ScrollView contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.flex} contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
             <Text style={styles.formTitle}>¿Tienes un ingreso fijo mensual?</Text>
             <Text style={styles.formSub}>Por ejemplo tu salario. Lo registramos automáticamente cada mes — puedes omitir este paso</Text>
 
@@ -745,7 +745,7 @@ export default function OnboardingScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <ScrollView contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.flex} contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
             <Text style={styles.formTitle}>¿Cuánto gastas en cosas fijas al mes?</Text>
             <Text style={styles.formSub}>Arriendo, servicios, suscripciones, etc. — agrega los que quieras, puedes omitir este paso</Text>
 

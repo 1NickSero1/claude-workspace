@@ -500,6 +500,7 @@ export default function TarjetasScreen() {
                   <TouchableOpacity
                     onPress={() => setHistoryModalType('debit')}
                     style={styles.historyToggleBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     accessibilityRole="button"
                     accessibilityLabel="Ver historial de débito"
                   >
@@ -544,6 +545,7 @@ export default function TarjetasScreen() {
                   <TouchableOpacity
                     onPress={() => setHistoryModalType('cash')}
                     style={styles.historyToggleBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     accessibilityRole="button"
                     accessibilityLabel="Ver historial de efectivo"
                   >
@@ -582,6 +584,7 @@ export default function TarjetasScreen() {
                   <TouchableOpacity
                     onPress={() => setHistoryModalType('credit')}
                     style={styles.historyToggleBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     accessibilityRole="button"
                     accessibilityLabel="Ver historial de crédito"
                   >
@@ -625,6 +628,7 @@ export default function TarjetasScreen() {
                   <TouchableOpacity
                     onPress={() => setDebtHistModal(true)}
                     style={styles.historyToggleBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     accessibilityRole="button"
                     accessibilityLabel="Ver historial de préstamos"
                   >

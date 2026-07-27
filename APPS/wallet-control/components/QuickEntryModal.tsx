@@ -8,9 +8,10 @@ import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import BottomSheet from './BottomSheet';
 import {
-  CustomCategory, Expense, Income, RecurrenceFrequency,
+  CustomCategory, Card, Expense, Income, RecurrenceFrequency,
   getCurrentMonthKey, addExpenses, addIncomes,
 } from '@/lib/storage';
+import { getPayableCards } from '@/lib/recurringPayments';
 import { scheduleRecurringReminder } from '@/lib/notifications';
 import { formatThousands } from '@/lib/expenseParser';
 
@@ -19,19 +20,24 @@ type EntryType = 'gasto' | 'ingreso';
 interface Props {
   visible: boolean;
   categories: CustomCategory[];
+  cards: Card[];
+  expenses: Expense[];
   initialType?: EntryType;
   onSave: () => void;
   onClose: () => void;
 }
 
-export default function QuickEntryModal({ visible, categories, initialType, onSave, onClose }: Props) {
+export default function QuickEntryModal({ visible, categories, cards, expenses, initialType, onSave, onClose }: Props) {
   const [type, setType] = useState<EntryType>(initialType ?? 'gasto');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState<RecurrenceFrequency>('monthly');
+
+  const payableCards = useMemo(() => getPayableCards(cards, expenses), [cards, expenses]);
 
   useEffect(() => {
     if (visible) {
@@ -39,6 +45,7 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
       setAmount('');
       setDescription('');
       setSelectedCategoryId(null);
+      setSelectedCardId(null);
       setSaving(false);
       setIsRecurring(false);
       setFrequency('monthly');
@@ -48,7 +55,7 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
   const numericAmount = parseFloat(amount.replace(/\./g, '').replace(',', '.')) || 0;
   const canSave =
     numericAmount > 0 &&
-    (type === 'ingreso' || selectedCategoryId !== null);
+    (type === 'ingreso' || (selectedCategoryId !== null && selectedCardId !== null));
 
   function handleAmountChange(text: string) {
     const cleaned = text.replace(/[^0-9]/g, '');
@@ -76,6 +83,7 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
           name: expenseName,
           amount: finalAmount,
           categoryId: selectedCategoryId!,
+          cardId: selectedCardId!,
           quincena,
           createdAt: now,
           monthKey,
@@ -139,6 +147,20 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
       borderWidth: 1, borderColor: COLORS.border, marginBottom: 14,
     },
     categoryScroll: { maxHeight: 240, marginBottom: SPACING.md },
+    fieldLabel: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 8 },
+    cardScroll: { marginBottom: SPACING.md },
+    cardChipRow: { flexDirection: 'row', gap: SPACING.sm, paddingRight: SPACING.md },
+    cardChip: {
+      paddingHorizontal: SPACING.md, paddingVertical: 8, borderRadius: RADIUS.pill,
+      borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,
+    },
+    cardChipText: { color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
+    noFundsBox: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+      backgroundColor: COLORS.danger + '18', borderRadius: RADIUS.md, padding: SPACING.md,
+      marginBottom: SPACING.md, borderWidth: 1, borderColor: COLORS.danger + '40',
+    },
+    noFundsText: { color: COLORS.danger, fontSize: FONT.sm, flex: 1, lineHeight: 18 },
     categoryGrid: {
       flexDirection: 'row', flexWrap: 'wrap',
       gap: SPACING.sm, paddingBottom: SPACING.sm,
@@ -262,6 +284,39 @@ export default function QuickEntryModal({ visible, categories, initialType, onSa
                 })}
               </View>
             </ScrollView>
+          )}
+
+          {/* De dónde sale el dinero — solo cuentas con saldo/cupo disponible */}
+          {isGasto && (
+            payableCards.length === 0 ? (
+              <View style={styles.noFundsBox}>
+                <Ionicons name="warning" size={16} color={COLORS.danger} />
+                <Text style={styles.noFundsText}>
+                  Ninguna cuenta tiene saldo disponible ahora mismo — usa otro medio de pago o agrega saldo antes de registrar este gasto.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <Text style={styles.fieldLabel}>¿De dónde salió el dinero?</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardScroll}>
+                  <View style={styles.cardChipRow}>
+                    {payableCards.map(c => {
+                      const selected = selectedCardId === c.id;
+                      return (
+                        <TouchableOpacity
+                          key={c.id}
+                          onPress={() => setSelectedCardId(c.id)}
+                          style={[styles.cardChip, selected && { backgroundColor: c.color + '22', borderColor: c.color }]}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={[styles.cardChipText, selected && { color: c.color }]}>{c.name}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+              </>
+            )
           )}
 
           {/* Amount display */}

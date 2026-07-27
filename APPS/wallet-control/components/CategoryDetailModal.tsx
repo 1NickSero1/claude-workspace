@@ -6,7 +6,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import BottomSheet from './BottomSheet';
 import { Ionicons } from '@expo/vector-icons';
-import { CustomCategory, Expense, Card, RecurrenceFrequency, updateExpense, addExpenses, deleteExpense } from '@/lib/storage';
+import { CustomCategory, Expense, Card, RecurrenceFrequency, RecurringTemplate, updateExpense, addExpenses, deleteExpense } from '@/lib/storage';
 import { cancelNotification, scheduleRecurringReminder } from '@/lib/notifications';
 import { formatCOP, formatThousands } from '@/lib/expenseParser';
 import { FONT, SPACING, RADIUS } from '@/constants/theme';
@@ -19,11 +19,13 @@ interface CatDetailProps {
   cards: Card[];
   categories: CustomCategory[];
   monthKey: string;
+  pendingTemplates: RecurringTemplate[];
+  onPay: (t: RecurringTemplate) => void;
   onRefresh: () => void;
   onClose: () => void;
 }
 
-export default function CategoryDetailModal({ visible, cat, expenses, cards, monthKey, onRefresh, onClose }: CatDetailProps) {
+export default function CategoryDetailModal({ visible, cat, expenses, cards, monthKey, pendingTemplates, onPay, onRefresh, onClose }: CatDetailProps) {
   type Mode = 'list' | 'add' | 'edit';
   const [mode, setMode]         = useState<Mode>('list');
   const [editExp, setEditExp]   = useState<Expense | null>(null);
@@ -51,12 +53,20 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     emptyState: { alignItems: 'center', paddingVertical: 40, gap: 10 },
     emptyText: { color: COLORS.textMuted, fontSize: FONT.sm },
     expRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: SPACING.sm },
+    expRowPending: {
+      borderBottomWidth: 0, borderWidth: 1, borderStyle: 'dashed', borderColor: COLORS.warning + '88',
+      backgroundColor: COLORS.warning + '0D', borderRadius: RADIUS.sm, paddingHorizontal: SPACING.sm, marginBottom: SPACING.xs,
+    },
     expLeft: { flex: 1 },
+    expNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     expName: { color: COLORS.text, fontWeight: '600', fontSize: FONT.md },
     expMeta: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
     expAmt: { color: COLORS.text, fontWeight: '700', fontSize: FONT.md },
     editBtn: { width: 30, height: 30, borderRadius: RADIUS.sm, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
     deleteBtn: { width: 30, height: 30, borderRadius: RADIUS.sm, backgroundColor: COLORS.creditBg, alignItems: 'center', justifyContent: 'center' },
+    payBtn: { width: 30, height: 30, borderRadius: RADIUS.sm, backgroundColor: COLORS.debitBg, alignItems: 'center', justifyContent: 'center' },
+    paidTag: { backgroundColor: COLORS.debitBg, borderRadius: RADIUS.pill, paddingHorizontal: 8, paddingVertical: 1 },
+    paidTagText: { color: COLORS.debit, fontWeight: '700', fontSize: 10 },
     addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, backgroundColor: COLORS.primary, borderRadius: 14, padding: 14, marginTop: SPACING.lg },
     addBtnText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 14, marginBottom: 6 },
@@ -237,46 +247,75 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
           {mode === 'list' && (
             <>
               <ScrollView style={dStyles.list} showsVerticalScrollIndicator={false}>
-                {expenses.length === 0 ? (
+                {expenses.length === 0 && pendingTemplates.length === 0 ? (
                   <View style={dStyles.emptyState}>
                     <Ionicons name="receipt-outline" size={36} color={COLORS.textDim} />
                     <Text style={dStyles.emptyText}>Sin gastos en esta categoría</Text>
                   </View>
                 ) : (
-                  expenses.map(e => {
-                    const card = getCard(e.cardId);
-                    return (
-                      <View key={e.id} style={dStyles.expRow}>
+                  <>
+                    {pendingTemplates.map(t => (
+                      <View key={`pending-${t.name}`} style={[dStyles.expRow, dStyles.expRowPending]}>
                         <View style={dStyles.expLeft}>
-                          <Text style={dStyles.expName}>{e.name}</Text>
+                          <Text style={dStyles.expName}>{t.name}</Text>
                           <Text style={dStyles.expMeta}>
-                            {e.isRecurring
-                              ? (e.recurrenceFrequency === 'weekly' ? 'Semanal' : e.recurrenceFrequency === 'biweekly' ? 'Quincenal' : 'Mensual')
-                              : (e.quincena === 1 ? '1ª Quincena' : '2ª Quincena')}
-                            {e.isRecurring && e.recurrenceDueDate ? ` · vence ${e.recurrenceDueDate}` : ''}
-                            {card ? ` · ${card.name}` : ''}
+                            Pendiente · {t.frequency === 'weekly' ? 'Semanal' : t.frequency === 'biweekly' ? 'Quincenal' : 'Mensual'}
+                            {t.dueDate ? ` · vence ${t.dueDate}` : ''}
                           </Text>
                         </View>
-                        <Text style={dStyles.expAmt}>{formatCOP(e.amount)}</Text>
+                        <Text style={[dStyles.expAmt, { color: COLORS.credit }]}>{formatCOP(t.amount)}</Text>
                         <TouchableOpacity
-                          onPress={() => startEdit(e)}
-                          style={dStyles.editBtn}
+                          onPress={() => onPay(t)}
+                          style={dStyles.payBtn}
                           accessibilityRole="button"
-                          accessibilityLabel={`Editar ${e.name}`}
+                          accessibilityLabel={`Marcar ${t.name} como pagado`}
                         >
-                          <Ionicons name="pencil" size={14} color={COLORS.primary} />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => handleDelete(e)}
-                          style={dStyles.deleteBtn}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Eliminar ${e.name}`}
-                        >
-                          <Ionicons name="trash-outline" size={14} color={COLORS.danger} />
+                          <Ionicons name="checkmark" size={16} color={COLORS.debit} />
                         </TouchableOpacity>
                       </View>
-                    );
-                  })
+                    ))}
+                    {expenses.map(e => {
+                      const card = getCard(e.cardId);
+                      return (
+                        <View key={e.id} style={dStyles.expRow}>
+                          <View style={dStyles.expLeft}>
+                            <View style={dStyles.expNameRow}>
+                              <Text style={dStyles.expName}>{e.name}</Text>
+                              {e.isRecurring && (
+                                <View style={dStyles.paidTag}>
+                                  <Text style={dStyles.paidTagText}>Pagado</Text>
+                                </View>
+                              )}
+                            </View>
+                            <Text style={dStyles.expMeta}>
+                              {e.isRecurring
+                                ? (e.recurrenceFrequency === 'weekly' ? 'Semanal' : e.recurrenceFrequency === 'biweekly' ? 'Quincenal' : 'Mensual')
+                                : (e.quincena === 1 ? '1ª Quincena' : '2ª Quincena')}
+                              {e.isRecurring && e.recurrenceDueDate ? ` · vence ${e.recurrenceDueDate}` : ''}
+                              {card ? ` · ${card.name}` : ''}
+                            </Text>
+                          </View>
+                          <Text style={dStyles.expAmt}>{formatCOP(e.amount)}</Text>
+                          <TouchableOpacity
+                            onPress={() => startEdit(e)}
+                            style={dStyles.editBtn}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Editar ${e.name}`}
+                          >
+                            <Ionicons name="pencil" size={14} color={COLORS.primary} />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => handleDelete(e)}
+                            style={dStyles.deleteBtn}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Eliminar ${e.name}`}
+                          >
+                            <Ionicons name="trash-outline" size={14} color={COLORS.danger} />
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })}
+                  </>
                 )}
               </ScrollView>
 

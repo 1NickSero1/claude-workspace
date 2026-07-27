@@ -24,14 +24,10 @@ WEB_SEARCH_TOOL = {
     "max_uses": 5,  # tope de busquedas por turno, control de costo adicional
 }
 
-# Herramienta de memoria (cliente): usada solo por la skill de Psicologia
-# para que "la vaya conociendo" entre sesiones - el manejador real vive en
-# skills/memoria_psicologia.py.
+# Herramienta de memoria (cliente): usada por las 5 skills para que "la
+# vayan conociendo" entre sesiones, cada una en su propia carpeta - el
+# manejador real vive en skills/memoria.py.
 MEMORY_TOOL = {"type": "memory_20250818", "name": "memory"}
-
-# Effort bajo: reduce la profundidad de razonamiento y el gasto de tokens por
-# respuesta. Va anidado en output_config, no como parametro top-level.
-OUTPUT_CONFIG = {"effort": "low"}
 
 # En Sonnet 5, si no se manda "thinking", el modelo corre en modo adaptive
 # (pensamiento activado) por defecto - no es "sin pensar". Se desactiva
@@ -39,6 +35,17 @@ OUTPUT_CONFIG = {"effort": "low"}
 # Si en el futuro se prefieren respuestas mas razonadas a costa de mas gasto,
 # cambiar a {"type": "adaptive"}.
 THINKING_CONFIG = {"type": "disabled"}
+
+# NO hay control de "effort" (output_config={"effort": "low"}) en este
+# proyecto - el paquete "anthropic" real de PyPI que soporta ese parametro
+# requiere Python >=3.9, y el proyecto esta fijado a Python 3.8 a proposito
+# (compatibilidad con Windows 7, ver ajustes pollito.txt). La ultima version
+# de "anthropic" instalable en Python 3.8 (0.72.0 al 2026-07-22) no acepta
+# output_config en messages.create() - mandarlo tira un TypeError local
+# ("unexpected keyword argument") antes de llegar siquiera a la red. Si el
+# proyecto alguna vez suelta el requisito de Windows 7 y sube a Python 3.9+,
+# se puede reinstalar la version mas nueva de anthropic y agregar effort de
+# vuelta.
 
 # Limite de mensajes por sesion como control de gasto adicional (pregunta 6).
 LIMITE_MENSAJES_SESION = 50

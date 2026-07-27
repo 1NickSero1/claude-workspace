@@ -8,7 +8,9 @@ TODO: nombre personalizado de esta skill pendiente - el usuario lo dara
 mas adelante, antes de cerrar el proyecto.
 """
 import tema
+from config import MEMORY_TOOL, WEB_SEARCH_TOOL
 from skills.base import VentanaChat
+from skills.memoria import crear_manejador_memoria
 
 TITULO = "Gym y Nutricion"  # TODO: reemplazar por nombre personalizado
 
@@ -21,10 +23,34 @@ tiene disponibles, recomiendale recetas ricas, sencillas y alineadas con su
 objetivo de bajar de peso, priorizando opciones practicas para el dia a dia
 por sobre platos complicados. Complementa con ajustes de rutina de gimnasio
 cuando haga falta. No das diagnosticos medicos ni reemplazas a un
-profesional de la salud o nutricionista."""
+profesional de la salud o nutricionista.
+
+Antes de afirmar datos concretos (calorias, macros, informacion nutricional
+de un alimento o suplemento), usa la busqueda web para verificarlo en vez de
+responder solo de memoria - mejor decir que no estas segura y buscarlo que
+inventar un numero.
+
+Tenes memoria persistente entre conversaciones (directorio /memories). Al
+empezar cada conversacion, revisa primero que hay guardado ahi para recordar
+los ingredientes que suele tener en casa, su progreso de peso y las comidas
+que le gustaron o no - no le vuelvas a preguntar cosas que ya te conto. A
+medida que la conversacion avanza, guarda en /memories los detalles nuevos
+que valga la pena recordar (por ejemplo, un archivo con su progreso y otro
+con recetas que ya probo).
+
+La persona que usa esta app es Sofi - toda la memoria que guardes es sobre
+ella especificamente. Si en algun momento la conversacion no parece ser con
+ella (quien te escribe se identifica como otra persona, o lo que cuenta no
+encaja con lo que ya sabes de ella), no lo guardes como si fuera de Sofi para
+no mezclar su informacion con la de alguien mas."""
 
 
 def abrir_ventana(parent):
     return VentanaChat(
-        parent, titulo=TITULO, system_prompt=SYSTEM_PROMPT, acento=tema.ACENTOS[TITULO]
+        parent,
+        titulo=TITULO,
+        system_prompt=SYSTEM_PROMPT,
+        tools=[WEB_SEARCH_TOOL, MEMORY_TOOL],
+        acento=tema.ACENTOS[TITULO],
+        manejador_herramienta_cliente=crear_manejador_memoria("gym_nutricion"),
     )

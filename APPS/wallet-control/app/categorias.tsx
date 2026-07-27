@@ -5,11 +5,14 @@ import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   getMonthData, getCategories, getCards, saveCategory, deleteCategory,
-  getCurrentMonthKey, CustomCategory, Expense, Card,
+  getCurrentMonthKey, getRecurringTemplates, getUserProfile,
+  CustomCategory, Expense, Card, RecurringTemplate, UserProfile,
 } from '@/lib/storage';
+import { splitRecurringByPaid, getPayableCards, payRecurringTemplate } from '@/lib/recurringPayments';
 import { formatCOP } from '@/lib/expenseParser';
 import CategoryFormModal from '@/components/CategoryFormModal';
 import CategoryDetailModal from '@/components/CategoryDetailModal';
+import PayRecurringModal from '@/components/PayRecurringModal';
 import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
@@ -22,6 +25,8 @@ export default function CategoriasScreen() {
   const [expenses, setExpenses]     = useState<Expense[]>([]);
   const [categories, setCategories] = useState<CustomCategory[]>([]);
   const [cards, setCards]           = useState<Card[]>([]);
+  const [templates, setTemplates]   = useState<RecurringTemplate[]>([]);
+  const [profile, setProfile]       = useState<UserProfile | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [catView, setCatView]       = useState<'grid' | 'list'>('grid');
   const [catModal, setCatModal]     = useState(false);
@@ -30,13 +35,42 @@ export default function CategoriasScreen() {
   const [detailCat, setDetailCat]         = useState<CustomCategory | null>(null);
   const [actionCat, setActionCat]         = useState<CustomCategory | null>(null);
   const [confirmDeleteCat, setConfirmDeleteCat] = useState<CustomCategory | null>(null);
+  const [payTarget, setPayTarget] = useState<RecurringTemplate | null>(null);
+  const [payCardId, setPayCardId] = useState<string | undefined>(undefined);
+  const [paySaving, setPaySaving] = useState(false);
 
   const load = useCallback(async () => {
-    const [d, cats, c] = await Promise.all([getMonthData(monthKey), getCategories(), getCards()]);
+    const [d, cats, c, t, p] = await Promise.all([
+      getMonthData(monthKey), getCategories(), getCards(), getRecurringTemplates(), getUserProfile(),
+    ]);
     setExpenses(d.expenses);
     setCategories(cats);
     setCards(c);
+    setTemplates(t);
+    setProfile(p);
   }, [monthKey]);
+
+  const quincena: 1 | 2 = new Date().getDate() <= 15 ? 1 : 2;
+  const period = profile?.budgetPeriod ?? 'biweekly';
+  const { pending: pendingTemplates } = splitRecurringByPaid(templates, expenses, period, quincena);
+  const payableCards = getPayableCards(cards, expenses);
+
+  const openPay = (t: RecurringTemplate) => {
+    setPayTarget(t);
+    setPayCardId(t.lastCardId && payableCards.some(c => c.id === t.lastCardId) ? t.lastCardId : undefined);
+  };
+
+  const confirmPay = async () => {
+    if (!payTarget || !payCardId || paySaving) return;
+    setPaySaving(true);
+    try {
+      await payRecurringTemplate(monthKey, quincena, payTarget, payCardId);
+      setPayTarget(null);
+      await load();
+    } finally {
+      setPaySaving(false);
+    }
+  };
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -285,8 +319,20 @@ export default function CategoriasScreen() {
         cards={cards}
         categories={categories}
         monthKey={monthKey}
+        pendingTemplates={pendingTemplates.filter(t => detailCat ? t.categoryId === detailCat.id : false)}
+        onPay={openPay}
         onRefresh={load}
         onClose={() => setDetailVisible(false)}
+      />
+
+      <PayRecurringModal
+        target={payTarget}
+        cardId={payCardId}
+        payableCards={payableCards}
+        saving={paySaving}
+        onSelectCard={setPayCardId}
+        onConfirm={confirmPay}
+        onCancel={() => setPayTarget(null)}
       />
 
       {/* Menú de acciones de categoría (reemplaza Alert.alert nativo) */}

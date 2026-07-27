@@ -52,7 +52,7 @@ export default function ChatScreen() {
   const [nickname, setNickname] = useState<string | undefined>(undefined);
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringTemplate[]>([]);
   const [recurringIncomeAmount, setRecurringIncomeAmount] = useState<number | null>(null);
-  const [recentExpense, setRecentExpense] = useState<RecurringTemplate | null>(null);
+  const [recentExpense, setRecentExpense] = useState<{ name: string; categoryId: string; amount: number } | null>(null);
   const [pendingExpenses, setPendingExpenses] = useState<{ msgId: string; expenses: Expense[] } | null>(null);
   const listRef = useRef<FlatList>(null);
   const monthKey = getCurrentMonthKey();
