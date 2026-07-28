@@ -54,7 +54,7 @@ export default function ExpenseExtractCard({ expenses, categories = [] }: Props)
               <Text style={styles.name}>{e.name}</Text>
               <Text style={styles.cat}>{cat.name} · Q{e.quincena}</Text>
             </View>
-            <Text style={[styles.amount, { color: cat.color }]}>{formatCOP(e.amount)}</Text>
+            <Text style={[styles.amount, { color: COLORS.danger }]}>{formatCOP(e.amount)}</Text>
           </View>
         );
       })}

@@ -1,6 +1,6 @@
 import {
   Card, Expense, RecurringTemplate, BudgetPeriod, RecurrenceFrequency,
-  addExpenses, deleteExpense, getCardTotalSpent,
+  addExpenses, deleteExpense, getCardCurrentCycleSpent,
 } from '@/lib/storage';
 import { cancelNotification, scheduleRecurringReminder } from '@/lib/notifications';
 
@@ -49,13 +49,34 @@ export function splitRecurringByPaid(
   return { pending, paid };
 }
 
+// Para mostrar "Pagados en la quincena X": splitRecurringByPaid clasifica un
+// gasto MENSUAL como pagado si hay match en cualquiera de las dos quincenas
+// del mes (a propósito — pagar en la quincena 1 no debe volver a pedirlo en
+// la 2). Pero eso hacía que ese mismo gasto apareciera listado como "pagado"
+// en AMBAS quincenas aunque solo se pagó en una. Este filtro es solo para la
+// lista visible — no cambia si algo cuenta como pendiente o pagado.
+export function paidInQuincena(
+  paid: RecurringTemplate[],
+  expenses: Expense[],
+  quincena: 1 | 2,
+): RecurringTemplate[] {
+  return paid.filter(t => {
+    if (t.frequency === 'weekly') return true; // no se organiza por quincena
+    return expenses.some(e =>
+      e.quincena === quincena
+      && e.name.trim().toLowerCase() === t.name.trim().toLowerCase()
+      && e.categoryId === t.categoryId,
+    );
+  });
+}
+
 // Cuentas con plata real disponible para pagar un gasto fijo — sin préstamos
 // (no son una fuente de dinero) y sin cuentas en $0.
 export function getPayableCards(cards: Card[], expenses: Expense[]): Card[] {
   return cards.filter(c => {
     if (c.type === 'debt') return false;
-    if (c.type === 'credit') return (c.limit ?? 0) - getCardTotalSpent(expenses, c.id) > 0;
-    return (c.balance ?? 0) - getCardTotalSpent(expenses, c.id) > 0;
+    if (c.type === 'credit') return (c.limit ?? 0) - getCardCurrentCycleSpent(c, expenses) - (c.statementBalance ?? 0) > 0;
+    return (c.balance ?? 0) - getCardCurrentCycleSpent(c, expenses) > 0;
   });
 }
 
@@ -64,7 +85,12 @@ export function getPayableCards(cards: Card[], expenses: Expense[]): Card[] {
 export function getCardAvailable(card: Card, expenses: Expense[]): number {
   if (card.type === 'debt') return 0;
   const base = card.type === 'credit' ? (card.limit ?? 0) : (card.balance ?? 0);
-  return base - getCardTotalSpent(expenses, card.id);
+  // Lo que ya quedó "cerrado" en un corte anterior y sigue sin pagar también
+  // ocupa cupo real de la tarjeta, no solo lo gastado este mes (lo gastado
+  // ya excluye ese monto, ver getCardCurrentCycleSpent — así no se resta
+  // dos veces).
+  const statementDebt = card.type === 'credit' ? (card.statementBalance ?? 0) : 0;
+  return base - getCardCurrentCycleSpent(card, expenses) - statementDebt;
 }
 
 // Cuentas que sí son una fuente de pago válida (todo menos préstamos), sin

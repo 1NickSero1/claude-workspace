@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, RefreshControl, Modal,
+  StyleSheet, RefreshControl, Modal, Keyboard,
   TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, router } from 'expo-router';
+import { useFocusEffect, useNavigation, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   getMonthData, getCategories, getCards,
@@ -16,12 +16,12 @@ import {
   getRecurringTemplates, RecurringTemplate,
   syncCardBalanceSnapshot, getCardBalanceSnapshot,
   CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile, MonthData,
-  getCardTotalSpent, sumIncomes, updateExpense, deleteExpense, RecurrenceFrequency,
+  getCardCurrentCycleSpent, sumIncomes, updateExpense, deleteExpense, RecurrenceFrequency,
   updateIncome, deleteIncome,
 } from '@/lib/storage';
 import { sumExpenses, formatCOP, formatThousands, GASTO_HORMIGA_MAX } from '@/lib/expenseParser';
 import { checkBudgetThreshold, updateBalanceNotification, cancelNotification, scheduleRecurringReminder } from '@/lib/notifications';
-import { splitRecurringByPaid, getPayableCards, getSpendableCards, getCardAvailable, payRecurringTemplate, unpayRecurringTemplate } from '@/lib/recurringPayments';
+import { splitRecurringByPaid, paidInQuincena, getPayableCards, getSpendableCards, getCardAvailable, payRecurringTemplate, unpayRecurringTemplate } from '@/lib/recurringPayments';
 import DonutChart, { DonutSlice } from '@/components/DonutChart';
 import CardView from '@/components/CardView';
 import QuickEntryModal from '@/components/QuickEntryModal';
@@ -44,6 +44,64 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 const GOAL_COLORS = ['#6C5CE7','#00C896','#FF5C5C','#FDCB6E','#0984E3','#A29BFE','#00B894','#E17055'];
 const INCOME_COLORS = ['#00C896','#0984E3','#6C5CE7','#FDCB6E','#00B894','#A29BFE','#E17055','#FF5C5C'];
 const MONTH_SWIPE_WIDTH = 170;
+
+// Paleta de respaldo para cuando dos porciones de un mismo diagrama (ej. una
+// categoría y una deuda) terminan con el mismo color y no se pueden
+// distinguir. No reemplaza el color guardado de la categoría/tarjeta/meta,
+// solo lo que se pinta en ESE diagrama puntual.
+// Paleta de respaldo con tonos repartidos cada ~30° de matiz (rojo, naranja,
+// amarillo, lima, verde, esmeralda, cian, azul, índigo, morado, magenta,
+// rosa) — a propósito bien separados entre sí, no solo "distintos en el
+// string" (dos rojos ligeramente distintos igual se ven "iguales").
+const DIAGRAM_FALLBACK_PALETTE = [
+  '#FF5C5C', '#FF8C42', '#FFD93D', '#8BC34A', '#00C853', '#00BFA5',
+  '#00BCD4', '#2979FF', '#7C4DFF', '#AA00FF', '#E040FB', '#FF4081',
+];
+const MIN_HUE_SEPARATION_DEG = 30;
+
+function hexToHueDeg(hex: string): number {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const d = max - min;
+  if (d === 0) return 0;
+  let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  h *= 60;
+  return h < 0 ? h + 360 : h;
+}
+
+function hueDistance(a: number, b: number): number {
+  const diff = Math.abs(a - b) % 360;
+  return diff > 180 ? 360 - diff : diff;
+}
+
+// Evita que dos porciones de un mismo diagrama (ej. una categoría y una
+// deuda) queden con colores iguales O demasiado parecidos entre sí (dos
+// rojos, dos naranjas) — compara el matiz real, no solo el string del color.
+// No reemplaza el color guardado de la categoría/tarjeta/meta, solo lo que
+// se pinta en ESE diagrama puntual.
+function resolveDistinctColors(items: { id: string; color: string }[]): Map<string, string> {
+  const usedHues: number[] = [];
+  const resolved = new Map<string, string>();
+  for (const item of items) {
+    const hue = hexToHueDeg(item.color);
+    const collides = usedHues.some(h => hueDistance(h, hue) < MIN_HUE_SEPARATION_DEG);
+    if (!collides) {
+      usedHues.push(hue);
+      resolved.set(item.id, item.color);
+    } else {
+      const fallback = DIAGRAM_FALLBACK_PALETTE.find(c => {
+        const h = hexToHueDeg(c);
+        return !usedHues.some(uh => hueDistance(uh, h) < MIN_HUE_SEPARATION_DEG);
+      }) ?? item.color;
+      usedHues.push(hexToHueDeg(fallback));
+      resolved.set(item.id, fallback);
+    }
+  }
+  return resolved;
+}
+
 const ACCOUNT_TYPE_GROUPS: { type: Card['type']; label: string; emoji: string }[] = [
   { type: 'debit',  label: 'Débito',    emoji: '🏦' },
   { type: 'credit', label: 'Crédito',   emoji: '💳' },
@@ -63,6 +121,7 @@ const GOAL_EMOJI_OPTIONS = [
 ];
 
 export default function ResumenScreen() {
+  const navigation = useNavigation();
   const { width: SCREEN_W, moderateScale } = useResponsive();
   const [expenses, setExpenses]     = useState<Expense[]>([]);
   const [incomes, setIncomes]       = useState<Income[]>([]);
@@ -88,6 +147,38 @@ export default function ResumenScreen() {
   // Quick entry modal
   const [quickEntry, setQuickEntry]         = useState(false);
   const [quickEntryType, setQuickEntryType] = useState<'gasto' | 'ingreso'>('gasto');
+
+  // El modal "Registrar" es una hoja nativa (react-native Modal) que se abre
+  // sobre esta pantalla del Tab Navigator — en Android esa hoja no cubre del
+  // todo la tab bar y deja ver un hueco con los íconos detrás. Se oculta la
+  // tab bar mientras el modal está abierto y se restaura al cerrarlo.
+  useEffect(() => {
+    navigation.getParent()?.setOptions({
+      tabBarStyle: quickEntry ? { display: 'none' } : undefined,
+    });
+    return () => {
+      navigation.getParent()?.setOptions({ tabBarStyle: undefined });
+    };
+  }, [quickEntry, navigation]);
+
+  // La tab bar de React Navigation tiene su propia lógica interna que
+  // reacciona al teclado (se re-muestra sola al cerrarse el teclado),
+  // peleando con el override de arriba — sin esto, apenas se cierra el
+  // teclado dentro del modal "Registrar" la tab bar volvía a aparecer
+  // detrás. Se vuelve a forzar oculta justo después de cada evento de
+  // teclado mientras el modal siga abierto.
+  useEffect(() => {
+    if (!quickEntry) return;
+    const reassertHidden = () => {
+      navigation.getParent()?.setOptions({ tabBarStyle: { display: 'none' } });
+    };
+    const hideSub = Keyboard.addListener('keyboardDidHide', reassertHidden);
+    const showSub = Keyboard.addListener('keyboardDidShow', reassertHidden);
+    return () => {
+      hideSub.remove();
+      showSub.remove();
+    };
+  }, [quickEntry, navigation]);
   const [summaryModal, setSummaryModal]     = useState(false);
   const [expensesModal, setExpensesModal]   = useState(false);
   const [exporting, setExporting]           = useState(false);
@@ -389,15 +480,19 @@ export default function ResumenScreen() {
 
   const debitAvailable = cards
     .filter(c => c.type === 'debit' && c.balance != null)
-    .reduce((s, c) => s + Math.max(c.balance! - getCardTotalSpent(expenses, c.id), 0), 0);
+    .reduce((s, c) => s + Math.max(c.balance! - getCardCurrentCycleSpent(c, expenses), 0), 0);
 
   // Balance General (patrimonio neto)
   const cashAvailable  = cards.filter(c => c.type === 'cash')
-    .reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0), 0);
+    .reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardCurrentCycleSpent(c, expenses), 0), 0);
   const debtTotal      = cards.filter(c => c.type === 'debt')
     .reduce((s, c) => s + (c.balance ?? 0), 0);
+  // Saldo ya cerrado en un corte de tarjeta de crédito y aún sin pagar —
+  // sigue siendo deuda real aunque no cuente como "gastado" este mes.
+  const creditStatementDebt = cards.filter(c => c.type === 'credit')
+    .reduce((s, c) => s + (c.statementBalance ?? 0), 0);
   const totalActivos   = debitAvailable + cashAvailable;
-  const totalPasivos   = creditSpent + debtTotal;
+  const totalPasivos   = creditSpent + debtTotal + creditStatementDebt;
   const patrimonioNeto = totalActivos - totalPasivos;
 
   // Mes anterior: usa el snapshot de saldos guardado ese mes (syncCardBalanceSnapshot
@@ -434,11 +529,14 @@ export default function ResumenScreen() {
     .map(cat => ({ cat, ...catBreakdown(cat.id) }))
     .filter(r => r.total > 0 || !r.cat.isDefault)
     .sort((a, b) => b.total - a.total);
+  const catRowsWithSpend = catRows.filter(r => r.total > 0);
+  const catRowsColors = resolveDistinctColors(catRowsWithSpend.map(r => ({ id: r.cat.id, color: r.cat.color })));
 
-  // Donut chart slices: one per category with expenses
-  const donutData: DonutSlice[] = catRows
-    .filter(r => r.total > 0)
-    .map(r => ({ id: r.cat.id, color: r.cat.color, amount: r.total }));
+  // Solo gastos marcados con el toggle "Gasto recurrente" — no todos los
+  // gastos del mes (eso ya lo muestra "Gastos por categoría" aparte).
+  const recurringExpenses  = expenses.filter(e => e.isRecurring);
+  const recurringTotal     = recurringExpenses.reduce((s, e) => s + e.amount, 0);
+  const recurringCatCount  = new Set(recurringExpenses.map(e => e.categoryId)).size;
 
   const donutSize = Math.min(Math.floor((SCREEN_W - 32) * 0.55), 200);
   const cardWidth = SCREEN_W - 32;
@@ -457,40 +555,52 @@ export default function ResumenScreen() {
   }, [totalActivos, totalPasivos, prevTotalActivos, prevTotalPasivos, cardWidth]);
 
   const activoItems = [
-    ...cards.filter(c => c.type === 'debit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '🏦', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
-    ...cards.filter(c => c.type === 'cash').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💵', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0) })),
+    ...cards.filter(c => c.type === 'debit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '🏦', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardCurrentCycleSpent(c, expenses), 0) })),
+    ...cards.filter(c => c.type === 'cash').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💵', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardCurrentCycleSpent(c, expenses), 0) })),
   ];
   const pasivoItems = [
-    ...cards.filter(c => c.type === 'credit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💳', color: c.color, type: c.type, value: getCardTotalSpent(expenses, c.id) })),
+    ...cards.filter(c => c.type === 'credit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💳', color: c.color, type: c.type, value: getCardCurrentCycleSpent(c, expenses) + (c.statementBalance ?? 0) })),
     ...cards.filter(c => c.type === 'debt').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💸', color: c.color, type: c.type, value: c.balance ?? 0 })),
   ];
+  // Cupo disponible de cada tarjeta de crédito — a diferencia de pasivoItems
+  // (deuda, para el detalle de "↓ Pasivos"), esto es un genuino activo/
+  // spending-power, así que alimenta "Billetera general" en vez de mezclar
+  // deuda con saldos reales en el mismo color/formato positivo.
+  const creditAvailableItems = cards.filter(c => c.type === 'credit').map(c => ({
+    id: c.id, name: c.name, emoji: c.emoji ?? '💳', color: c.color, type: c.type,
+    value: Math.max(getCardAvailable(c, expenses), 0),
+  }));
 
   // Mismo desglose que activoItems/pasivoItems, pero con el snapshot del mes anterior.
   const prevCardsForBreakdown = prevCards ?? cards;
   const prevActivoItems = [
-    ...prevCardsForBreakdown.filter(c => c.type === 'debit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '🏦', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardTotalSpent(prevExpenses, c.id), 0) })),
-    ...prevCardsForBreakdown.filter(c => c.type === 'cash').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💵', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardTotalSpent(prevExpenses, c.id), 0) })),
+    ...prevCardsForBreakdown.filter(c => c.type === 'debit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '🏦', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardCurrentCycleSpent(c, prevExpenses), 0) })),
+    ...prevCardsForBreakdown.filter(c => c.type === 'cash').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💵', color: c.color, type: c.type, value: Math.max((c.balance ?? 0) - getCardCurrentCycleSpent(c, prevExpenses), 0) })),
   ];
   const prevPasivoItems = [
-    ...prevCardsForBreakdown.filter(c => c.type === 'credit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💳', color: c.color, type: c.type, value: getCardTotalSpent(prevExpenses, c.id) })),
+    ...prevCardsForBreakdown.filter(c => c.type === 'credit').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💳', color: c.color, type: c.type, value: getCardCurrentCycleSpent(c, prevExpenses) + (c.statementBalance ?? 0) })),
     ...prevCardsForBreakdown.filter(c => c.type === 'debt').map(c => ({ id: c.id, name: c.name, emoji: c.emoji ?? '💸', color: c.color, type: c.type, value: c.balance ?? 0 })),
   ];
 
-  const goalsDonutData: DonutSlice[] = goals
-    .filter(g => g.savedAmount > 0 && g.targetAmount > 0)
-    .map(g => ({ id: g.id, color: g.color, amount: g.savedAmount }));
+  const goalsShown = goals.filter(g => g.savedAmount > 0 && g.targetAmount > 0);
+  const goalColors = resolveDistinctColors(goalsShown.map(g => ({ id: g.id, color: g.color })));
+  const goalsDonutData: DonutSlice[] = goalsShown
+    .map(g => ({ id: g.id, color: goalColors.get(g.id)!, amount: g.savedAmount }));
 
   const incomesDonutData: DonutSlice[] = incomes.map((inc, i) => ({
     id: inc.id, color: INCOME_COLORS[i % INCOME_COLORS.length], amount: inc.amount,
   }));
 
   // ── Balance (donut de cuentas, reemplaza las cards Débito/Crédito) ───────
-  // Los préstamos (type === 'debt') no son plata disponible ni un movimiento
-  // más para sumar acá — son una deuda pendiente de reponer, así que no
-  // entran en este donut (sí siguen contando como Pasivo en Balance General).
-  const balanceItemsAll = [...activoItems, ...pasivoItems].filter(it => it.value > 0 && it.type !== 'debt');
+  // Los préstamos (type === 'debt') no son plata disponible, y una tarjeta
+  // de crédito tampoco "tiene" lo que debe — por eso este donut combina
+  // activoItems (saldos reales) con creditAvailableItems (cupo disponible
+  // de crédito, un activo genuino), nunca con pasivoItems (deuda, que ya
+  // se muestra aparte en "Gastos del mes" y en el detalle de Pasivos).
+  const balanceItemsAll = [...activoItems, ...creditAvailableItems].filter(it => it.value > 0);
   const balanceItems = balanceFilter === 'all' ? balanceItemsAll : balanceItemsAll.filter(it => it.type === balanceFilter);
-  const balanceDonutData: DonutSlice[] = balanceItems.map(it => ({ id: it.id, color: it.color, amount: it.value }));
+  const balanceColors = resolveDistinctColors(balanceItems.map(it => ({ id: it.id, color: it.color })));
+  const balanceDonutData: DonutSlice[] = balanceItems.map(it => ({ id: it.id, color: balanceColors.get(it.id)!, amount: it.value }));
   const totalBalance = balanceItems.reduce((s, it) => s + it.value, 0);
 
   // ── Categorías fijas pendientes por pagar en el periodo activo ────────────
@@ -511,14 +621,24 @@ export default function ResumenScreen() {
     .sort((a, b) => b.total - a.total);
   // Préstamos: se suman al total como si fueran un gasto más (es plata que
   // salió/se debe), pero en rojo y aparte para que se note que es deuda y
-  // no un gasto normal de una categoría.
+  // no un gasto normal de una categoría. El saldo ya cerrado de un corte de
+  // tarjeta de crédito es exactamente lo mismo (plata que ya se debe), así
+  // que se trata igual — solo que etiquetado "(tarjeta)" en vez de "(deuda)".
   const chartDebtCards = cards.filter(c => c.type === 'debt' && (c.balance ?? 0) > 0);
   const chartDebtTotal = chartDebtCards.reduce((s, c) => s + (c.balance ?? 0), 0);
+  const chartStatementCards = cards.filter(c => c.type === 'credit' && (c.statementBalance ?? 0) > 0);
+  const chartStatementTotal = chartStatementCards.reduce((s, c) => s + (c.statementBalance ?? 0), 0);
+  const chartColors = resolveDistinctColors([
+    ...chartCatRows.map(r => ({ id: r.cat.id, color: r.cat.color })),
+    ...chartDebtCards.map(c => ({ id: c.id, color: _COLORS.danger })),
+    ...chartStatementCards.map(c => ({ id: c.id, color: _COLORS.danger })),
+  ]);
   const chartDonutData: DonutSlice[] = [
-    ...chartCatRows.map(r => ({ id: r.cat.id, color: r.cat.color, amount: r.total })),
-    ...chartDebtCards.map(c => ({ id: c.id, color: _COLORS.danger, amount: c.balance ?? 0 })),
+    ...chartCatRows.map(r => ({ id: r.cat.id, color: chartColors.get(r.cat.id)!, amount: r.total })),
+    ...chartDebtCards.map(c => ({ id: c.id, color: chartColors.get(c.id)!, amount: c.balance ?? 0 })),
+    ...chartStatementCards.map(c => ({ id: c.id, color: chartColors.get(c.id)!, amount: c.statementBalance ?? 0 })),
   ];
-  const chartTotalSpent = chartCatRows.reduce((s, r) => s + r.total, 0) + chartDebtTotal;
+  const chartTotalSpent = chartCatRows.reduce((s, r) => s + r.total, 0) + chartDebtTotal + chartStatementTotal;
   const currentQuincena: 1 | 2 = day <= 15 ? 1 : 2;
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
@@ -528,8 +648,11 @@ export default function ResumenScreen() {
   // usuario está mirando en el slider (no siempre la de hoy).
   const periodLabel = period === 'weekly' ? 'esta semana' : period === 'monthly' ? 'este mes' : `la quincena ${viewedQuincena}`;
 
-  const { pending: pendingTemplates, paid: paidTemplates } =
+  const { pending: pendingTemplates, paid: paidTemplatesAll } =
     splitRecurringByPaid(recurringTemplates, expenses, viewedQuincena);
+  // "Pagados en la quincena X" solo debe listar lo que se pagó de verdad en
+  // esa quincena — no todo lo que ya cuenta como pagado en el mes.
+  const paidTemplates = paidInQuincena(paidTemplatesAll, expenses, viewedQuincena);
 
   // Cuentas con plata real disponible para pagar un gasto fijo — sin
   // préstamos (no son una fuente de dinero) y sin cuentas en $0.
@@ -639,7 +762,10 @@ export default function ResumenScreen() {
       borderWidth: 1, borderColor: COLORS.border,
     },
     gastosCardIcon: { width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.creditBg, alignItems: 'center', justifyContent: 'center' },
+    gastosCardPending: { borderColor: COLORS.warning + '55', backgroundColor: COLORS.warning + '0D' },
     gastosCardTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg },
+    gastosCardBadge: { backgroundColor: COLORS.warning, borderRadius: RADIUS.pill, minWidth: 20, paddingHorizontal: 7, paddingVertical: 1, alignItems: 'center' },
+    gastosCardBadgeText: { color: '#fff', fontWeight: '800', fontSize: 11 },
     gastosCardSub: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
     summaryRow: { flexDirection: 'row', paddingHorizontal: SPACING.lg, gap: SPACING.md, marginBottom: SPACING.xxl },
     summaryCard: { flex: 1, borderRadius: 18, padding: SPACING.lg, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6 },
@@ -769,7 +895,7 @@ export default function ResumenScreen() {
       backgroundColor: COLORS.card2, borderRadius: 14, padding: SPACING.md, marginBottom: 10,
     },
     expCardIcon: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
-    expCardName: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base },
+    expCardName: { color: COLORS.text, fontWeight: '700', fontSize: FONT.base, flexShrink: 1 },
     expCardMeta: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
     recurringTag: { backgroundColor: COLORS.debitBg, borderRadius: RADIUS.pill, paddingHorizontal: 6, paddingVertical: 1 },
     recurringTagText: { color: COLORS.debit, fontWeight: '700', fontSize: 9 },
@@ -988,7 +1114,7 @@ export default function ResumenScreen() {
                   {balanceItems.slice(0, 6).map(it => (
                     <View key={it.id} style={styles.incomeLegendRow}>
                       <View style={styles.incomeLegendLeft}>
-                        <View style={[styles.incomeLegendDot, { backgroundColor: it.color }]} />
+                        <View style={[styles.incomeLegendDot, { backgroundColor: balanceColors.get(it.id) }]} />
                         <Text style={styles.incomeLegendName} numberOfLines={1}>{it.emoji} {it.name}</Text>
                       </View>
                       <Text style={styles.incomeLegendAmt}>{formatCOP(it.value)}</Text>
@@ -1012,12 +1138,12 @@ export default function ResumenScreen() {
                 />
               </TouchableOpacity>
               {/* Leyenda por categoría */}
-              {(chartCatRows.length > 0 || chartDebtCards.length > 0) && (
+              {(chartCatRows.length > 0 || chartDebtCards.length > 0 || chartStatementCards.length > 0) && (
                 <View style={styles.incomeLegend}>
                   {chartCatRows.slice(0, 6).map(r => (
                     <View key={r.cat.id} style={styles.incomeLegendRow}>
                       <View style={styles.incomeLegendLeft}>
-                        <View style={[styles.incomeLegendDot, { backgroundColor: r.cat.color }]} />
+                        <View style={[styles.incomeLegendDot, { backgroundColor: chartColors.get(r.cat.id) }]} />
                         <Text style={styles.incomeLegendName} numberOfLines={1}>
                           {r.cat.emoji ? `${r.cat.emoji} ` : ''}{r.cat.name}
                         </Text>
@@ -1028,12 +1154,23 @@ export default function ResumenScreen() {
                   {chartDebtCards.map(c => (
                     <View key={c.id} style={styles.incomeLegendRow}>
                       <View style={styles.incomeLegendLeft}>
-                        <View style={[styles.incomeLegendDot, { backgroundColor: COLORS.danger }]} />
+                        <View style={[styles.incomeLegendDot, { backgroundColor: chartColors.get(c.id) }]} />
                         <Text style={styles.incomeLegendName} numberOfLines={1}>
                           {c.emoji ? `${c.emoji} ` : '💸 '}{c.name} (deuda)
                         </Text>
                       </View>
                       <Text style={[styles.incomeLegendAmt, { color: COLORS.danger }]}>-{formatCOP(c.balance ?? 0)}</Text>
+                    </View>
+                  ))}
+                  {chartStatementCards.map(c => (
+                    <View key={c.id} style={styles.incomeLegendRow}>
+                      <View style={styles.incomeLegendLeft}>
+                        <View style={[styles.incomeLegendDot, { backgroundColor: chartColors.get(c.id) }]} />
+                        <Text style={styles.incomeLegendName} numberOfLines={1}>
+                          {c.emoji ? `${c.emoji} ` : '💳 '}{c.name} (tarjeta)
+                        </Text>
+                      </View>
+                      <Text style={[styles.incomeLegendAmt, { color: COLORS.danger }]}>-{formatCOP(c.statementBalance ?? 0)}</Text>
                     </View>
                   ))}
                 </View>
@@ -1051,6 +1188,7 @@ export default function ResumenScreen() {
                   centerValue={goals.length > 0 ? formatCOP(totalSaved) : ''}
                   centerLabel={goals.length > 0 ? `de ${formatCOP(totalTarget)}` : 'Sin metas'}
                   centerValueColor={COLORS.primary}
+                  isEmpty={goals.length === 0}
                   emptyLabel="Sin metas aún"
                   emptyHint="Toca + para crear tu primera meta de ahorro"
                 />
@@ -1061,7 +1199,7 @@ export default function ResumenScreen() {
                   {goals.slice(0, 6).map(g => (
                     <View key={g.id} style={styles.incomeLegendRow}>
                       <View style={styles.incomeLegendLeft}>
-                        <View style={[styles.incomeLegendDot, { backgroundColor: g.color }]} />
+                        <View style={[styles.incomeLegendDot, { backgroundColor: goalColors.get(g.id) ?? g.color }]} />
                         <Text style={styles.incomeLegendName} numberOfLines={1}>{g.emoji ?? '🎯'} {g.name}</Text>
                       </View>
                       <Text style={styles.incomeLegendAmt}>{formatCOP(g.savedAmount)}</Text>
@@ -1127,6 +1265,36 @@ export default function ResumenScreen() {
           </View>
         </View>
 
+        {/* ── Gastos recurrentes (entra al hub de pendientes/pagados) ──
+             Arriba de todo, justo debajo del presupuesto — es lo primero
+             accionable que hay que revisar (bills pendientes), a diferencia
+             de Balance General que es solo informativo. */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.push('/gastos-recurrentes')}
+          style={[styles.gastosCard, pendingTemplates.length > 0 && styles.gastosCardPending]}
+        >
+          <View style={[styles.gastosCardIcon, pendingTemplates.length > 0 && { backgroundColor: COLORS.warning + '22' }]}>
+            <Ionicons name="pricetags" size={22} color={pendingTemplates.length > 0 ? COLORS.warning : COLORS.credit} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={styles.gastosCardTitle}>Gastos recurrentes</Text>
+              {pendingTemplates.length > 0 && (
+                <View style={styles.gastosCardBadge}>
+                  <Text style={styles.gastosCardBadgeText}>{pendingTemplates.length}</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.gastosCardSub}>
+              {pendingTemplates.length > 0
+                ? `${pendingTemplates.length} pendiente${pendingTemplates.length === 1 ? '' : 's'} por pagar`
+                : `${recurringCatCount} categoría${recurringCatCount === 1 ? '' : 's'} · ${formatCOP(recurringTotal)}`}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.textDim} />
+        </TouchableOpacity>
+
         {/* ── Tarjeta de periodo (semanal/quincenal/mensual) ── */}
         {profile?.budgetPeriod === 'weekly' ? (
           <TouchableOpacity activeOpacity={0.85} onPress={() => setPendingModal(true)} style={styles.budgetWrap}>
@@ -1183,20 +1351,6 @@ export default function ResumenScreen() {
             </View>
           </View>
         )}
-
-        {/* ── Gastos recurrentes (entra al hub de pendientes/pagados) ── */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/gastos-recurrentes')} style={styles.gastosCard}>
-          <View style={styles.gastosCardIcon}>
-            <Ionicons name="pricetags" size={22} color={COLORS.credit} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.gastosCardTitle}>Gastos recurrentes</Text>
-            <Text style={styles.gastosCardSub}>
-              {catRows.filter(r => r.total > 0).length} categorías · {formatCOP(totalSpent)}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={COLORS.textDim} />
-        </TouchableOpacity>
 
         {/* ── Balance General (patrimonio neto) — mes actual / anterior ── */}
         {(totalActivos > 0 || totalPasivos > 0 || prevTotalActivos > 0 || prevTotalPasivos > 0) && (() => {
@@ -1497,25 +1651,26 @@ export default function ResumenScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Gastos por categoría */}
-              {catRows.filter(r => r.total > 0).length > 0 && (
+              {catRowsWithSpend.length > 0 && (
                 <>
                   <View style={styles.summarySectionHeader}>
                     <Text style={styles.summarySectionTitle}>💸 Gastos por categoría</Text>
                     <Text style={styles.summarySectionTotal}>{formatCOP(totalSpent)}</Text>
                   </View>
-                  {catRows.filter(r => r.total > 0).map(r => {
+                  {catRowsWithSpend.map(r => {
                     const pct = totalSpent > 0 ? (r.total / totalSpent) * 100 : 0;
+                    const rowColor = catRowsColors.get(r.cat.id)!;
                     return (
                       <View key={r.cat.id} style={{ position: 'relative' }}>
                         <View style={[styles.summaryCatRow]}>
-                          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: r.cat.color }} />
+                          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: rowColor }} />
                           <Text style={styles.summaryCatName}>
                             {r.cat.emoji ? `${r.cat.emoji} ` : ''}{r.cat.name}
                           </Text>
-                          <Text style={[styles.summaryCatAmt, { color: r.cat.color }]}>{formatCOP(r.total)}</Text>
+                          <Text style={[styles.summaryCatAmt, { color: rowColor }]}>{formatCOP(r.total)}</Text>
                           <Text style={styles.summaryCatPct}>{Math.round(pct)}%</Text>
                         </View>
-                        <View style={[styles.summaryCatBar, { width: `${pct}%`, backgroundColor: r.cat.color + '33' }]} />
+                        <View style={[styles.summaryCatBar, { width: `${pct}%`, backgroundColor: rowColor + '33' }]} />
                       </View>
                     );
                   })}
@@ -1524,7 +1679,6 @@ export default function ResumenScreen() {
 
               {/* Recurrentes vs no recurrentes */}
               {totalSpent > 0 && (() => {
-                const recurringTotal = expenses.filter(e => e.isRecurring).reduce((s, e) => s + e.amount, 0);
                 const nonRecurringTotal = totalSpent - recurringTotal;
                 const rows = [
                   { key: 'rec', label: 'Recurrentes', amt: recurringTotal, color: COLORS.primary },
@@ -1675,7 +1829,7 @@ export default function ResumenScreen() {
                                   {card ? ` · ${card.name}` : ''}
                                 </Text>
                               </View>
-                              <Text style={[styles.expCardAmt, { color: cat?.color ?? COLORS.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                              <Text style={[styles.expCardAmt, { color: COLORS.danger }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                                 {formatCOP(e.amount)}
                               </Text>
                             </View>
@@ -1745,7 +1899,7 @@ export default function ResumenScreen() {
                         card={c}
                         compact
                         selected={editExpCardId === c.id}
-                        totalSpent={getCardTotalSpent(expenses, c.id)}
+                        totalSpent={getCardCurrentCycleSpent(c, expenses)}
                         onPress={() => setEditExpCardId(c.id)}
                       />
                     ))}
@@ -2080,7 +2234,7 @@ export default function ResumenScreen() {
                             <Text style={styles.patRowEmoji}>{cat?.emoji ?? '💸'}</Text>
                             <View style={{ flex: 1 }}>
                               <Text style={styles.patRowName}>{t.name}</Text>
-                              <Text style={[styles.patRowVal, { color: cat?.color ?? COLORS.credit }]}>{formatCOP(t.amount)}</Text>
+                              <Text style={[styles.patRowVal, { color: COLORS.credit }]}>{formatCOP(t.amount)}</Text>
                             </View>
                             <TouchableOpacity
                               onPress={() => openMarkPaid(t)}

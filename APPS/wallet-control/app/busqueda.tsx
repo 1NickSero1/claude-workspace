@@ -196,7 +196,7 @@ export default function BusquedaScreen() {
                     <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
                     <Text style={styles.resultMeta}>{cat?.name ?? 'Sin categoría'} · {date}</Text>
                   </View>
-                  <Text style={[styles.resultAmt, { color: cat?.color ?? COLORS.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{formatCOP(item.amount)}</Text>
+                  <Text style={[styles.resultAmt, { color: COLORS.danger }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{formatCOP(item.amount)}</Text>
                 </View>
               );
             }}

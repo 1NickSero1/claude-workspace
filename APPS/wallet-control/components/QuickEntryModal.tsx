@@ -11,7 +11,7 @@ import BottomSheet from './BottomSheet';
 import CardView from './CardView';
 import {
   CustomCategory, Card, Expense, Income, RecurrenceFrequency,
-  getCurrentMonthKey, addExpenses, addIncomes, getCardTotalSpent,
+  getCurrentMonthKey, addExpenses, addIncomes, getCardCurrentCycleSpent,
 } from '@/lib/storage';
 import { getPayableCards, getCardAvailable } from '@/lib/recurringPayments';
 import { scheduleRecurringReminder } from '@/lib/notifications';
@@ -162,7 +162,6 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
       backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 2,
     },
     dateIconText: { color: COLORS.debit, fontSize: 10, fontWeight: '700' },
-    categoryScroll: { maxHeight: 240, marginBottom: SPACING.md },
     fieldLabel: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 8 },
     cardScroll: { marginBottom: SPACING.md },
     cardChipRow: { flexDirection: 'row', gap: SPACING.sm, paddingRight: SPACING.md },
@@ -174,7 +173,7 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
     noFundsText: { color: COLORS.danger, fontSize: FONT.sm, flex: 1, lineHeight: 18 },
     categoryGrid: {
       flexDirection: 'row', flexWrap: 'wrap',
-      gap: SPACING.sm, paddingBottom: SPACING.sm,
+      gap: SPACING.sm, paddingBottom: SPACING.sm, marginBottom: SPACING.sm,
     },
     categoryCell: {
       width: '30.5%', alignItems: 'center', paddingVertical: 10, paddingHorizontal: SPACING.xs,
@@ -239,204 +238,205 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
             </TouchableOpacity>
           </View>
 
-          {/* Toggle Gasto / Ingreso */}
-          <View style={styles.toggleRow}>
-            <TouchableOpacity
-              style={[styles.toggleBtn, isGasto && { backgroundColor: COLORS.creditBg, borderColor: COLORS.credit }]}
-              onPress={() => { setType('gasto'); setSelectedCategoryId(null); }}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="arrow-down-circle" size={16} color={isGasto ? COLORS.credit : COLORS.textDim} />
-              <Text style={[styles.toggleText, isGasto && { color: COLORS.credit }]}>Gasto</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toggleBtn, !isGasto && { backgroundColor: COLORS.debitBg, borderColor: COLORS.debit }]}
-              onPress={() => setType('ingreso')}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="arrow-up-circle" size={16} color={!isGasto ? COLORS.debit : COLORS.textDim} />
-              <Text style={[styles.toggleText, !isGasto && { color: COLORS.debit }]}>Ingreso</Text>
-            </TouchableOpacity>
-          </View>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {/* Toggle Gasto / Ingreso */}
+            <View style={styles.toggleRow}>
+              <TouchableOpacity
+                style={[styles.toggleBtn, isGasto && { backgroundColor: COLORS.creditBg, borderColor: COLORS.credit }]}
+                onPress={() => { setType('gasto'); setSelectedCategoryId(null); }}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="arrow-down-circle" size={16} color={isGasto ? COLORS.credit : COLORS.textDim} />
+                <Text style={[styles.toggleText, isGasto && { color: COLORS.credit }]}>Gasto</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toggleBtn, !isGasto && { backgroundColor: COLORS.debitBg, borderColor: COLORS.debit }]}
+                onPress={() => setType('ingreso')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="arrow-up-circle" size={16} color={!isGasto ? COLORS.debit : COLORS.textDim} />
+                <Text style={[styles.toggleText, !isGasto && { color: COLORS.debit }]}>Ingreso</Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* Category grid */}
-          {isGasto && (
-            <ScrollView
-              style={styles.categoryScroll}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              {categories.length === 0 && (
-                <View style={styles.noFundsBox}>
-                  <Ionicons name="pricetags-outline" size={18} color={COLORS.danger} />
-                  <Text style={styles.noFundsText}>Todavía no tienes categorías. Créalas desde Personaliza tu vida financiera.</Text>
-                </View>
-              )}
-              <View style={styles.categoryGrid}>
-                {categories.map(cat => {
-                  const selected = selectedCategoryId === cat.id;
-                  return (
-                    <TouchableOpacity
-                      key={cat.id}
-                      style={[
-                        styles.categoryCell,
-                        selected && { borderColor: cat.color, backgroundColor: cat.color + '18' },
-                      ]}
-                      onPress={() => setSelectedCategoryId(cat.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[styles.catIconCircle, { backgroundColor: cat.color + '25' }]}>
-                        <Ionicons name={cat.icon as any} size={20} color={cat.color} />
-                      </View>
-                      <Text style={[styles.catName, selected && { color: cat.color, fontWeight: '700' }]} numberOfLines={1}>
-                        {cat.name}
-                      </Text>
-                      {selected && (
-                        <View style={[styles.checkDot, { backgroundColor: cat.color }]}>
-                          <Ionicons name="checkmark" size={10} color="#fff" />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </ScrollView>
-          )}
-
-          {/* De dónde sale el dinero — solo cuentas con saldo/cupo disponible */}
-          {isGasto && (
-            payableCards.length === 0 ? (
-              <View style={styles.noFundsBox}>
-                <Ionicons name="warning" size={16} color={COLORS.danger} />
-                <Text style={styles.noFundsText}>
-                  Ninguna cuenta tiene saldo disponible ahora mismo — usa otro medio de pago o agrega saldo antes de registrar este gasto.
-                </Text>
-              </View>
-            ) : (
+            {/* Category grid */}
+            {isGasto && (
               <>
-                <Text style={styles.fieldLabel}>¿De dónde salió el dinero?</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardScroll}>
-                  <View style={styles.cardChipRow}>
-                    {payableCards.map(c => (
-                      <CardView
-                        key={c.id}
-                        card={c}
-                        compact
-                        selected={selectedCardId === c.id}
-                        totalSpent={getCardTotalSpent(expenses, c.id)}
-                        onPress={() => setSelectedCardId(c.id)}
-                      />
-                    ))}
-                  </View>
-                </ScrollView>
-                {exceedsAvailable && (
+                <Text style={styles.fieldLabel}>Elige una categoría disponible</Text>
+                {categories.length === 0 && (
                   <View style={styles.noFundsBox}>
-                    <Ionicons name="warning" size={16} color={COLORS.danger} />
-                    <Text style={styles.noFundsText}>
-                      Ese monto supera lo disponible en {selectedCard?.name} ({formatCOP(cardAvailable)}). Reduce el monto o elige otra cuenta.
-                    </Text>
+                    <Ionicons name="pricetags-outline" size={18} color={COLORS.danger} />
+                    <Text style={styles.noFundsText}>Todavía no tienes categorías. Créalas desde Personaliza tu vida financiera.</Text>
+                  </View>
+                )}
+                <View style={styles.categoryGrid}>
+                  {categories.map(cat => {
+                    const selected = selectedCategoryId === cat.id;
+                    return (
+                      <TouchableOpacity
+                        key={cat.id}
+                        style={[
+                          styles.categoryCell,
+                          selected && { borderColor: cat.color, backgroundColor: cat.color + '18' },
+                        ]}
+                        onPress={() => setSelectedCategoryId(cat.id)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[styles.catIconCircle, { backgroundColor: cat.color + '25' }]}>
+                          {cat.emoji
+                            ? <Text style={{ fontSize: 20 }}>{cat.emoji}</Text>
+                            : <Ionicons name={cat.icon as any} size={20} color={cat.color} />}
+                        </View>
+                        <Text style={[styles.catName, selected && { color: cat.color, fontWeight: '700' }]} numberOfLines={1}>
+                          {cat.name}
+                        </Text>
+                        {selected && (
+                          <View style={[styles.checkDot, { backgroundColor: cat.color }]}>
+                            <Ionicons name="checkmark" size={10} color="#fff" />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
+            {/* De dónde sale el dinero — solo cuentas con saldo/cupo disponible */}
+            {isGasto && (
+              payableCards.length === 0 ? (
+                <View style={styles.noFundsBox}>
+                  <Ionicons name="warning" size={16} color={COLORS.danger} />
+                  <Text style={styles.noFundsText}>
+                    Ninguna cuenta tiene saldo disponible ahora mismo — usa otro medio de pago o agrega saldo antes de registrar este gasto.
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={styles.fieldLabel}>¿De dónde salió el dinero?</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardScroll}>
+                    <View style={styles.cardChipRow}>
+                      {payableCards.map(c => (
+                        <CardView
+                          key={c.id}
+                          card={c}
+                          compact
+                          selected={selectedCardId === c.id}
+                          totalSpent={getCardCurrentCycleSpent(c, expenses)}
+                          onPress={() => setSelectedCardId(c.id)}
+                        />
+                      ))}
+                    </View>
+                  </ScrollView>
+                  {exceedsAvailable && (
+                    <View style={styles.noFundsBox}>
+                      <Ionicons name="warning" size={16} color={COLORS.danger} />
+                      <Text style={styles.noFundsText}>
+                        Ese monto supera lo disponible en {selectedCard?.name} ({formatCOP(cardAvailable)}). Reduce el monto o elige otra cuenta.
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )
+            )}
+
+            {/* Amount display */}
+            <Text style={styles.fieldLabel}>{isGasto ? '¿Cuánto gastaste?' : '¿Cuánto recibiste?'}</Text>
+            <View style={[styles.amountBox, { borderColor: activeColor + '40', backgroundColor: activeBg }]}>
+              <Text style={styles.currencySymbol}>$</Text>
+              <TextInput
+                style={[styles.amountInput, { color: activeColor }]}
+                value={formatThousands(amount)}
+                onChangeText={handleAmountChange}
+                placeholder="0"
+                placeholderTextColor={activeColor + '60'}
+                keyboardType="number-pad"
+              />
+            </View>
+
+            {/* Description */}
+            <View style={styles.descRow}>
+              <TextInput
+                style={[styles.descInput, { flex: 1 }]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder={isGasto ? 'Descripción (opcional)' : 'Descripción'}
+                placeholderTextColor={COLORS.textDim}
+                returnKeyType="done"
+              />
+              {!isGasto && (
+                <TouchableOpacity
+                  onPress={() => setShowIncomeDatePicker(true)}
+                  style={styles.dateIconBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Elegir día del ingreso (opcional)"
+                >
+                  <Ionicons name="calendar-outline" size={18} color={incomeDate ? COLORS.debit : COLORS.textMuted} />
+                  {incomeDate && (
+                    <Text style={styles.dateIconText}>{incomeDate.getDate()}</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+            {showIncomeDatePicker && (
+              <DateTimePicker
+                value={incomeDate ?? new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, selected) => {
+                  setShowIncomeDatePicker(false);
+                  if (event.type === 'dismissed' || !selected) return;
+                  setIncomeDate(selected);
+                }}
+              />
+            )}
+
+            {/* Gasto recurrente */}
+            {isGasto && (
+              <>
+                <View style={styles.recurringRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.recurringLabel}>Gasto recurrente</Text>
+                    <Text style={styles.recurringCaption}>Recibirás un recordatorio automático</Text>
+                  </View>
+                  <Switch
+                    value={isRecurring}
+                    onValueChange={setIsRecurring}
+                    trackColor={{ false: COLORS.border, true: COLORS.primary + '88' }}
+                    thumbColor={isRecurring ? COLORS.primary : COLORS.textDim}
+                  />
+                </View>
+                {isRecurring && (
+                  <View style={styles.freqRow}>
+                    {(['weekly', 'monthly'] as const).map(f => (
+                      <TouchableOpacity
+                        key={f}
+                        onPress={() => setFrequency(f)}
+                        style={[styles.freqBtn, frequency === f && styles.freqBtnActive]}
+                      >
+                        <Text style={[styles.freqBtnText, frequency === f && styles.freqBtnTextActive]}>
+                          {f === 'weekly' ? 'Semanal' : 'Mensual'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
                 )}
               </>
-            )
-          )}
-
-          {/* Amount display */}
-          <View style={[styles.amountBox, { borderColor: activeColor + '40', backgroundColor: activeBg }]}>
-            <Text style={styles.currencySymbol}>$</Text>
-            <TextInput
-              style={[styles.amountInput, { color: activeColor }]}
-              value={formatThousands(amount)}
-              onChangeText={handleAmountChange}
-              placeholder="0"
-              placeholderTextColor={activeColor + '60'}
-              keyboardType="number-pad"
-              autoFocus={visible}
-            />
-          </View>
-
-          {/* Description */}
-          <View style={styles.descRow}>
-            <TextInput
-              style={[styles.descInput, { flex: 1 }]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder={isGasto ? 'Descripción (opcional)' : 'Descripción'}
-              placeholderTextColor={COLORS.textDim}
-              returnKeyType="done"
-            />
-            {!isGasto && (
-              <TouchableOpacity
-                onPress={() => setShowIncomeDatePicker(true)}
-                style={styles.dateIconBtn}
-                accessibilityRole="button"
-                accessibilityLabel="Elegir día del ingreso (opcional)"
-              >
-                <Ionicons name="calendar-outline" size={18} color={incomeDate ? COLORS.debit : COLORS.textMuted} />
-                {incomeDate && (
-                  <Text style={styles.dateIconText}>{incomeDate.getDate()}</Text>
-                )}
-              </TouchableOpacity>
             )}
-          </View>
-          {showIncomeDatePicker && (
-            <DateTimePicker
-              value={incomeDate ?? new Date()}
-              mode="date"
-              display="default"
-              onChange={(event, selected) => {
-                setShowIncomeDatePicker(false);
-                if (event.type === 'dismissed' || !selected) return;
-                setIncomeDate(selected);
-              }}
-            />
-          )}
 
-          {/* Gasto recurrente */}
-          {isGasto && (
-            <>
-              <View style={styles.recurringRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.recurringLabel}>Gasto recurrente</Text>
-                  <Text style={styles.recurringCaption}>Recibirás un recordatorio automático</Text>
-                </View>
-                <Switch
-                  value={isRecurring}
-                  onValueChange={setIsRecurring}
-                  trackColor={{ false: COLORS.border, true: COLORS.primary + '88' }}
-                  thumbColor={isRecurring ? COLORS.primary : COLORS.textDim}
-                />
-              </View>
-              {isRecurring && (
-                <View style={styles.freqRow}>
-                  {(['weekly', 'monthly'] as const).map(f => (
-                    <TouchableOpacity
-                      key={f}
-                      onPress={() => setFrequency(f)}
-                      style={[styles.freqBtn, frequency === f && styles.freqBtnActive]}
-                    >
-                      <Text style={[styles.freqBtnText, frequency === f && styles.freqBtnTextActive]}>
-                        {f === 'weekly' ? 'Semanal' : 'Mensual'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </>
-          )}
-
-          {/* Save button */}
-          <TouchableOpacity
-            style={[
-              styles.saveBtn,
-              { backgroundColor: canSave ? activeColor : COLORS.textDim },
-            ]}
-            onPress={handleSave}
-            disabled={!canSave || saving}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.saveBtnText}>{saving ? 'Guardando...' : 'Guardar'}</Text>
-          </TouchableOpacity>
+            {/* Save button */}
+            <TouchableOpacity
+              style={[
+                styles.saveBtn,
+                { backgroundColor: canSave ? activeColor : COLORS.textDim },
+              ]}
+              onPress={handleSave}
+              disabled={!canSave || saving}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.saveBtnText}>{saving ? 'Guardando...' : 'Guardar'}</Text>
+            </TouchableOpacity>
+          </ScrollView>
     </BottomSheet>
   );
 }

@@ -102,7 +102,11 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
     compactAmount: { color: 'rgba(255,255,255,0.85)', fontSize: 10, fontWeight: '600', marginTop: 3 },
   }), []);
 
-  const available = card.type === 'credit' && card.limit ? card.limit - totalSpent : null;
+  // Lo que ya "cerró" en un corte anterior y sigue sin pagarse también resta
+  // del cupo disponible, no solo lo gastado en el ciclo actual.
+  const available = card.type === 'credit' && card.limit
+    ? card.limit - totalSpent - (card.statementBalance ?? 0)
+    : null;
   const balanceLeft = (card.type === 'debit' || card.type === 'cash') && card.balance != null ? card.balance - totalSpent : null;
   const typeLabel = card.type === 'credit' ? 'crédito' : card.type === 'debit' ? 'débito' : card.type === 'cash' ? 'efectivo' : 'préstamo';
   const amountLabel = available !== null

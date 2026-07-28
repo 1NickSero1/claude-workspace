@@ -106,6 +106,26 @@ export async function scheduleRecurringReminder(
   });
 }
 
+/** Reprograma (cancelando la anterior si existe) el aviso de vencimiento del
+ * saldo de un corte de tarjeta de crédito. */
+export async function scheduleStatementDueReminder(
+  cardName: string,
+  amount: number,
+  dueDate: Date,
+  previousNotificationId?: string,
+): Promise<string | undefined> {
+  if (!(await requestNotificationPermission())) return undefined;
+  if (previousNotificationId) await cancelNotification(previousNotificationId);
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Corte de tarjeta de crédito',
+      body: `Vence el pago de ${cardName}: ${formatCOP(amount)}`,
+      sound: true,
+    },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueDate },
+  });
+}
+
 export const BALANCE_NOTIFICATION_ID = 'wc-balance';
 
 /** Crea o actualiza (in-place) la notificación fija de saldo. Requiere permiso. */

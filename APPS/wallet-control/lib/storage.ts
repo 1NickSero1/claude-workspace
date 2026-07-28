@@ -24,6 +24,16 @@ export interface Card {
   notificationId?: string;
   events?: CardEvent[];
   createdAt: string;
+  // ── Corte de tarjeta de crédito (solo type 'credit') ──────────────────────
+  // Simula el ciclo de facturación real: lo gastado no desaparece al pasar
+  // de mes — al llegar el día de corte se "congela" como deuda pendiente
+  // (statementBalance) con fecha límite de pago, y lo gastado después vuelve
+  // a acumularse desde cero para el ciclo siguiente. Ver lib/creditCutoff.ts.
+  cutoffDay?: number;
+  statementBalance?: number;
+  statementDueDate?: string;
+  lastCutoffAt?: string;
+  statementNotificationId?: string;
 }
 
 export interface CustomCategory {
@@ -246,6 +256,11 @@ async function migrateLegacyNamespaceData(ns: string): Promise<void> {
  * Copia (sin borrar el origen) los datos de un namespace hacia otro — usado
  * al crear una cuenta real desde modo anónimo, para que lo ya registrado no
  * desaparezca. No pisa datos que ya existan en el destino.
+ *
+ * No usa withKeyLock: toca varias llaves de dos namespaces distintos a la
+ * vez (por diseño — es una copia, no una escritura puntual), así que un
+ * mutex de una sola llave no encaja aquí. Se llama una única vez por
+ * registro/login, no hay escrituras concurrentes reales que proteger.
  */
 export async function migrateNamespaceData(fromNs: string, toNs: string): Promise<void> {
   try {
@@ -282,8 +297,13 @@ export async function migrateNamespaceData(fromNs: string, toNs: string): Promis
 
 /**
  * Borra todos los datos financieros de un namespace (usado al cerrar sesión
- * en modo anónimo, para que el próximo invitado en este dispositivo no
- * herede tarjetas/gastos de quien usó el modo anónimo antes).
+ * en modo anónimo, y también justo después de migrar datos de 'anon' a una
+ * cuenta real, para que el próximo invitado en este dispositivo no herede
+ * tarjetas/gastos de quien usó el modo anónimo antes).
+ *
+ * No usa withKeyLock por la misma razón que migrateNamespaceData: borra
+ * varias llaves de un namespace completo de una sola vez, no una escritura
+ * puntual sobre una llave que pueda competir con otra concurrente.
  */
 export async function wipeNamespaceData(ns: string): Promise<void> {
   try {
@@ -321,11 +341,15 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 }
 
 export async function saveUserProfile(profile: UserProfile): Promise<void> {
-  await AsyncStorage.setItem(K_PROFILE, JSON.stringify(profile));
+  return withKeyLock(K_PROFILE, async () => {
+    await AsyncStorage.setItem(K_PROFILE, JSON.stringify(profile));
+  });
 }
 
 export async function deleteUserProfile(): Promise<void> {
-  await AsyncStorage.removeItem(K_PROFILE);
+  return withKeyLock(K_PROFILE, async () => {
+    await AsyncStorage.removeItem(K_PROFILE);
+  });
 }
 
 // ── Cards ─────────────────────────────────────────────────────────────────────
@@ -403,7 +427,9 @@ export async function deleteCardEvent(cardId: string, eventIndex: number): Promi
 // necesidad de un mecanismo de cierre de mes explícito.
 export async function syncCardBalanceSnapshot(monthKey: string, cards: Card[]): Promise<void> {
   const ns = await getActiveNamespace();
-  await AsyncStorage.setItem(K_CARD_SNAP(ns, monthKey), JSON.stringify(cards));
+  return withKeyLock(K_CARD_SNAP(ns, monthKey), async () => {
+    await AsyncStorage.setItem(K_CARD_SNAP(ns, monthKey), JSON.stringify(cards));
+  });
 }
 
 // Devuelve el snapshot de tarjetas de ese mes si existe (meses anteriores a
@@ -453,14 +479,18 @@ export async function saveCategory(cat: CustomCategory): Promise<void> {
 
 export async function deleteCategory(id: string): Promise<void> {
   const ns = await getActiveNamespace();
-  return withKeyLock(K_CATEGORIES(ns), async () => {
+  await withKeyLock(K_CATEGORIES(ns), async () => {
     const cats = await getCategories();
     await AsyncStorage.setItem(K_CATEGORIES(ns), JSON.stringify(cats.filter(c => c.id !== id)));
-    // Los gastos recurrentes que todavía no se han pagado ni una vez (sin
-    // historial real) quedarían huérfanos apuntando a una categoría borrada —
-    // los recurrentes derivados del historial se filtran aparte en
-    // getRecurringTemplates() por categoryId inexistente, ya que esos sí
-    // deben conservar los gastos ya registrados intactos.
+  });
+  // Los gastos recurrentes que todavía no se han pagado ni una vez (sin
+  // historial real) quedarían huérfanos apuntando a una categoría borrada —
+  // los recurrentes derivados del historial se filtran aparte en
+  // getRecurringTemplates() por categoryId inexistente, ya que esos sí
+  // deben conservar los gastos ya registrados intactos. Va en su propio
+  // candado (K_RECURRING_DEFS), no en el de K_CATEGORIES de arriba — son
+  // llaves distintas, así que no deben compartir mutex.
+  await withKeyLock(K_RECURRING_DEFS(ns), async () => {
     const defs = await getRecurringDefinitions();
     const remaining = defs.filter(d => d.categoryId !== id);
     if (remaining.length !== defs.length) {
@@ -666,6 +696,22 @@ export function getCardTotalSpent(expenses: Expense[], cardId: string): number {
   return expenses.filter(e => e.cardId === cardId).reduce((s, e) => s + e.amount, 0);
 }
 
+// Lo gastado en el ciclo ABIERTO de una tarjeta — para una de crédito con
+// corte ya activado (lastCutoffAt), excluye lo que ya quedó "cerrado" en
+// statementBalance (eso se cuenta aparte, no dos veces). Para cualquier
+// otro tipo de cuenta, o una de crédito sin corte activado, es idéntico a
+// getCardTotalSpent — por eso es seguro usar esta función en todos los
+// sitios que antes llamaban a getCardTotalSpent con una Card a la mano.
+export function getCardCurrentCycleSpent(card: Card, expenses: Expense[]): number {
+  if (card.type === 'credit' && card.lastCutoffAt) {
+    const cutoff = new Date(card.lastCutoffAt).getTime();
+    return expenses
+      .filter(e => e.cardId === card.id && new Date(e.createdAt).getTime() > cutoff)
+      .reduce((s, e) => s + e.amount, 0);
+  }
+  return getCardTotalSpent(expenses, card.id);
+}
+
 export function sumIncomes(incomes: Income[]): number {
   return incomes.reduce((s, i) => s + i.amount, 0);
 }
@@ -673,19 +719,22 @@ export function sumIncomes(incomes: Income[]): number {
 export function computeNetWorth(expenses: Expense[], cards: Card[]): {
   totalActivos: number; totalPasivos: number; patrimonioNeto: number;
 } {
-  const cardTypeMap = new Map(cards.map(c => [c.id, c.type]));
-  let creditSpent = 0;
-  for (const e of expenses) {
-    const type = e.cardId ? cardTypeMap.get(e.cardId) : 'debit';
-    if (type === 'credit') creditSpent += e.amount;
-  }
+  // Lo gastado del ciclo abierto de cada tarjeta de crédito — no lo ya
+  // congelado en statementBalance (eso se suma aparte, más abajo, para no
+  // contarlo dos veces).
+  const creditSpent = cards.filter(c => c.type === 'credit')
+    .reduce((s, c) => s + getCardCurrentCycleSpent(c, expenses), 0);
   const debitAvailable = cards.filter(c => c.type === 'debit' && c.balance != null)
     .reduce((s, c) => s + Math.max(c.balance! - getCardTotalSpent(expenses, c.id), 0), 0);
   const cashAvailable = cards.filter(c => c.type === 'cash')
     .reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0), 0);
   const debtTotal = cards.filter(c => c.type === 'debt').reduce((s, c) => s + (c.balance ?? 0), 0);
+  // Lo que ya cerró en un corte anterior y sigue sin pagarse también es
+  // deuda real, aunque ya no aparezca sumado en "gastado" de este mes.
+  const statementDebt = cards.filter(c => c.type === 'credit')
+    .reduce((s, c) => s + (c.statementBalance ?? 0), 0);
   const totalActivos = debitAvailable + cashAvailable;
-  const totalPasivos = creditSpent + debtTotal;
+  const totalPasivos = creditSpent + debtTotal + statementDebt;
   return { totalActivos, totalPasivos, patrimonioNeto: totalActivos - totalPasivos };
 }
 

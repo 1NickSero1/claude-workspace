@@ -15,6 +15,26 @@ const EMOJI_OPTIONS = [
   '💰','🔧','🌿','💳','🏖️','🎭','🐕','🍺','💄','🏥',
 ];
 
+// Dos colores de la paleta pueden ser distintos como string y aun así verse
+// "iguales" (dos rojos, dos naranjas) — se compara el matiz real, con un
+// mínimo de separación, en vez de solo != .
+const MIN_HUE_SEPARATION_DEG = 30;
+function hexToHueDeg(hex: string): number {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const d = max - min;
+  if (d === 0) return 0;
+  let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  h *= 60;
+  return h < 0 ? h + 360 : h;
+}
+function hueDistance(a: number, b: number): number {
+  const diff = Math.abs(a - b) % 360;
+  return diff > 180 ? 360 - diff : diff;
+}
+
 interface Props {
   visible: boolean;
   category?: CustomCategory | null;
@@ -28,10 +48,25 @@ export default function CategoryFormModal({ visible, category, categories, onSav
   const [emoji, setEmoji] = useState(EMOJI_OPTIONS[0]);
 
   const COLORS = useColors();
+  // El color sigue naciendo del emoji elegido (para que cambiar de emoji se
+  // sienta como elegir un color), pero si ese color ya lo tiene otra
+  // categoría se busca el siguiente libre de la paleta — así dos categorías
+  // nunca terminan indistinguibles en los diagramas por casualidad del
+  // módulo (30 emojis, 15 colores → sin esto, emoji #3 y #18 se pisaban).
+  const usedHues = useMemo(
+    () => categories.filter(c => c.id !== category?.id).map(c => hexToHueDeg(c.color)),
+    [categories, category],
+  );
   const autoColor = useMemo(() => {
     const idx = EMOJI_OPTIONS.indexOf(emoji);
-    return CATEGORY_COLOR_OPTIONS[idx >= 0 ? idx % CATEGORY_COLOR_OPTIONS.length : 0];
-  }, [emoji]);
+    const start = idx >= 0 ? idx % CATEGORY_COLOR_OPTIONS.length : 0;
+    for (let i = 0; i < CATEGORY_COLOR_OPTIONS.length; i++) {
+      const candidate = CATEGORY_COLOR_OPTIONS[(start + i) % CATEGORY_COLOR_OPTIONS.length];
+      const candidateHue = hexToHueDeg(candidate);
+      if (!usedHues.some(h => hueDistance(h, candidateHue) < MIN_HUE_SEPARATION_DEG)) return candidate;
+    }
+    return CATEGORY_COLOR_OPTIONS[start];
+  }, [emoji, usedHues]);
 
   const styles = useMemo(() => StyleSheet.create({
     hero: {
@@ -86,8 +121,6 @@ export default function CategoryFormModal({ visible, category, categories, onSav
 
   const handleSave = () => {
     if (!name.trim() || isDuplicate) return;
-    const idx = EMOJI_OPTIONS.indexOf(emoji);
-    const autoColor = CATEGORY_COLOR_OPTIONS[idx >= 0 ? idx % CATEGORY_COLOR_OPTIONS.length : 0];
     onSave({
       id: category?.id ?? `cat_${Date.now()}`,
       name: name.trim(),

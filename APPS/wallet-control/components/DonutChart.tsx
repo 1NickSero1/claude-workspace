@@ -35,9 +35,15 @@ interface Props {
   centerValueColor?: string;
   emptyLabel?: string;
   emptyHint?: string;
+  // Por defecto se auto-detecta "sin datos" cuando no hay porciones o el
+  // total es 0 — pero eso confunde cuando SÍ hay elementos creados y solo
+  // están todos en $0 (ej. una meta recién creada sin ahorros aún). Quien
+  // llama puede forzar este valor para que el estado vacío diga "aún no
+  // tiene actividad", no "no tienes ninguno".
+  isEmpty?: boolean;
 }
 
-export default function DonutChart({ data, total, size, centerLabel, centerValue, centerValueColor, emptyLabel, emptyHint }: Props) {
+export default function DonutChart({ data, total, size, centerLabel, centerValue, centerValueColor, emptyLabel, emptyHint, isEmpty }: Props) {
   const COLORS = useColors();
   const { width, moderateScale } = useResponsive();
   const styles = useMemo(() => StyleSheet.create(scaledSheet({
@@ -62,7 +68,7 @@ export default function DonutChart({ data, total, size, centerLabel, centerValue
   const outerR = S / 2 - 4;
   const innerR = outerR * 0.58;
 
-  if (!data.length || total === 0) {
+  if (isEmpty ?? (!data.length || total === 0)) {
     return (
       <View style={[{ width: S, height: S, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' }, styles.empty]}>
         <Text style={styles.emptyText}>{emptyLabel ?? 'Sin datos'}</Text>

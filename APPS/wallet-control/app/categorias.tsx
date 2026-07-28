@@ -317,6 +317,7 @@ export default function CategoriasScreen() {
         visible={detailVisible}
         cat={detailCat}
         expenses={expenses.filter(e => detailCat ? e.categoryId === detailCat.id : false)}
+        allExpenses={expenses}
         cards={cards}
         categories={categories}
         monthKey={monthKey}

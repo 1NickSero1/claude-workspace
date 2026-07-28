@@ -266,12 +266,12 @@ export default function HistoryScreen() {
                     <Text style={styles.monthLabel}>{formatMonthLabel(key)}</Text>
                     <View style={styles.monthBadges}>
                       <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{data.expenses.length} gastos</Text>
+                        <Text style={styles.badgeText}>{data.expenses.length} gasto{data.expenses.length === 1 ? '' : 's'}</Text>
                       </View>
                       {data.incomes.length > 0 && (
                         <View style={[styles.badge, styles.badgeGreen]}>
                           <Text style={[styles.badgeText, { color: COLORS.debit }]}>
-                            {data.incomes.length} ingresos
+                            {data.incomes.length} ingreso{data.incomes.length === 1 ? '' : 's'}
                           </Text>
                         </View>
                       )}
@@ -335,11 +335,13 @@ export default function HistoryScreen() {
                               <View style={[styles.catDot, {
                                 backgroundColor: (cat?.color ?? COLORS.textDim) + '33',
                               }]}>
-                                <Ionicons
-                                  name={(cat?.icon ?? 'ellipsis-horizontal') as any}
-                                  size={13}
-                                  color={cat?.color ?? COLORS.textDim}
-                                />
+                                {cat?.emoji
+                                  ? <Text style={{ fontSize: 13 }}>{cat.emoji}</Text>
+                                  : <Ionicons
+                                      name={(cat?.icon ?? 'ellipsis-horizontal') as any}
+                                      size={13}
+                                      color={cat?.color ?? COLORS.textDim}
+                                    />}
                               </View>
                               <View style={styles.catInfo}>
                                 <View style={styles.catInfoTop}>

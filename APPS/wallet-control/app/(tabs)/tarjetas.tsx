@@ -8,14 +8,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  getCards, saveCard, deleteCard, getMonthData, getCurrentMonthKey,
-  getCardTotalSpent, getCategories, updateExpense, deleteExpense,
+  getCards, saveCard, deleteCard, getMonthData, getCurrentMonthKey, getPreviousMonthKey,
+  getCardCurrentCycleSpent, getCategories, updateExpense, deleteExpense,
   appendCardEvent, updateCardEvent, deleteCardEvent,
   clearCardFromExpenses, countExpensesForCard,
   Card, CardEvent, Expense, CustomCategory,
 } from '@/lib/storage';
-import { cancelNotification } from '@/lib/notifications';
+import { cancelNotification, scheduleStatementDueReminder } from '@/lib/notifications';
 import { getCardAvailable } from '@/lib/recurringPayments';
+import { hasPendingCutoff, applyPendingCutoffs } from '@/lib/creditCutoff';
 import { formatCOP } from '@/lib/expenseParser';
 import CardView from '@/components/CardView';
 import CardFormModal from '@/components/CardFormModal';
@@ -39,6 +40,7 @@ export default function TarjetasScreen() {
   const [activeTab, setActiveTab]       = useState<SubTab>('cuentas');
   const [cards, setCards]               = useState<Card[]>([]);
   const [expenses, setExpenses]         = useState<Expense[]>([]);
+  const [prevMonthExpenses, setPrevMonthExpenses] = useState<Expense[]>([]);
   const [categories, setCategories]     = useState<CustomCategory[]>([]);
   const [loading, setLoading]           = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -73,13 +75,39 @@ export default function TarjetasScreen() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [c, d, cats] = await Promise.all([
+    const [c, d, prevMonthData, cats] = await Promise.all([
       getCards(),
       getMonthData(monthKey),
+      getMonthData(getPreviousMonthKey(monthKey)),
       getCategories(),
     ]);
+    const expenseBuckets = [d.expenses, prevMonthData.expenses];
+
+    // Corte de tarjeta de crédito: si ya pasó el día de corte configurado
+    // desde la última vez que se abrió la app, lo gastado en ese ciclo se
+    // congela como saldo pendiente (statementBalance) con su propia fecha
+    // de pago, en vez de resetearse a $0 al cambiar de mes.
+    const pendingCutoffCards = c.filter(card => hasPendingCutoff(card));
+    if (pendingCutoffCards.length > 0) {
+      for (const card of pendingCutoffCards) {
+        const updated = applyPendingCutoffs(card, expenseBuckets);
+        if (!updated) continue;
+        const statementNotificationId = updated.statementDueDate
+          ? await scheduleStatementDueReminder(
+              updated.name, updated.statementBalance ?? 0,
+              new Date(updated.statementDueDate), updated.statementNotificationId,
+            )
+          : updated.statementNotificationId;
+        const finalCard = { ...updated, statementNotificationId };
+        await saveCard(finalCard);
+        const idx = c.findIndex(x => x.id === card.id);
+        if (idx >= 0) c[idx] = finalCard;
+      }
+    }
+
     setCards(c);
     setExpenses(d.expenses);
+    setPrevMonthExpenses(prevMonthData.expenses);
     setCategories(cats);
     setLoading(false);
   }, [monthKey]);
@@ -297,12 +325,17 @@ export default function TarjetasScreen() {
   const cuentas    = [...debitCards, ...cashCards];
   const tarjetas   = cards.filter(c => c.type === 'credit');
   const debts      = cards.filter(c => c.type === 'debt');
+  // Saldos de corte de tarjeta de crédito ya vencidos/pendientes de pago —
+  // se muestran junto a los préstamos porque, igual que ellos, es plata que
+  // ya se debe y hay que abonar, aunque la tarjeta en sí siga arriba.
+  const creditsWithStatement = tarjetas.filter(c => (c.statementBalance ?? 0) > 0);
 
-  const totalCash        = cashCards.reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0), 0);
-  const totalDebt        = debts.reduce((s, c) => s + (c.balance ?? 0), 0);
-  const totalCreditUsed  = tarjetas.reduce((s, c) => s + getCardTotalSpent(expenses, c.id), 0);
-  const totalDebitSpent  = debitCards.reduce((s, c) => s + getCardTotalSpent(expenses, c.id), 0);
-  const totalDebitAvail  = debitCards.reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardTotalSpent(expenses, c.id), 0), 0);
+  const totalCash        = cashCards.reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardCurrentCycleSpent(c, expenses), 0), 0);
+  const totalDebt        = debts.reduce((s, c) => s + (c.balance ?? 0), 0)
+    + creditsWithStatement.reduce((s, c) => s + (c.statementBalance ?? 0), 0);
+  const totalCreditUsed  = tarjetas.reduce((s, c) => s + getCardCurrentCycleSpent(c, expenses), 0);
+  const totalDebitSpent  = debitCards.reduce((s, c) => s + getCardCurrentCycleSpent(c, expenses), 0);
+  const totalDebitAvail  = debitCards.reduce((s, c) => s + Math.max((c.balance ?? 0) - getCardCurrentCycleSpent(c, expenses), 0), 0);
 
   const allDebtPayments = debts
     .flatMap(c =>
@@ -392,8 +425,13 @@ export default function TarjetasScreen() {
     const amount = Number(actionAmount);
     if (!amount) return;
     const isDebt = actionCard.type === 'debt';
-    if (isDebt && amount > (actionCard.balance ?? 0)) {
-      setOverflowInfo({ entered: amount, pending: actionCard.balance ?? 0 });
+    // Abonar al saldo de un corte de tarjeta de crédito se comporta igual
+    // que abonar a un préstamo (resta de un pendiente, nunca de más) — solo
+    // que el pendiente vive en statementBalance, no en balance.
+    const isStatement = actionCard.type === 'credit';
+    const pendingAmount = isDebt ? (actionCard.balance ?? 0) : isStatement ? (actionCard.statementBalance ?? 0) : 0;
+    if ((isDebt || isStatement) && amount > pendingAmount) {
+      setOverflowInfo({ entered: amount, pending: pendingAmount });
       setOverflowModal(true);
       return;
     }
@@ -401,10 +439,11 @@ export default function TarjetasScreen() {
       ...actionCard,
       balance: isDebt
         ? Math.max((actionCard.balance ?? 0) - amount, 0)
-        : (actionCard.balance ?? 0) + amount,
+        : isStatement ? actionCard.balance : (actionCard.balance ?? 0) + amount,
+      statementBalance: isStatement ? Math.max((actionCard.statementBalance ?? 0) - amount, 0) : actionCard.statementBalance,
     });
     await appendCardEvent(actionCard.id, {
-      type: isDebt ? 'pay' : 'deposit',
+      type: (isDebt || isStatement) ? 'pay' : 'deposit',
       amount,
       date: new Date().toISOString(),
       note: actionNote.trim() || undefined,
@@ -426,11 +465,13 @@ export default function TarjetasScreen() {
     const newAmount = Number(actionAmount);
     if (!oldEvent || !newAmount) return;
     const isDebt = actionCard.type === 'debt';
+    const isStatement = actionCard.type === 'credit';
     // Pendiente antes de este abono en particular: se le devuelve su monto
     // viejo al saldo actual para comparar contra la deuda real, igual que
     // handleAddMoney valida un abono nuevo.
-    const pendingBeforeEvent = (actionCard.balance ?? 0) + oldEvent.amount;
-    if (isDebt && newAmount > pendingBeforeEvent) {
+    const pendingField = isStatement ? (actionCard.statementBalance ?? 0) : (actionCard.balance ?? 0);
+    const pendingBeforeEvent = pendingField + oldEvent.amount;
+    if ((isDebt || isStatement) && newAmount > pendingBeforeEvent) {
       setOverflowInfo({ entered: newAmount, pending: pendingBeforeEvent });
       setOverflowModal(true);
       return;
@@ -438,8 +479,12 @@ export default function TarjetasScreen() {
     // Un abono (pay) resta al saldo pendiente; un depósito lo suma — al
     // editar, primero se revierte el efecto del monto viejo y se aplica el
     // nuevo, en vez de sumar/restar la diferencia a ciegas.
-    const delta = isDebt ? (oldEvent.amount - newAmount) : (newAmount - oldEvent.amount);
-    await saveCard({ ...actionCard, balance: Math.max((actionCard.balance ?? 0) + delta, 0) });
+    const delta = (isDebt || isStatement) ? (oldEvent.amount - newAmount) : (newAmount - oldEvent.amount);
+    await saveCard({
+      ...actionCard,
+      balance: isStatement ? actionCard.balance : Math.max((actionCard.balance ?? 0) + delta, 0),
+      statementBalance: isStatement ? Math.max((actionCard.statementBalance ?? 0) + delta, 0) : actionCard.statementBalance,
+    });
     await updateCardEvent(actionCard.id, editEventIndex, { amount: newAmount, note: actionNote.trim() || undefined });
     closeAction();
     await load();
@@ -450,8 +495,13 @@ export default function TarjetasScreen() {
     const oldEvent = (actionCard.events ?? [])[editEventIndex];
     if (!oldEvent) return;
     const isDebt = actionCard.type === 'debt';
-    const delta = isDebt ? oldEvent.amount : -oldEvent.amount;
-    await saveCard({ ...actionCard, balance: Math.max((actionCard.balance ?? 0) + delta, 0) });
+    const isStatement = actionCard.type === 'credit';
+    const delta = (isDebt || isStatement) ? oldEvent.amount : -oldEvent.amount;
+    await saveCard({
+      ...actionCard,
+      balance: isStatement ? actionCard.balance : Math.max((actionCard.balance ?? 0) + delta, 0),
+      statementBalance: isStatement ? Math.max((actionCard.statementBalance ?? 0) + delta, 0) : actionCard.statementBalance,
+    });
     await deleteCardEvent(actionCard.id, editEventIndex);
     closeAction();
     await load();
@@ -467,6 +517,7 @@ export default function TarjetasScreen() {
   const confirmDeleteCardNow = async () => {
     if (!confirmDeleteCard) return;
     await cancelNotification(confirmDeleteCard.notificationId);
+    await cancelNotification(confirmDeleteCard.statementNotificationId);
     await clearCardFromExpenses(confirmDeleteCard.id);
     await deleteCard(confirmDeleteCard.id);
     setConfirmDeleteCard(null);
@@ -507,9 +558,10 @@ export default function TarjetasScreen() {
     ? expenses.filter(e => e.cardId === actionCard.id).slice(-3).reverse()
     : [];
   const actionEvents   = actionCard?.events?.slice().reverse().slice(0, 3) ?? [];
-  const actionTotal    = actionCard ? getCardTotalSpent(expenses, actionCard.id) : 0;
+  const actionTotal    = actionCard ? getCardCurrentCycleSpent(actionCard, expenses) : 0;
+  const actionStatementDebt = actionCard?.type === 'credit' ? (actionCard.statementBalance ?? 0) : 0;
   const actionLimitPct = actionCard?.type === 'credit' && actionCard.limit
-    ? Math.min((actionTotal / actionCard.limit) * 100, 100)
+    ? Math.min(((actionTotal + actionStatementDebt) / actionCard.limit) * 100, 100)
     : 0;
 
   if (loading) return (
@@ -593,7 +645,7 @@ export default function TarjetasScreen() {
                     <CardView
                       key={card.id}
                       card={card}
-                      totalSpent={getCardTotalSpent(expenses, card.id)}
+                      totalSpent={getCardCurrentCycleSpent(card, expenses)}
                       selected={false}
                       onPress={() => openAction(card)}
                       onLongPress={() => openAction(card)}
@@ -640,7 +692,7 @@ export default function TarjetasScreen() {
                     onEdit={() => { setEditingCard(card); setPendingTypes([card.type]); setModalVisible(true); }}
                   >
                     <TouchableOpacity onPress={() => openAction(card)} activeOpacity={0.85}>
-                      <AccountRow card={card} spent={getCardTotalSpent(expenses, card.id)} />
+                      <AccountRow card={card} spent={getCardCurrentCycleSpent(card, expenses)} />
                     </TouchableOpacity>
                   </SwipeableRow>
                 ))}
@@ -686,7 +738,7 @@ export default function TarjetasScreen() {
                     <CardView
                       key={card.id}
                       card={card}
-                      totalSpent={getCardTotalSpent(expenses, card.id)}
+                      totalSpent={getCardCurrentCycleSpent(card, expenses)}
                       selected={false}
                       onPress={() => openAction(card)}
                       onLongPress={() => openAction(card)}
@@ -714,7 +766,7 @@ export default function TarjetasScreen() {
               {totalDebt > 0 && <Text style={[styles.sectionDividerAmt, { color: COLORS.danger }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(totalDebt)}</Text>}
             </View>
 
-            {debts.length === 0 ? (
+            {debts.length === 0 && creditsWithStatement.length === 0 ? (
               <View style={{ paddingHorizontal: 20 }}>
                 <Text style={[styles.emptyHint, { marginBottom: 16 }]}>
                   Registra préstamos o deudas informales
@@ -736,6 +788,11 @@ export default function TarjetasScreen() {
                     </TouchableOpacity>
                   </SwipeableRow>
                 ))}
+                {creditsWithStatement.map(card => (
+                  <TouchableOpacity key={card.id} onPress={() => openAction(card)} activeOpacity={0.85}>
+                    <AccountRow card={card} spent={0} />
+                  </TouchableOpacity>
+                ))}
               </View>
             )}
           </>
@@ -747,6 +804,7 @@ export default function TarjetasScreen() {
         card={editingCard}
         allowedTypes={pendingTypes}
         expenses={expenses}
+        expenseBuckets={[expenses, prevMonthExpenses]}
         onSave={handleSaveCard}
         onClose={() => { setModalVisible(false); setEditingCard(null); }}
       />
@@ -807,7 +865,7 @@ export default function TarjetasScreen() {
                             <View style={actStyles.statBox}>
                               <Text style={actStyles.statLabel}>Disponible</Text>
                               <Text style={[actStyles.statVal, { color: COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>
-                                {formatCOP(Math.max(actionCard.limit - actionTotal, 0))}
+                                {formatCOP(Math.max(actionCard.limit - actionTotal - actionStatementDebt, 0))}
                               </Text>
                             </View>
                           ) : null}
@@ -824,6 +882,21 @@ export default function TarjetasScreen() {
                             }]} />
                           </View>
                         ) : null}
+                        {actionStatementDebt > 0 && (
+                          <View style={actStyles.balanceRow}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={actStyles.balanceLabel}>Saldo pendiente del corte</Text>
+                              {actionCard.statementDueDate && (
+                                <Text style={{ color: COLORS.textMuted, fontSize: 11, marginTop: 2 }}>
+                                  Vence {new Date(actionCard.statementDueDate).toLocaleDateString('es-CO')}
+                                </Text>
+                              )}
+                            </View>
+                            <Text style={[actStyles.balanceVal, { color: COLORS.danger, fontSize: FONT.base }]} numberOfLines={1} adjustsFontSizeToFit>
+                              {formatCOP(actionStatementDebt)}
+                            </Text>
+                          </View>
+                        )}
                       </>
                     ) : (
                       <>
@@ -843,7 +916,7 @@ export default function TarjetasScreen() {
                             <Text style={[actStyles.balanceVal, { color: accentColor }]} numberOfLines={1} adjustsFontSizeToFit>
                               {formatCOP(isDebt
                                 ? (actionCard.balance ?? 0)
-                                : Math.max((actionCard.balance ?? 0) - getCardTotalSpent(expenses, actionCard.id), 0)
+                                : Math.max((actionCard.balance ?? 0) - getCardCurrentCycleSpent(actionCard, expenses), 0)
                               )}
                             </Text>
                           </View>
@@ -945,7 +1018,7 @@ export default function TarjetasScreen() {
                         </View>
                       </>
                     )}
-                    {isDebt && <View style={actStyles.divider} />}
+                    {(isDebt || (isCredit && actionStatementDebt > 0)) && <View style={actStyles.divider} />}
 
                     {!isCredit && (
                       <TouchableOpacity
@@ -961,6 +1034,16 @@ export default function TarjetasScreen() {
                         </Text>
                       </TouchableOpacity>
                     )}
+
+                    {isCredit && actionStatementDebt > 0 && (
+                      <TouchableOpacity
+                        style={[actStyles.addMoneyBtn, { backgroundColor: COLORS.danger, marginBottom: 4 }]}
+                        onPress={() => setActionStep('money')}
+                      >
+                        <Ionicons name="arrow-down-circle-outline" size={20} color="#fff" />
+                        <Text style={actStyles.addMoneyBtnText}>Abonar al saldo del corte</Text>
+                      </TouchableOpacity>
+                    )}
                   </>
                 );
               })()}
@@ -972,7 +1055,7 @@ export default function TarjetasScreen() {
                     <Text style={actStyles.backBtnText}>Volver</Text>
                   </TouchableOpacity>
                   <Text style={actStyles.moneyTitle}>
-                    {actionCard.type === 'debt' ? '¿Cuánto abonaste?' : '¿Cuánto quieres agregar?'}
+                    {actionCard.type === 'debt' || actionCard.type === 'credit' ? '¿Cuánto abonaste?' : '¿Cuánto quieres agregar?'}
                   </Text>
                   <TextInput
                     style={actStyles.moneyInput}
@@ -993,13 +1076,13 @@ export default function TarjetasScreen() {
                   />
                   <TouchableOpacity
                     style={[actStyles.confirmBtn, {
-                      backgroundColor: actionCard.type === 'debt' ? COLORS.debt : COLORS.debit,
+                      backgroundColor: actionCard.type === 'debt' ? COLORS.debt : actionCard.type === 'credit' ? COLORS.danger : COLORS.debit,
                       marginBottom: 8,
                     }]}
                     onPress={handleAddMoney}
                   >
                     <Text style={actStyles.confirmBtnText}>
-                      {actionCard.type === 'debt' ? 'Registrar abono' : 'Agregar dinero'}
+                      {actionCard.type === 'debt' || actionCard.type === 'credit' ? 'Registrar abono' : 'Agregar dinero'}
                     </Text>
                   </TouchableOpacity>
                 </>
@@ -1269,13 +1352,19 @@ function AccountRow({ card, spent }: { card: Card; spent: number }) {
 
   const isCash = card.type === 'cash';
   const isDebt = card.type === 'debt';
+  // Una tarjeta de crédito solo aparece en esta fila (dentro de Préstamos)
+  // cuando ya tiene un saldo de corte pendiente de pago.
+  const isStatement = card.type === 'credit';
   const available = isDebt
     ? (card.balance ?? 0)
+    : isStatement
+    ? (card.statementBalance ?? 0)
     : Math.max((card.balance ?? 0) - spent, 0);
   const icon: keyof typeof Ionicons.glyphMap =
-    isCash ? 'cash-outline' : isDebt ? 'receipt-outline' : 'business-outline';
+    isCash ? 'cash-outline' : isDebt ? 'receipt-outline' : isStatement ? 'card-outline' : 'business-outline';
   const subtitle = isCash ? 'Efectivo'
     : isDebt ? (card.dueDate ? `Vence: ${card.dueDate}` : 'Préstamo pendiente')
+    : isStatement ? `💳 Tarjeta de crédito${card.statementDueDate ? ` · vence ${new Date(card.statementDueDate).toLocaleDateString('es-CO')}` : ''}`
     : (card.bank || 'Débito');
 
   return (
@@ -1292,8 +1381,8 @@ function AccountRow({ card, spent }: { card: Card; spent: number }) {
         <Text style={s.sub}>{subtitle}</Text>
       </View>
       <View style={s.right}>
-        <Text style={[s.balance, { color: isDebt ? COLORS.danger : COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(available)}</Text>
-        {!isDebt && spent > 0 && <Text style={s.spentText} numberOfLines={1} adjustsFontSizeToFit>-{formatCOP(spent)} gastado</Text>}
+        <Text style={[s.balance, { color: isDebt || isStatement ? COLORS.danger : COLORS.debit }]} numberOfLines={1} adjustsFontSizeToFit>{formatCOP(available)}</Text>
+        {!isDebt && !isStatement && spent > 0 && <Text style={s.spentText} numberOfLines={1} adjustsFontSizeToFit>-{formatCOP(spent)} gastado</Text>}
       </View>
     </View>
   );

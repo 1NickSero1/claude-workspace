@@ -5,9 +5,11 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import BottomSheet from './BottomSheet';
+import CardView from './CardView';
 import { Ionicons } from '@expo/vector-icons';
-import { CustomCategory, Expense, Card, RecurrenceFrequency, RecurringTemplate, updateExpense, addExpenses, deleteExpense } from '@/lib/storage';
+import { CustomCategory, Expense, Card, RecurrenceFrequency, RecurringTemplate, updateExpense, addExpenses, deleteExpense, getCardCurrentCycleSpent } from '@/lib/storage';
 import { cancelNotification, scheduleRecurringReminder } from '@/lib/notifications';
+import { getPayableCards, getCardAvailable } from '@/lib/recurringPayments';
 import { formatCOP, formatThousands } from '@/lib/expenseParser';
 import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
@@ -16,6 +18,10 @@ interface CatDetailProps {
   visible: boolean;
   cat: CustomCategory | null;
   expenses: Expense[];
+  // Gastos de TODAS las categorías del mes (no solo de esta) — necesario
+  // para calcular el disponible real de cada tarjeta al elegir de dónde
+  // salió el dinero, independiente de qué categoría se está viendo.
+  allExpenses: Expense[];
   cards: Card[];
   categories: CustomCategory[];
   monthKey: string;
@@ -26,7 +32,7 @@ interface CatDetailProps {
   onClose: () => void;
 }
 
-export default function CategoryDetailModal({ visible, cat, expenses, cards, monthKey, pendingTemplates, hormigaThreshold, onPay, onRefresh, onClose }: CatDetailProps) {
+export default function CategoryDetailModal({ visible, cat, expenses, allExpenses, cards, monthKey, pendingTemplates, hormigaThreshold, onPay, onRefresh, onClose }: CatDetailProps) {
   type Mode = 'list' | 'add' | 'edit';
   const [mode, setMode]         = useState<Mode>('list');
   const [editExp, setEditExp]   = useState<Expense | null>(null);
@@ -60,7 +66,7 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     },
     expLeft: { flex: 1 },
     expNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    expName: { color: COLORS.text, fontWeight: '600', fontSize: FONT.md },
+    expName: { color: COLORS.text, fontWeight: '600', fontSize: FONT.md, flexShrink: 1 },
     expMeta: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
     expAmt: { color: COLORS.text, fontWeight: '700', fontSize: FONT.md },
     editBtn: { width: 30, height: 30, borderRadius: RADIUS.sm, backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center' },
@@ -74,6 +80,14 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     addBtnText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 14, marginBottom: 6 },
     input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
+    cardScroll: { marginTop: 2 },
+    cardChipRow: { flexDirection: 'row', gap: SPACING.sm, paddingRight: SPACING.md },
+    noFundsBox: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+      backgroundColor: COLORS.danger + '18', borderRadius: RADIUS.md, padding: SPACING.md,
+      marginTop: 6, borderWidth: 1, borderColor: COLORS.danger + '40',
+    },
+    noFundsText: { color: COLORS.danger, fontSize: FONT.sm, flex: 1, lineHeight: 18 },
     recurringRow: {
       flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginTop: 14,
       backgroundColor: COLORS.card2, borderRadius: RADIUS.md, padding: SPACING.md,
@@ -161,9 +175,26 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     setDueDate(selected.toLocaleDateString('es-CO'));
   };
 
+  // ¿De dónde sale el dinero? — mismo criterio que QuickEntryModal: solo
+  // cuentas con saldo/cupo disponible, mirando TODOS los gastos del mes
+  // (allExpenses), no solo los de esta categoría. Al editar un gasto que ya
+  // se guardó, su propio monto no cuenta contra sí mismo (se le devuelve al
+  // disponible antes de comparar).
+  const payableCards = getPayableCards(cards, allExpenses);
+  const selectedCardObj = cardId ? cards.find(c => c.id === cardId) ?? null : null;
+  const cardAvailable = selectedCardObj
+    ? getCardAvailable(selectedCardObj, allExpenses) + (mode === 'edit' && editExp && editExp.cardId === cardId ? editExp.amount : 0)
+    : 0;
+  const exceedsAvailable = !!selectedCardObj && Number(amount.replace(/\D/g, '')) > cardAvailable;
+  // Para un gasto NUEVO se exige elegir cuenta, igual que en QuickEntryModal.
+  // Al editar uno que ya estaba sin cuenta asignada (huérfano, ej. porque se
+  // borró la tarjeta) no se fuerza a elegir una retroactivamente — pero si
+  // hay una cuenta elegida (nuevo o editando), sí tiene que alcanzar.
+  const canSaveExpense = cardId ? !exceedsAvailable : mode === 'edit';
+
   const handleSave = async () => {
     const amt = Number(amount.replace(/\D/g, ''));
-    if (!name.trim() || !amt) return;
+    if (!name.trim() || !amt || !canSaveExpense) return;
     const trimmedName = name.trim().toUpperCase();
 
     if (mode === 'edit' && editExp) {
@@ -298,7 +329,7 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
                         <View key={e.id} style={dStyles.expRow}>
                           <View style={dStyles.expLeft}>
                             <View style={dStyles.expNameRow}>
-                              <Text style={dStyles.expName}>{e.name}</Text>
+                              <Text style={dStyles.expName} numberOfLines={1}>{e.name}</Text>
                               {e.isRecurring ? (
                                 <View style={dStyles.paidTag}>
                                   <Text style={dStyles.paidTagText}>Pagado</Text>
@@ -372,6 +403,41 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
                 keyboardType="number-pad"
               />
 
+              <Text style={dStyles.label}>¿De dónde salió el dinero?</Text>
+              {payableCards.length === 0 ? (
+                <View style={dStyles.noFundsBox}>
+                  <Ionicons name="warning" size={16} color={COLORS.danger} />
+                  <Text style={dStyles.noFundsText}>
+                    Ninguna cuenta tiene saldo disponible ahora mismo — usa otro medio de pago o agrega saldo antes de registrar este gasto.
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={dStyles.cardScroll}>
+                    <View style={dStyles.cardChipRow}>
+                      {payableCards.map(c => (
+                        <CardView
+                          key={c.id}
+                          card={c}
+                          compact
+                          selected={cardId === c.id}
+                          totalSpent={getCardCurrentCycleSpent(c, allExpenses)}
+                          onPress={() => setCardId(c.id)}
+                        />
+                      ))}
+                    </View>
+                  </ScrollView>
+                  {exceedsAvailable && (
+                    <View style={dStyles.noFundsBox}>
+                      <Ionicons name="warning" size={16} color={COLORS.danger} />
+                      <Text style={dStyles.noFundsText}>
+                        Ese monto supera lo disponible en {selectedCardObj?.name} ({formatCOP(cardAvailable)}). Reduce el monto o elige otra cuenta.
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
+
               <View style={dStyles.recurringRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={dStyles.recurringLabel}>Gasto recurrente</Text>
@@ -424,8 +490,8 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleSave}
-                  disabled={!name.trim() || !Number(amount.replace(/\D/g, ''))}
-                  style={[dStyles.saveBtn, (!name.trim() || !amount) && dStyles.saveBtnOff]}
+                  disabled={!name.trim() || !Number(amount.replace(/\D/g, '')) || !canSaveExpense}
+                  style={[dStyles.saveBtn, (!name.trim() || !amount || !canSaveExpense) && dStyles.saveBtnOff]}
                 >
                   <Text style={dStyles.saveText}>Guardar</Text>
                 </TouchableOpacity>

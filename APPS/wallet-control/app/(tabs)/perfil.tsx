@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, TextInput, Switch, Modal,
+  ScrollView, Switch, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import {
-  getUserProfile, deleteUserProfile, saveUserProfile, UserProfile,
+  getUserProfile, deleteUserProfile, UserProfile,
   getShowBalanceNotification, saveShowBalanceNotification,
   wipeNamespaceData,
 } from '@/lib/storage';
 import { requestNotificationPermission, cancelBalanceNotification } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
-import BottomSheet from '@/components/BottomSheet';
 import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors, useThemeInfo } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
@@ -31,8 +30,6 @@ export default function PerfilScreen() {
   const { moderateScale } = useResponsive();
   const { themeMode, setThemeMode } = useThemeInfo();
   const [profile, setProfile]       = useState<UserProfile | null>(null);
-  const [editModal, setEditModal]   = useState(false);
-  const [editName, setEditName]     = useState('');
   const [showBalanceNotif, setShowBalanceNotif] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
 
@@ -77,14 +74,6 @@ export default function PerfilScreen() {
       await deleteUserProfile();
       router.replace('/onboarding');
     }
-  };
-
-  const handleSaveName = async () => {
-    if (!profile || !editName.trim()) return;
-    const updated = { ...profile, name: editName.trim() };
-    await saveUserProfile(updated);
-    setProfile(updated);
-    setEditModal(false);
   };
 
   const styles = useMemo(() => StyleSheet.create(scaledSheet({
@@ -158,21 +147,6 @@ export default function PerfilScreen() {
     upgradeText: { color: COLORS.primary, fontWeight: '700', fontSize: FONT.base },
     upgradeSub: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
 
-    modalTitle: { color: COLORS.text, fontWeight: '700', fontSize: FONT.lg, marginBottom: SPACING.lg },
-    modalLabel: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 6 },
-    input: {
-      backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md,
-      color: COLORS.text, fontSize: FONT.base, borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.xl,
-    },
-    modalActions: { flexDirection: 'row', gap: 10 },
-    cancelBtn: {
-      flex: 1, padding: 14, borderRadius: RADIUS.md, borderWidth: 1,
-      borderColor: COLORS.border, alignItems: 'center',
-    },
-    cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
-    saveBtn:    { flex: 1, padding: 14, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: 'center' },
-    saveText:   { color: '#fff', fontWeight: '700', fontSize: FONT.md },
-
     confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 28 },
     confirmCard: {
       backgroundColor: COLORS.card, borderRadius: RADIUS.xl, padding: SPACING.xxl, width: '100%',
@@ -215,10 +189,10 @@ export default function PerfilScreen() {
             )}
             <TouchableOpacity
               style={styles.editBtn}
-              onPress={() => { setEditName(profile.name); setEditModal(true); }}
+              onPress={() => router.push('/cuenta')}
             >
               <Ionicons name="pencil-outline" size={14} color={COLORS.primary} />
-              <Text style={styles.editBtnText}>Editar nombre</Text>
+              <Text style={styles.editBtnText}>Modificar tu cuenta</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -344,31 +318,6 @@ export default function PerfilScreen() {
         </TouchableOpacity>
 
       </ScrollView>
-
-      {/* Modal editar nombre */}
-      <BottomSheet visible={editModal} onClose={() => setEditModal(false)} maxHeight="70%">
-        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <Text style={styles.modalTitle}>Editar nombre</Text>
-          <Text style={styles.modalLabel}>Nombre</Text>
-          <TextInput
-            style={styles.input}
-            value={editName}
-            onChangeText={setEditName}
-            placeholder="Tu nombre"
-            placeholderTextColor={COLORS.textDim}
-            autoFocus
-            autoCapitalize="words"
-          />
-          <View style={styles.modalActions}>
-            <TouchableOpacity onPress={() => setEditModal(false)} style={styles.cancelBtn}>
-              <Text style={styles.cancelText}>Cancelar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleSaveName} style={styles.saveBtn}>
-              <Text style={styles.saveText}>Guardar</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </BottomSheet>
 
       {/* Confirmación de cerrar sesión (reemplaza Alert.alert nativo) */}
       <Modal visible={confirmLogout} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setConfirmLogout(false)}>

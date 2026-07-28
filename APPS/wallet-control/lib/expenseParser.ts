@@ -40,22 +40,38 @@ export function parseClaudeResponse(text: string): ClaudeRawResponse {
   }
 }
 
-export function buildExpenses(rawExpenses: RawExpense[], monthKey: string, cards: Card[] = []): Expense[] {
-  return rawExpenses.map((raw, i) => {
-    const card = raw.cardName
-      ? cards.find(c => c.name.trim().toLowerCase() === raw.cardName!.trim().toLowerCase())
-      : undefined;
-    return {
-      id:         `${Date.now()}_${i}`,
-      name:       String(raw.name ?? '').toUpperCase().trim(),
-      amount:     Math.abs(Number(raw.amount) || 0),
-      categoryId: String(raw.category ?? 'otro'),
-      quincena:   raw.quincena === 2 ? 2 : 1,
-      cardId:     card?.id,
-      createdAt:  new Date().toISOString(),
-      monthKey,
-    };
+function findCardByName(cardName: string, cards: Card[]): Card | undefined {
+  const needle = cardName.trim().toLowerCase();
+  const exact = cards.find(c => c.name.trim().toLowerCase() === needle);
+  if (exact) return exact;
+  // Claude a veces manda un alias corto ("bbva") en vez del nombre completo
+  // que el usuario le puso a la tarjeta ("BBVA Débito") — antes de dejar el
+  // gasto sin cuenta asignada, se prueba una coincidencia parcial en
+  // cualquiera de los dos sentidos.
+  return cards.find(c => {
+    const full = c.name.trim().toLowerCase();
+    return full.includes(needle) || needle.includes(full);
   });
+}
+
+export function buildExpenses(rawExpenses: RawExpense[], monthKey: string, cards: Card[] = []): Expense[] {
+  return rawExpenses
+    // Un gasto sin nombre o sin monto real no debe llegar a guardarse en
+    // silencio — se descarta acá, antes de crear el registro.
+    .filter(raw => String(raw.name ?? '').trim().length > 0 && Number(raw.amount) > 0)
+    .map((raw, i) => {
+      const card = raw.cardName ? findCardByName(raw.cardName, cards) : undefined;
+      return {
+        id:         `${Date.now()}_${i}`,
+        name:       String(raw.name ?? '').toUpperCase().trim(),
+        amount:     Math.abs(Number(raw.amount) || 0),
+        categoryId: String(raw.category ?? 'otro'),
+        quincena:   raw.quincena === 2 ? 2 : 1,
+        cardId:     card?.id,
+        createdAt:  new Date().toISOString(),
+        monthKey,
+      };
+    });
 }
 
 export function buildIncomes(rawIncomes: RawIncome[], monthKey: string): Income[] {

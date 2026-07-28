@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView,
@@ -11,9 +11,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   saveUserProfile, getUserProfile, UserProfile, BudgetPeriod,
-  addIncomes, addExpenses, getCurrentMonthKey, saveBudget,
-  migrateNamespaceData, saveCard, getCards, Card,
-  getCategories, saveCategory,
+  addIncomes, getCurrentMonthKey, saveBudget,
+  migrateNamespaceData, wipeNamespaceData, saveCard, getCards, Card, appendCardEvent,
+  getCategories, saveCategory, CustomCategory, saveRecurringDefinition,
 } from '@/lib/storage';
 import { scheduleRecurringReminder } from '@/lib/notifications';
 import { formatThousands, GASTO_HORMIGA_MAX } from '@/lib/expenseParser';
@@ -35,16 +35,21 @@ const RECOMMENDED_EMOJIS = ['💵', '😀', '😎', '🚀', '🐱', '⭐', '🔥
 const EMOJI_ONLY_REGEX = /\p{Extended_Pictographic}/gu;
 const filterEmojiOnly = (text: string) => (text.match(EMOJI_ONLY_REGEX) ?? []).join('');
 
+// Categoría genérica siempre disponible en este paso del onboarding, para que
+// nunca falte una categoría a la que asignar un gasto fijo aunque el usuario
+// no cree ninguna propia.
+const RANDOM_CATEGORY: CustomCategory = {
+  id: 'random', name: 'Random', color: '#8E8E93', icon: 'shuffle-outline', isDefault: false, emoji: '🎲',
+};
+
 type Step = 'welcome' | 'choice' | 'register' | 'login' | 'periodicity' | 'budget' | 'fixedIncome' | 'fixedExpense' | 'hormigaThreshold' | 'done';
 
-const SUGGESTED_FIXED_EXPENSES = [
-  'Arriendo', 'Servicios (luz/agua/gas)', 'Internet / Celular', 'Suscripciones', 'Transporte', 'Seguro',
-];
+const SUGGESTED_FIXED_EXPENSES = ['Arriendo', 'Servicios (luz/agua/gas)', 'Suscripciones'];
 
 function getPasswordStrength(pw: string): { label: string; pct: number; color: 'danger' | 'gold' | 'debit' } {
   let score = 0;
-  if (pw.length >= 6) score++;
-  if (pw.length >= 10) score++;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
   if (/[A-Z]/.test(pw)) score++;
   if (/[0-9]/.test(pw)) score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
@@ -87,9 +92,13 @@ export default function OnboardingScreen() {
   const [budgetPeriod, setBudgetPeriod]       = useState<BudgetPeriod>('biweekly');
   const [budgetAmount, setBudgetAmount]       = useState('');
   const [fixedIncomeAmount, setFixedIncomeAmount] = useState('');
-  const [fixedExpenseItems, setFixedExpenseItems] = useState<{ name: string; amount: number }[]>([]);
+  const [fixedExpenseItems, setFixedExpenseItems] = useState<{ name: string; amount: number; categoryId: string }[]>([]);
   const [newExpenseName, setNewExpenseName]   = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
+  const [expenseCategories, setExpenseCategories] = useState<CustomCategory[]>([RANDOM_CATEGORY]);
+  const [selectedExpenseCategoryId, setSelectedExpenseCategoryId] = useState<string | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [addingExpense, setAddingExpense] = useState(false);
   const [hormigaThreshold, setHormigaThreshold] = useState(String(GASTO_HORMIGA_MAX));
   const [setupSaving, setSetupSaving]         = useState(false);
 
@@ -98,7 +107,7 @@ export default function OnboardingScreen() {
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const canRegister = nickname.trim().length >= 2
     && emailValid
-    && password.length >= 6
+    && password.length >= 8
     && avatarEmoji.trim().length > 0;
 
   const handleRegister = async () => {
@@ -158,8 +167,11 @@ export default function OnboardingScreen() {
       };
       await saveUserProfile(profile);
       // Si el usuario venía probando en modo anónimo, sus tarjetas/gastos/
-      // metas ya cargados no deben desaparecer al crear la cuenta real.
+      // metas ya cargados no deben desaparecer al crear la cuenta real —
+      // se copian a la cuenta nueva y LUEGO se borran del namespace 'anon',
+      // para que el próximo invitado en este dispositivo no los herede.
       await migrateNamespaceData('anon', data.user.id);
+      await wipeNamespaceData('anon');
       trackSignup(profile);
       if (wasAnonymousUpgrade) {
         goToApp();
@@ -237,8 +249,11 @@ export default function OnboardingScreen() {
       // confirmar correo (con modo anónimo activo mientras tanto), la
       // migración de datos no se pudo hacer en handleRegister — se
       // intenta aquí también. migrateNamespaceData ya es seguro llamarlo
-      // de más (no pisa datos si el destino ya los tiene).
+      // de más (no pisa datos si el destino ya los tiene). El borrado del
+      // namespace 'anon' después es igual de seguro llamarlo de más (queda
+      // vacío si ya se había borrado antes).
       await migrateNamespaceData('anon', data.user.id);
+      await wipeNamespaceData('anon');
       router.replace('/(tabs)');
     } catch (e: any) {
       setInfoModal({ title: 'No pudimos iniciar sesión', message: e?.message ?? 'Revisa tu correo y contraseña.', variant: 'error' });
@@ -266,10 +281,14 @@ export default function OnboardingScreen() {
 
   const handlePeriodicityContinue = async () => {
     if (!createdProfile) return;
-    const updated: UserProfile = { ...createdProfile, budgetPeriod };
-    await saveUserProfile(updated);
-    setCreatedProfile(updated);
-    setStep('budget');
+    try {
+      const updated: UserProfile = { ...createdProfile, budgetPeriod };
+      await saveUserProfile(updated);
+      setCreatedProfile(updated);
+      setStep('budget');
+    } catch (e: any) {
+      setInfoModal({ title: 'Error', message: e?.message ?? 'No se pudo guardar. Intenta de nuevo.', variant: 'error' });
+    }
   };
 
   const handleBudgetContinue = async (skip: boolean) => {
@@ -280,6 +299,8 @@ export default function OnboardingScreen() {
         await saveBudget(getCurrentMonthKey(), amount);
       }
       setStep('fixedIncome');
+    } catch (e: any) {
+      setInfoModal({ title: 'Error', message: e?.message ?? 'No se pudo guardar. Intenta de nuevo.', variant: 'error' });
     } finally {
       setSetupSaving(false);
     }
@@ -313,8 +334,10 @@ export default function OnboardingScreen() {
         // de Efectivo con ese monto para arrancar con saldo real.
         const existingCards = await getCards();
         const cashCard = existingCards.find(c => c.type === 'cash');
+        let cashCardId: string;
         if (cashCard) {
           await saveCard({ ...cashCard, balance: (cashCard.balance ?? 0) + amount });
+          cashCardId = cashCard.id;
         } else {
           const newCash: Card = {
             id: `card_${Date.now()}`,
@@ -328,21 +351,75 @@ export default function OnboardingScreen() {
             createdAt: new Date().toISOString(),
           };
           await saveCard(newCash);
+          cashCardId = newCash.id;
         }
+        // Queda registrado en el mini historial de Efectivo que este depósito
+        // vino del ingreso fijo mensual, no como un aumento de saldo sin explicar.
+        await appendCardEvent(cashCardId, { type: 'deposit', amount, date: new Date().toISOString(), note: 'Sueldo' });
       }
       setStep('fixedExpense');
+    } catch (e: any) {
+      setInfoModal({ title: 'Error', message: e?.message ?? 'No se pudo guardar. Intenta de nuevo.', variant: 'error' });
     } finally {
       setSetupSaving(false);
     }
   };
 
-  const addFixedExpenseItem = () => {
+  // A esta altura del onboarding el usuario todavía no ha pasado por la
+  // pantalla de Categorías — sin la genérica "Random" siempre disponible no
+  // tendría a qué categoría asignar un gasto fijo si no crea una propia.
+  useEffect(() => {
+    if (step !== 'fixedExpense') return;
+    (async () => {
+      const existing = await getCategories();
+      const hasRandom = existing.some(c => c.id === RANDOM_CATEGORY.id || c.name.trim().toLowerCase() === 'random');
+      if (!hasRandom) await saveCategory(RANDOM_CATEGORY);
+      const cats = hasRandom ? existing : [...existing, RANDOM_CATEGORY];
+      setExpenseCategories(cats);
+    })();
+  }, [step]);
+
+  const addFixedExpenseItem = async () => {
     const amount = Number(newExpenseAmount.replace(/\D/g, ''));
     const name = newExpenseName.trim().toUpperCase();
-    if (!name || amount <= 0) return;
-    setFixedExpenseItems(items => [...items, { name, amount }]);
-    setNewExpenseName('');
-    setNewExpenseAmount('');
+    const typedCatName = newCategoryName.trim();
+    if (!name || amount <= 0 || (!selectedExpenseCategoryId && !typedCatName) || addingExpense) return;
+    setAddingExpense(true);
+    try {
+      // Si el usuario escribió una categoría nueva en vez de tocar un pill,
+      // se crea recién ahora (y aparece como pill) — reutilizando una ya
+      // existente con el mismo nombre en vez de duplicarla.
+      let categoryId = selectedExpenseCategoryId;
+      if (typedCatName) {
+        const existing = expenseCategories.find(c => c.name.trim().toLowerCase() === typedCatName.toLowerCase());
+        if (existing) {
+          categoryId = existing.id;
+        } else {
+          const cat: CustomCategory = {
+            id: `cat_${Date.now()}`,
+            name: typedCatName,
+            color: AVATAR_COLORS[expenseCategories.length % AVATAR_COLORS.length],
+            icon: 'pricetag-outline',
+            isDefault: false,
+          };
+          await saveCategory(cat);
+          setExpenseCategories(prev => [...prev, cat]);
+          categoryId = cat.id;
+        }
+      }
+      setFixedExpenseItems(items => [...items, { name, amount, categoryId: categoryId! }]);
+      // La categoría NO queda preseleccionada para el próximo gasto — el
+      // usuario elige a propósito cada vez, en vez de heredar en silencio
+      // la última que usó.
+      setSelectedExpenseCategoryId(null);
+      setNewExpenseName('');
+      setNewExpenseAmount('');
+      setNewCategoryName('');
+    } catch (e: any) {
+      setInfoModal({ title: 'Error', message: e?.message ?? 'No se pudo agregar. Intenta de nuevo.', variant: 'error' });
+    } finally {
+      setAddingExpense(false);
+    }
   };
 
   const removeFixedExpenseItem = (index: number) => {
@@ -353,43 +430,31 @@ export default function OnboardingScreen() {
     setSetupSaving(true);
     try {
       if (!skip && fixedExpenseItems.length > 0) {
-        const monthKey = getCurrentMonthKey();
-        const day = new Date().getDate();
-        const quincena: 1 | 2 = day <= 15 ? 1 : 2;
-
-        // A esta altura del onboarding el usuario todavía no ha creado
-        // ninguna categoría propia (esa pantalla no es parte del setup
-        // inicial) — sin categorías por defecto, se necesita una real para
-        // que estos gastos no queden invisibles en "Gastos por categoría".
-        const existingCats = await getCategories();
-        let fallbackCat = existingCats[0];
-        if (!fallbackCat) {
-          fallbackCat = { id: 'otro', name: 'Otros', color: '#607D8B', icon: 'ellipsis-horizontal', isDefault: false };
-          await saveCategory(fallbackCat);
-        }
-
-        const expenses = await Promise.all(fixedExpenseItems.map(async (item, i) => {
+        // Se crean como gastos fijos PENDIENTES (RecurringDefinition), no
+        // como gastos ya pagados — el usuario los marca pagados de verdad
+        // desde "Gastos recurrentes", igual que cualquier otro gasto
+        // recurrente creado desde ahí. Antes se guardaban directo como
+        // Expense y aparecían todos como ya gastados desde el día 1.
+        await Promise.all(fixedExpenseItems.map(async (item, i) => {
           const notificationId = await scheduleRecurringReminder(item.name, 'monthly', new Date());
-          return {
-            id: `exp_${Date.now()}_${i}`,
+          await saveRecurringDefinition({
+            id: `${Date.now()}_${i}_def`,
             name: item.name,
+            categoryId: item.categoryId,
             amount: item.amount,
-            categoryId: fallbackCat.id,
-            quincena,
+            frequency: 'monthly',
             createdAt: new Date().toISOString(),
-            monthKey,
-            isRecurring: true,
-            recurrenceFrequency: 'monthly' as const,
             notificationId,
-          };
+          });
         }));
-        await addExpenses(monthKey, expenses);
       }
       if (pendingAnonymous) {
         goToApp();
       } else {
         setStep('hormigaThreshold');
       }
+    } catch (e: any) {
+      setInfoModal({ title: 'Error', message: e?.message ?? 'No se pudo guardar. Intenta de nuevo.', variant: 'error' });
     } finally {
       setSetupSaving(false);
     }
@@ -404,6 +469,8 @@ export default function OnboardingScreen() {
       await saveUserProfile(updated);
       setCreatedProfile(updated);
       setStep('done');
+    } catch (e: any) {
+      setInfoModal({ title: 'Error', message: e?.message ?? 'No se pudo guardar. Intenta de nuevo.', variant: 'error' });
     } finally {
       setSetupSaving(false);
     }
@@ -458,7 +525,7 @@ export default function OnboardingScreen() {
     featureText: { flex: 1, color: COLORS.text, fontSize: FONT.md, lineHeight: 20 },
 
     // Choice
-    choiceContainer: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl, paddingBottom: SPACING.xxl },
+    choiceContainer: { flexGrow: 1, paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl, paddingBottom: SPACING.xxl },
     optionCard: {
       flexDirection: 'row', alignItems: 'center', gap: 14,
       backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: SPACING.lg,
@@ -560,11 +627,28 @@ export default function OnboardingScreen() {
       backgroundColor: COLORS.card2, borderWidth: 1, borderColor: COLORS.border,
     },
     chipText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
-    addRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-    addBtn: {
-      width: 48, height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
-      alignItems: 'center', justifyContent: 'center',
+    categoryBox: {
+      backgroundColor: COLORS.card, borderRadius: RADIUS.md,
+      borderWidth: 1.5, borderColor: COLORS.border, overflow: 'hidden',
     },
+    categoryChipRow: {
+      flexDirection: 'row', flexWrap: 'wrap', gap: 6,
+      paddingHorizontal: 14, paddingTop: 10, paddingBottom: 8,
+    },
+    miniChip: {
+      paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14,
+      backgroundColor: COLORS.card2, borderWidth: 1, borderColor: COLORS.border,
+    },
+    miniChipText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.xs },
+    categoryDivider: { height: 1, backgroundColor: COLORS.border },
+    categoryInput: { padding: 14, color: COLORS.text, fontSize: FONT.md },
+    secondaryAddBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
+      borderRadius: RADIUS.lg, borderWidth: 1.5, borderColor: COLORS.primary,
+      paddingVertical: 14, marginTop: SPACING.lg,
+    },
+    secondaryAddBtnOff: { borderColor: COLORS.border },
+    secondaryAddBtnText: { color: COLORS.primary, fontWeight: '700', fontSize: FONT.base },
     expenseItemRow: {
       flexDirection: 'row', alignItems: 'center', gap: 10,
       backgroundColor: COLORS.card, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm,
@@ -879,14 +963,16 @@ export default function OnboardingScreen() {
 
   // ── GASTO FIJO ───────────────────────────────────────────────────────────────
   if (step === 'fixedExpense') {
+    const canAddExpense = !!newExpenseName.trim() && Number(newExpenseAmount.replace(/\D/g, '')) > 0
+      && (!!selectedExpenseCategoryId || !!newCategoryName.trim()) && !addingExpense;
     return (
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <ScrollView style={styles.flex} contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
             <Text style={styles.formTitle}>¿Cuánto gastas en cosas fijas al mes?</Text>
-            <Text style={styles.formSub}>Arriendo, servicios, suscripciones, etc. — agrega los que quieras, puedes omitir este paso</Text>
+            <Text style={[styles.formSub, { marginBottom: SPACING.sm }]}>Arriendo, servicios, suscripciones, etc. — agrega los que quieras, puedes omitir este paso</Text>
 
-            <Text style={styles.label}>Sugerencias</Text>
+            <Text style={[styles.label, { marginTop: 0 }]}>Sugerencias</Text>
             <View style={styles.chipRow}>
               {SUGGESTED_FIXED_EXPENSES.map(label => (
                 <TouchableOpacity key={label} onPress={() => setNewExpenseName(label)} style={styles.chip}>
@@ -905,33 +991,71 @@ export default function OnboardingScreen() {
               autoCapitalize="characters"
             />
 
-            <Text style={styles.label}>Monto mensual (COP)</Text>
-            <View style={styles.addRow}>
+            <Text style={styles.label}>Categoría</Text>
+            <View style={styles.categoryBox}>
+              <View style={styles.categoryChipRow}>
+                {expenseCategories.map(cat => {
+                  const active = selectedExpenseCategoryId === cat.id && !newCategoryName.trim();
+                  return (
+                    <TouchableOpacity
+                      key={cat.id}
+                      onPress={() => { setSelectedExpenseCategoryId(cat.id); setNewCategoryName(''); }}
+                      style={[styles.miniChip, active && { backgroundColor: cat.color + '22', borderColor: cat.color }]}
+                    >
+                      <Text style={[styles.miniChipText, active && { color: cat.color }]}>
+                        {cat.emoji ? `${cat.emoji} ` : ''}{cat.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <View style={styles.categoryDivider} />
               <TextInput
-                style={[styles.input, { flex: 1 }]}
-                value={formatThousands(newExpenseAmount)}
-                onChangeText={v => setNewExpenseAmount(v.replace(/\D/g, '').slice(0, 12))}
-                placeholder="Ej: 1.200.000"
+                style={styles.categoryInput}
+                value={newCategoryName}
+                onChangeText={t => { setNewCategoryName(t); if (t.trim()) setSelectedExpenseCategoryId(null); }}
+                placeholder="O escribe una categoría nueva"
                 placeholderTextColor={COLORS.textDim}
-                keyboardType="number-pad"
+                autoCapitalize="words"
               />
-              <TouchableOpacity
-                onPress={addFixedExpenseItem}
-                style={styles.addBtn}
-                accessibilityRole="button"
-                accessibilityLabel="Agregar gasto fijo"
-              >
-                <Ionicons name="add" size={22} color="#fff" />
-              </TouchableOpacity>
             </View>
+
+            <Text style={styles.label}>Monto mensual (COP)</Text>
+            <TextInput
+              style={styles.input}
+              value={formatThousands(newExpenseAmount)}
+              onChangeText={v => setNewExpenseAmount(v.replace(/\D/g, '').slice(0, 12))}
+              placeholder="Ej: 1.200.000"
+              placeholderTextColor={COLORS.textDim}
+              keyboardType="number-pad"
+            />
+
+            <TouchableOpacity
+              onPress={addFixedExpenseItem}
+              disabled={!canAddExpense}
+              style={[styles.secondaryAddBtn, !canAddExpense && styles.secondaryAddBtnOff]}
+              accessibilityRole="button"
+              accessibilityLabel="Añadir gasto fijo"
+            >
+              <Ionicons name="add-circle-outline" size={20} color={canAddExpense ? COLORS.primary : COLORS.textDim} />
+              <Text style={[styles.secondaryAddBtnText, !canAddExpense && { color: COLORS.textDim }]}>
+                {addingExpense ? 'Añadiendo...' : 'Añadir gasto fijo'}
+              </Text>
+            </TouchableOpacity>
 
             {fixedExpenseItems.length > 0 && (
               <View style={{ marginTop: 18 }}>
-                {fixedExpenseItems.map((item, i) => (
+                <Text style={styles.label}>Gastos creados</Text>
+                {fixedExpenseItems.map((item, i) => {
+                  const itemCat = expenseCategories.find(c => c.id === item.categoryId);
+                  return (
                   <View key={`${item.name}_${i}`} style={styles.expenseItemRow}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.expenseItemName}>{item.name}</Text>
-                      <Text style={styles.expenseItemAmount}>${formatThousands(item.amount)} COP/mes</Text>
+                      <Text style={styles.expenseItemAmount}>
+                        ${formatThousands(item.amount)} COP/mes
+                        {itemCat ? ` · ${itemCat.emoji ? `${itemCat.emoji} ` : ''}${itemCat.name}` : ''}
+                      </Text>
                     </View>
                     <TouchableOpacity
                       onPress={() => removeFixedExpenseItem(i)}
@@ -942,7 +1066,8 @@ export default function OnboardingScreen() {
                       <Ionicons name="trash-outline" size={16} color={COLORS.credit} />
                     </TouchableOpacity>
                   </View>
-                ))}
+                  );
+                })}
               </View>
             )}
 
@@ -1141,7 +1266,7 @@ export default function OnboardingScreen() {
               style={styles.input}
               value={password}
               onChangeText={setPassword}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               placeholderTextColor={COLORS.textDim}
               secureTextEntry={!showPassword}
             />

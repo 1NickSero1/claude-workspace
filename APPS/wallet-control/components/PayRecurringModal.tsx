@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, Expense, RecurringTemplate, getCardTotalSpent } from '@/lib/storage';
+import { Card, Expense, RecurringTemplate, getCardCurrentCycleSpent } from '@/lib/storage';
 import { getCardAvailable } from '@/lib/recurringPayments';
 import { formatCOP } from '@/lib/expenseParser';
 import { FONT, SPACING, RADIUS } from '@/constants/theme';
@@ -116,7 +116,7 @@ export default function PayRecurringModal({
                     card={c}
                     compact
                     selected={cardId === c.id}
-                    totalSpent={getCardTotalSpent(expenses, c.id)}
+                    totalSpent={getCardCurrentCycleSpent(c, expenses)}
                     onPress={() => onSelectCard(c.id)}
                   />
                 ))}

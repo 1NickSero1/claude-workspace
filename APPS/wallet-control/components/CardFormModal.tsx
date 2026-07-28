@@ -8,7 +8,8 @@ import InfoModal from './InfoModal';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Card, Expense, getCardTotalSpent } from '@/lib/storage';
+import { Card, Expense, getCardCurrentCycleSpent } from '@/lib/storage';
+import { mostRecentCutoff, computeStatementDueDate, sumCardExpensesInWindow } from '@/lib/creditCutoff';
 import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { CARD_COLORS } from '@/constants/categories';
@@ -18,6 +19,11 @@ interface Props {
   card?: Card | null;
   allowedTypes: Card['type'][];
   expenses: Expense[];
+  // Meses adicionales de gastos (ej. el mes anterior) para poder barrer
+  // correctamente al activar el corte por primera vez sobre una tarjeta que
+  // ya tenía gastos de antes del mes actual. Si no se pasa, se usa solo
+  // `expenses`. Ver activatingCutoff más abajo.
+  expenseBuckets?: Expense[][];
   onSave: (card: Card) => void;
   onClose: () => void;
 }
@@ -55,9 +61,10 @@ const BLANK = (type: Card['type']) => ({
   balance: undefined as number | undefined,
   dueDate: '',
   notifyOnDue: false,
+  cutoffDay: undefined as number | undefined,
 });
 
-export default function CardFormModal({ visible, card, allowedTypes, expenses, onSave, onClose }: Props) {
+export default function CardFormModal({ visible, card, allowedTypes, expenses, expenseBuckets, onSave, onClose }: Props) {
   const [form, setForm] = useState(BLANK(card?.type ?? allowedTypes[0]));
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [infoModal, setInfoModal] = useState<{ title: string; message: string } | null>(null);
@@ -86,6 +93,7 @@ export default function CardFormModal({ visible, card, allowedTypes, expenses, o
         balance:     card.balance,
         dueDate:     card.dueDate  ?? '',
         notifyOnDue: false,
+        cutoffDay:   card.cutoffDay,
       });
       setDueDateObj(card.dueDate ? parseDueDate(card.dueDate) : null);
     } else {
@@ -147,13 +155,62 @@ export default function CardFormModal({ visible, card, allowedTypes, expenses, o
     }
 
     if (card && form.type === 'credit' && limitValue != null) {
-      const spent = getCardTotalSpent(expenses, card.id);
+      const spent = getCardCurrentCycleSpent(card, expenses);
       if (Number(limitValue) < spent) {
         setInfoModal({
           title: 'Límite por debajo de lo gastado',
           message: `Ya tienes ${fmt(spent)} en gastos con esta tarjeta, más de lo que estás dejando como nuevo límite. Se guardará igual.`,
         });
       }
+    }
+
+    // Corte de tarjeta de crédito: activar el día de corte por primera vez
+    // (no lo tenía antes, sea al editar una tarjeta existente o al crearla
+    // ya con el día puesto desde el inicio) deja lista la fecha de corte
+    // para que el motor de cortes recurrentes (applyPendingCutoffs, en
+    // tarjetas.tsx) la tome desde el próximo ciclo.
+    let statementBalance         = card?.statementBalance;
+    let statementDueDate         = card?.statementDueDate;
+    let lastCutoffAt             = card?.lastCutoffAt;
+    let statementNotificationId  = card?.statementNotificationId;
+    const isCreditType = form.type === 'credit';
+    const activatingCutoff = isCreditType && !card?.cutoffDay && !!form.cutoffDay;
+    if (activatingCutoff) {
+      const cutoffDate = mostRecentCutoff(form.cutoffDay!);
+      lastCutoffAt = cutoffDate.toISOString();
+
+      if (card) {
+        // Tarjeta existente: lo gastado ANTES (o justo en) el día de corte
+        // se congela como la primera deuda pendiente, igual que pasaría con
+        // una tarjeta real — así no se ignora lo que ya llevabas gastado.
+        // Lo gastado DESPUÉS del corte, si lo hay, queda como ciclo abierto
+        // nuevo y no se suma acá (antes se sumaba TODO sin mirar fecha, lo
+        // que duplicaba la deuda apenas se activaba el corte).
+        const spentSoFar = sumCardExpensesInWindow(
+          card.id, expenseBuckets ?? [expenses], new Date(0), cutoffDate,
+        );
+        statementBalance = (statementBalance ?? 0) + spentSoFar;
+        if (statementBalance > 0) {
+          const dueDateObj2 = computeStatementDueDate(cutoffDate);
+          statementDueDate = dueDateObj2.toISOString();
+          const { status } = await Notifications.requestPermissionsAsync();
+          if (status === 'granted') {
+            if (statementNotificationId) {
+              await Notifications.cancelScheduledNotificationAsync(statementNotificationId).catch(() => {});
+            }
+            statementNotificationId = await Notifications.scheduleNotificationAsync({
+              content: {
+                title: 'Corte de tarjeta de crédito',
+                body: `Vence el pago de ${name}: ${fmt(statementBalance)}`,
+                sound: true,
+              },
+              trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueDateObj2 },
+            });
+          }
+        }
+      }
+      // Tarjeta nueva (!card): todavía no existe su id, así que no puede
+      // tener gastos previos que congelar — solo queda lista lastCutoffAt.
     }
 
     onSave({
@@ -171,6 +228,11 @@ export default function CardFormModal({ visible, card, allowedTypes, expenses, o
       notificationId: notificationId,
       events:         card?.events,
       createdAt:      card?.createdAt ?? new Date().toISOString(),
+      cutoffDay:               isCreditType ? form.cutoffDay : undefined,
+      statementBalance:        isCreditType ? statementBalance : undefined,
+      statementDueDate:        isCreditType ? statementDueDate : undefined,
+      lastCutoffAt:            isCreditType ? lastCutoffAt : undefined,
+      statementNotificationId: isCreditType ? statementNotificationId : undefined,
     });
   };
 
@@ -266,6 +328,13 @@ export default function CardFormModal({ visible, card, allowedTypes, expenses, o
     notifyCaption: { color: COLORS.textMuted, fontSize: FONT.xs, marginTop: 2 },
     dateField: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.border },
     dateFieldText: { fontSize: FONT.md },
+    cutoffHint: { color: COLORS.textMuted, fontSize: FONT.xs, marginTop: 6, lineHeight: 16 },
+    statementInfo: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 10,
+      backgroundColor: COLORS.warning + '18', borderRadius: RADIUS.md, padding: SPACING.md,
+      borderWidth: 1, borderColor: COLORS.warning + '40',
+    },
+    statementInfoText: { color: COLORS.text, fontSize: FONT.xs, flex: 1, lineHeight: 16 },
     confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 28 },
     confirmCard: {
       backgroundColor: COLORS.card, borderRadius: RADIUS.xl, padding: SPACING.xxl, width: '100%',
@@ -297,19 +366,20 @@ export default function CardFormModal({ visible, card, allowedTypes, expenses, o
 
           <ScrollView showsVerticalScrollIndicator={false}>
 
-            {/* ── Vista previa ─────────────────────────── */}
-            <View style={[styles.previewCard, { backgroundColor: form.color }]}>
-              <View style={styles.previewShine} />
-              <View style={styles.previewCircle1} />
-              <View style={styles.previewCircle2} />
-              <View style={styles.previewTop}>
-                <Text style={styles.previewBank}>
-                  {isDebt ? (form.emoji || '💸') : (form.bank || 'Entidad')}
-                </Text>
-                <Text style={styles.previewType}>{TYPE_META[form.type].label}</Text>
+            {/* ── Vista previa (solo débito/crédito — préstamo y efectivo
+                 no son tarjetas reales, la vista previa no aporta nada) ── */}
+            {!isDebt && !isCash && (
+              <View style={[styles.previewCard, { backgroundColor: form.color }]}>
+                <View style={styles.previewShine} />
+                <View style={styles.previewCircle1} />
+                <View style={styles.previewCircle2} />
+                <View style={styles.previewTop}>
+                  <Text style={styles.previewBank}>{form.bank || 'Entidad'}</Text>
+                  <Text style={styles.previewType}>{TYPE_META[form.type].label}</Text>
+                </View>
+                <Text style={styles.previewName}>{form.name || 'Nombre'}</Text>
               </View>
-              <Text style={styles.previewName}>{form.name || 'Nombre'}</Text>
-            </View>
+            )}
 
             {/* ── Tipo de cuenta (solo cuando hay más de una opción para elegir) ── */}
             {showSelector && (
@@ -432,6 +502,39 @@ export default function CardFormModal({ visible, card, allowedTypes, expenses, o
               </>
             )}
 
+            {/* ── Día de corte (crédito, opcional) ────── */}
+            {isCredit && (
+              <>
+                <Text style={styles.label}>Día de corte (opcional)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={form.cutoffDay != null ? String(form.cutoffDay) : ''}
+                  onChangeText={v => {
+                    const digits = v.replace(/\D/g, '');
+                    set('cutoffDay', digits === '' ? undefined : Math.min(Math.max(Number(digits), 1), 28));
+                  }}
+                  placeholder="Ej: 20"
+                  placeholderTextColor={COLORS.textDim}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                />
+                <Text style={styles.cutoffHint}>
+                  El día del mes en que tu banco cierra el ciclo. Lo gastado hasta ese día queda
+                  como saldo pendiente con 15 días para pagarlo, en vez de desaparecer al pasar de mes.
+                </Text>
+                {!!card?.cutoffDay && (card?.statementBalance ?? 0) > 0 && (
+                  <View style={styles.statementInfo}>
+                    <Ionicons name="alert-circle-outline" size={16} color={COLORS.warning} />
+                    <Text style={styles.statementInfoText}>
+                      Saldo pendiente del corte: {fmt(card!.statementBalance!)}
+                      {card?.statementDueDate ? ` · vence ${new Date(card.statementDueDate).toLocaleDateString('es-CO')}` : ''}
+                      {'\n'}Se paga desde Préstamos, no desde aquí.
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
+
             {/* ── Saldo (débito, efectivo, préstamo) ──── */}
             {!isCredit && (
               <>
@@ -485,20 +588,25 @@ export default function CardFormModal({ visible, card, allowedTypes, expenses, o
               </>
             )}
 
-            {/* ── Color ───────────────────────────────── */}
-            <Text style={styles.label}>{isDebt ? 'Color de la tarjeta (opcional)' : 'Color de la tarjeta'}</Text>
-            <View style={styles.colorRow}>
-              {CARD_COLORS.map(c => (
-                <TouchableOpacity
-                  key={c}
-                  onPress={() => set('color', c)}
-                  style={[styles.colorDot, { backgroundColor: c },
-                          form.color === c && styles.colorDotSelected]}
-                  accessibilityRole="button"
-                  accessibilityLabel="Elegir color de tarjeta"
-                />
-              ))}
-            </View>
+            {/* ── Color (solo débito/crédito — préstamo y efectivo se
+                 distinguen por el emoji, no necesitan elegir color) ── */}
+            {!isDebt && !isCash && (
+              <>
+                <Text style={styles.label}>Color de la tarjeta</Text>
+                <View style={styles.colorRow}>
+                  {CARD_COLORS.map(c => (
+                    <TouchableOpacity
+                      key={c}
+                      onPress={() => set('color', c)}
+                      style={[styles.colorDot, { backgroundColor: c },
+                              form.color === c && styles.colorDotSelected]}
+                      accessibilityRole="button"
+                      accessibilityLabel="Elegir color de tarjeta"
+                    />
+                  ))}
+                </View>
+              </>
+            )}
           </ScrollView>
 
           <View style={styles.actions}>

@@ -8,7 +8,7 @@ import {
   saveRecurringDefinition, deleteRecurringDefinition, getRecurringDefinitions,
   getCurrentMonthKey, CustomCategory, Expense, Card, RecurringTemplate, RecurrenceFrequency, UserProfile,
 } from '@/lib/storage';
-import { splitRecurringByPaid, getPayableCards, getSpendableCards, payRecurringTemplate, unpayRecurringTemplate } from '@/lib/recurringPayments';
+import { splitRecurringByPaid, paidInQuincena, getPayableCards, getSpendableCards, payRecurringTemplate, unpayRecurringTemplate } from '@/lib/recurringPayments';
 import { scheduleRecurringReminder, cancelNotification } from '@/lib/notifications';
 import { formatCOP, formatThousands } from '@/lib/expenseParser';
 import PayRecurringModal from '@/components/PayRecurringModal';
@@ -53,7 +53,10 @@ export default function GastosRecurrentesScreen() {
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
   const period = profile?.budgetPeriod ?? 'biweekly';
-  const { pending, paid } = splitRecurringByPaid(templates, expenses, quincena);
+  const { pending, paid: paidAll } = splitRecurringByPaid(templates, expenses, quincena);
+  // "Pagados" solo debe listar lo que se pagó de verdad en esta quincena —
+  // no todo lo que ya cuenta como pagado en el mes (ver paidInQuincena).
+  const paid = paidInQuincena(paidAll, expenses, quincena);
   const payableCards = getPayableCards(cards, expenses);
   const spendableCards = getSpendableCards(cards);
   const periodLabel = period === 'weekly' ? 'esta semana' : period === 'monthly' ? 'este mes' : `la quincena ${quincena}`;

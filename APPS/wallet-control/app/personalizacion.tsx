@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   getUserProfile, saveUserProfile, UserProfile, BudgetPeriod,
   getMonthData, getCurrentMonthKey, saveBudget, getEffectiveBudget,
-  addIncomes, updateIncome, Income, getCards, saveCard, Card,
+  addIncomes, updateIncome, Income, getCards, saveCard, Card, appendCardEvent,
 } from '@/lib/storage';
 import { scheduleRecurringReminder } from '@/lib/notifications';
 import { formatCOP, GASTO_HORMIGA_MAX } from '@/lib/expenseParser';
@@ -90,8 +90,10 @@ export default function PersonalizacionScreen() {
 
       const existingCards = await getCards();
       const cashCard = existingCards.find(c => c.type === 'cash');
+      let cashCardId: string;
       if (cashCard) {
         await saveCard({ ...cashCard, balance: (cashCard.balance ?? 0) + amount });
+        cashCardId = cashCard.id;
       } else {
         const newCash: Card = {
           id: `card_${Date.now()}`,
@@ -105,7 +107,11 @@ export default function PersonalizacionScreen() {
           createdAt: new Date().toISOString(),
         };
         await saveCard(newCash);
+        cashCardId = newCash.id;
       }
+      // Queda registrado en el mini historial de Efectivo que este depósito
+      // vino del ingreso fijo mensual, no como un aumento de saldo sin explicar.
+      await appendCardEvent(cashCardId, { type: 'deposit', amount, date: new Date().toISOString(), note: 'Sueldo' });
     }
     setIncomeModal(false);
   };
@@ -166,10 +172,25 @@ export default function PersonalizacionScreen() {
         <View style={styles.introCard}>
           <Text style={styles.introTitle}>Ajusta la app a tu manera</Text>
           <Text style={styles.introSub}>
-            Tu periodicidad, tu presupuesto, tu ingreso fijo y qué cuenta como "gasto hormiga" —
-            todo esto hace que Wallet Control se sienta hecho a tu medida.
+            Esta sección te ayuda a tener una experiencia más personalizada, para que tengas
+            el control total de tu vida financiera.
           </Text>
         </View>
+
+        {/* ── Categorías de gastos ─────────────────────── */}
+        <Text style={styles.sectionLabel}>Categorías de gastos</Text>
+        <TouchableOpacity style={styles.section} onPress={() => router.push('/categorias')}>
+          <View style={styles.row}>
+            <View style={[styles.rowIcon, { backgroundColor: COLORS.primaryBg }]}>
+              <Ionicons name="pricetags-outline" size={18} color={COLORS.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowLabel}>Crear o editar categorías</Text>
+              <Text style={styles.rowHint}>Nombre, color y emoji de cada categoría</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textDim} />
+          </View>
+        </TouchableOpacity>
 
         {/* ── Periodicidad de cuenta ───────────────────── */}
         <Text style={styles.sectionLabel}>Periodicidad de cuenta</Text>
@@ -237,21 +258,6 @@ export default function PersonalizacionScreen() {
             <Text style={styles.rowLabel}>
               Hasta {formatCOP(profile?.hormigaThreshold ?? GASTO_HORMIGA_MAX)}
             </Text>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.textDim} />
-          </View>
-        </TouchableOpacity>
-
-        {/* ── Categorías de gastos ─────────────────────── */}
-        <Text style={styles.sectionLabel}>Categorías de gastos</Text>
-        <TouchableOpacity style={styles.section} onPress={() => router.push('/categorias')}>
-          <View style={styles.row}>
-            <View style={[styles.rowIcon, { backgroundColor: COLORS.primaryBg }]}>
-              <Ionicons name="pricetags-outline" size={18} color={COLORS.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowLabel}>Crear o editar categorías</Text>
-              <Text style={styles.rowHint}>Nombre, color y emoji de cada categoría</Text>
-            </View>
             <Ionicons name="chevron-forward" size={16} color={COLORS.textDim} />
           </View>
         </TouchableOpacity>
