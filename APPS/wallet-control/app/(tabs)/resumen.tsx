@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, RefreshControl, Alert, Modal,
+  StyleSheet, RefreshControl, Modal,
   TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,11 +17,13 @@ import {
   syncCardBalanceSnapshot, getCardBalanceSnapshot,
   CustomCategory, Expense, Card, Goal, GoalDeposit, Income, UserProfile, MonthData,
   getCardTotalSpent, sumIncomes, updateExpense, deleteExpense, RecurrenceFrequency,
+  updateIncome, deleteIncome,
 } from '@/lib/storage';
 import { sumExpenses, formatCOP, formatThousands, GASTO_HORMIGA_MAX } from '@/lib/expenseParser';
 import { checkBudgetThreshold, updateBalanceNotification, cancelNotification, scheduleRecurringReminder } from '@/lib/notifications';
 import { splitRecurringByPaid, getPayableCards, getSpendableCards, getCardAvailable, payRecurringTemplate, unpayRecurringTemplate } from '@/lib/recurringPayments';
 import DonutChart, { DonutSlice } from '@/components/DonutChart';
+import CardView from '@/components/CardView';
 import QuickEntryModal from '@/components/QuickEntryModal';
 import BudgetProgressBar from '@/components/BudgetProgressBar';
 import BottomSheet from '@/components/BottomSheet';
@@ -29,6 +31,7 @@ import PayRecurringModal from '@/components/PayRecurringModal';
 import SwipeableRow from '@/components/SwipeableRow';
 import SemanaCard from '@/components/SemanaCard';
 import MesCard from '@/components/MesCard';
+import InfoModal from '@/components/InfoModal';
 import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
@@ -112,9 +115,14 @@ export default function ResumenScreen() {
   const [editExpDueDate, setEditExpDueDate]         = useState('');
   const [editExpDueDateObj, setEditExpDueDateObj]   = useState<Date | null>(null);
   const [editExpShowDatePicker, setEditExpShowDatePicker] = useState(false);
+  const [openIncomeRowId, setOpenIncomeRowId] = useState<string | null>(null);
+  const [editIncomeTarget, setEditIncomeTarget]           = useState<Income | null>(null);
+  const [editIncomeDescription, setEditIncomeDescription] = useState('');
+  const [editIncomeAmount, setEditIncomeAmount]           = useState('');
   const [payTarget, setPayTarget]     = useState<RecurringTemplate | null>(null);
   const [payCardId, setPayCardId]     = useState<string | undefined>(undefined);
   const [paySaving, setPaySaving]     = useState(false);
+  const [infoModal, setInfoModal] = useState<{ title: string; message: string; variant?: 'success' | 'error' } | null>(null);
   const monthScrollRef = useRef<ScrollView>(null);
   const monthScrollSynced = useRef(false);
   const balanceScrollRef = useRef<ScrollView>(null);
@@ -129,10 +137,10 @@ export default function ResumenScreen() {
       if (canShare) {
         await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Reporte Wallet Control', UTI: 'com.adobe.pdf' });
       } else {
-        Alert.alert('PDF Generado', `Guardado en:\n${uri}`);
+        setInfoModal({ title: 'PDF Generado', message: `Guardado en:\n${uri}`, variant: 'success' });
       }
     } catch {
-      Alert.alert('Error', 'No se pudo generar el PDF.');
+      setInfoModal({ title: 'Error', message: 'No se pudo generar el PDF.', variant: 'error' });
     } finally {
       setExporting(false);
     }
@@ -147,10 +155,10 @@ export default function ResumenScreen() {
       if (canShare) {
         await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Extracto Wallet Control', UTI: 'com.adobe.pdf' });
       } else {
-        Alert.alert('PDF Generado', `Guardado en:\n${uri}`);
+        setInfoModal({ title: 'PDF Generado', message: `Guardado en:\n${uri}`, variant: 'success' });
       }
     } catch {
-      Alert.alert('Error', 'No se pudo generar el extracto.');
+      setInfoModal({ title: 'Error', message: 'No se pudo generar el extracto.', variant: 'error' });
     } finally {
       setExportingStatement(false);
     }
@@ -172,7 +180,10 @@ export default function ResumenScreen() {
     setCards(c);
     setGoals(gs);
     setProfile(p);
-    setBudget(d.budget);
+    // Si este mes no tiene presupuesto propio, se muestra el del mes
+    // anterior como referencia (sin persistirlo) — el aviso de 80%/100%
+    // más abajo sigue mirando solo d.budget, el valor explícito del mes.
+    setBudget(d.budget ?? prevData.budget ?? null);
     setPrevExpenses(prevData.expenses);
     setPrevIncomes(prevData.incomes);
     setRecurringTemplates(recurring);
@@ -216,6 +227,15 @@ export default function ResumenScreen() {
     await load();
   };
 
+  const parseDueDate = (raw: string): Date | null => {
+    const parts = raw.trim().split('/');
+    if (parts.length !== 3) return null;
+    const [d, m, y] = parts.map(Number);
+    if (!d || !m || !y || y < 2024) return null;
+    const date = new Date(y, m - 1, d, 9, 0, 0);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
   // ── Editar cualquier gasto desde el popup "Gastos del mes" ────────────────
   const startEditExpense = (e: Expense) => {
     setEditExpTarget(e);
@@ -225,7 +245,7 @@ export default function ResumenScreen() {
     setEditExpIsRecurring(!!e.isRecurring);
     setEditExpFrequency(e.recurrenceFrequency ?? 'monthly');
     setEditExpDueDate(e.recurrenceDueDate ?? '');
-    setEditExpDueDateObj(null);
+    setEditExpDueDateObj(e.recurrenceDueDate ? parseDueDate(e.recurrenceDueDate) : null);
     setEditExpShowDatePicker(false);
   };
 
@@ -252,9 +272,14 @@ export default function ResumenScreen() {
     const trimmedName = editExpName.trim().toUpperCase();
     let notificationId = editExpTarget.notificationId;
     const wasRecurring = !!editExpTarget.isRecurring;
-    if (editExpIsRecurring && (!wasRecurring || editExpFrequency !== editExpTarget.recurrenceFrequency)) {
+    const newDueDate = editExpIsRecurring && editExpDueDate ? editExpDueDate : '';
+    const needsReschedule = !wasRecurring
+      || editExpFrequency !== editExpTarget.recurrenceFrequency
+      || trimmedName !== editExpTarget.name
+      || newDueDate !== (editExpTarget.recurrenceDueDate ?? '');
+    if (editExpIsRecurring && needsReschedule) {
       if (notificationId) await cancelNotification(notificationId);
-      notificationId = await scheduleRecurringReminder(trimmedName, editExpFrequency, new Date());
+      notificationId = await scheduleRecurringReminder(trimmedName, editExpFrequency, editExpDueDateObj ?? new Date());
     } else if (!editExpIsRecurring && wasRecurring) {
       if (notificationId) await cancelNotification(notificationId);
       notificationId = undefined;
@@ -267,6 +292,33 @@ export default function ResumenScreen() {
       notificationId,
     });
     setEditExpTarget(null);
+    await load();
+  };
+
+  // ── Editar/eliminar cualquier ingreso desde el popup "Fuentes de ingreso" ──
+  const deleteIncomeRow = async (inc: Income) => {
+    if (inc.notificationId) await cancelNotification(inc.notificationId);
+    await deleteIncome(monthKey, inc.id);
+    await load();
+  };
+
+  const startEditIncome = (inc: Income) => {
+    setEditIncomeTarget(inc);
+    setEditIncomeDescription(inc.description);
+    setEditIncomeAmount(String(inc.amount));
+  };
+
+  const editIncomeAmountNum = Number(editIncomeAmount.replace(/\D/g, ''));
+  const canSaveEditIncome = !!editIncomeDescription.trim() && !!editIncomeAmountNum;
+
+  const saveEditIncome = async () => {
+    if (!editIncomeTarget || !canSaveEditIncome) return;
+    await updateIncome(monthKey, {
+      id: editIncomeTarget.id,
+      description: editIncomeDescription.trim(),
+      amount: editIncomeAmountNum,
+    });
+    setEditIncomeTarget(null);
     await load();
   };
 
@@ -477,7 +529,7 @@ export default function ResumenScreen() {
   const periodLabel = period === 'weekly' ? 'esta semana' : period === 'monthly' ? 'este mes' : `la quincena ${viewedQuincena}`;
 
   const { pending: pendingTemplates, paid: paidTemplates } =
-    splitRecurringByPaid(recurringTemplates, expenses, period, viewedQuincena);
+    splitRecurringByPaid(recurringTemplates, expenses, viewedQuincena);
 
   // Cuentas con plata real disponible para pagar un gasto fijo — sin
   // préstamos (no son una fuente de dinero) y sin cuentas en $0.
@@ -489,10 +541,14 @@ export default function ResumenScreen() {
   // Conteo de gastos fijos pagados/pendientes por quincena específica (para el
   // badge inline en cada slide del slider Quincena 1/2, independiente de cuál
   // quincena esté "viendo" el usuario en ese momento).
+  // Solo los gastos fijos creados desde la pantalla "Gastos recurrentes"
+  // (tienen defId) — un gasto marcado recurrente desde otro lado (ej. al
+  // editar dentro de una categoría) no cuenta aquí.
+  const recurringDefTemplates = recurringTemplates.filter(t => t.fromRecurringScreen);
   const paidCountForQuincena = (q: 1 | 2) => {
     const loggedNamesQ = new Set(expenses.filter(e => e.quincena === q).map(e => e.name.trim().toLowerCase()));
-    const pending = recurringTemplates.filter(t => !loggedNamesQ.has(t.name.trim().toLowerCase()));
-    return recurringTemplates.length - pending.length;
+    const pending = recurringDefTemplates.filter(t => !loggedNamesQ.has(t.name.trim().toLowerCase()));
+    return recurringDefTemplates.length - pending.length;
   };
 
   // Total gastado dentro de cada quincena específica (para el pie de cada slide).
@@ -545,10 +601,10 @@ export default function ResumenScreen() {
     balanceFilterChipTextActive: { color: '#fff' },
     incomeLegend: { alignSelf: 'stretch', paddingHorizontal: SPACING.xl, marginTop: 10, gap: SPACING.xs },
     incomeLegendRow: { flexDirection: 'row', alignItems: 'center' },
-    incomeLegendLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, flexShrink: 1, minWidth: 0, marginRight: SPACING.sm },
+    incomeLegendLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, flex: 1, minWidth: 0, marginRight: SPACING.sm },
     incomeLegendDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
     incomeLegendName: { color: COLORS.textMuted, fontSize: FONT.xs, fontWeight: '600', flexShrink: 1, minWidth: 0 },
-    incomeLegendAmt: { color: COLORS.debit, fontWeight: '700', fontSize: FONT.xs, marginLeft: 'auto', flexShrink: 0 },
+    incomeLegendAmt: { color: COLORS.debit, fontWeight: '700', fontSize: FONT.xs, flexShrink: 0 },
     heroGoalsWidget: { marginTop: SPACING.md },
     heroGoalsDivider: { height: 1, backgroundColor: COLORS.border, marginBottom: 10 },
     heroGoalsRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
@@ -789,9 +845,6 @@ export default function ResumenScreen() {
     closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: SPACING.md, marginBottom: 6 },
     input: { backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md, color: COLORS.text, fontSize: FONT.md, borderWidth: 1, borderColor: COLORS.border },
-    cardChip: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, marginRight: SPACING.sm, backgroundColor: COLORS.bg },
-    cardChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-    cardChipText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm },
     cardRequiredHint: { color: COLORS.danger, fontSize: 11, marginTop: 6 },
     recurringRow: {
       flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginTop: 14,
@@ -948,7 +1001,7 @@ export default function ResumenScreen() {
             {/* Slide 2 — Gastos */}
             <View style={[styles.donutSlide, { width: cardWidth }]}>
               <Text style={styles.heroDonutLabel}>Gastos del mes</Text>
-              <TouchableOpacity onPress={() => setExpensesModal(true)} activeOpacity={0.85} style={styles.donutTap}>
+              <TouchableOpacity onPress={() => chartTotalSpent > 0 ? setExpensesModal(true) : setRegistrarSheet(true)} activeOpacity={0.85} style={styles.donutTap}>
                 <DonutChart
                   data={chartDonutData}
                   total={chartTotalSpent || 1}
@@ -990,7 +1043,7 @@ export default function ResumenScreen() {
             {/* Slide 3 — Metas */}
             <View style={[styles.donutSlide, { width: cardWidth }]}>
               <Text style={styles.heroDonutLabel}>Metas de ahorro</Text>
-              <TouchableOpacity onPress={() => goals.length > 0 && setMetasModal(true)} activeOpacity={0.85} style={styles.donutTap}>
+              <TouchableOpacity onPress={() => goals.length > 0 ? setMetasModal(true) : setRegistrarSheet(true)} activeOpacity={0.85} style={styles.donutTap}>
                 <DonutChart
                   data={goalsDonutData}
                   total={totalSaved || 1}
@@ -1021,7 +1074,7 @@ export default function ResumenScreen() {
             {/* Slide 4 — Ingresos */}
             <View style={[styles.donutSlide, { width: cardWidth }]}>
               <Text style={styles.heroDonutLabel}>Fuentes de ingreso</Text>
-              <TouchableOpacity onPress={() => incomes.length > 0 && setIngresosModal(true)} activeOpacity={0.85} style={styles.donutTap}>
+              <TouchableOpacity onPress={() => incomes.length > 0 ? setIngresosModal(true) : setRegistrarSheet(true)} activeOpacity={0.85} style={styles.donutTap}>
                 <DonutChart
                   data={incomesDonutData}
                   total={totalIncome || 1}
@@ -1113,9 +1166,9 @@ export default function ResumenScreen() {
                       <View style={styles.quincenaCardTrack}>
                         <View style={[styles.quincenaCardFill, { width: `${pct}%` }]} />
                       </View>
-                      {recurringTemplates.length > 0 && (
+                      {recurringDefTemplates.length > 0 && (
                         <Text style={styles.quincenaPendingText}>
-                          {paidCountForQuincena(q)} de {recurringTemplates.length} gastos fijos pagados
+                          {paidCountForQuincena(q)} de {recurringDefTemplates.length} gastos fijos pagados
                         </Text>
                       )}
                       <Text style={styles.quincenaCardSpentTotal}>{formatCOP(quincenaSpent(q))} gastados</Text>
@@ -1369,7 +1422,7 @@ export default function ResumenScreen() {
       />
 
       {/* Menú de acciones de meta (reemplaza Alert.alert nativo) */}
-      <Modal visible={!!actionGoal} animationType="slide" transparent onRequestClose={() => setActionGoal(null)}>
+      <Modal visible={!!actionGoal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setActionGoal(null)}>
         <View style={styles.goalActOverlay}>
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setActionGoal(null)} activeOpacity={1} />
           <View style={styles.goalActSheet}>
@@ -1395,7 +1448,7 @@ export default function ResumenScreen() {
       </Modal>
 
       {/* Confirmación de eliminar meta (reemplaza Alert.alert nativo) */}
-      <Modal visible={!!confirmDeleteGoal} animationType="fade" transparent onRequestClose={() => setConfirmDeleteGoal(null)}>
+      <Modal visible={!!confirmDeleteGoal} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setConfirmDeleteGoal(null)}>
         <TouchableOpacity style={styles.goalConfirmOverlay} activeOpacity={1} onPress={() => setConfirmDeleteGoal(null)}>
           <TouchableOpacity style={styles.goalConfirmCard} activeOpacity={1} onPress={() => {}}>
             <View style={styles.goalConfirmIcon}>
@@ -1416,7 +1469,7 @@ export default function ResumenScreen() {
       </Modal>
 
       {/* ── Summary popup (donut tap) ─────────────────── */}
-      <Modal visible={summaryModal} animationType="slide" transparent onRequestClose={() => setSummaryModal(false)}>
+      <Modal visible={summaryModal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setSummaryModal(false)}>
         <View style={styles.summaryOverlay}>
           <TouchableOpacity style={styles.summaryDismiss} activeOpacity={1} onPress={() => setSummaryModal(false)} />
           <View style={styles.summarySheet}>
@@ -1553,7 +1606,7 @@ export default function ResumenScreen() {
       </Modal>
 
       {/* ── Gastos del mes (independiente, tap en donut de Gastos) ── */}
-      <Modal visible={expensesModal} animationType="slide" transparent onRequestClose={() => setExpensesModal(false)}>
+      <Modal visible={expensesModal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setExpensesModal(false)}>
         <GestureHandlerRootView style={{ flex: 1 }}>
         <View style={styles.sheetOverlay}>
           <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setExpensesModal(false)} />
@@ -1643,7 +1696,7 @@ export default function ResumenScreen() {
       </Modal>
 
       {/* ── Editar gasto (desde "Gastos del mes") ─────── */}
-      <Modal visible={!!editExpTarget} animationType="slide" transparent onRequestClose={() => setEditExpTarget(null)}>
+      <Modal visible={!!editExpTarget} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setEditExpTarget(null)}>
         <View style={styles.sheetOverlay}>
           <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setEditExpTarget(null)} />
           <View style={[styles.regSheet, { maxHeight: '88%' }]}>
@@ -1674,7 +1727,7 @@ export default function ResumenScreen() {
               <TextInput
                 style={styles.input}
                 value={formatThousands(editExpAmount)}
-                onChangeText={v => setEditExpAmount(v.replace(/\D/g, ''))}
+                onChangeText={v => setEditExpAmount(v.replace(/\D/g, '').slice(0, 12))}
                 placeholder="0"
                 placeholderTextColor={COLORS.textDim}
                 keyboardType="number-pad"
@@ -1687,14 +1740,14 @@ export default function ResumenScreen() {
                 <>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
                     {cards.map(c => (
-                      <TouchableOpacity
+                      <CardView
                         key={c.id}
+                        card={c}
+                        compact
+                        selected={editExpCardId === c.id}
+                        totalSpent={getCardTotalSpent(expenses, c.id)}
                         onPress={() => setEditExpCardId(c.id)}
-                        style={[styles.cardChip, editExpCardId === c.id && styles.cardChipActive,
-                                editExpCardId === c.id && { backgroundColor: c.color }]}
-                      >
-                        <Text style={[styles.cardChipText, editExpCardId === c.id && { color: '#fff' }]}>{c.name}</Text>
-                      </TouchableOpacity>
+                      />
                     ))}
                   </ScrollView>
                   {!editExpCardId && (
@@ -1771,8 +1824,62 @@ export default function ResumenScreen() {
         </View>
       </Modal>
 
+      {/* ── Editar ingreso (desde "Fuentes de ingreso") ── */}
+      <Modal visible={!!editIncomeTarget} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setEditIncomeTarget(null)}>
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setEditIncomeTarget(null)} />
+          <View style={[styles.regSheet, { maxHeight: '60%' }]}>
+            <View style={styles.summaryHandle} />
+            <View style={styles.editExpHeader}>
+              <Text style={styles.editExpTitle}>Editar ingreso</Text>
+              <TouchableOpacity
+                onPress={() => setEditIncomeTarget(null)}
+                style={styles.closeBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar"
+              >
+                <Ionicons name="close" size={20} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.label}>Descripción</Text>
+              <TextInput
+                style={styles.input}
+                value={editIncomeDescription}
+                onChangeText={setEditIncomeDescription}
+                placeholder="Ej: Sueldo, Freelance"
+                placeholderTextColor={COLORS.textDim}
+              />
+
+              <Text style={styles.label}>Monto (COP)</Text>
+              <TextInput
+                style={styles.input}
+                value={formatThousands(editIncomeAmount)}
+                onChangeText={v => setEditIncomeAmount(v.replace(/\D/g, '').slice(0, 12))}
+                placeholder="0"
+                placeholderTextColor={COLORS.textDim}
+                keyboardType="number-pad"
+              />
+
+              <View style={styles.formActions}>
+                <TouchableOpacity onPress={() => setEditIncomeTarget(null)} style={styles.cancelBtn}>
+                  <Text style={styles.cancelText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={saveEditIncome}
+                  disabled={!canSaveEditIncome}
+                  style={[styles.saveBtn, !canSaveEditIncome && styles.saveBtnOff]}
+                >
+                  <Text style={styles.saveText}>Guardar</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* ── Help sheet ───────────────────────────────── */}
-      <Modal visible={helpSheet} animationType="slide" transparent onRequestClose={() => setHelpSheet(false)}>
+      <Modal visible={helpSheet} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setHelpSheet(false)}>
         <View style={styles.sheetOverlay}>
           <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setHelpSheet(false)} />
           <View style={styles.regSheet}>
@@ -1806,7 +1913,7 @@ export default function ResumenScreen() {
       </Modal>
 
       {/* ── Patrimonio detail modal ───────────────── */}
-      <Modal visible={patrimonioModal} animationType="slide" transparent onRequestClose={() => setPatrimonioModal(false)}>
+      <Modal visible={patrimonioModal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setPatrimonioModal(false)}>
         <View style={styles.sheetOverlay}>
           <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setPatrimonioModal(false)} />
           <View style={[styles.regSheet, { maxHeight: '80%' }]}>
@@ -1861,7 +1968,7 @@ export default function ResumenScreen() {
       </Modal>
 
       {/* ── Metas detail modal (donut de metas) ───── */}
-      <Modal visible={metasModal} animationType="slide" transparent onRequestClose={() => setMetasModal(false)}>
+      <Modal visible={metasModal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setMetasModal(false)}>
         <View style={styles.sheetOverlay}>
           <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setMetasModal(false)} />
           <View style={[styles.regSheet, { maxHeight: '80%' }]}>
@@ -1897,7 +2004,8 @@ export default function ResumenScreen() {
       </Modal>
 
       {/* ── Ingresos detail modal (donut de ingresos) ── */}
-      <Modal visible={ingresosModal} animationType="slide" transparent onRequestClose={() => setIngresosModal(false)}>
+      <Modal visible={ingresosModal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setIngresosModal(false)}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
         <View style={styles.sheetOverlay}>
           <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setIngresosModal(false)} />
           <View style={[styles.regSheet, { maxHeight: '80%' }]}>
@@ -1909,11 +2017,20 @@ export default function ResumenScreen() {
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.patSection}>
                 {incomes.map(inc => (
-                  <View key={inc.id} style={styles.patRow}>
-                    <Text style={styles.patRowEmoji}>💰</Text>
-                    <Text style={styles.patRowName}>{inc.description || 'Ingreso'}</Text>
-                    <Text style={[styles.patRowVal, { color: COLORS.debit }]}>{formatCOP(inc.amount)}</Text>
-                  </View>
+                  <SwipeableRow
+                    key={inc.id}
+                    rowId={inc.id}
+                    openRowId={openIncomeRowId}
+                    onOpenChange={setOpenIncomeRowId}
+                    onDelete={() => deleteIncomeRow(inc)}
+                    onEdit={() => startEditIncome(inc)}
+                  >
+                    <View style={styles.patRow}>
+                      <Text style={styles.patRowEmoji}>💰</Text>
+                      <Text style={styles.patRowName}>{inc.description || 'Ingreso'}</Text>
+                      <Text style={[styles.patRowVal, { color: COLORS.debit }]}>{formatCOP(inc.amount)}</Text>
+                    </View>
+                  </SwipeableRow>
                 ))}
                 <View style={styles.patTotal}>
                   <Text style={styles.patTotalLabel}>Total ingresos</Text>
@@ -1923,10 +2040,11 @@ export default function ResumenScreen() {
             </ScrollView>
           </View>
         </View>
+        </GestureHandlerRootView>
       </Modal>
 
       {/* ── Pendientes por pagar (tarjeta de periodo) ── */}
-      <Modal visible={pendingModal} animationType="slide" transparent onRequestClose={() => setPendingModal(false)}>
+      <Modal visible={pendingModal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setPendingModal(false)}>
         <View style={styles.sheetOverlay}>
           <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setPendingModal(false)} />
           <View style={[styles.regSheet, { maxHeight: '80%' }]}>
@@ -2025,7 +2143,7 @@ export default function ResumenScreen() {
       />
 
       {/* ── Patrimonio detail modal (mes anterior) ── */}
-      <Modal visible={prevPatrimonioModal} animationType="slide" transparent onRequestClose={() => setPrevPatrimonioModal(false)}>
+      <Modal visible={prevPatrimonioModal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setPrevPatrimonioModal(false)}>
         <View style={styles.sheetOverlay}>
           <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setPrevPatrimonioModal(false)} />
           <View style={[styles.regSheet, { maxHeight: '80%' }]}>
@@ -2154,6 +2272,14 @@ export default function ResumenScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      <InfoModal
+        visible={!!infoModal}
+        title={infoModal?.title ?? ''}
+        message={infoModal?.message ?? ''}
+        variant={infoModal?.variant ?? 'info'}
+        onClose={() => setInfoModal(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -2338,7 +2464,7 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
               <TextInput
                 style={gdStyles.input}
                 value={formatThousands(amount)}
-                onChangeText={v => setAmount(v.replace(/\D/g, ''))}
+                onChangeText={v => setAmount(v.replace(/\D/g, '').slice(0, 12))}
                 placeholder="0"
                 placeholderTextColor={COLORS.textDim}
                 keyboardType="number-pad"
@@ -2378,7 +2504,7 @@ function GoalDetailModal({ visible, goal, onRefresh, onClose }: GoalDetailProps)
     </BottomSheet>
 
     {/* Confirmación de eliminar aporte (reemplaza Alert.alert nativo) */}
-    <Modal visible={!!confirmDeleteDeposit} animationType="fade" transparent onRequestClose={() => setConfirmDeleteDeposit(null)}>
+    <Modal visible={!!confirmDeleteDeposit} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setConfirmDeleteDeposit(null)}>
       <TouchableOpacity style={gdStyles.confirmOverlay} activeOpacity={1} onPress={() => setConfirmDeleteDeposit(null)}>
         <TouchableOpacity style={gdStyles.confirmCard} activeOpacity={1} onPress={() => {}}>
           <View style={gdStyles.confirmIcon}>
@@ -2490,7 +2616,7 @@ function GoalFormModal({ visible, goal, onSave, onClose }: GoalModalProps) {
             <TextInput
               style={gStyles.input}
               value={target ? Number(target).toLocaleString('es-CO') : ''}
-              onChangeText={v => setTarget(v.replace(/\D/g, ''))}
+              onChangeText={v => setTarget(v.replace(/\D/g, '').slice(0, 12))}
               placeholder="5.000.000"
               placeholderTextColor={COLORS.textDim}
               keyboardType="number-pad"
@@ -2499,7 +2625,7 @@ function GoalFormModal({ visible, goal, onSave, onClose }: GoalModalProps) {
             <TextInput
               style={gStyles.input}
               value={saved ? Number(saved).toLocaleString('es-CO') : ''}
-              onChangeText={v => setSaved(v.replace(/\D/g, ''))}
+              onChangeText={v => setSaved(v.replace(/\D/g, '').slice(0, 12))}
               placeholder="0"
               placeholderTextColor={COLORS.textDim}
               keyboardType="number-pad"

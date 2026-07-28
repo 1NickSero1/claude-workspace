@@ -51,8 +51,7 @@ export default function CategoriasScreen() {
   }, [monthKey]);
 
   const quincena: 1 | 2 = new Date().getDate() <= 15 ? 1 : 2;
-  const period = profile?.budgetPeriod ?? 'biweekly';
-  const { pending: pendingTemplates } = splitRecurringByPaid(templates, expenses, period, quincena);
+  const { pending: pendingTemplates } = splitRecurringByPaid(templates, expenses, quincena);
   const payableCards = getPayableCards(cards, expenses);
   const spendableCards = getSpendableCards(cards);
 
@@ -309,6 +308,7 @@ export default function CategoriasScreen() {
       <CategoryFormModal
         visible={catModal}
         category={editingCat}
+        categories={categories}
         onSave={handleSaveCat}
         onClose={() => { setCatModal(false); setEditingCat(null); }}
       />
@@ -340,7 +340,7 @@ export default function CategoriasScreen() {
       />
 
       {/* Menú de acciones de categoría (reemplaza Alert.alert nativo) */}
-      <Modal visible={!!actionCat} animationType="slide" transparent onRequestClose={() => setActionCat(null)}>
+      <Modal visible={!!actionCat} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setActionCat(null)}>
         <View style={styles.actOverlay}>
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setActionCat(null)} activeOpacity={1} />
           <View style={styles.actSheet}>
@@ -368,7 +368,7 @@ export default function CategoriasScreen() {
       </Modal>
 
       {/* Confirmación de eliminar (reemplaza Alert.alert nativo) */}
-      <Modal visible={!!confirmDeleteCat} animationType="fade" transparent onRequestClose={() => setConfirmDeleteCat(null)}>
+      <Modal visible={!!confirmDeleteCat} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setConfirmDeleteCat(null)}>
         <TouchableOpacity style={styles.confirmOverlay} activeOpacity={1} onPress={() => setConfirmDeleteCat(null)}>
           <TouchableOpacity style={styles.confirmCard} activeOpacity={1} onPress={() => {}}>
             <View style={styles.confirmIcon}>

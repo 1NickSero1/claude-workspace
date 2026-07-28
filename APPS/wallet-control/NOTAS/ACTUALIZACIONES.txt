@@ -910,6 +910,24 @@ v1.38 — 2026-07-27 · Efectivo deslizable + arreglo de carrusel
   "en progreso".
 
 ------------------------------------------------------------
+v1.39 — 2026-07-27 · Presupuesto en el onboarding + diagramas vacíos abren el "+"
+------------------------------------------------------------
+• Onboarding: nuevo paso "¿Cuál es tu presupuesto mensual?" (opcional,
+  se puede omitir) entre "¿Cómo manejas tu dinero?" y "¿Tienes un ingreso
+  fijo mensual?" — aplica tanto al crear cuenta real como en modo anónimo.
+  Antes el presupuesto solo se podía configurar después, a mano, desde
+  Perfil → Personaliza tu vida financiera.
+• Resumen: los diagramas de "Gastos del mes", "Metas de ahorro" y "Fuentes
+  de ingreso" ya no ignoran el toque cuando están vacíos — tocar el círculo
+  abre la cápsula "+" (Ingreso/Gasto/Meta) para crear el primer dato, en
+  vez de no hacer nada. Con datos, el toque sigue abriendo el detalle de
+  siempre. No aplica a "Billetera general" (cuentas/tarjetas se agregan
+  desde la pestaña Tarjetas, no desde la cápsula).
+• npx tsc --noEmit: 0 errores. Verificado en la tablet real: el presupuesto
+  configurado en el onboarding queda guardado y visible en Resumen, y el
+  donut de "Gastos del mes" vacío abre la cápsula al tocarlo.
+
+------------------------------------------------------------
 [PRÓXIMO]
 ------------------------------------------------------------
 • Política de tratamiento de datos formal y publicada (después de la

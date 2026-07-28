@@ -11,8 +11,11 @@ import {
   getCards, saveCard, deleteCard, getMonthData, getCurrentMonthKey,
   getCardTotalSpent, getCategories, updateExpense, deleteExpense,
   appendCardEvent, updateCardEvent, deleteCardEvent,
+  clearCardFromExpenses, countExpensesForCard,
   Card, CardEvent, Expense, CustomCategory,
 } from '@/lib/storage';
+import { cancelNotification } from '@/lib/notifications';
+import { getCardAvailable } from '@/lib/recurringPayments';
 import { formatCOP } from '@/lib/expenseParser';
 import CardView from '@/components/CardView';
 import CardFormModal from '@/components/CardFormModal';
@@ -52,6 +55,7 @@ export default function TarjetasScreen() {
   const [overflowModal, setOverflowModal] = useState(false);
   const [overflowInfo, setOverflowInfo]   = useState({ entered: 0, pending: 0 });
   const [confirmDeleteCard, setConfirmDeleteCard] = useState<Card | null>(null);
+  const [deleteExpenseCount, setDeleteExpenseCount] = useState(0);
   const [openSwipeRowId, setOpenSwipeRowId]         = useState<string | null>(null);
 
   const [expModal, setExpModal]         = useState(false);
@@ -283,7 +287,9 @@ export default function TarjetasScreen() {
     cancelBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
     cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
     saveBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: 'center' },
+    saveBtnOff: { backgroundColor: COLORS.textDim },
     saveText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
+    hint: { color: COLORS.danger, fontSize: 11, marginTop: 6 },
   }), [COLORS]);
 
   const debitCards = cards.filter(c => c.type === 'debit');
@@ -420,6 +426,15 @@ export default function TarjetasScreen() {
     const newAmount = Number(actionAmount);
     if (!oldEvent || !newAmount) return;
     const isDebt = actionCard.type === 'debt';
+    // Pendiente antes de este abono en particular: se le devuelve su monto
+    // viejo al saldo actual para comparar contra la deuda real, igual que
+    // handleAddMoney valida un abono nuevo.
+    const pendingBeforeEvent = (actionCard.balance ?? 0) + oldEvent.amount;
+    if (isDebt && newAmount > pendingBeforeEvent) {
+      setOverflowInfo({ entered: newAmount, pending: pendingBeforeEvent });
+      setOverflowModal(true);
+      return;
+    }
     // Un abono (pay) resta al saldo pendiente; un depósito lo suma — al
     // editar, primero se revierte el efecto del monto viejo y se aplica el
     // nuevo, en vez de sumar/restar la diferencia a ciegas.
@@ -445,10 +460,14 @@ export default function TarjetasScreen() {
   const handleDeleteCard = (card: Card) => {
     closeAction();
     setConfirmDeleteCard(card);
+    setDeleteExpenseCount(0);
+    countExpensesForCard(card.id).then(setDeleteExpenseCount);
   };
 
   const confirmDeleteCardNow = async () => {
     if (!confirmDeleteCard) return;
+    await cancelNotification(confirmDeleteCard.notificationId);
+    await clearCardFromExpenses(confirmDeleteCard.id);
     await deleteCard(confirmDeleteCard.id);
     setConfirmDeleteCard(null);
     await load();
@@ -464,10 +483,18 @@ export default function TarjetasScreen() {
     }, 350);
   };
 
+  // Cuenta asignada al gasto en edición (puede no existir si se borró la
+  // tarjeta). El monto viejo se le devuelve al disponible antes de comparar,
+  // igual que en resumen.tsx, para no bloquear guardar sin cambio de monto.
+  const expCard = editingExp?.cardId ? cards.find(c => c.id === editingExp.cardId) : undefined;
+  const expAmountNum = Number(expAmount.replace(/\D/g, '').replace(/\./g, ''));
+  const expAvailable = expCard ? getCardAvailable(expCard, expenses) + (editingExp?.amount ?? 0) : Infinity;
+  const expExceeds = !!expCard && expAmountNum > expAvailable;
+
   const handleSaveExp = async () => {
     if (!editingExp) return;
     const amount = Number(expAmount.replace(/\D/g, '').replace(/\./g, ''));
-    if (!expName.trim() || !amount) return;
+    if (!expName.trim() || !amount || expExceeds) return;
     await updateExpense(monthKey, { id: editingExp.id, name: expName.trim().toUpperCase(), amount });
     setExpModal(false);
     setEditingExp(null);
@@ -719,12 +746,13 @@ export default function TarjetasScreen() {
         visible={modalVisible}
         card={editingCard}
         allowedTypes={pendingTypes}
+        expenses={expenses}
         onSave={handleSaveCard}
         onClose={() => { setModalVisible(false); setEditingCard(null); }}
       />
 
       {/* Action bottom sheet */}
-      <Modal visible={!!actionCard} animationType="slide" transparent onRequestClose={closeAction}>
+      <Modal visible={!!actionCard} animationType="slide" transparent statusBarTranslucent onRequestClose={closeAction}>
         <KeyboardAvoidingView
           style={actStyles.overlay}
           behavior="padding"
@@ -751,6 +779,7 @@ export default function TarjetasScreen() {
                             ? actionCard.emoji
                             : isCash ? 'Efectivo'
                             : isCredit ? (actionCard.bank || 'Crédito')
+                            : isDebt ? '💸'
                             : (actionCard.bank || 'Débito')}
                         </Text>
                         <View style={{ alignItems: 'flex-end' }}>
@@ -948,7 +977,7 @@ export default function TarjetasScreen() {
                   <TextInput
                     style={actStyles.moneyInput}
                     value={actionAmount ? fmt(Number(actionAmount)) : ''}
-                    onChangeText={v => setActionAmount(v.replace(/\D/g, '').replace(/\./g, ''))}
+                    onChangeText={v => setActionAmount(v.replace(/\D/g, '').replace(/\./g, '').slice(0, 12))}
                     placeholder="$0"
                     placeholderTextColor={COLORS.textDim}
                     keyboardType="number-pad"
@@ -988,7 +1017,7 @@ export default function TarjetasScreen() {
                   <TextInput
                     style={actStyles.moneyInput}
                     value={actionAmount ? fmt(Number(actionAmount)) : ''}
-                    onChangeText={v => setActionAmount(v.replace(/\D/g, '').replace(/\./g, ''))}
+                    onChangeText={v => setActionAmount(v.replace(/\D/g, '').replace(/\./g, '').slice(0, 12))}
                     placeholder="$0"
                     placeholderTextColor={COLORS.textDim}
                     keyboardType="number-pad"
@@ -1023,7 +1052,7 @@ export default function TarjetasScreen() {
       </Modal>
 
       {/* Expense edit modal */}
-      <Modal visible={expModal} animationType="slide" transparent onRequestClose={() => setExpModal(false)}>
+      <Modal visible={expModal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setExpModal(false)}>
         <KeyboardAvoidingView
           style={expStyles.overlay}
           behavior="padding"
@@ -1045,16 +1074,25 @@ export default function TarjetasScreen() {
             <TextInput
               style={expStyles.input}
               value={expAmount ? fmt(Number(expAmount)) : ''}
-              onChangeText={v => setExpAmount(v.replace(/\D/g, '').replace(/\./g, ''))}
+              onChangeText={v => setExpAmount(v.replace(/\D/g, '').replace(/\./g, '').slice(0, 12))}
               placeholder="0"
               placeholderTextColor={COLORS.textDim}
               keyboardType="number-pad"
             />
+            {expExceeds && (
+              <Text style={expStyles.hint}>
+                Ese monto supera lo disponible en {expCard?.name} ({formatCOP(expAvailable)}).
+              </Text>
+            )}
             <View style={expStyles.actions}>
               <TouchableOpacity onPress={() => { setExpModal(false); setEditingExp(null); }} style={expStyles.cancelBtn}>
                 <Text style={expStyles.cancelText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleSaveExp} style={expStyles.saveBtn}>
+              <TouchableOpacity
+                onPress={handleSaveExp}
+                disabled={expExceeds}
+                style={[expStyles.saveBtn, expExceeds && expStyles.saveBtnOff]}
+              >
                 <Text style={expStyles.saveText}>Guardar</Text>
               </TouchableOpacity>
             </View>
@@ -1062,7 +1100,7 @@ export default function TarjetasScreen() {
         </KeyboardAvoidingView>
       </Modal>
       {/* Overflow warning modal */}
-      <Modal visible={overflowModal} animationType="fade" transparent onRequestClose={() => setOverflowModal(false)}>
+      <Modal visible={overflowModal} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setOverflowModal(false)}>
         <TouchableOpacity style={actStyles.overflowOverlay} activeOpacity={1} onPress={() => setOverflowModal(false)}>
           <TouchableOpacity style={actStyles.overflowCard} activeOpacity={1} onPress={() => {}}>
             <View style={actStyles.overflowIcon}>
@@ -1089,7 +1127,7 @@ export default function TarjetasScreen() {
       </Modal>
 
       {/* Confirmación de eliminar (reemplaza Alert.alert nativo) */}
-      <Modal visible={!!confirmDeleteCard} animationType="fade" transparent onRequestClose={() => setConfirmDeleteCard(null)}>
+      <Modal visible={!!confirmDeleteCard} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setConfirmDeleteCard(null)}>
         <TouchableOpacity style={actStyles.deleteConfirmOverlay} activeOpacity={1} onPress={() => setConfirmDeleteCard(null)}>
           <TouchableOpacity style={actStyles.deleteConfirmCard} activeOpacity={1} onPress={() => {}}>
             <View style={actStyles.deleteConfirmIcon}>
@@ -1097,6 +1135,11 @@ export default function TarjetasScreen() {
             </View>
             <Text style={actStyles.deleteConfirmTitle}>Eliminar</Text>
             <Text style={actStyles.deleteConfirmText}>¿Eliminar "{confirmDeleteCard?.name}"?</Text>
+            {deleteExpenseCount > 0 && (
+              <Text style={actStyles.deleteConfirmText}>
+                {deleteExpenseCount} {deleteExpenseCount === 1 ? 'gasto quedará' : 'gastos quedarán'} sin cuenta asignada (no se borran).
+              </Text>
+            )}
             <View style={actStyles.deleteConfirmActions}>
               <TouchableOpacity style={actStyles.deleteConfirmCancelBtn} onPress={() => setConfirmDeleteCard(null)}>
                 <Text style={actStyles.deleteConfirmCancelText}>Cancelar</Text>
@@ -1110,7 +1153,7 @@ export default function TarjetasScreen() {
       </Modal>
 
       {/* Debt payments history modal */}
-      <Modal visible={debtHistModal} animationType="slide" transparent onRequestClose={() => setDebtHistModal(false)}>
+      <Modal visible={debtHistModal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setDebtHistModal(false)}>
         <KeyboardAvoidingView style={actStyles.overlay} behavior="padding">
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setDebtHistModal(false)} activeOpacity={1} />
           <View style={actStyles.sheet}>
@@ -1147,7 +1190,7 @@ export default function TarjetasScreen() {
       </Modal>
 
       {/* Historial por sección (débito / efectivo / crédito) */}
-      <Modal visible={!!historyModalType} animationType="slide" transparent onRequestClose={() => setHistoryModalType(null)}>
+      <Modal visible={!!historyModalType} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setHistoryModalType(null)}>
         <KeyboardAvoidingView style={actStyles.overlay} behavior="padding">
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setHistoryModalType(null)} activeOpacity={1} />
           <View style={actStyles.sheet}>

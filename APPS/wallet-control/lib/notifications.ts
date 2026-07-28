@@ -97,7 +97,9 @@ export async function scheduleRecurringReminder(
     content,
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.MONTHLY,
-      day: baseDate.getDate(),
+      // Meses con menos de 31/30 días no tienen ese día — sin este tope,
+      // expo-notifications simplemente no dispara ningún mes que sea corto.
+      day: Math.min(baseDate.getDate(), 28),
       hour: 9,
       minute: 0,
     },

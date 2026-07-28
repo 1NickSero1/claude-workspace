@@ -1,5 +1,5 @@
 import {
-  Card, Expense, RecurringTemplate, BudgetPeriod,
+  Card, Expense, RecurringTemplate, BudgetPeriod, RecurrenceFrequency,
   addExpenses, deleteExpense, getCardTotalSpent,
 } from '@/lib/storage';
 import { cancelNotification, scheduleRecurringReminder } from '@/lib/notifications';
@@ -25,19 +25,28 @@ function loggedNamesInPeriod(expenses: Expense[], period: BudgetPeriod, quincena
   return new Set(windowExpenses.map(e => e.name.trim().toLowerCase()));
 }
 
-// Separa los gastos fijos/recurrentes en pendientes/pagados del periodo activo,
-// comparando por nombre contra los gastos reales ya registrados.
+// Separa los gastos fijos/recurrentes en pendientes/pagados, comparando por
+// nombre contra los gastos reales ya registrados dentro de la ventana de CADA
+// plantilla (t.frequency) — no la periodicidad global del dashboard, que
+// podía marcar como "pagado" (o "pendiente") algo que en realidad vive en una
+// ventana de tiempo distinta a la suya (ej. un recurrente semanal comparado
+// contra la quincena activa), dando conteos duplicados o inconsistentes.
 export function splitRecurringByPaid(
   templates: RecurringTemplate[],
   expenses: Expense[],
-  period: BudgetPeriod,
   quincena: 1 | 2,
 ): { pending: RecurringTemplate[]; paid: RecurringTemplate[] } {
-  const logged = loggedNamesInPeriod(expenses, period, quincena);
-  return {
-    pending: templates.filter(t => !logged.has(t.name.trim().toLowerCase())),
-    paid: templates.filter(t => logged.has(t.name.trim().toLowerCase())),
-  };
+  const loggedByFrequency = new Map<RecurrenceFrequency, Set<string>>();
+  const pending: RecurringTemplate[] = [];
+  const paid: RecurringTemplate[] = [];
+  for (const t of templates) {
+    if (!loggedByFrequency.has(t.frequency)) {
+      loggedByFrequency.set(t.frequency, loggedNamesInPeriod(expenses, t.frequency, quincena));
+    }
+    const logged = loggedByFrequency.get(t.frequency)!;
+    (logged.has(t.name.trim().toLowerCase()) ? paid : pending).push(t);
+  }
+  return { pending, paid };
 }
 
 // Cuentas con plata real disponible para pagar un gasto fijo — sin préstamos
@@ -87,6 +96,7 @@ export async function payRecurringTemplate(
     monthKey,
     isRecurring: true,
     recurrenceFrequency: template.frequency,
+    recurrenceDueDate: template.dueDate,
     notificationId,
   }]);
 }
@@ -100,7 +110,11 @@ export async function unpayRecurringTemplate(
   expenses: Expense[],
 ): Promise<void> {
   const key = template.name.trim().toLowerCase();
-  const matches = expenses.filter(e => e.quincena === quincena && e.name.trim().toLowerCase() === key);
+  const matches = expenses.filter(e =>
+    e.quincena === quincena
+    && e.name.trim().toLowerCase() === key
+    && e.categoryId === template.categoryId,
+  );
   for (const m of matches) {
     if (m.notificationId) await cancelNotification(m.notificationId);
     await deleteExpense(monthKey, m.id);

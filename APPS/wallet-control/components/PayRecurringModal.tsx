@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, Expense, RecurringTemplate } from '@/lib/storage';
+import { Card, Expense, RecurringTemplate, getCardTotalSpent } from '@/lib/storage';
 import { getCardAvailable } from '@/lib/recurringPayments';
 import { formatCOP } from '@/lib/expenseParser';
 import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
+import CardView from './CardView';
 
 interface Props {
   target: RecurringTemplate | null;
@@ -50,12 +51,6 @@ export default function PayRecurringModal({
     sub: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 4, marginBottom: SPACING.lg },
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 6 },
     hint: { color: COLORS.danger, fontSize: FONT.sm, marginTop: SPACING.xs },
-    chip: {
-      paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, borderRadius: RADIUS.pill,
-      backgroundColor: COLORS.bg, borderWidth: 1, borderColor: COLORS.border, marginRight: SPACING.sm,
-    },
-    chipActive: { borderColor: 'transparent' },
-    chipText: { color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
     actions: { flexDirection: 'row', gap: 10, marginTop: SPACING.xl },
     cancelBtn: { flex: 1, padding: 14, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.bg },
     cancelText: { color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.md },
@@ -76,7 +71,7 @@ export default function PayRecurringModal({
 
   if (target && insufficient) {
     return (
-      <Modal visible animationType="slide" transparent onRequestClose={onCancel}>
+      <Modal visible animationType="slide" transparent statusBarTranslucent onRequestClose={onCancel}>
         <View style={styles.overlay}>
           <TouchableOpacity style={styles.dismiss} activeOpacity={1} onPress={onCancel} />
           <View style={styles.sheet}>
@@ -102,7 +97,7 @@ export default function PayRecurringModal({
   }
 
   return (
-    <Modal visible={!!target} animationType="slide" transparent onRequestClose={onCancel}>
+    <Modal visible={!!target} animationType="slide" transparent statusBarTranslucent onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.dismiss} activeOpacity={1} onPress={onCancel} />
         <View style={styles.sheet}>
@@ -116,13 +111,14 @@ export default function PayRecurringModal({
             <>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
                 {cards.map(c => (
-                  <TouchableOpacity
+                  <CardView
                     key={c.id}
+                    card={c}
+                    compact
+                    selected={cardId === c.id}
+                    totalSpent={getCardTotalSpent(expenses, c.id)}
                     onPress={() => onSelectCard(c.id)}
-                    style={[styles.chip, cardId === c.id && styles.chipActive, cardId === c.id && { backgroundColor: c.color }]}
-                  >
-                    <Text style={[styles.chipText, cardId === c.id && { color: '#fff' }]}>{c.name}</Text>
-                  </TouchableOpacity>
+                  />
                 ))}
               </ScrollView>
               {!cardId && <Text style={styles.hint}>Elige de dónde salió el dinero.</Text>}

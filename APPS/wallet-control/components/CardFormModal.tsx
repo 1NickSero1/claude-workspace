@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  ScrollView, StyleSheet, Switch, Alert, Modal,
+  ScrollView, StyleSheet, Switch, Modal,
 } from 'react-native';
 import BottomSheet from './BottomSheet';
+import InfoModal from './InfoModal';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Card } from '@/lib/storage';
+import { Card, Expense, getCardTotalSpent } from '@/lib/storage';
 import { FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { CARD_COLORS } from '@/constants/categories';
@@ -16,6 +17,7 @@ interface Props {
   visible: boolean;
   card?: Card | null;
   allowedTypes: Card['type'][];
+  expenses: Expense[];
   onSave: (card: Card) => void;
   onClose: () => void;
 }
@@ -42,6 +44,9 @@ const EMOJI_SUGGESTIONS: Record<Card['type'], string[]> = {
 
 const fmt  = (n: number) => n.toLocaleString('es-CO');
 const parse = (s: string) => Number(s.replace(/\./g, '').replace(/,/g, '').replace(/\D/g, ''));
+// Tope de 12 dígitos (~menos de un billón de COP) para que un pegado o
+// tecleo accidental no genere un monto absurdo sin ningún aviso.
+const capAmount = (n: number) => Number(String(n).slice(0, 12));
 
 const BLANK = (type: Card['type']) => ({
   name: '', type, bank: '', emoji: '', lastFour: '',
@@ -52,9 +57,10 @@ const BLANK = (type: Card['type']) => ({
   notifyOnDue: false,
 });
 
-export default function CardFormModal({ visible, card, allowedTypes, onSave, onClose }: Props) {
+export default function CardFormModal({ visible, card, allowedTypes, expenses, onSave, onClose }: Props) {
   const [form, setForm] = useState(BLANK(card?.type ?? allowedTypes[0]));
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [infoModal, setInfoModal] = useState<{ title: string; message: string } | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dueDateObj, setDueDateObj] = useState<Date | null>(null);
 
@@ -126,11 +132,27 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
             trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueDate },
           });
         } else {
-          Alert.alert(
-            'Notificaciones desactivadas',
-            'No podremos recordarte el vencimiento porque las notificaciones están desactivadas para Wallet Control. Actívalas desde los ajustes del sistema para que el recordatorio funcione.',
-          );
+          setInfoModal({
+            title: 'Notificaciones desactivadas',
+            message: 'No podremos recordarte el vencimiento porque las notificaciones están desactivadas para Wallet Control. Actívalas desde los ajustes del sistema para que el recordatorio funcione.',
+          });
         }
+      }
+    } else if (notificationId) {
+      // Se apagó el switch (o se borró la fecha) sobre un préstamo que ya
+      // tenía un recordatorio agendado — hay que cancelarlo, si no queda
+      // sonando en la fecha vieja para una deuda que ya no lo pidió.
+      await Notifications.cancelScheduledNotificationAsync(notificationId).catch(() => {});
+      notificationId = undefined;
+    }
+
+    if (card && form.type === 'credit' && limitValue != null) {
+      const spent = getCardTotalSpent(expenses, card.id);
+      if (Number(limitValue) < spent) {
+        setInfoModal({
+          title: 'Límite por debajo de lo gastado',
+          message: `Ya tienes ${fmt(spent)} en gastos con esta tarjeta, más de lo que estás dejando como nuevo límite. Se guardará igual.`,
+        });
       }
     }
 
@@ -144,7 +166,7 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
       emoji:          form.emoji?.trim() || undefined,
       limit:          form.type === 'credit' && limitValue != null ? Number(limitValue) : undefined,
       balance:        newBalance,
-      initialBalance: isDebtType ? (card?.initialBalance ?? newBalance) : undefined,
+      initialBalance: isDebtType ? Math.max(card?.initialBalance ?? 0, newBalance ?? 0) : undefined,
       dueDate:        isDebtType ? (form.dueDate.trim() || undefined) : undefined,
       notificationId: notificationId,
       events:         card?.events,
@@ -300,7 +322,7 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
                     return (
                       <TouchableOpacity
                         key={t}
-                        onPress={() => set('type', t)}
+                        onPress={() => setForm(f => ({ ...BLANK(t), name: f.name, color: f.color }))}
                         style={[
                           styles.typeChip,
                           active && { borderColor: COLORS[meta.accent], backgroundColor: COLORS[meta.accentBg] },
@@ -372,10 +394,9 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
                 <TextInput
                   style={[styles.input, styles.emojiCustomInput]}
                   value={form.emoji}
-                  onChangeText={v => set('emoji', v)}
+                  onChangeText={v => set('emoji', [...v][0] ?? '')}
                   placeholder="Otro"
                   placeholderTextColor={COLORS.textDim}
-                  maxLength={2}
                 />
               </View>
             </>
@@ -403,7 +424,7 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
                 <TextInput
                   style={styles.input}
                   value={form.limit != null ? fmt(Number(form.limit)) : ''}
-                  onChangeText={v => set('limit', parse(v) || undefined)}
+                  onChangeText={v => { const n = parse(v); set('limit', n ? capAmount(n) : undefined); }}
                   placeholder="Ej: 5.000.000"
                   placeholderTextColor={COLORS.textDim}
                   keyboardType="number-pad"
@@ -420,7 +441,7 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
                 <TextInput
                   style={styles.input}
                   value={form.balance != null ? fmt(Number(form.balance)) : ''}
-                  onChangeText={v => set('balance', parse(v) || undefined)}
+                  onChangeText={v => { const n = parse(v); set('balance', n ? capAmount(n) : undefined); }}
                   placeholder="Ej: 1.500.000"
                   placeholderTextColor={COLORS.textDim}
                   keyboardType="number-pad"
@@ -485,8 +506,12 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
               <Text style={styles.cancelText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => { handleSave(); }}
-              disabled={!valid}
+              onPress={() => {
+                if (!(form.name ?? '').trim()) return;
+                if (!amountFilled) { setConfirmDiscard(true); return; }
+                handleSave();
+              }}
+              disabled={!(form.name ?? '').trim()}
               style={[styles.saveBtn, !valid && styles.saveBtnOff]}
             >
               <Text style={styles.saveText}>Guardar</Text>
@@ -495,7 +520,7 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
     </BottomSheet>
 
     {/* Confirmación al salir sin monto: dejar en $0 o descartar */}
-    <Modal visible={confirmDiscard} animationType="fade" transparent onRequestClose={() => setConfirmDiscard(false)}>
+    <Modal visible={confirmDiscard} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setConfirmDiscard(false)}>
       <TouchableOpacity style={styles.confirmOverlay} activeOpacity={1} onPress={() => setConfirmDiscard(false)}>
         <TouchableOpacity style={styles.confirmCard} activeOpacity={1} onPress={() => {}}>
           <View style={styles.confirmIcon}>
@@ -523,6 +548,14 @@ export default function CardFormModal({ visible, card, allowedTypes, onSave, onC
         </TouchableOpacity>
       </TouchableOpacity>
     </Modal>
+
+    <InfoModal
+      visible={!!infoModal}
+      title={infoModal?.title ?? ''}
+      message={infoModal?.message ?? ''}
+      variant="warning"
+      onClose={() => setInfoModal(null)}
+    />
     </>
   );
 }

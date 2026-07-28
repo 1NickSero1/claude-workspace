@@ -5,8 +5,10 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   getUserProfile, saveUserProfile, UserProfile, BudgetPeriod,
-  getMonthData, getCurrentMonthKey, saveBudget,
+  getMonthData, getCurrentMonthKey, saveBudget, getEffectiveBudget,
+  addIncomes, updateIncome, Income, getCards, saveCard, Card,
 } from '@/lib/storage';
+import { scheduleRecurringReminder } from '@/lib/notifications';
 import { formatCOP, GASTO_HORMIGA_MAX } from '@/lib/expenseParser';
 import BudgetFormModal from '@/components/BudgetFormModal';
 import { FONT, SPACING, RADIUS } from '@/constants/theme';
@@ -26,11 +28,16 @@ export default function PersonalizacionScreen() {
   const [budget, setBudget]             = useState<number | null>(null);
   const [budgetModal, setBudgetModal]   = useState(false);
   const [hormigaModal, setHormigaModal] = useState(false);
+  const [fixedIncome, setFixedIncome]   = useState<Income | null>(null);
+  const [incomeModal, setIncomeModal]   = useState(false);
   const monthKey = getCurrentMonthKey();
 
   useEffect(() => {
     getUserProfile().then(setProfile);
-    getMonthData(monthKey).then(d => setBudget(d.budget));
+    getEffectiveBudget(monthKey).then(setBudget);
+    getMonthData(monthKey).then(d => {
+      setFixedIncome(d.incomes.find(i => i.isRecurring) ?? null);
+    });
   }, [monthKey]);
 
   const handleChangePeriod = async (period: BudgetPeriod) => {
@@ -52,6 +59,55 @@ export default function PersonalizacionScreen() {
     await saveUserProfile(updated);
     setProfile(updated);
     setHormigaModal(false);
+  };
+
+  const handleSaveIncome = async (amount: number) => {
+    if (fixedIncome) {
+      // Ya existe un ingreso fijo este mes — solo se corrige el monto
+      // guardado, sin tocar ninguna cuenta (ese dinero ya se movió).
+      await updateIncome(monthKey, { id: fixedIncome.id, amount });
+      setFixedIncome({ ...fixedIncome, amount });
+    } else {
+      // Ingreso fijo nuevo para este mes — mismo flujo que el onboarding:
+      // se registra el ingreso Y se fondea (o crea) la cuenta de Efectivo,
+      // para que el monto quede disponible para gastar de inmediato.
+      const day = new Date().getDate();
+      const quincena: 1 | 2 = day <= 15 ? 1 : 2;
+      const notificationId = await scheduleRecurringReminder('Sueldo', 'monthly', new Date());
+      const income: Income = {
+        id: `inc_${Date.now()}`,
+        description: 'Sueldo',
+        amount,
+        quincena,
+        createdAt: new Date().toISOString(),
+        monthKey,
+        isRecurring: true,
+        recurrenceFrequency: 'monthly',
+        notificationId,
+      };
+      await addIncomes(monthKey, [income]);
+      setFixedIncome(income);
+
+      const existingCards = await getCards();
+      const cashCard = existingCards.find(c => c.type === 'cash');
+      if (cashCard) {
+        await saveCard({ ...cashCard, balance: (cashCard.balance ?? 0) + amount });
+      } else {
+        const newCash: Card = {
+          id: `card_${Date.now()}`,
+          name: 'Efectivo',
+          type: 'cash',
+          bank: '',
+          lastFour: '',
+          color: COLORS.cash,
+          emoji: '💵',
+          balance: amount,
+          createdAt: new Date().toISOString(),
+        };
+        await saveCard(newCash);
+      }
+    }
+    setIncomeModal(false);
   };
 
   const styles = useMemo(() => StyleSheet.create(scaledSheet({
@@ -84,6 +140,7 @@ export default function PersonalizacionScreen() {
     rowDivider: { borderTopWidth: 1, borderTopColor: COLORS.border },
     rowIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
     rowLabel: { flex: 1, color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
+    rowHint: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
 
     themeRow: { flexDirection: 'row', gap: SPACING.sm, flex: 1 },
     themeBtn: {
@@ -109,8 +166,8 @@ export default function PersonalizacionScreen() {
         <View style={styles.introCard}>
           <Text style={styles.introTitle}>Ajusta la app a tu manera</Text>
           <Text style={styles.introSub}>
-            Cómo manejas tu dinero, tu presupuesto y qué cuenta como "gasto hormiga" — todo esto
-            hace que Wallet Control se sienta hecho a tu medida.
+            Tu periodicidad, tu presupuesto, tu ingreso fijo y qué cuenta como "gasto hormiga" —
+            todo esto hace que Wallet Control se sienta hecho a tu medida.
           </Text>
         </View>
 
@@ -156,6 +213,20 @@ export default function PersonalizacionScreen() {
           </View>
         </TouchableOpacity>
 
+        {/* ── Ingreso fijo mensual ──────────────────────── */}
+        <Text style={styles.sectionLabel}>Ingreso fijo mensual</Text>
+        <TouchableOpacity style={styles.section} onPress={() => setIncomeModal(true)}>
+          <View style={styles.row}>
+            <View style={[styles.rowIcon, { backgroundColor: COLORS.primaryBg }]}>
+              <Ionicons name="cash-outline" size={18} color={COLORS.primary} />
+            </View>
+            <Text style={styles.rowLabel}>
+              {fixedIncome && fixedIncome.amount > 0 ? formatCOP(fixedIncome.amount) : 'Sin configurar'}
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textDim} />
+          </View>
+        </TouchableOpacity>
+
         {/* ── Gasto hormiga ────────────────────────────── */}
         <Text style={styles.sectionLabel}>Gasto hormiga</Text>
         <TouchableOpacity style={styles.section} onPress={() => setHormigaModal(true)}>
@@ -166,6 +237,21 @@ export default function PersonalizacionScreen() {
             <Text style={styles.rowLabel}>
               Hasta {formatCOP(profile?.hormigaThreshold ?? GASTO_HORMIGA_MAX)}
             </Text>
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textDim} />
+          </View>
+        </TouchableOpacity>
+
+        {/* ── Categorías de gastos ─────────────────────── */}
+        <Text style={styles.sectionLabel}>Categorías de gastos</Text>
+        <TouchableOpacity style={styles.section} onPress={() => router.push('/categorias')}>
+          <View style={styles.row}>
+            <View style={[styles.rowIcon, { backgroundColor: COLORS.primaryBg }]}>
+              <Ionicons name="pricetags-outline" size={18} color={COLORS.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowLabel}>Crear o editar categorías</Text>
+              <Text style={styles.rowHint}>Nombre, color y emoji de cada categoría</Text>
+            </View>
             <Ionicons name="chevron-forward" size={16} color={COLORS.textDim} />
           </View>
         </TouchableOpacity>
@@ -187,6 +273,19 @@ export default function PersonalizacionScreen() {
         hint='Gastos por este monto o menos se marcan como "🐜 Hormiga" en vez de mostrar la quincena.'
         placeholder="Ej: 30.000"
         accessibilityLabel="Monto máximo de gasto hormiga"
+      />
+
+      <BudgetFormModal
+        visible={incomeModal}
+        budget={fixedIncome?.amount ?? null}
+        onSave={handleSaveIncome}
+        onClose={() => setIncomeModal(false)}
+        title="Ingreso fijo mensual"
+        hint={fixedIncome
+          ? 'Corrige el monto de tu ingreso fijo de este mes.'
+          : 'Por ejemplo tu salario. Se registra este mes y se fondea tu cuenta de Efectivo con este monto.'}
+        placeholder="Ej: 2.500.000"
+        accessibilityLabel="Monto de ingreso fijo mensual"
       />
     </SafeAreaView>
   );

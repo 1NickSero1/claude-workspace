@@ -2,15 +2,18 @@ import React, { useState, useMemo, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView,
-  Platform, ScrollView, Alert,
+  Platform, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import InfoModal from '@/components/InfoModal';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  saveUserProfile, UserProfile, BudgetPeriod,
-  addIncomes, addExpenses, getCurrentMonthKey,
+  saveUserProfile, getUserProfile, UserProfile, BudgetPeriod,
+  addIncomes, addExpenses, getCurrentMonthKey, saveBudget,
+  migrateNamespaceData, saveCard, getCards, Card,
+  getCategories, saveCategory,
 } from '@/lib/storage';
 import { scheduleRecurringReminder } from '@/lib/notifications';
 import { formatThousands, GASTO_HORMIGA_MAX } from '@/lib/expenseParser';
@@ -32,7 +35,7 @@ const RECOMMENDED_EMOJIS = ['💵', '😀', '😎', '🚀', '🐱', '⭐', '🔥
 const EMOJI_ONLY_REGEX = /\p{Extended_Pictographic}/gu;
 const filterEmojiOnly = (text: string) => (text.match(EMOJI_ONLY_REGEX) ?? []).join('');
 
-type Step = 'welcome' | 'choice' | 'register' | 'login' | 'periodicity' | 'fixedIncome' | 'fixedExpense' | 'hormigaThreshold' | 'done';
+type Step = 'welcome' | 'choice' | 'register' | 'login' | 'periodicity' | 'budget' | 'fixedIncome' | 'fixedExpense' | 'hormigaThreshold' | 'done';
 
 const SUGGESTED_FIXED_EXPENSES = [
   'Arriendo', 'Servicios (luz/agua/gas)', 'Internet / Celular', 'Suscripciones', 'Transporte', 'Seguro',
@@ -58,7 +61,10 @@ const PERIOD_OPTIONS: { value: BudgetPeriod; label: string; caption: string; ico
 ];
 
 export default function OnboardingScreen() {
-  const [step, setStep]           = useState<Step>('welcome');
+  // Perfil (modo anónimo) puede mandar a esta pantalla con ?step=register
+  // para "Crear cuenta y guardar mis datos" sin pasar por welcome/choice.
+  const params = useLocalSearchParams<{ step?: string }>();
+  const [step, setStep]           = useState<Step>(params.step === 'register' ? 'register' : 'welcome');
   const [nickname, setNickname]   = useState('');
   const [email, setEmail]         = useState('');
   const [password, setPassword]   = useState('');
@@ -66,6 +72,7 @@ export default function OnboardingScreen() {
   const [avatarEmoji, setAvatarEmoji] = useState(DEFAULT_AVATAR_EMOJI);
   const [showEmojiSuggestions, setShowEmojiSuggestions] = useState(false);
   const [loading, setLoading]     = useState(false);
+  const [infoModal, setInfoModal] = useState<{ title: string; message: string; variant?: 'error' | 'info' } | null>(null);
   const emojiInputRef = useRef<TextInput>(null);
 
   const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -78,6 +85,7 @@ export default function OnboardingScreen() {
   const [createdProfile, setCreatedProfile]   = useState<UserProfile | null>(null);
   const [pendingAnonymous, setPendingAnonymous] = useState(false);
   const [budgetPeriod, setBudgetPeriod]       = useState<BudgetPeriod>('biweekly');
+  const [budgetAmount, setBudgetAmount]       = useState('');
   const [fixedIncomeAmount, setFixedIncomeAmount] = useState('');
   const [fixedExpenseItems, setFixedExpenseItems] = useState<{ name: string; amount: number }[]>([]);
   const [newExpenseName, setNewExpenseName]   = useState('');
@@ -97,6 +105,13 @@ export default function OnboardingScreen() {
     if (!canRegister) return;
     setLoading(true);
     try {
+      // Si ya venía en modo anónimo con datos reales (tarjetas, gastos, etc.),
+      // esto es una migración a cuenta real, no un setup desde cero — hay que
+      // conservar sus preferencias y saltar el wizard de periodicidad/
+      // presupuesto/ingreso fijo para no duplicar lo que ya tiene guardado.
+      const previousProfile = await getUserProfile();
+      const wasAnonymousUpgrade = previousProfile?.isAnonymous === true;
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
@@ -112,10 +127,10 @@ export default function OnboardingScreen() {
       if (!data.user) throw new Error('No se pudo crear la cuenta.');
 
       if (!data.session) {
-        Alert.alert(
-          'Confirma tu correo',
-          'Te enviamos un enlace de confirmación a tu correo. Ábrelo y luego vuelve aquí para iniciar sesión.',
-        );
+        setInfoModal({
+          title: 'Confirma tu correo',
+          message: 'Te enviamos un enlace de confirmación a tu correo. Ábrelo y luego vuelve aquí para iniciar sesión.',
+        });
         setStep('login');
         return;
       }
@@ -137,14 +152,23 @@ export default function OnboardingScreen() {
         email:       email.trim().toLowerCase(),
         avatarColor,
         avatarEmoji: avatarEmoji.trim(),
-        createdAt:   new Date().toISOString(),
+        createdAt:   previousProfile?.createdAt ?? new Date().toISOString(),
+        budgetPeriod:      previousProfile?.budgetPeriod,
+        hormigaThreshold:  previousProfile?.hormigaThreshold,
       };
       await saveUserProfile(profile);
+      // Si el usuario venía probando en modo anónimo, sus tarjetas/gastos/
+      // metas ya cargados no deben desaparecer al crear la cuenta real.
+      await migrateNamespaceData('anon', data.user.id);
       trackSignup(profile);
-      setCreatedProfile(profile);
-      setStep('periodicity');
+      if (wasAnonymousUpgrade) {
+        goToApp();
+      } else {
+        setCreatedProfile(profile);
+        setStep('periodicity');
+      }
     } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'No se pudo crear tu cuenta. Intenta de nuevo.');
+      setInfoModal({ title: 'Error', message: e?.message ?? 'No se pudo crear tu cuenta. Intenta de nuevo.', variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -160,7 +184,7 @@ export default function OnboardingScreen() {
         const { data: foundEmail, error: lookupError } = await supabase
           .rpc('get_email_by_nickname', { p_nickname: identifier });
         if (lookupError || !foundEmail) {
-          Alert.alert('No encontramos tu cuenta', 'Revisa tu nombre de usuario o correo.');
+          setInfoModal({ title: 'No encontramos tu cuenta', message: 'Revisa tu nombre de usuario o correo.', variant: 'error' });
           setLoginLoading(false);
           return;
         }
@@ -209,9 +233,15 @@ export default function OnboardingScreen() {
         avatarEmoji: profileRow.avatar_emoji ?? undefined,
         createdAt:   profileRow.created_at,
       });
+      // Red de seguridad: si el registro había quedado pendiente de
+      // confirmar correo (con modo anónimo activo mientras tanto), la
+      // migración de datos no se pudo hacer en handleRegister — se
+      // intenta aquí también. migrateNamespaceData ya es seguro llamarlo
+      // de más (no pisa datos si el destino ya los tiene).
+      await migrateNamespaceData('anon', data.user.id);
       router.replace('/(tabs)');
     } catch (e: any) {
-      Alert.alert('No pudimos iniciar sesión', e?.message ?? 'Revisa tu correo y contraseña.');
+      setInfoModal({ title: 'No pudimos iniciar sesión', message: e?.message ?? 'Revisa tu correo y contraseña.', variant: 'error' });
     } finally {
       setLoginLoading(false);
     }
@@ -239,7 +269,20 @@ export default function OnboardingScreen() {
     const updated: UserProfile = { ...createdProfile, budgetPeriod };
     await saveUserProfile(updated);
     setCreatedProfile(updated);
-    setStep('fixedIncome');
+    setStep('budget');
+  };
+
+  const handleBudgetContinue = async (skip: boolean) => {
+    setSetupSaving(true);
+    try {
+      const amount = Number(budgetAmount.replace(/\D/g, ''));
+      if (!skip && amount > 0) {
+        await saveBudget(getCurrentMonthKey(), amount);
+      }
+      setStep('fixedIncome');
+    } finally {
+      setSetupSaving(false);
+    }
   };
 
   const handleFixedIncomeContinue = async (skip: boolean) => {
@@ -250,10 +293,10 @@ export default function OnboardingScreen() {
         const monthKey = getCurrentMonthKey();
         const day = new Date().getDate();
         const quincena: 1 | 2 = day <= 15 ? 1 : 2;
-        const notificationId = await scheduleRecurringReminder('Ingreso fijo mensual', 'monthly', new Date());
+        const notificationId = await scheduleRecurringReminder('Sueldo', 'monthly', new Date());
         await addIncomes(monthKey, [{
           id: `inc_${Date.now()}`,
-          description: 'Ingreso fijo mensual',
+          description: 'Sueldo',
           amount,
           quincena,
           createdAt: new Date().toISOString(),
@@ -262,6 +305,30 @@ export default function OnboardingScreen() {
           recurrenceFrequency: 'monthly',
           notificationId,
         }]);
+
+        // Un ingreso por sí solo no es dinero "en" ninguna cuenta — sin esto,
+        // alguien que recién puso su ingreso fijo no tendría con qué
+        // registrar ni un solo gasto (Registrar gasto solo deja elegir
+        // cuentas con saldo disponible). Se fondea (o se crea) una cuenta
+        // de Efectivo con ese monto para arrancar con saldo real.
+        const existingCards = await getCards();
+        const cashCard = existingCards.find(c => c.type === 'cash');
+        if (cashCard) {
+          await saveCard({ ...cashCard, balance: (cashCard.balance ?? 0) + amount });
+        } else {
+          const newCash: Card = {
+            id: `card_${Date.now()}`,
+            name: 'Efectivo',
+            type: 'cash',
+            bank: '',
+            lastFour: '',
+            color: COLORS.cash,
+            emoji: '💵',
+            balance: amount,
+            createdAt: new Date().toISOString(),
+          };
+          await saveCard(newCash);
+        }
       }
       setStep('fixedExpense');
     } finally {
@@ -289,13 +356,25 @@ export default function OnboardingScreen() {
         const monthKey = getCurrentMonthKey();
         const day = new Date().getDate();
         const quincena: 1 | 2 = day <= 15 ? 1 : 2;
+
+        // A esta altura del onboarding el usuario todavía no ha creado
+        // ninguna categoría propia (esa pantalla no es parte del setup
+        // inicial) — sin categorías por defecto, se necesita una real para
+        // que estos gastos no queden invisibles en "Gastos por categoría".
+        const existingCats = await getCategories();
+        let fallbackCat = existingCats[0];
+        if (!fallbackCat) {
+          fallbackCat = { id: 'otro', name: 'Otros', color: '#607D8B', icon: 'ellipsis-horizontal', isDefault: false };
+          await saveCategory(fallbackCat);
+        }
+
         const expenses = await Promise.all(fixedExpenseItems.map(async (item, i) => {
           const notificationId = await scheduleRecurringReminder(item.name, 'monthly', new Date());
           return {
             id: `exp_${Date.now()}_${i}`,
             name: item.name,
             amount: item.amount,
-            categoryId: 'otro',
+            categoryId: fallbackCat.id,
             quincena,
             createdAt: new Date().toISOString(),
             monthKey,
@@ -678,6 +757,13 @@ export default function OnboardingScreen() {
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
+        <InfoModal
+          visible={!!infoModal}
+          title={infoModal?.title ?? ''}
+          message={infoModal?.message ?? ''}
+          variant={infoModal?.variant ?? 'info'}
+          onClose={() => setInfoModal(null)}
+        />
       </SafeAreaView>
     );
   }
@@ -719,6 +805,42 @@ export default function OnboardingScreen() {
     );
   }
 
+  // ── PRESUPUESTO MENSUAL ──────────────────────────────────────────────────────
+  if (step === 'budget') {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView style={styles.flex} contentContainerStyle={styles.formScroll} showsVerticalScrollIndicator={false}>
+            <Text style={styles.formTitle}>¿Cuál es tu presupuesto mensual?</Text>
+            <Text style={styles.formSub}>Te avisamos cuando te acerques al límite — puedes cambiarlo cuando quieras desde Perfil, y puedes omitir este paso</Text>
+
+            <Text style={styles.label}>Presupuesto mensual (COP, opcional)</Text>
+            <TextInput
+              style={styles.input}
+              value={formatThousands(budgetAmount)}
+              onChangeText={v => setBudgetAmount(v.replace(/\D/g, '').slice(0, 12))}
+              placeholder="Ej: 1.500.000"
+              placeholderTextColor={COLORS.textDim}
+              keyboardType="number-pad"
+            />
+
+            <TouchableOpacity
+              onPress={() => handleBudgetContinue(false)}
+              disabled={setupSaving}
+              style={[styles.primaryBtn, styles.primaryBtnSpaced, setupSaving && styles.primaryBtnOff]}
+            >
+              <Text style={styles.primaryBtnText}>{setupSaving ? 'Guardando...' : 'Continuar'}</Text>
+              {!setupSaving && <Ionicons name="arrow-forward" size={18} color="#fff" />}
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleBudgetContinue(true)} disabled={setupSaving} style={{ marginTop: 14, alignItems: 'center' }}>
+              <Text style={{ color: COLORS.textMuted, fontWeight: '600', fontSize: FONT.sm }}>Omitir</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
+
   // ── INGRESO FIJO ─────────────────────────────────────────────────────────────
   if (step === 'fixedIncome') {
     return (
@@ -732,7 +854,7 @@ export default function OnboardingScreen() {
             <TextInput
               style={styles.input}
               value={formatThousands(fixedIncomeAmount)}
-              onChangeText={v => setFixedIncomeAmount(v.replace(/\D/g, ''))}
+              onChangeText={v => setFixedIncomeAmount(v.replace(/\D/g, '').slice(0, 12))}
               placeholder="Ej: 2.500.000"
               placeholderTextColor={COLORS.textDim}
               keyboardType="number-pad"
@@ -788,7 +910,7 @@ export default function OnboardingScreen() {
               <TextInput
                 style={[styles.input, { flex: 1 }]}
                 value={formatThousands(newExpenseAmount)}
-                onChangeText={v => setNewExpenseAmount(v.replace(/\D/g, ''))}
+                onChangeText={v => setNewExpenseAmount(v.replace(/\D/g, '').slice(0, 12))}
                 placeholder="Ej: 1.200.000"
                 placeholderTextColor={COLORS.textDim}
                 keyboardType="number-pad"
@@ -858,7 +980,7 @@ export default function OnboardingScreen() {
             <TextInput
               style={styles.input}
               value={formatThousands(hormigaThreshold)}
-              onChangeText={v => setHormigaThreshold(v.replace(/\D/g, ''))}
+              onChangeText={v => setHormigaThreshold(v.replace(/\D/g, '').slice(0, 12))}
               placeholder="Ej: 30.000"
               placeholderTextColor={COLORS.textDim}
               keyboardType="number-pad"
@@ -1060,6 +1182,13 @@ export default function OnboardingScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+      <InfoModal
+        visible={!!infoModal}
+        title={infoModal?.title ?? ''}
+        message={infoModal?.message ?? ''}
+        variant={infoModal?.variant ?? 'info'}
+        onClose={() => setInfoModal(null)}
+      />
     </SafeAreaView>
   );
 }

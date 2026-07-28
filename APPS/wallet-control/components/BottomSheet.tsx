@@ -27,7 +27,7 @@ export default function BottomSheet({
   const COLORS = useColors();
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={[styles.overlay, { backgroundColor: `rgba(0,0,0,${overlayOpacity})` }]}
         behavior="padding"

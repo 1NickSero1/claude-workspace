@@ -71,7 +71,7 @@ function extractDemoExpenses(text: string) {
   const found: any[] = [];
   for (const item of known) {
     if (item.kw.some(k => lower.includes(k))) {
-      const match = text.match(new RegExp(`(?:${item.kw.join('|')}).*?\\$?([\\d]{2,7}[.,]?[\\d]{0,3})`, 'i'));
+      const match = text.match(new RegExp(`(?:${item.kw.join('|')}).*?\\$?([\\d]{1,3}(?:[.,]\\d{3})+|[\\d]{2,7})`, 'i'));
       const raw = match ? parseInt(match[1].replace(/[.,]/g, ''), 10) : item.def;
       found.push({
         name: item.name,
@@ -100,14 +100,29 @@ export async function askAdvisor(
     return demoResponse(last);
   }
 
-  const response = await fetch(EDGE_FUNCTION_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({ system: buildSystemPrompt(nickname, categories), messages: history }),
-  });
+  // Sin esto, una red caída o muy lenta deja el fetch colgado indefinidamente
+  // (el spinner de "escribiendo..." nunca se resuelve) — con el timeout, cae
+  // al catch existente en index.tsx con un mensaje de error visible.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+
+  let response: Response;
+  try {
+    response = await fetch(EDGE_FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ system: buildSystemPrompt(nickname, categories), messages: history }),
+      signal: controller.signal,
+    });
+  } catch (err: any) {
+    if (err?.name === 'AbortError') throw new Error('Sin conexión. Revisa tu internet e intenta de nuevo.');
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));

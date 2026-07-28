@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert,
+  ScrollView, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import InfoModal from '@/components/InfoModal';
 import { COLORS as _COLORS, FONT } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive, scaledSheet } from '@/constants/responsive';
@@ -210,26 +211,25 @@ const buildPdfHtml = (): string => `
 Finando te dé un resumen inteligente de tus finanzas del mes.</p>
 
 <h3>Chips de acceso rápido</h3>
-<p>Cuando el chat está vacío, aparecen botones rápidos para las acciones más comunes:
-"Registrar gasto", "Ver resumen", "Agregar ingreso" y "Analizar gastos".</p>
-
-<div class="warn">Si no tienes API key configurada, la app funciona en modo demo con respuestas simuladas.</div>
+<p>Cuando el chat está vacío, aparecen 3 botones rápidos: uno con un gasto de ejemplo
+(usa una de tus categorías o un gasto real reciente si ya tienes), otro con un ingreso
+de ejemplo, y "Analiza mis finanzas". Tócalos para completar el mensaje al instante.</p>
 
 <!-- ── RESUMEN ── -->
 <div class="page-break"></div>
 <h2>3. Resumen — Visualiza tus Finanzas</h2>
 <p>La pestaña Resumen muestra todo en un vistazo.</p>
 
-<h3>Gráfica de torta</h3>
-<p>Muestra la distribución de tus gastos del mes en tres segmentos: Débito, Crédito y Ahorro.</p>
+<h3>Carrusel de diagramas</h3>
+<p>Un carrusel deslizable con 4 diagramas de torta: <strong>Billetera general</strong>
+(todas tus cuentas y tarjetas), <strong>Gastos del mes</strong> (por categoría),
+<strong>Metas de ahorro</strong> (avance de cada una) y <strong>Fuentes de ingreso</strong>.
+Toca cualquier diagrama para ver el detalle; si está vacío, tocarlo abre directamente
+el botón "+" para registrar el primer dato.</p>
 
-<h3>Tarjeta de flujo de efectivo</h3>
-<p>Muestra ingresos totales, gastos totales y cuánto has ahorrado. La barra de ahorro
-se pone verde cuando estás ahorrando y roja cuando gastas más de lo que ganas.</p>
-
-<h3>Tarjetas de resumen (Débito / Crédito)</h3>
-<p>Dos tarjetas muestran el total gastado en cuentas débito y en tarjetas de crédito.
-<strong>Tócalas</strong> para ir directamente a la sección de Tarjetas.</p>
+<h3>Total gastado y Total disponible</h3>
+<p>En la parte superior de Resumen ves el total gastado este mes (todas las cuentas) y
+el total disponible (débito + efectivo).</p>
 
 <h3>Categorías de gastos</h3>
 <p>Cada categoría aparece con su ícono, nombre y monto gastado.</p>
@@ -370,7 +370,7 @@ const SECTIONS: Section[] = [
     icon: '📊',
     title: 'Resumen — Ver tus finanzas',
     items: [
-      'Diagramas de billetera, gastos y fuentes de ingreso — tócalos para ver el detalle',
+      'Diagramas de billetera, gastos, metas de ahorro y fuentes de ingreso — tócalos para ver el detalle',
       'Toca una categoría o meta para ver su detalle',
       'Presiona largo una categoría o meta para editarla o eliminarla',
       'La tarjeta "Presupuesto mensual" abre el resumen completo del mes',
@@ -419,6 +419,7 @@ const SECTIONS: Section[] = [
 
 export default function AyudaScreen() {
   const [generating, setGenerating] = useState(false);
+  const [infoModal, setInfoModal] = useState<{ title: string; message: string; variant?: 'success' | 'error' } | null>(null);
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const COLORS = useColors();
@@ -518,10 +519,10 @@ export default function AyudaScreen() {
           UTI: 'com.adobe.pdf',
         });
       } else {
-        Alert.alert('PDF Generado', `Guardado en:\n${uri}`);
+        setInfoModal({ title: 'PDF Generado', message: `Guardado en:\n${uri}`, variant: 'success' });
       }
     } catch (e) {
-      Alert.alert('Error', 'No se pudo generar el PDF. Intenta de nuevo.');
+      setInfoModal({ title: 'Error', message: 'No se pudo generar el PDF. Intenta de nuevo.', variant: 'error' });
     } finally {
       setGenerating(false);
     }
@@ -640,6 +641,14 @@ export default function AyudaScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <InfoModal
+        visible={!!infoModal}
+        title={infoModal?.title ?? ''}
+        message={infoModal?.message ?? ''}
+        variant={infoModal?.variant ?? 'info'}
+        onClose={() => setInfoModal(null)}
+      />
     </SafeAreaView>
   );
 }

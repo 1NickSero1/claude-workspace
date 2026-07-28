@@ -82,44 +82,57 @@ export default function CardView({ card, totalSpent = 0, selected, onPress, onLo
     balanceLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 10 },
     balanceAmt: { color: '#fff', fontSize: FONT.base, fontWeight: '700' },
     spentText: { color: 'rgba(255,255,255,0.55)', fontSize: 10, marginTop: 2 },
-    compact: {
-      borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      minWidth: 110, marginRight: SPACING.sm,
-    },
-    compactSelected: { borderWidth: 2, borderColor: '#fff' },
-    compactChip: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, flex: 1 },
-    compactText: { color: '#fff', fontSize: FONT.sm, fontWeight: '700', flex: 1 },
-    compactLast: { color: 'rgba(255,255,255,0.7)', fontSize: 10, marginLeft: SPACING.xs },
   }, moderateScale)), [moderateScale]);
 
+  // Estilos del selector compacto: a propósito NO pasan por scaledSheet/moderateScale —
+  // en tablets (width grande) ese escalado casi duplicaba el tamaño y el selector de
+  // "¿de dónde salió el dinero?" se veía enorme. Tamaño fijo en todos los dispositivos.
+  // BLOQUEADO (2026-07-27): usuario confirmó que este tamaño quedó perfecto — no cambiar
+  // ninguno de estos valores sin permiso explícito.
+  const compactStyles = useMemo(() => StyleSheet.create({
+    compact: {
+      borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
+      minWidth: 108, marginRight: SPACING.sm,
+    },
+    compactSelected: { borderWidth: 2, borderColor: '#fff' },
+    compactTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    compactChip: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, flex: 1 },
+    compactText: { color: '#fff', fontSize: 12, fontWeight: '700', flex: 1 },
+    compactLast: { color: 'rgba(255,255,255,0.7)', fontSize: 9, marginLeft: SPACING.xs },
+    compactAmount: { color: 'rgba(255,255,255,0.85)', fontSize: 10, fontWeight: '600', marginTop: 3 },
+  }), []);
+
   const available = card.type === 'credit' && card.limit ? card.limit - totalSpent : null;
-  const balanceLeft = card.type === 'debit' && card.balance != null ? card.balance - totalSpent : null;
+  const balanceLeft = (card.type === 'debit' || card.type === 'cash') && card.balance != null ? card.balance - totalSpent : null;
   const typeLabel = card.type === 'credit' ? 'crédito' : card.type === 'debit' ? 'débito' : card.type === 'cash' ? 'efectivo' : 'préstamo';
-
-  if (compact) {
-    return (
-      <TouchableOpacity
-        onPress={onPress}
-        style={[styles.compact, { backgroundColor: card.color }, selected && styles.compactSelected]}
-        activeOpacity={0.8}
-        accessibilityRole="button"
-        accessibilityLabel={`${card.name}, ${typeLabel}${selected ? ', seleccionada' : ''}`}
-      >
-        <View style={styles.compactChip}>
-          <Ionicons name={card.type === 'credit' ? 'card' : 'card-outline'} size={14} color="#fff" />
-          <Text style={styles.compactText} numberOfLines={1}>{card.name}</Text>
-        </View>
-        {card.type === 'credit' && <Text style={styles.compactLast}>•••{card.lastFour}</Text>}
-      </TouchableOpacity>
-    );
-  }
-
   const amountLabel = available !== null
     ? `disponible ${formatCOP(Math.max(available, 0))}`
     : balanceLeft !== null
       ? `saldo ${formatCOP(Math.max(balanceLeft, 0))}`
       : '';
+
+  if (compact) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        style={[compactStyles.compact, { backgroundColor: card.color }, selected && compactStyles.compactSelected]}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`${card.name}, ${typeLabel}${amountLabel ? ', ' + amountLabel : ''}${selected ? ', seleccionada' : ''}`}
+      >
+        <View style={compactStyles.compactTopRow}>
+          <View style={compactStyles.compactChip}>
+            {card.emoji
+              ? <Text style={{ fontSize: 12 }}>{card.emoji}</Text>
+              : <Ionicons name={card.type === 'credit' ? 'card' : 'card-outline'} size={12} color="#fff" />}
+            <Text style={compactStyles.compactText} numberOfLines={1}>{card.name}</Text>
+          </View>
+          {card.type === 'credit' && <Text style={compactStyles.compactLast}>•••{card.lastFour}</Text>}
+        </View>
+        {!!amountLabel && <Text style={compactStyles.compactAmount} numberOfLines={1}>{amountLabel}</Text>}
+      </TouchableOpacity>
+    );
+  }
 
   return (
     <TouchableOpacity

@@ -227,7 +227,7 @@ export default function ChatScreen() {
       const rawText = await askAdvisor(buildHistory(next), nickname, categories);
       const { message, expenses: rawExp, incomes: rawInc, askForCard } = parseClaudeResponse(rawText);
 
-      const expenses = buildExpenses(rawExp, monthKey);
+      const expenses = buildExpenses(rawExp, monthKey, cards);
       const incomes  = buildIncomes(rawInc,  monthKey);
 
       if (expenses.length > 0) await addExpenses(monthKey, expenses);

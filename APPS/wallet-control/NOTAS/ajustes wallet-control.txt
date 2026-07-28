@@ -15,6 +15,9 @@ COMANDO RÁPIDO:
 
   — (vacío por ahora)
 
+
+
+
 ------------------------------------------------------------
 [PENDIENTE] por MAQUINA
 ------------------------------------------------------------
@@ -28,8 +31,10 @@ COMANDO RÁPIDO:
 ------------------------------------------------------------
 [EN PROGRESO]
 ------------------------------------------------------------
-  — Números cortados en la leyenda de "Metas de ahorro" (SOLO en la
-    tablet, no reproduce en el celular) — reportado 2026-07-27.
+  — Números cortados en la leyenda de los diagramas de torta del
+    Resumen (SOLO en la tablet, no reproduce en el celular) —
+    reportado 2026-07-27, visto primero en "Metas de ahorro" y
+    confirmado también en "Fuentes de ingreso" el mismo día.
     → Durante esta investigación SÍ se encontraron y arreglaron dos bugs
       reales relacionados:
       1) El carrusel de diagramas (donutSlider) había perdido su
@@ -59,9 +64,6 @@ COMANDO RÁPIDO:
       layout en el código. Los cambios de flexbox que no ayudaron
       (minWidth:0, flexShrink) se dejaron igual porque son buena práctica
       y no tienen contra, pero no resolvieron el problema visual.
-    → Se perdió la conexión ADB con ambos dispositivos de prueba
-      (celular y tablet) a mitad de esta investigación — falta reconectar
-      para seguir probando en vivo.
     → Nota aparte: al intentar descartar un caché de bundle viejo en la
       tablet, se corrió `pm clear` sobre Expo Go, lo que borró los datos
       guardados localmente en esa sesión de prueba (cuentas Daviplata/Nu/
@@ -70,10 +72,435 @@ COMANDO RÁPIDO:
       que esta app no tiene backend para datos financieros (todo vive en
       AsyncStorage local), así que ese comando nunca debe correrse sobre
       un dispositivo con datos reales sin confirmar antes.
+    → Reconectada la tablet el 2026-07-27 (misma sesión) y repetida la
+      prueba desde cero (modo anónimo, sin los datos borrados por pm
+      clear): se creó una meta "Iphone" ($5.000 de $5.000.000) y luego
+      "Play" ($60.000 de $300.000). El corte se reprodujo IDÉNTICO en
+      ambas filas ("$5.00" y "$60.00", falta el último carácter en las
+      dos) pese a tener largos de texto distintos. El árbol de
+      accesibilidad volvió a confirmar que ambos TextView miden el ancho
+      correcto para el string completo (53px para "$5.000", 67px para
+      "$60.000", terminando ambos en el mismo borde derecho x≈1160 de
+      1200) — refuerza que no es un bug de layout/medida de texto.
+    → Hallazgo NUEVO: se agregó también un ingreso de prueba ("Test",
+      $60.000) y, al deslizar a la pestaña "Fuentes de ingreso" — una de
+      las 3 que el reporte anterior daba por buena — el mismo corte
+      apareció ahí también ("$60" en vez de "$60.000"). Además, en esa
+      misma pantalla aparecieron fragmentos numéricos sueltos ("00") en
+      el borde izquierdo, pegados fuera de su tarjeta — residuo de la
+      leyenda de la slide anterior (Metas de ahorro) que no se limpió al
+      deslizar. Cambiar de pestaña (Tarjetas → Resumen) y volver NO quitó
+      ninguno de los dos artefactos — siguen ahí de forma persistente,
+      no solo durante la animación del swipe.
+      Esto amplía la sospecha original: ya no parece un glitch de
+      renderizado de texto exclusivo de "Metas de ahorro", sino algo más
+      general de esta tablet con el ScrollView horizontal del carrusel
+      (donutSlider) — posible vista no invalidada/reciclada mal en
+      Android 10 de gama baja. Sigue sin encontrarse una causa en el
+      código: los 4 diagramas comparten exactamente el mismo componente
+      de leyenda (`incomeLegendAmt` en resumen.tsx), así que un bug de
+      layout tendría que afectar a los 4 por igual y de forma
+      determinística, no de forma intermitente por sesión.
+    → Prueba definitiva (2026-07-27, misma tarde): a pedido del usuario se
+      quitó el `marginLeft: 'auto'` de `incomeLegendAmt` (era el único
+      "auto" en todo el layout de la leyenda) y se cambió a un layout
+      explícito: `incomeLegendLeft` con `flex: 1` empuja el monto al
+      extremo derecho sin depender de auto-margin. Se recargó en vivo en
+      la tablet: el corte se reprodujo IDÉNTICO. Como prueba final se le
+      dio a `incomeLegendAmt` un `minWidth: 150` (~3 veces más ancho del
+      que necesita "$60.000") — el corte siguió exactamente igual, en el
+      mismo punto. Esto descarta layout/ancho por completo: con 150px
+      garantizados de sobra, si fuera un problema de espacio el texto se
+      habría visto completo. El recorte ocurre en el pintado del glyph
+      mismo (Skia/GPU de esa tablet), no en la medición/posición de la
+      caja — no hay ningún ajuste de CSS/estilo en React Native que pueda
+      corregir esto desde el código de la app. El layout quedó simplificado
+      de todos modos (sin auto-margin, más idiomático) por limpieza, sin
+      el minWidth de prueba.
+    → Conclusión final: este bug NO se puede resolver desde el código de
+      Wallet Control. Es una limitación de renderizado de esa tablet
+      específica (Android 10, gama baja). Se documenta como limitación
+      conocida, no como pendiente activo — no seguir invirtiendo tiempo
+      de desarrollo aquí salvo que aparezca en más dispositivos reales de
+      los amigos que prueben la app (en ese caso sí sería un patrón, no
+      un caso aislado de hardware).
 
 ------------------------------------------------------------
 [RESUELTO]
 ------------------------------------------------------------
+
+  ✓ Modo anónimo → cuenta real: no existía ningún botón 2026-07-28 (FIXA)
+    → La migración de datos (`migrateNamespaceData`) ya existía y funcionaba
+      desde la ronda de auditoría, pero solo se disparaba si el usuario
+      pasaba por el wizard completo de "Crear cuenta" — y a ese wizard solo
+      se llegaba cerrando sesión primero, lo cual (correctamente, por
+      diseño) BORRA los datos del modo anónimo antes de que alcanzaran a
+      migrar. En la práctica no había ninguna forma de aprovechar la
+      migración: entrar en modo anónimo era un callejón sin salida para los
+      datos.
+    → Se agregó un botón "Crear cuenta y guardar mis datos" en Perfil,
+      visible solo en modo anónimo, que abre el registro directamente
+      (`/onboarding?step=register`) sin cerrar sesión ni borrar nada.
+    → Al registrarse desde ahí, se detecta que venía de modo anónimo y: se
+      migran tarjetas/categorías/metas/gastos/ingresos/presupuesto al
+      namespace de la cuenta nueva, se conservan sus preferencias
+      (periodicidad, umbral de gasto hormiga) y se salta el wizard de
+      "¿tienes ingreso fijo?/¿cuánto gastas en fijos?" (ya tiene esos datos
+      reales, repetirlo los habría duplicado) — va directo a la app.
+    → De regalo: el texto de "Cerrar sesión" ahora avisa explícitamente en
+      modo anónimo que se borrarán los datos si no creas cuenta antes
+      (antes decía, incorrecto, que los datos "se mantendrían en el
+      dispositivo" incluso en modo anónimo). Y `handleLogin` también
+      intenta la migración como red de seguridad, por si el registro quedó
+      pendiente de confirmar correo mientras tanto.
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ Tope de 12 dígitos, faltaba en 12 campos más de monto 2026-07-28 (FIXA)
+    → Confirmado en pruebas: en tarjetas.tsx (agregar dinero, editar abono,
+      editar gasto) y CardFormModal.tsx (límite/saldo) el tope sí
+      funcionaba, pero el mismo campo de "editar gasto" en resumen.tsx
+      (desde "Gastos del mes", una pantalla distinta a la de tarjetas.tsx)
+      nunca lo tuvo — de ahí el reporte de "permite un valor exagerado".
+      Al revisar se encontró que el tope solo se había aplicado en la
+      ronda anterior a los 5 campos de Tarjetas, y quedaban 12 más sin
+      protección en el resto de la app: CategoryDetailModal, BudgetFormModal
+      (presupuesto, usado en Personalización Y onboarding), onboarding.tsx
+      (presupuesto, ingreso fijo, gasto fijo, umbral de gasto hormiga),
+      gastos-recurrentes.tsx (nuevo recurrente), resumen.tsx (editar gasto,
+      editar ingreso, aportar a meta, crear meta) y QuickEntryModal.tsx
+      (Finando IA). Se agregó `.slice(0, 12)` a los 12 — ya no queda
+      ningún campo de monto sin tope en toda la app.
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ Últimos Alert.alert nativos reemplazados 2026-07-27 (FIXA)
+    → Quedaban 12 llamadas reales a Alert.alert (el popup genérico blanco/
+      negro de Android) sin reemplazar por el tema de la app, repartidas en
+      4 archivos: CardFormModal.tsx (notificaciones desactivadas, límite
+      por debajo de lo gastado), onboarding.tsx (confirma tu correo,
+      errores de registro/login), ayuda.tsx y resumen.tsx (PDF
+      generado/error al exportar reporte y extracto).
+    → Se creó `components/InfoModal.tsx`, un modal genérico reutilizable
+      (título + mensaje + botón OK) con el mismo estilo ya usado en los
+      demás reemplazos de Alert.alert de la app (CategoryDetailModal,
+      categorias.tsx, tarjetas.tsx, perfil.tsx) — 4 variantes de color
+      (info/success/warning/error) según el tipo de mensaje.
+    → Con esto ya NO queda ningún Alert.alert real en la app — todos los
+      popups que ve el usuario son del tema de Wallet Control.
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ Ronda de pruebas post-auditoría 2026-07-27 (FIXA)
+    → Ingresos editables/eliminables deslizando: confirmado que SÍ
+      funciona — el código ya estaba correcto (idéntico al de gastos);
+      lo que fallaba era un servidor de Expo viejo, sin caché limpia,
+      que seguía corriendo de una sesión anterior. Se cerró y se dejó
+      uno solo, limpio, en el primer puerto libre.
+    → Selector de tarjetas en "Pagar" (CardView.tsx, modo `compact`):
+      en tablet (pantalla ancha) el escalado automático (moderateScale)
+      casi duplicaba el padding y la letra, por eso seguía viéndose
+      grande aunque ya se había achicado antes. Se sacó ese selector del
+      escalado automático y se le dejó tamaño fijo, igual en celular y
+      tablet. Usuario confirmó que el tamaño quedó perfecto — queda
+      BLOQUEADO, no cambiar sin permiso explícito (ver comentario en el
+      código).
+    → Personalización: el mensaje "Ajusta la app a tu manera" solo
+      mencionaba el gasto hormiga — se generalizó para mencionar también
+      periodicidad, presupuesto e ingreso fijo.
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ Auditoría 2026-07-27 — Última fase del plan: mutex de storage.ts
+    (PECAS)
+    → "Condición de carrera en cada guardado": dos guardados casi
+      simultáneos sobre el mismo dato (ej. dos gastos agregados muy
+      seguidos, o abrir la app en tablet y celular a la vez sobre la
+      misma cuenta) podían leer el mismo estado viejo y el segundo en
+      terminar pisaba lo que guardó el primero. Ahora cada función que
+      guarda/borra/edita algo (tarjetas, categorías, metas, gastos,
+      ingresos, presupuesto, recurrentes) encola su lectura+escritura
+      detrás de cualquier otra que esté tocando el MISMO dato en ese
+      momento — invisible para el usuario, no cambia ninguna pantalla.
+    → Con esto queda completo el plan de los 39 hallazgos de la auditoría
+      del 2026-07-27 (fases 0 a 7 + este mutex final), más los pendientes
+      "por MI" que se sumaron en el camino (ingreso fijo/Sueldo,
+      categorías predeterminadas, tamaño de tarjetas, conteo de
+      recurrentes). npx tsc --noEmit: 0 errores en cada paso.
+    → Pendiente: probar todo en el dispositivo (todas las fases juntas,
+      según lo acordado) y correr `eas env:list` antes del próximo
+      "SUBIR PROYECTO" (ver Fase 7 más abajo).
+
+  ✓ Auditoría 2026-07-27 — Fase 7 del plan: arreglos independientes
+    (PECAS)
+    → "Variables de Supabase sin guardia": si faltan las env vars de
+      Supabase, ahora la app lanza un error claro en vez de fallar de
+      forma confusa más adelante. Pendiente operativo (no es código):
+      correr `eas env:list` y confirmar que estén registradas para el
+      perfil "preview" antes del próximo "SUBIR PROYECTO".
+    → "formatCOP con signo mal puesto": un monto negativo se mostraba
+      "$-5.000" en vez de "-$5.000".
+    → "formatThousands vacía el campo en 0": escribir "0" en un monto
+      borraba el campo en vez de mostrar "0".
+    → "Finando IA se cuelga sin red": el chat con IA real ahora tiene un
+      límite de 20 segundos — si no hay respuesta, muestra un error en vez
+      de quedarse pensando indefinidamente.
+    → "Finando ignora la tarjeta nombrada": si le dices a Finando con qué
+      tarjeta pagaste (ej. "con Nequi"), el gasto ahora queda asignado a
+      esa cuenta de una vez, en vez de quedar sin tarjeta asignada.
+    → "Regex de modo demo trunca montos": en modo demo (sin cuenta real),
+      montos con más de un punto de miles (ej. "$1.800.000") se
+      registraban truncados (ej. "$800.000"). Ya captura el monto completo.
+    → "Cerrar sesión no cancela notificación de saldo": ya se cancela al
+      cerrar sesión, en ambos modos (cuenta real y anónimo).
+    → "Doble navegación al cerrar sesión": en cuenta real, ya no compite
+      la navegación manual con la que dispara sola la app al detectar el
+      cierre de sesión (se dejó solo en el modo anónimo, que sí la necesita).
+    → "Ayuda desactualizada + contradicción de API key": la guía en PDF ya
+      describe los 4 diagramas reales de Resumen (antes hablaba de "3
+      segmentos" y una "barra de ahorro" que ya no existen) y los 3 chips
+      de acceso rápido reales; se borró la línea que sugería que hacía
+      falta configurar una API key (nunca hace falta).
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ Auditoría 2026-07-27 — Fase 6 del plan: completitud de datos —
+    ingresos editables, presupuesto con respaldo del mes anterior (PECAS)
+    → "Ingresos no editables/eliminables": el popup "Fuentes de ingreso"
+      en Resumen ahora permite deslizar cada ingreso para editarlo o
+      eliminarlo, igual que ya se podía con los gastos.
+    → "Presupuesto no se traslada de mes a mes": si un mes nuevo no tiene
+      presupuesto configurado todavía, ahora se muestra (solo para
+      referencia, sin guardarlo) el del mes anterior, tanto en
+      Personalización como en Resumen — para no ver "Sin configurar" cada
+      mes si ya lo habías definido antes. El aviso de 80%/100% del gasto
+      sigue mirando solo el presupuesto explícito de ese mes exacto, para
+      no dispararse sobre un valor que el usuario nunca confirmó para el
+      período actual.
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ Auditoría 2026-07-27 — Fase 5 del plan: CategoryDetailModal +
+    resumen.tsx, sincronía nombre/fecha en recurrentes (PECAS)
+    → "Renombrar recurrente deja notificación con nombre/fecha viejos": al
+      editar un gasto recurrente (tanto desde una categoría como desde el
+      popup "Gastos del mes" de Resumen), cambiar el nombre, la frecuencia
+      O la fecha de vencimiento ahora reprograma el recordatorio — antes
+      solo reprogramaba si cambiaba la frecuencia.
+    → "Recordatorio ignora la fecha elegida": el recordatorio ahora se
+      agenda para la fecha real que el usuario eligió (no siempre "hoy").
+      De paso se corrigió que, al editar un gasto que YA tenía una fecha
+      guardada, esa fecha no se cargaba en el selector si no se tocaba el
+      calendario — quedaba en blanco por dentro aunque se viera el texto.
+    → "Sin ajuste para meses cortos": un recordatorio agendado para el día
+      29, 30 o 31 simplemente no sonaba en meses que no llegan a esa
+      fecha (ej. febrero) — ahora se limita a máximo el día 28.
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ Auditoría 2026-07-27 — Fase 4 del plan: Recurrentes/Categorías, dedup
+    y notificaciones (PECAS)
+    → "Doble conteo de recurrentes": splitRecurringByPaid comparaba TODOS
+      los gastos fijos contra la periodicidad global del dashboard, en vez
+      de la frecuencia propia de cada uno (semanal/quincenal/mensual) —
+      ahora compara cada plantilla contra su propia ventana, evitando
+      conteos duplicados o inconsistentes entre pendientes/pagados.
+    → "Pagar pierde la fecha de vencimiento": al marcar un gasto fijo como
+      pagado, el gasto real creado ya no pierde la fecha de vencimiento
+      configurada en la plantilla (recurrenceDueDate).
+    → "Crear recurrente con nombre repetido": el hub "Gastos recurrentes"
+      ahora avisa (en vez de crear un duplicado silencioso) si ya existe
+      un gasto fijo con el mismo nombre en la misma categoría.
+    → "Colisión de key en React": dos categorías eliminadas distintas
+      colisionaban en la misma key literal "sin-categoria" al agrupar
+      pendientes/pagados — ahora se usa el categoryId real como key.
+    → "Crear recurrente desde el hub no agenda notificación": ahora agenda
+      recordatorio igual que el resto de la app, y "Reversar" (borrar la
+      definición antes de pagarla) cancela esa notificación primero.
+    → "Sin validación de nombre duplicado en categorías": el formulario de
+      categoría ya no deja guardar un nombre repetido (case-insensitive),
+      mismo patrón de aviso + botón deshabilitado que el resto de la app.
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ MEJORAX — quitar categorías predeterminadas + acotar el conteo de
+    gastos fijos a lo creado en Gastos recurrentes (2026-07-27)
+    → "Quita las categorías predeterminadas y deja las que crea el
+      usuario" (confirmado: borrarlas también de la cuenta actual): ya no
+      se siembran las 10 categorías por defecto (Vivienda, Comida, etc.)
+      para ninguna cuenta nueva — `getCategories()` devuelve vacío si el
+      usuario no ha creado ninguna. Además, una limpieza automática nueva
+      (una sola vez por cuenta, corre sola la próxima vez que la app cargue
+      datos) quita las que ya estaban guardadas de antes en CUALQUIER
+      cuenta de este dispositivo (la tuya y la de tu hermano si usa la
+      misma app) — los gastos que ya tenían una de esas categorías quedan
+      sin categoría asignada (mismo efecto que borrar cualquier categoría
+      a mano, tal como confirmaste). El paso de "gastos fijos" del
+      onboarding (que antes asumía que la categoría "Otro" siempre
+      existía) ahora crea una categoría real ("Otros") solo si hace falta,
+      para que esos gastos no queden invisibles en "Gastos por categoría".
+      También se agregó un aviso en "Registrar gasto" si todavía no hay
+      ninguna categoría creada, con la pista de dónde crearla.
+    → "Vincula las categorías que el usuario crea en las pills de gastos":
+      las píldoras de categoría (Registrar gasto, Finando IA) ya leían de
+      la misma lista de categorías del usuario — con los defaults fuera,
+      esas píldoras ahora muestran únicamente lo que el usuario creó, sin
+      cambios de código adicionales más allá de lo anterior.
+    → "Suma solo los gastos recurrentes creados en la pantalla de
+      recurrentes, no sumes algo más": el contador "X de Y gastos fijos
+      pagados" de cada Quincena en Resumen contaba también los gastos
+      marcados "recurrente" desde otro lado (ej. al editar uno dentro de
+      una categoría), no solo los creados en Gastos recurrentes. Ahora
+      getRecurringTemplates() conserva el id de la definición original
+      incluso después de pagarla por primera vez, y el contador de
+      Quincena filtra solo por esas. El popup "Pendientes por pagar" no se
+      tocó — sigue mostrando todos, como se confirmó en una ronda anterior.
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ MEJORAX — ingreso fijo mensual editable/nuevo desde Personalización +
+    renombrado a "Sueldo" + tarjetas más pequeñas en selectores de pago
+    (2026-07-27)
+    → "Editar o poner un ingreso fijo mensual nuevo desde Personaliza tu
+      vida financiera": nueva sección en personalizacion.tsx, mismo patrón
+      que Presupuesto/Gasto hormiga. Si ya existe uno este mes, corrige
+      solo el monto (nueva `updateIncome` en storage.ts); si no existe
+      todavía, sigue el mismo flujo que el onboarding (registra el
+      ingreso, agenda recordatorio, fondea/crea la cuenta de Efectivo).
+    → "Ponle nombre sueldo": el ingreso fijo mensual (tanto el creado en
+      onboarding como el creado/editado desde Personalización) ahora se
+      guarda como "Sueldo" en vez de "Ingreso fijo mensual" — así aparece
+      en "Fuentes de ingreso" y en el recordatorio.
+    → "Las tarjetas se ven muy grandes en la opción de pagar": el modo
+      compact de CardView (usado en Registrar gasto, Pagar recurrente y
+      editar gasto) se hizo más angosto y compacto (minWidth 148→122,
+      menos padding, textos más pequeños) en los 3 lugares que lo usan.
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ Auditoría 2026-07-27 — Fase 3 del plan: Tarjetas, resto de arreglos
+    locales (PECAS)
+    → "Etiqueta 'Débito' en préstamo sin emoji": la insignia de la hoja de
+      acciones de un préstamo sin emoji propio mostraba "Débito" — ahora
+      muestra 💸, igual que la vista previa de CardFormModal.
+    → "Editar abono no valida contra la deuda": handleSaveEvent (editar un
+      abono ya registrado) ahora reutiliza el mismo modal "Abono mayor a
+      la deuda" que ya usaba abonar por primera vez, devolviéndole el
+      monto viejo al pendiente antes de comparar.
+    → "Editar gasto no valida contra saldo/cupo disponible": el modal de
+      editar gasto en Tarjetas ahora usa getCardAvailable (mismo helper
+      que Resumen) con aviso en rojo + "Guardar" deshabilitado si el monto
+      supera lo disponible en la cuenta asignada.
+    → "Sin tope en montos": los 3 campos de monto de tarjetas.tsx que no
+      pasaban por el sanitizador de CardFormModal ahora cortan a 12
+      dígitos.
+    → npx tsc --noEmit: 0 errores. Pendiente de prueba en dispositivo.
+
+  ✓ Auditoría 2026-07-27 — Fase 2 del plan: Tarjetas, eliminar tarjeta +
+    validación de cupo (PECAS)
+    → "Bajar el límite de crédito no avisa si ya hay más gastado que el
+      nuevo límite": CardFormModal ahora recibe `expenses` (pasado desde
+      tarjetas.tsx) y, al guardar una tarjeta de crédito existente, compara
+      el nuevo límite contra getCardTotalSpent — si queda por debajo,
+      muestra un aviso (no bloquea el guardado, es solo informativo).
+    → "Eliminar tarjeta no cancela su notificación de vencimiento": ya
+      arreglado en tarjetas.tsx (confirmDeleteCardNow ahora llama a
+      cancelNotification antes de borrar la tarjeta) — mismo bug que ya
+      se había corregido para "eliminar gasto" en resumen.tsx.
+    → "Eliminar tarjeta deja gastos huérfanos sin avisar": según la
+      decisión ya confirmada con el usuario (los gastos se conservan en el
+      historial, solo quedan sin cuenta asignada), confirmDeleteCardNow
+      ahora llama a clearCardFromExpenses antes de borrar la tarjeta, y el
+      modal de confirmación de borrado muestra cuántos gastos quedarán así
+      antes de que el usuario confirme.
+    → npx tsc --noEmit: 0 errores. Pendiente de prueba en dispositivo junto
+      con la Fase 1 (a pedido del usuario, se agrupan para probar las dos
+      juntas en la siguiente ronda).
+
+  ✓ MEJORAX — selector de tarjeta más visual + acceso a categorías desde
+    Personalización (2026-07-27)
+    → "Elegir la cuenta del gasto más grande/con previsualización": los 3
+      lugares donde se elige de qué cuenta sale el dinero (Registrar gasto,
+      editar gasto desde "Gastos del mes" en Resumen, y marcar un
+      recurrente como pagado) usaban una simple píldora de texto gris.
+      Se reemplazaron por el componente CardView en su modo `compact` (ya
+      existía y se usaba en el selector de tarjeta de Finando IA) — ahora
+      cada opción se ve con el color real de la tarjeta, su emoji, y el
+      saldo/disponible actual. Se aprovechó para agregar el monto
+      disponible también al modo compact (antes solo lo mostraba la
+      tarjeta completa), incluyendo cuentas de Efectivo (antes esa
+      cuenta no calculaba saldo disponible en CardView en absoluto).
+    → "Crear/modificar categorías desde Personaliza tu cuenta": se
+      encontró que app/categorias.tsx ya no tenía NINGÚN punto de entrada
+      en toda la app (quedó huérfana desde que la tarjeta de Resumen que
+      antes llevaba ahí se redirigió a Gastos Recurrentes, ronda
+      2026-07-22). Se agregó una nueva sección "Categorías de gastos" en
+      Personaliza tu vida financiera que navega a /categorias — de paso
+      resuelve que la pantalla fuera inalcanzable.
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ Cuenta nueva con ingreso fijo no dejaba registrar ningún gasto
+    (reportado 2026-07-27, durante las pruebas de los arreglos de la
+    auditoría del mismo día)
+    → Causa: "Ingresos" y "Cuentas" (tarjetas/efectivo/débito) son dos
+      cosas totalmente separadas en el modelo de datos. El paso de
+      onboarding "¿Tienes un ingreso fijo mensual?" solo guardaba un
+      registro de Income — nunca fondeaba ninguna cuenta real. Como
+      "Registrar gasto" (QuickEntryModal) solo deja elegir cuentas con
+      saldo disponible (`getPayableCards`), un usuario nuevo sin tarjetas
+      creadas quedaba sin ninguna opción para pagar, con el aviso
+      "Ninguna cuenta tiene saldo disponible ahora mismo" bloqueando por
+      completo el primer gasto.
+    → Fix: en app/onboarding.tsx (`handleFixedIncomeContinue`), además de
+      guardar el Income, ahora se fondea (o se crea, si no existe) una
+      cuenta de Efectivo con ese mismo monto — así el ingreso fijo mensual
+      sí llega a un lugar gastable desde el primer momento, como se
+      esperaba.
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ Línea/barra negra fija encima de la tab bar + borde transparente en
+    popups que deja ver la tab bar detrás (SOLO en el celular, reportado
+    2026-07-27)
+    → Barra negra fija: en app/(tabs)/_layout.tsx, tabBarStyle combinaba
+      `elevation: 8` (sombra de Android) con `shadowOpacity: 1` (opacidad
+      total) y shadowColor semi-transparente — en Android, shadowOpacity:1
+      puede pintar la sombra de elevation casi sólida en vez de sutil,
+      dependiendo del renderer/skin del fabricante. Se separó el estilo
+      por plataforma: Android ahora solo usa `elevation: 4` (sin shadow*,
+      esas props son de iOS), iOS conserva la sombra con shadowOpacity
+      bajado a 0.15.
+    → Borde transparente en popups (se ve la tab bar detrás): los ~26
+      `<Modal transparent>` del proyecto (BottomSheet.tsx y los sheets
+      sueltos de resumen.tsx, tarjetas.tsx, categorias.tsx, perfil.tsx,
+      CardFormModal.tsx, CategoryDetailModal.tsx, PayRecurringModal.tsx)
+      no llevaban `statusBarTranslucent`. En Android, sin ese flag, la
+      ventana nativa del Modal no siempre se extiende hasta el borde real
+      de la pantalla (por debajo de la barra de gestos) en ciertos
+      teléfonos — se ve literalmente la pantalla de atrás (la tab bar) por
+      esa rendija. Agregado `statusBarTranslucent` a los 26 Modal (fix
+      estándar y bien documentado en RN/Android para este síntoma exacto).
+    → No se pudo probar en vivo en el celular real en esta sesión (solo la
+      tablet estaba conectada por ADB) — pendiente que el usuario confirme
+      en su teléfono tras recargar la app (forzar cierre de Expo Go +
+      reabrir si el reload normal no toma el bundle nuevo, lección ya
+      conocida de la ronda del 2026-07-26).
+    → npx tsc --noEmit: 0 errores.
+
+  ✓ MEJORAX — onboarding personalizado + diagramas vacíos abren el "+" (2026-07-27)
+    → "Preguntas personalizadas al crear cuenta nueva": el onboarding ya traía
+      pasos de periodicidad, ingreso fijo y gastos fijos (para cuenta real Y
+      modo anónimo), pero faltaba el presupuesto mensual — hoy solo se
+      configuraba después, a mano, desde Perfil → Personaliza tu vida
+      financiera. Se agregó un paso nuevo "¿Cuál es tu presupuesto mensual?"
+      en onboarding.tsx, entre periodicidad e ingreso fijo, opcional/omitible
+      igual que los demás, que llama a saveBudget(monthKey, monto). Probado
+      en la tablet real (modo anónimo): al terminar el onboarding, la tarjeta
+      "Presupuesto mensual" en Resumen ya aparece configurada ($1.500.000)
+      en vez de pedir configurarlo en Perfil.
+    → "Diagrama de torta vacío → abrir el '+' al tocar el círculo": en
+      resumen.tsx, los donuts de Gastos del mes, Metas de ahorro y Fuentes
+      de ingreso ignoraban el toque por completo cuando no había datos (el
+      texto ya sugería "Toca + para..." pero tocar el círculo no hacía
+      nada). Ahora, si no hay datos, tocar el donut abre la cápsula "+"
+      (Ingreso/Gasto/Meta) — igual que tocar el botón flotante. Con datos,
+      sigue abriendo el popup de detalle de siempre. Billetera general
+      (cuentas/tarjetas) se dejó igual a propósito: sus datos se crean desde
+      la pestaña Tarjetas, no desde la cápsula de registro, así que abrir el
+      "+" ahí no resolvería nada.
+    → Probado en la tablet real: el donut de "Gastos del mes" vacío ahora
+      abre la cápsula al tocarlo. La misma lógica (idéntica en los 3 casos)
+      se dejó para Metas e Ingresos.
+    → npx tsc --noEmit: 0 errores.
 
   ✓ MEJORAX — décima ronda de pendientes "por MI" del 2026-07-26 (FIXA/PECAS)
     → "Mismo swipe de editar/eliminar en Efectivo": en tarjetas.tsx, las

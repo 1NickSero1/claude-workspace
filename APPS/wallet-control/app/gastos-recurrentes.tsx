@@ -5,10 +5,11 @@ import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
   getMonthData, getCategories, getCards, getUserProfile, getRecurringTemplates,
-  saveRecurringDefinition, deleteRecurringDefinition,
+  saveRecurringDefinition, deleteRecurringDefinition, getRecurringDefinitions,
   getCurrentMonthKey, CustomCategory, Expense, Card, RecurringTemplate, RecurrenceFrequency, UserProfile,
 } from '@/lib/storage';
 import { splitRecurringByPaid, getPayableCards, getSpendableCards, payRecurringTemplate, unpayRecurringTemplate } from '@/lib/recurringPayments';
+import { scheduleRecurringReminder, cancelNotification } from '@/lib/notifications';
 import { formatCOP, formatThousands } from '@/lib/expenseParser';
 import PayRecurringModal from '@/components/PayRecurringModal';
 import BottomSheet from '@/components/BottomSheet';
@@ -52,7 +53,7 @@ export default function GastosRecurrentesScreen() {
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
   const period = profile?.budgetPeriod ?? 'biweekly';
-  const { pending, paid } = splitRecurringByPaid(templates, expenses, period, quincena);
+  const { pending, paid } = splitRecurringByPaid(templates, expenses, quincena);
   const payableCards = getPayableCards(cards, expenses);
   const spendableCards = getSpendableCards(cards);
   const periodLabel = period === 'weekly' ? 'esta semana' : period === 'monthly' ? 'este mes' : `la quincena ${quincena}`;
@@ -67,7 +68,7 @@ export default function GastosRecurrentesScreen() {
       map.set(t.categoryId, arr);
     }
     return [...map.entries()]
-      .map(([categoryId, items]) => ({ cat: getCat(categoryId), items }))
+      .map(([categoryId, items]) => ({ categoryId, cat: getCat(categoryId), items }))
       .sort((a, b) => (a.cat?.name ?? '').localeCompare(b.cat?.name ?? ''));
   };
 
@@ -98,6 +99,8 @@ export default function GastosRecurrentesScreen() {
 
   const removeDefinition = async (t: RecurringTemplate) => {
     if (!t.defId) return;
+    const def = (await getRecurringDefinitions()).find(d => d.id === t.defId);
+    if (def?.notificationId) await cancelNotification(def.notificationId);
     await deleteRecurringDefinition(t.defId);
     await load();
   };
@@ -109,12 +112,16 @@ export default function GastosRecurrentesScreen() {
   };
 
   const newAmountNum = Number(newAmount.replace(/\D/g, ''));
-  const canSaveNew = !!newName.trim() && !!newAmountNum && !!newCategoryId;
+  const isDuplicateNewName = !!newCategoryId && templates.some(t =>
+    t.categoryId === newCategoryId && t.name.trim().toLowerCase() === newName.trim().toLowerCase(),
+  );
+  const canSaveNew = !!newName.trim() && !!newAmountNum && !!newCategoryId && !isDuplicateNewName;
 
   const confirmAddNew = async () => {
     if (!canSaveNew || newSaving) return;
     setNewSaving(true);
     try {
+      const notificationId = await scheduleRecurringReminder(newName.trim().toUpperCase(), newFrequency, new Date());
       await saveRecurringDefinition({
         id: `${Date.now()}_def`,
         name: newName.trim().toUpperCase(),
@@ -122,6 +129,7 @@ export default function GastosRecurrentesScreen() {
         amount: newAmountNum,
         frequency: newFrequency,
         createdAt: new Date().toISOString(),
+        notificationId,
       });
       setAddModal(false);
       await load();
@@ -177,6 +185,7 @@ export default function GastosRecurrentesScreen() {
     },
     sheetTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: SPACING.xs },
     sheetHint: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: SPACING.lg },
+    dupHint: { color: COLORS.danger, fontSize: FONT.xs, marginTop: 6 },
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 14, marginBottom: 6 },
     input: {
       backgroundColor: COLORS.bg, borderRadius: 10, padding: SPACING.md,
@@ -238,8 +247,8 @@ export default function GastosRecurrentesScreen() {
             </View>
             {pendingGroups.length === 0 ? (
               <Text style={styles.emptyHint}>¡Al día! No tienes gastos fijos pendientes en {periodLabel}.</Text>
-            ) : pendingGroups.map(({ cat, items }) => (
-              <View key={cat?.id ?? 'sin-categoria'} style={styles.catGroup}>
+            ) : pendingGroups.map(({ categoryId, cat, items }) => (
+              <View key={categoryId} style={styles.catGroup}>
                 <Text style={styles.catGroupTitle}>{cat?.emoji ?? '💸'} {cat?.name ?? 'Sin categoría'}</Text>
                 {items.map(t => (
                   <View key={t.name} style={[styles.row, styles.rowPending]}>
@@ -282,8 +291,8 @@ export default function GastosRecurrentesScreen() {
             </View>
             {paidGroups.length === 0 ? (
               <Text style={styles.emptyHint}>Todavía no marcas ninguno como pagado en {periodLabel}.</Text>
-            ) : paidGroups.map(({ cat, items }) => (
-              <View key={cat?.id ?? 'sin-categoria'} style={styles.catGroup}>
+            ) : paidGroups.map(({ categoryId, cat, items }) => (
+              <View key={categoryId} style={styles.catGroup}>
                 <Text style={styles.catGroupTitle}>{cat?.emoji ?? '💸'} {cat?.name ?? 'Sin categoría'}</Text>
                 {items.map(t => (
                   <View key={t.name} style={styles.row}>
@@ -345,12 +354,15 @@ export default function GastosRecurrentesScreen() {
             placeholderTextColor={COLORS.textDim}
             autoCapitalize="characters"
           />
+          {isDuplicateNewName && (
+            <Text style={styles.dupHint}>Ya tienes un gasto recurrente con ese nombre en esta categoría.</Text>
+          )}
 
           <Text style={styles.label}>Monto (COP)</Text>
           <TextInput
             style={styles.input}
             value={formatThousands(newAmount)}
-            onChangeText={v => setNewAmount(v.replace(/\D/g, ''))}
+            onChangeText={v => setNewAmount(v.replace(/\D/g, '').slice(0, 12))}
             placeholder="0"
             placeholderTextColor={COLORS.textDim}
             keyboardType="number-pad"

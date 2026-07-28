@@ -18,11 +18,12 @@ const EMOJI_OPTIONS = [
 interface Props {
   visible: boolean;
   category?: CustomCategory | null;
+  categories: CustomCategory[];
   onSave: (cat: CustomCategory) => void;
   onClose: () => void;
 }
 
-export default function CategoryFormModal({ visible, category, onSave, onClose }: Props) {
+export default function CategoryFormModal({ visible, category, categories, onSave, onClose }: Props) {
   const [name, setName]   = useState('');
   const [emoji, setEmoji] = useState(EMOJI_OPTIONS[0]);
 
@@ -66,6 +67,7 @@ export default function CategoryFormModal({ visible, category, onSave, onClose }
     saveBtn: { flex: 1, padding: 14, borderRadius: 14, alignItems: 'center' },
     saveBtnOff: { backgroundColor: COLORS.border },
     saveText: { color: '#fff', fontWeight: '800', fontSize: FONT.md },
+    dupHint: { color: COLORS.danger, fontSize: FONT.xs, marginTop: 6 },
   }), [COLORS]);
 
   useEffect(() => {
@@ -78,8 +80,12 @@ export default function CategoryFormModal({ visible, category, onSave, onClose }
     }
   }, [category, visible]);
 
+  const isDuplicate = categories.some(c =>
+    c.id !== category?.id && c.name.trim().toLowerCase() === name.trim().toLowerCase(),
+  );
+
   const handleSave = () => {
-    if (!name.trim()) return;
+    if (!name.trim() || isDuplicate) return;
     const idx = EMOJI_OPTIONS.indexOf(emoji);
     const autoColor = CATEGORY_COLOR_OPTIONS[idx >= 0 ? idx % CATEGORY_COLOR_OPTIONS.length : 0];
     onSave({
@@ -121,6 +127,9 @@ export default function CategoryFormModal({ visible, category, onSave, onClose }
               autoFocus
               maxLength={24}
             />
+            {isDuplicate && (
+              <Text style={styles.dupHint}>Ya tienes una categoría con ese nombre.</Text>
+            )}
 
             <Text style={styles.label}>Emoji</Text>
             <View style={styles.emojiGrid}>
@@ -143,8 +152,8 @@ export default function CategoryFormModal({ visible, category, onSave, onClose }
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSave}
-                disabled={!name.trim()}
-                style={[styles.saveBtn, { backgroundColor: name.trim() ? autoColor : COLORS.border }]}
+                disabled={!name.trim() || isDuplicate}
+                style={[styles.saveBtn, { backgroundColor: name.trim() && !isDuplicate ? autoColor : COLORS.border }]}
               >
                 <Text style={styles.saveText}>Guardar</Text>
               </TouchableOpacity>

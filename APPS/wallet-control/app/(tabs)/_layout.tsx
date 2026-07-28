@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/constants/ThemeContext';
 
@@ -16,11 +17,15 @@ export default function TabLayout() {
           height: 64,
           paddingBottom: 10,
           paddingTop: 6,
-          elevation: 8,
-          shadowColor: COLORS.shadow,
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 1,
-          shadowRadius: 8,
+          ...Platform.select({
+            android: { elevation: 4 },
+            ios: {
+              shadowColor: COLORS.shadow,
+              shadowOffset: { width: 0, height: -2 },
+              shadowOpacity: 0.15,
+              shadowRadius: 8,
+            },
+          }),
         },
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textDim,

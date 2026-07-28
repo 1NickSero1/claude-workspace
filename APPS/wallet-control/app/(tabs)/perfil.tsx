@@ -10,6 +10,7 @@ import Constants from 'expo-constants';
 import {
   getUserProfile, deleteUserProfile, saveUserProfile, UserProfile,
   getShowBalanceNotification, saveShowBalanceNotification,
+  wipeNamespaceData,
 } from '@/lib/storage';
 import { requestNotificationPermission, cancelBalanceNotification } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
@@ -61,9 +62,21 @@ export default function PerfilScreen() {
 
   const confirmLogoutNow = async () => {
     setConfirmLogout(false);
-    if (profile?.id) await supabase.auth.signOut();
-    await deleteUserProfile();
-    router.replace('/onboarding');
+    await cancelBalanceNotification();
+    if (profile?.id) {
+      await supabase.auth.signOut();
+      await deleteUserProfile();
+      // La navegación a /onboarding ya la dispara app/_layout.tsx al detectar
+      // SIGNED_OUT — no hace falta duplicarla aquí.
+    } else {
+      // Modo anónimo: limpiar el namespace 'anon' para que el próximo
+      // invitado en este dispositivo empiece en blanco, no herede estos datos.
+      // No hay signOut() real en este caso, así que SIGNED_OUT nunca dispara
+      // — la navegación sí hay que hacerla a mano.
+      await wipeNamespaceData('anon');
+      await deleteUserProfile();
+      router.replace('/onboarding');
+    }
   };
 
   const handleSaveName = async () => {
@@ -136,6 +149,14 @@ export default function PerfilScreen() {
       borderWidth: 1, borderColor: COLORS.danger + '30',
     },
     dangerText: { color: COLORS.danger, fontWeight: '700', fontSize: FONT.base },
+
+    upgradeBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
+      backgroundColor: COLORS.primaryBg, borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.lg,
+      borderWidth: 1, borderColor: COLORS.primary + '30',
+    },
+    upgradeText: { color: COLORS.primary, fontWeight: '700', fontSize: FONT.base },
+    upgradeSub: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
 
     modalTitle: { color: COLORS.text, fontWeight: '700', fontSize: FONT.lg, marginBottom: SPACING.lg },
     modalLabel: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 6 },
@@ -294,6 +315,23 @@ export default function PerfilScreen() {
           </View>
         </View>
 
+        {/* ── Crear cuenta (solo modo anónimo) ─────────── */}
+        {profile?.isAnonymous && (
+          <TouchableOpacity
+            style={styles.upgradeBtn}
+            onPress={() => router.push('/onboarding?step=register')}
+            accessibilityRole="button"
+            accessibilityLabel="Crear cuenta y guardar mis datos"
+          >
+            <Ionicons name="cloud-upload-outline" size={20} color={COLORS.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.upgradeText}>Crear cuenta y guardar mis datos</Text>
+              <Text style={styles.upgradeSub}>Tus tarjetas, gastos y metas se conservan tal cual</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textDim} />
+          </TouchableOpacity>
+        )}
+
         {/* ── Cerrar sesión ────────────────────────────── */}
         <TouchableOpacity
           style={styles.dangerBtn}
@@ -333,14 +371,18 @@ export default function PerfilScreen() {
       </BottomSheet>
 
       {/* Confirmación de cerrar sesión (reemplaza Alert.alert nativo) */}
-      <Modal visible={confirmLogout} animationType="fade" transparent onRequestClose={() => setConfirmLogout(false)}>
+      <Modal visible={confirmLogout} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setConfirmLogout(false)}>
         <TouchableOpacity style={styles.confirmOverlay} activeOpacity={1} onPress={() => setConfirmLogout(false)}>
           <TouchableOpacity style={styles.confirmCard} activeOpacity={1} onPress={() => {}}>
             <View style={styles.confirmIcon}>
               <Ionicons name="log-out-outline" size={26} color={COLORS.danger} />
             </View>
             <Text style={styles.confirmTitle}>Cerrar sesión</Text>
-            <Text style={styles.confirmText}>¿Seguro? Tus datos guardados se mantendrán en el dispositivo.</Text>
+            <Text style={styles.confirmText}>
+              {profile?.isAnonymous
+                ? 'Estás en modo anónimo: al cerrar sesión se borran tus tarjetas, gastos y metas de este dispositivo. Si quieres conservarlos, crea una cuenta primero.'
+                : '¿Seguro? Tus datos guardados se mantendrán en el dispositivo.'}
+            </Text>
             <View style={styles.confirmActions}>
               <TouchableOpacity style={styles.confirmCancelBtn} onPress={() => setConfirmLogout(false)}>
                 <Text style={styles.confirmCancelText}>Cancelar</Text>

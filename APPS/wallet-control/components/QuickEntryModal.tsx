@@ -8,9 +8,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import BottomSheet from './BottomSheet';
+import CardView from './CardView';
 import {
   CustomCategory, Card, Expense, Income, RecurrenceFrequency,
-  getCurrentMonthKey, addExpenses, addIncomes,
+  getCurrentMonthKey, addExpenses, addIncomes, getCardTotalSpent,
 } from '@/lib/storage';
 import { getPayableCards, getCardAvailable } from '@/lib/recurringPayments';
 import { scheduleRecurringReminder } from '@/lib/notifications';
@@ -66,7 +67,7 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
     (type === 'ingreso' || (selectedCategoryId !== null && selectedCardId !== null && !exceedsAvailable));
 
   function handleAmountChange(text: string) {
-    const cleaned = text.replace(/[^0-9]/g, '');
+    const cleaned = text.replace(/[^0-9]/g, '').slice(0, 12);
     setAmount(cleaned);
   }
 
@@ -165,11 +166,6 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
     fieldLabel: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 8 },
     cardScroll: { marginBottom: SPACING.md },
     cardChipRow: { flexDirection: 'row', gap: SPACING.sm, paddingRight: SPACING.md },
-    cardChip: {
-      paddingHorizontal: SPACING.md, paddingVertical: 8, borderRadius: RADIUS.pill,
-      borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,
-    },
-    cardChipText: { color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
     noFundsBox: {
       flexDirection: 'row', alignItems: 'flex-start', gap: 8,
       backgroundColor: COLORS.danger + '18', borderRadius: RADIUS.md, padding: SPACING.md,
@@ -270,6 +266,12 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
+              {categories.length === 0 && (
+                <View style={styles.noFundsBox}>
+                  <Ionicons name="pricetags-outline" size={18} color={COLORS.danger} />
+                  <Text style={styles.noFundsText}>Todavía no tienes categorías. Créalas desde Personaliza tu vida financiera.</Text>
+                </View>
+              )}
               <View style={styles.categoryGrid}>
                 {categories.map(cat => {
                   const selected = selectedCategoryId === cat.id;
@@ -315,19 +317,16 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
                 <Text style={styles.fieldLabel}>¿De dónde salió el dinero?</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardScroll}>
                   <View style={styles.cardChipRow}>
-                    {payableCards.map(c => {
-                      const selected = selectedCardId === c.id;
-                      return (
-                        <TouchableOpacity
-                          key={c.id}
-                          onPress={() => setSelectedCardId(c.id)}
-                          style={[styles.cardChip, selected && { backgroundColor: c.color + '22', borderColor: c.color }]}
-                          activeOpacity={0.8}
-                        >
-                          <Text style={[styles.cardChipText, selected && { color: c.color }]}>{c.name}</Text>
-                        </TouchableOpacity>
-                      );
-                    })}
+                    {payableCards.map(c => (
+                      <CardView
+                        key={c.id}
+                        card={c}
+                        compact
+                        selected={selectedCardId === c.id}
+                        totalSpent={getCardTotalSpent(expenses, c.id)}
+                        onPress={() => setSelectedCardId(c.id)}
+                      />
+                    ))}
                   </View>
                 </ScrollView>
                 {exceedsAvailable && (

@@ -58,7 +58,7 @@ export default function BudgetFormModal({
         <TextInput
           style={styles.input}
           value={amount ? fmt(numeric) : ''}
-          onChangeText={v => setAmount(v.replace(/\D/g, ''))}
+          onChangeText={v => setAmount(v.replace(/\D/g, '').slice(0, 12))}
           placeholder={placeholder}
           placeholderTextColor={COLORS.textDim}
           keyboardType="number-pad"

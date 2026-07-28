@@ -121,6 +121,15 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     confirmDeleteText: { color: '#fff', fontWeight: '700', fontSize: FONT.md },
   }), [COLORS]);
 
+  const parseDueDate = (raw: string): Date | null => {
+    const parts = raw.trim().split('/');
+    if (parts.length !== 3) return null;
+    const [d, m, y] = parts.map(Number);
+    if (!d || !m || !y || y < 2024) return null;
+    const date = new Date(y, m - 1, d, 9, 0, 0);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
   const reset = () => {
     setMode('list'); setEditExp(null); setName(''); setAmount(''); setQuincena(1); setCardId(undefined);
     setIsRecurring(false); setFrequency('monthly'); setDueDate(''); setDueDateObj(null); setShowDatePicker(false);
@@ -135,6 +144,7 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     setIsRecurring(!!e.isRecurring);
     setFrequency(e.recurrenceFrequency ?? 'monthly');
     setDueDate(e.recurrenceDueDate ?? '');
+    setDueDateObj(e.recurrenceDueDate ? parseDueDate(e.recurrenceDueDate) : null);
     setMode('edit');
   };
 
@@ -159,9 +169,14 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     if (mode === 'edit' && editExp) {
       let notificationId = editExp.notificationId;
       const wasRecurring = !!editExp.isRecurring;
-      if (isRecurring && (!wasRecurring || frequency !== editExp.recurrenceFrequency)) {
+      const newDueDate = isRecurring && dueDate ? dueDate : '';
+      const needsReschedule = !wasRecurring
+        || frequency !== editExp.recurrenceFrequency
+        || trimmedName !== editExp.name
+        || newDueDate !== (editExp.recurrenceDueDate ?? '');
+      if (isRecurring && needsReschedule) {
         if (notificationId) await cancelNotification(notificationId);
-        notificationId = await scheduleRecurringReminder(trimmedName, frequency, new Date());
+        notificationId = await scheduleRecurringReminder(trimmedName, frequency, dueDateObj ?? new Date());
       } else if (!isRecurring && wasRecurring) {
         if (notificationId) await cancelNotification(notificationId);
         notificationId = undefined;
@@ -175,7 +190,7 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
       });
     } else if (mode === 'add' && cat) {
       const notificationId = isRecurring
-        ? await scheduleRecurringReminder(trimmedName, frequency, new Date())
+        ? await scheduleRecurringReminder(trimmedName, frequency, dueDateObj ?? new Date())
         : undefined;
       await addExpenses(monthKey, [{
         id: `${Date.now()}_manual`,
@@ -351,7 +366,7 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
               <TextInput
                 style={dStyles.input}
                 value={formatThousands(amount)}
-                onChangeText={v => setAmount(v.replace(/\D/g, ''))}
+                onChangeText={v => setAmount(v.replace(/\D/g, '').slice(0, 12))}
                 placeholder="0"
                 placeholderTextColor={COLORS.textDim}
                 keyboardType="number-pad"
@@ -420,7 +435,7 @@ export default function CategoryDetailModal({ visible, cat, expenses, cards, mon
     </BottomSheet>
 
     {/* Confirmación de eliminar (reemplaza Alert.alert nativo) */}
-    <Modal visible={!!confirmDeleteExp} animationType="fade" transparent onRequestClose={() => setConfirmDeleteExp(null)}>
+    <Modal visible={!!confirmDeleteExp} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setConfirmDeleteExp(null)}>
       <TouchableOpacity style={dStyles.confirmOverlay} activeOpacity={1} onPress={() => setConfirmDeleteExp(null)}>
         <TouchableOpacity style={dStyles.confirmCard} activeOpacity={1} onPress={() => {}}>
           <View style={dStyles.confirmIcon}>
