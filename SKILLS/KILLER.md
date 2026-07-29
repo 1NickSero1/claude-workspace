@@ -87,6 +87,7 @@ Cuando el usuario pida mejorar una skill:
 | FIFAS | SKILLS/FIFAS.md | Análisis estadístico deportivo (fútbol) |
 | AUDITA | SKILLS/AUDITA.md | Auditoría profesional de proyectos (bugs, mejoras, eliminaciones), con PECAS |
 | ESTETIK | SKILLS/ESTETIK.md | Auditoría visual y de experiencia de usuario (diseño, responsive, accesibilidad, microinteracciones) |
+| FREE | SKILLS/FREE.md | Coach de freelance y networking digital |
 | KILLER | SKILLS/KILLER.md | Este mismo generador |
 
 ---

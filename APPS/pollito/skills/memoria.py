@@ -127,6 +127,11 @@ def _insertar(raiz: Path, entrada: dict) -> str:
 
 def _borrar(raiz: Path, entrada: dict) -> str:
     ruta = _resolver_ruta_segura(raiz, entrada["path"])
+    # _resolver_ruta_segura deja pasar ruta == raiz (no es "salir" del
+    # directorio) - sin esta guardia, pedir borrar "/memories" a secas
+    # arrasaria con toda la memoria persistente de esa skill de una vez.
+    if ruta == raiz:
+        return "Error: no se puede borrar la carpeta raiz de memoria."
     if ruta.is_dir():
         shutil.rmtree(ruta)
     elif ruta.exists():

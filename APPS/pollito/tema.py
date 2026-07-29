@@ -8,7 +8,12 @@ lados.
 FONDO = "#FFF5F8"
 FONDO_SECUNDARIO = "#FCE8EF"
 TEXTO = "#4A2C34"
-TEXTO_SECUNDARIO = "#9C6B7A"
+# Mismo tono mauve que antes (#9C6B7A), mas oscuro - el original daba 4.1:1
+# de contraste sobre FONDO, por debajo del minimo AA de WCAG (4.5:1) para
+# texto normal. Este valor da 5.25:1 sobre FONDO y 4.78:1 sobre
+# FONDO_SECUNDARIO (donde se pintan los avisos de "Sistema"), pasando el
+# minimo en los dos fondos donde se usa.
+TEXTO_SECUNDARIO = "#8A5A69"
 
 BOTON_PRINCIPAL = "#F2A6C4"
 BOTON_PRINCIPAL_HOVER = "#E8829F"

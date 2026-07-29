@@ -30,6 +30,20 @@
             "shell": "powershell",
             "timeout": 15,
             "statusMessage": "Comprobando comando IMAGINA..."
+          },
+          {
+            "type": "command",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\revisemos-fixa.ps1\"",
+            "shell": "powershell",
+            "timeout": 90,
+            "statusMessage": "Comprobando comando REVISEMOS y corriendo Jest..."
+          },
+          {
+            "type": "command",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\revision-a-fondo.ps1\"",
+            "shell": "powershell",
+            "timeout": 15,
+            "statusMessage": "Comprobando comando REVISION A FONDO..."
           }
         ]
       }

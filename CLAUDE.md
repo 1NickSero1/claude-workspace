@@ -36,6 +36,7 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 | wallet-control | PECAS | En progreso | `APPS/wallet-control` |
 | ruta-segura | PECAS | En progreso | `APPS/ruta-segura` |
 | pollito | PECAS | En definición | `APPS/pollito` |
+| INDEPENDIENTE | FREE | En definición | `INDEPENDIENTE` |
 
 ---
 
@@ -74,11 +75,15 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 ├── SKILLS/FIXA.md        ← Debug, errores y QA
 ├── SKILLS/FIFAS.md       ← Analista estadístico deportivo (fútbol)
 ├── SKILLS/AUDITA.md      ← Auditor profesional de proyectos (con PECAS)
-└── SKILLS/ESTETIK.md     ← Auditor visual y de experiencia de usuario (con PECAS)
+├── SKILLS/ESTETIK.md     ← Auditor visual y de experiencia de usuario (con PECAS)
+└── SKILLS/FREE.md        ← Coach de freelance y networking digital
 │
-└── APPS/                 ← Código de todos los proyectos
-    ├── wallet-control/
-    └── ruta-segura/
+├── APPS/                 ← Código de todos los proyectos
+│   ├── wallet-control/
+│   ├── ruta-segura/
+│   └── pollito/
+│
+└── INDEPENDIENTE/        ← Plan y seguimiento del negocio freelance (con FREE) — fuera de APPS/
 ```
 
 ---
@@ -94,6 +99,7 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 | Debuggear un error | FIXA | "FIXA, este error: [error]" |
 | Auditar un proyecto (bugs/mejoras/eliminaciones) | AUDITA | "AUDITA" (siempre pregunta cuál proyecto) |
 | Auditar el visual/UX de un proyecto | ESTETIK | "ESTETIK" (siempre pregunta cuál proyecto) |
+| Consulta de freelance/networking/clientes | FREE | "FREE, ¿cuánto debería cobrar por [servicio]?" |
 
 ---
 
@@ -230,6 +236,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 | `WALLET CONTROL` | Hace `git pull --ff-only` automático (ver nota), invoca la skill PECAS y saluda, recomendando al usuario correr `/clear` antes de seguir (contexto limpio), para trabajar específicamente en `APPS/wallet-control` |
 | `RUTA SEGURA` | Igual, pero enfocado en `APPS/ruta-segura` |
 | `POLLITO` | Igual, pero enfocado en `APPS/pollito` (app de escritorio, regalo) |
+| `INDEPENDIENTE` | Igual (git pull + saludo + recomendación de `/clear`), pero invoca la skill **FREE** (no PECAS) y enfoca en la carpeta **`INDEPENDIENTE`** — a diferencia de las otras tres, vive en la raíz del repo, no bajo `APPS/` |
 
 **Nota:** Claude no puede borrar su propio contexto de conversación desde un hook — eso solo lo dispara el usuario con `/clear`. El hook recomienda hacerlo, no lo fuerza.
 
@@ -271,6 +278,36 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 
 ---
 
+## Palabra Clave de Diagnóstico Automático (REVISEMOS)
+
+> Hook real (`UserPromptSubmit`, `.claude/hooks/revisemos-fixa.ps1`). Detecta el mensaje exacto
+> "REVISEMOS" (mayúsculas o minúsculas) y corre la suite de pruebas de Jest de wallet-control
+> automáticamente, antes de que Claude responda nada.
+
+| Palabra clave | Acción |
+|---|---|
+| `REVISEMOS` | Corre `npx jest --no-color` en `APPS/wallet-control` y le pasa la salida completa a Claude como contexto. Si todas las pruebas pasan, Claude solo lo confirma brevemente. Si alguna falla, Claude activa el protocolo de diagnóstico de FIXA (`SKILLS/FIXA.md`) sobre la salida real de Jest — sin resumirla ni inventarla — y propone un fix concreto (CAPA / CAUSA / ARCHIVO / FIX / VERIFICAR) por cada prueba fallida |
+
+**Nota:** por ahora solo aplica a wallet-control, que es el único proyecto con suite de Jest configurada (`lib/__tests__/`, ver `package.json` → `"test"`). Es la primera palabra clave que conecta un comando de verificación automática con el protocolo de diagnóstico de una skill, en vez de invocar la skill directamente.
+
+---
+
+## Palabra Clave de Revisión a Fondo (código + visual/UX)
+
+> Hook real (`UserPromptSubmit`, `.claude/hooks/revision-a-fondo.ps1`). Detecta el mensaje exacto
+> "REVISION A FONDO" (mayúsculas o minúsculas) y le inyecta contexto a Claude para correr AUDITA y
+> ESTETIK en conjunto sobre un mismo proyecto.
+
+| Palabra clave | Acción |
+|---|---|
+| `REVISION A FONDO` | Única pregunta: cuál proyecto de `APPS/` revisar. Con la respuesta, corre en conjunto el proceso completo de **AUDITA** (auditoría de código: Bugs / Para eliminar / Mejoras / Lo que ya funciona bien) y de **ESTETIK** (auditoría visual/UX viendo la app real renderizada: Inconsistencia visual / Accesibilidad / Responsive / Microinteracciones-UX / Lo que ya funciona bien) sobre el mismo proyecto, y junta las dos en **un solo informe** con dos secciones separadas y un único resumen ejecutivo combinado. Genera el PDF automáticamente con Puppeteer — sin preguntar si lo quiere en PDF ni dónde guardarlo — en `APPS/<proyecto>/AUDITORIAS/revision-a-fondo-<fecha>.pdf` |
+
+**Nota:** ninguna de las dos auditorías modifica código durante la revisión (mismo principio que AUDITA/ESTETIK por separado). Si después de leer el PDF el usuario quiere que se arreglen los hallazgos, ahí se activan **PECAS** (cambios de código/UI) y **FIXA** (bugs puntuales) — no se disparan solos. Es la primera palabra clave que combina dos skills de diagnóstico en un solo informe, en vez de invocar una sola.
+
+**Nota (pruebas automatizadas):** dentro de la parte de AUDITA, si el proyecto elegido tiene una suite de pruebas configurada (ej. Jest — `package.json` → `scripts.test`, o carpeta `__tests__`), se corre de verdad y el resultado real se usa como evidencia — una prueba que falla se reporta como Bug con el mensaje/stack trace real, con el mismo criterio de diagnóstico de FIXA (capa/causa). Si el proyecto no tiene pruebas configuradas, se anota como Mejora recomendada (agregar tests), no como bug. A diferencia de `REVISEMOS` (fijo a wallet-control), esto corre sobre cualquier proyecto que tenga tests, el que sea que se elija.
+
+---
+
 ## Checklist Universal de Proyecto Terminado
 
 - [ ] Feature principal funciona end-to-end
@@ -307,6 +344,11 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 | 2026-07-17 | Lección 3 actualizada — "abre el servidor/qr" de wallet-control/ruta-segura ya no fuerza el puerto 8082: ahora detecta y usa el primer puerto libre a partir de 8081 en el momento de ejecutar |
 | 2026-07-21 | Agregado proyecto `pollito` (app de escritorio, regalo) a Proyectos Activos; agregada palabra clave `POLLITO` en `proyecto-switch.ps1` (mismo patrón que WALLET CONTROL/RUTA SEGURA — git pull + PECAS + recomendación de `/clear`) |
 | 2026-07-22 | Corregido: ESTETIK y AUDITA existían solo como documentación en `SKILLS/` pero nunca se habían registrado como comando real en `.claude/commands/` (a diferencia de KILLER, FINANDO, PAKI, PECAS, FIXA y FIFAS, que sí tenían esa copia) — por eso no se podían invocar como skill. Copiados `SKILLS/ESTETIK.md` y `SKILLS/AUDITA.md` a `.claude/commands/estetik.md` y `.claude/commands/audita.md`; ambas palabras clave ya funcionan como comando de verdad |
+| 2026-07-29 | Configurada suite de pruebas Jest en wallet-control (`lib/__tests__/`, 17 pruebas iniciales sobre la lógica del corte de tarjeta — justo lo que causó el hallazgo #1 de la auditoría del 28-jul) y agregada palabra clave `REVISEMOS` (hook real `.claude/hooks/revisemos-fixa.ps1`) que corre esa suite automáticamente y, si algo falla, activa el protocolo de diagnóstico de FIXA sobre la salida real de Jest |
+| 2026-07-29 | Creada skill `FREE` (generada vía KILLER) — coach de freelance y networking digital, con misión concreta de llevar al usuario a mínimo 100 USD/mes en clientes fijos antes del 2026-12-01; a diferencia de FINANDO/GYMRAT/NUTRIZA, mantiene memoria persistente entre sesiones en 4 archivos (`roadmap.md`, `perfil.md`, `tarifas.md`, `clientes.md`) dentro de `INDEPENDIENTE/` |
+| 2026-07-29 | Agregado proyecto `INDEPENDIENTE` (carpeta en la raíz del repo, fuera de `APPS/`) a Proyectos Activos; agregada palabra clave `INDEPENDIENTE` en `proyecto-switch.ps1` (mismo patrón que WALLET CONTROL/RUTA SEGURA/POLLITO, pero invocando FREE en vez de PECAS) |
+| 2026-07-29 | Corregido: pese a lo documentado el 2026-07-22, `ESTETIK` seguía sin copia real en el registro de comandos (que en realidad es la carpeta global `C:\Users\Lenovo Ideapad\.claude\commands\`, no una carpeta dentro del repo) — `/estetik` no funcionaba. Copiado `SKILLS/ESTETIK.md` a esa carpeta; ya es invocable de verdad, igual que `FREE.md` recién creado |
+| 2026-07-29 | Agregada palabra clave `REVISION A FONDO` (hook real `.claude/hooks/revision-a-fondo.ps1`) — primera palabra clave que combina dos skills de diagnóstico (AUDITA + ESTETIK) en un solo PDF con dos secciones y un resumen ejecutivo combinado, en `APPS/<proyecto>/AUDITORIAS/revision-a-fondo-<fecha>.pdf`; no arregla nada sola, PECAS/FIXA quedan disponibles después si se pide |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise

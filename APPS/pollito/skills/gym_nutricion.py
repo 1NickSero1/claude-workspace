@@ -9,10 +9,18 @@ mas adelante, antes de cerrar el proyecto.
 """
 import tema
 from config import MEMORY_TOOL, WEB_SEARCH_TOOL
-from skills.base import VentanaChat
+from skills.base import VistaChat, construir_intro_bienvenida
 from skills.memoria import crear_manejador_memoria
 
 TITULO = "Gym y Nutricion"  # TODO: reemplazar por nombre personalizado
+
+# Primer mensaje que ve Sofi al entrar a la vista, como si la skill le
+# hablara primero (ver skills/base.py).
+BIENVENIDA = construir_intro_bienvenida(TITULO) + (
+    "Te ayudo con tu rutina de gym y, sobre todo, a cocinar rico y "
+    "saludable con lo que tengas en casa. Contame que ingredientes tenes o "
+    "que necesitas hoy."
+)
 
 SYSTEM_PROMPT = """Eres una entrenadora personal y asesora de nutricion. Ya
 entrena de forma regular, pero su enfoque principal ahora es bajar de peso y
@@ -45,12 +53,14 @@ encaja con lo que ya sabes de ella), no lo guardes como si fuera de Sofi para
 no mezclar su informacion con la de alguien mas."""
 
 
-def abrir_ventana(parent):
-    return VentanaChat(
+def crear_vista(parent, volver):
+    return VistaChat(
         parent,
         titulo=TITULO,
         system_prompt=SYSTEM_PROMPT,
+        volver=volver,
         tools=[WEB_SEARCH_TOOL, MEMORY_TOOL],
         acento=tema.ACENTOS[TITULO],
         manejador_herramienta_cliente=crear_manejador_memoria("gym_nutricion"),
+        mensaje_bienvenida=BIENVENIDA,
     )

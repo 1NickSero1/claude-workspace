@@ -4,7 +4,7 @@
 ========================================
 
 ------------------------------------------------------------
-v0.1 — 2026-06-04 · Versión inicial
+v0.1 — 2026-06-04 · Versión inicial  [BASE]
 ------------------------------------------------------------
 • App creada desde cero con 4 pantallas principales:
   Resumen, Tarjetas/Cuentas, Finando IA, Historial
@@ -16,7 +16,7 @@ v0.1 — 2026-06-04 · Versión inicial
 • Metas de ahorro con historial de depósitos
 
 ------------------------------------------------------------
-v0.2 — 2026-06-06 · Finando IA integrado
+v0.2 — 2026-06-06 · Finando IA integrado  [IA]
 ------------------------------------------------------------
 • Integración con Claude API (modelo sonnet-4-6)
 • Registro de gastos e ingresos en lenguaje natural
@@ -28,7 +28,7 @@ v0.2 — 2026-06-06 · Finando IA integrado
 • Análisis financiero conversacional del mes
 
 ------------------------------------------------------------
-v0.3 — 2026-06-10 · Tarjetas y Cuentas
+v0.3 — 2026-06-10 · Tarjetas y Cuentas  [TARJETAS]
 ------------------------------------------------------------
 • Gestión de cuentas débito y tarjetas de crédito
 • Vista de tarjetas con scroll horizontal (CardView)
@@ -39,7 +39,7 @@ v0.3 — 2026-06-10 · Tarjetas y Cuentas
 • Filtro de gastos por cuenta/tarjeta seleccionada
 
 ------------------------------------------------------------
-v0.4 — 2026-06-12 · Resumen visual y PDF
+v0.4 — 2026-06-12 · Resumen visual y PDF  [VISUAL]
 ------------------------------------------------------------
 • DonutChart estilo Monefy con categorías por color
 • Resumen hero: ingresos, gastos, ahorro del mes
@@ -51,7 +51,7 @@ v0.4 — 2026-06-12 · Resumen visual y PDF
 • Modal de entrada rápida de gastos (QuickEntryModal)
 
 ------------------------------------------------------------
-v0.5 — 2026-06-13 · Historial y tendencias
+v0.5 — 2026-06-13 · Historial y tendencias  [HISTORIAL]
 ------------------------------------------------------------
 • Historial de meses expandibles con resumen
 • Gráfica de líneas (últimos 6 meses):
@@ -60,7 +60,7 @@ v0.5 — 2026-06-13 · Historial y tendencias
 • Navegación directa a mes anterior/siguiente
 
 ------------------------------------------------------------
-v0.6 — 2026-06-15 · Dark mode completo
+v0.6 — 2026-06-15 · Dark mode completo  [TEMA]
 ------------------------------------------------------------
 • ThemeContext con paleta oscura y clara
 • Todos los screens y componentes usan useColors()
@@ -71,7 +71,7 @@ v0.6 — 2026-06-15 · Dark mode completo
 • Fix: splash screen sin parpadeo en blanco (checked state)
 
 ------------------------------------------------------------
-v0.7 — 2026-06-16 · Pantalla de inicio más completa
+v0.7 — 2026-06-16 · Pantalla de inicio más completa  [ONBOARDING]
 ------------------------------------------------------------
 • Botón para cambiar entre tema claro y oscuro directo desde
   la pantalla de bienvenida (antes solo se podía desde Perfil)
@@ -87,7 +87,7 @@ v0.7 — 2026-06-16 · Pantalla de inicio más completa
   local y privada en tu dispositivo"
 
 ------------------------------------------------------------
-v0.8 — 2026-06-16 · Tarjetas más simple e intuitivo
+v0.8 — 2026-06-16 · Tarjetas más simple e intuitivo  [TARJETAS]
 ------------------------------------------------------------
 • "Débito" y "Efectivo" ahora son un solo apartado llamado
   "Cuentas" — ya no hay que entrar a una pestaña aparte para
@@ -105,7 +105,7 @@ v0.8 — 2026-06-16 · Tarjetas más simple e intuitivo
 • Nuevo color ámbar dedicado para identificar cuentas de efectivo
 
 ------------------------------------------------------------
-v0.9 — 2026-06-16 · Tarjetas con más vida y control de deudas
+v0.9 — 2026-06-16 · Tarjetas con más vida y control de deudas  [PRESTAMOS]
 ------------------------------------------------------------
 • Las 2 pestañas de "Balance" ahora son visualmente distintas:
   — "Cuentas" se pone verde cuando está activa
@@ -131,7 +131,7 @@ v0.9 — 2026-06-16 · Tarjetas con más vida y control de deudas
   — El total de deudas aparece en el encabezado de la sección
 
 ------------------------------------------------------------
-v1.0 — 2026-06-16 · Panel inteligente + Préstamos + Patrimonio Neto
+v1.0 — 2026-06-16 · Panel inteligente + Préstamos + Patrimonio Neto  [PATRIMONIO]
 ------------------------------------------------------------
 • Un solo toque en cualquier cuenta abre el panel de acción
   (antes había que mantener presionado; ahora es más rápido y natural)
@@ -159,7 +159,7 @@ v1.0 — 2026-06-16 · Panel inteligente + Préstamos + Patrimonio Neto
   Solo aparece cuando tienes cuentas o préstamos registrados
 
 ------------------------------------------------------------
-v1.1 — 2026-06-16 · Tab Débito reorganizado + formulario de crédito mejorado
+v1.1 — 2026-06-16 · Tab Débito reorganizado + formulario de crédito mejorado  [TARJETAS]
 ------------------------------------------------------------
 • Las pills del tab "Balance" ahora usan ícono + texto en mayúsculas:
   — [🏦] DÉBITO (verde cuando activo)
@@ -178,7 +178,7 @@ v1.1 — 2026-06-16 · Tab Débito reorganizado + formulario de crédito mejorad
   genera automáticamente (solo aplica para tipo Crédito)
 
 ------------------------------------------------------------
-v1.2 — 2026-06-16 · Débito visual + resumen deudas + abonos con nota
+v1.2 — 2026-06-16 · Débito visual + resumen deudas + abonos con nota  [TARJETAS]
 ------------------------------------------------------------
 • El campo "Nombre" en el formulario de tarjeta/deuda/efectivo
   ahora se llama "Alias" — más claro para referirse a lo que
@@ -204,7 +204,7 @@ v1.2 — 2026-06-16 · Débito visual + resumen deudas + abonos con nota
     del tipo de movimiento (Depósito / Abono)
 
 ------------------------------------------------------------
-v1.3 — 2026-06-17 · Débito con métricas + préstamos en rojo + historial de abonos
+v1.3 — 2026-06-17 · Débito con métricas + préstamos en rojo + historial de abonos  [PRESTAMOS]
 ------------------------------------------------------------
 • Nueva fila de resumen en el tab DÉBITO (igual que el de crédito):
   — "Total gastado" en rojo y "Total disponible" en verde
@@ -227,7 +227,7 @@ v1.3 — 2026-06-17 · Débito con métricas + préstamos en rojo + historial de
   — Eliminado import TypeScript sin uso (CardEvent)
 
 ------------------------------------------------------------
-v1.4 — 2026-06-17 · Cuentas unificadas + préstamos más inteligentes
+v1.4 — 2026-06-17 · Cuentas unificadas + préstamos más inteligentes  [PRESTAMOS]
 ------------------------------------------------------------
 • El resumen de débito ahora incluye el efectivo:
   — "Total gastado" suma todos los gastos de cuentas débito Y efectivo
@@ -246,7 +246,7 @@ v1.4 — 2026-06-17 · Cuentas unificadas + préstamos más inteligentes
   — No se registra el abono hasta que el monto sea correcto
 
 ------------------------------------------------------------
-v1.5 — 2026-06-17 · Alertas bonitas + crédito organizado + emoji global + recordatorios
+v1.5 — 2026-06-17 · Alertas bonitas + crédito organizado + emoji global + recordatorios  [ALERTAS]
 ------------------------------------------------------------
 • El aviso de "abono mayor a la deuda" ahora es un modal del propio estilo
   de la app (no el popup genérico del sistema):
@@ -271,7 +271,7 @@ v1.5 — 2026-06-17 · Alertas bonitas + crédito organizado + emoji global + re
   — La fecha aparece en la lista ("Vence: DD/MM/AAAA") y en el panel
 
 ------------------------------------------------------------
-v1.6 — 2026-06-18 · Jerarquía visual de secciones
+v1.6 — 2026-06-18 · Jerarquía visual de secciones  [VISUAL]
 ------------------------------------------------------------
 • El resumen "Total gastado / Total disponible" ahora aparece
   ARRIBA del título de sección en ambos tabs:
@@ -283,7 +283,7 @@ v1.6 — 2026-06-18 · Jerarquía visual de secciones
   — Más coherente visualmente con el resto del tab DÉBITO
 
 ------------------------------------------------------------
-v1.7 — 2026-06-18 · Resumen visual mejorado + emojis en categorías
+v1.7 — 2026-06-18 · Resumen visual mejorado + emojis en categorías  [VISUAL]
 ------------------------------------------------------------
 • El selector de color al crear/editar una categoría fue reemplazado
   por un grid de 30 emojis (5 columnas):
@@ -305,7 +305,7 @@ v1.7 — 2026-06-18 · Resumen visual mejorado + emojis en categorías
   "Registrar" debajo del círculo para que sea más obvio
 
 ------------------------------------------------------------
-v1.8 — 2026-06-18 · Metas con emoji + donut interactivo
+v1.8 — 2026-06-18 · Metas con emoji + donut interactivo  [METAS]
 ------------------------------------------------------------
 • El selector de color al crear/editar una meta fue reemplazado
   por un grid de 30 emojis (igual que las categorías):
@@ -328,7 +328,7 @@ v1.8 — 2026-06-18 · Metas con emoji + donut interactivo
   fue eliminada (esa info ya aparece en el hero con las pills)
 
 ------------------------------------------------------------
-v1.9 — 2026-06-18 · UX visual mejorada en Resumen
+v1.9 — 2026-06-18 · UX visual mejorada en Resumen  [VISUAL]
 ------------------------------------------------------------
 • Los campos de monto en metas de ahorro ahora formatean automáticamente:
   — "Monto objetivo" y "Ya ahorrado" muestran puntos de miles mientras escribes
@@ -355,7 +355,7 @@ v1.9 — 2026-06-18 · UX visual mejorada en Resumen
   — Si no tiene emoji: sigue mostrando 🎉 (completada) o 🎯 (en progreso)
 
 ------------------------------------------------------------
-v1.10 — 2026-06-18 · Hero rediseñado + pulidos visuales
+v1.10 — 2026-06-18 · Hero rediseñado + pulidos visuales  [VISUAL]
 ------------------------------------------------------------
 • El hero del Resumen ahora tiene dos donuts lado a lado:
   — Izquierda: donut de gastos por categoría (igual que antes, toca para ver resumen)
@@ -373,7 +373,7 @@ v1.10 — 2026-06-18 · Hero rediseñado + pulidos visuales
   — Se distingue bien sin tapar el contenido de la pantalla
 
 ------------------------------------------------------------
-v1.11 — 2026-06-18 · Navegación rediseñada + cards interactivas
+v1.11 — 2026-06-18 · Navegación rediseñada + cards interactivas  [NAVEGACION]
 ------------------------------------------------------------
 • El botón flotante "Registrar" ahora abre un mini menú con 2 opciones:
   — 💸 Gasto / Ingreso → abre el modal de registro rápido de siempre
@@ -402,7 +402,7 @@ v1.11 — 2026-06-18 · Navegación rediseñada + cards interactivas
   — Texto de labels en uppercase con letra más pequeña y espaciado
 
 ------------------------------------------------------------
-v1.12 — 2026-06-18 · Hero con 3 donuts + pills elegantes
+v1.12 — 2026-06-18 · Hero con 3 donuts + pills elegantes  [VISUAL]
 ------------------------------------------------------------
 • Las pills de Ingresos y Gastos son ahora tarjetas verticales elegantes:
   — Fondo sólido (verde para ingresos, rojo para gastos) en vez de fondo tintado
@@ -421,7 +421,7 @@ v1.12 — 2026-06-18 · Hero con 3 donuts + pills elegantes
   — 3 puntos de paginación debajo del gadget
 
 ------------------------------------------------------------
-v1.13 — 2026-07-08 · Botón "+" en Tarjetas, resumen movido a Resumen
+v1.13 — 2026-07-08 · Botón "+" en Tarjetas, resumen movido a Resumen  [REORGANIZACION]
 ------------------------------------------------------------
 • Pantalla Tarjetas (Balance): se quitaron los recuadros "Total gastado" /
   "Total disponible" de arriba de la lista de tarjetas (Débito y Crédito)
@@ -435,7 +435,7 @@ v1.13 — 2026-07-08 · Botón "+" en Tarjetas, resumen movido a Resumen
   fondo celeste (marca), con splash screen a juego
 
 ------------------------------------------------------------
-v1.14 — 2026-07-08 · Botón Registrar en cápsula flotante
+v1.14 — 2026-07-08 · Botón Registrar en cápsula flotante  [NAVEGACION]
 ------------------------------------------------------------
 • El FAB "+" de Resumen ya no abre un bottom sheet con 2 filas — al tocarlo
   se transforma en una cápsula redondeada flotante con 2 botones circulares
@@ -448,7 +448,7 @@ v1.14 — 2026-07-08 · Botón Registrar en cápsula flotante
   tarjeta o cuenta directo desde cualquier sub-pestaña
 
 ------------------------------------------------------------
-v1.15 — 2026-07-08 · Botón "+" también en sección Efectivo
+v1.15 — 2026-07-08 · Botón "+" también en sección Efectivo  [TARJETAS]
 ------------------------------------------------------------
 • Tarjetas (Balance) → Débito → Efectivo: se quitó el texto naranja
   "+ Agregar efectivo" de abajo de la lista — ahora el encabezado
@@ -456,7 +456,7 @@ v1.15 — 2026-07-08 · Botón "+" también en sección Efectivo
   de Tarjetas de débito y Tarjetas de crédito
 
 ------------------------------------------------------------
-v1.16 — 2026-07-12 · Registro más rápido + primeros pasos + fecha de metas
+v1.16 — 2026-07-12 · Registro más rápido + primeros pasos + fecha de metas  [ONBOARDING]
 ------------------------------------------------------------
 • Registrar gasto: el modal de registro rápido ahora muestra la categoría
   directo ahí (grid con ícono + nombre, scroll si hay muchas) — ya no hay
@@ -474,7 +474,7 @@ v1.16 — 2026-07-12 · Registro más rápido + primeros pasos + fecha de metas
   color naranja de esa sección (antes moradito, no calzaba con el resto)
 
 ------------------------------------------------------------
-v1.17 — 2026-07-19 · Confirmaciones de eliminar con tema propio
+v1.17 — 2026-07-19 · Confirmaciones de eliminar con tema propio  [TEMA]
 ------------------------------------------------------------
 • Resumen: al mantener presionada una meta, el menú "Editar/Eliminar" y la
   confirmación de eliminar ya no son el diálogo blanco nativo de Android —
@@ -485,7 +485,7 @@ v1.17 — 2026-07-19 · Confirmaciones de eliminar con tema propio
   botones Cancelar/Eliminar
 
 ------------------------------------------------------------
-v1.18 — 2026-07-20 · Cerrar modales tocando afuera
+v1.18 — 2026-07-20 · Cerrar modales tocando afuera  [UX]
 ------------------------------------------------------------
 • Todos los sheets y ventanas emergentes de la app ahora se pueden cerrar
   tocando la zona oscura de afuera, no solo con el botón "X" o "Cancelar":
@@ -498,7 +498,7 @@ v1.18 — 2026-07-20 · Cerrar modales tocando afuera
   Balance General, Metas, Ingresos) quedaron igual, sin cambios
 
 ------------------------------------------------------------
-v1.19 — 2026-07-21 · Tarjetas simplificadas + monto obligatorio
+v1.19 — 2026-07-21 · Tarjetas simplificadas + monto obligatorio  [TARJETAS]
 ------------------------------------------------------------
 • Resumen: al eliminar un aporte del historial de una meta, y en Perfil al
   cerrar sesión, la confirmación ya no es el diálogo blanco nativo de
@@ -523,7 +523,7 @@ v1.19 — 2026-07-21 · Tarjetas simplificadas + monto obligatorio
   anónimo): "No disponible en modo anónimo" en vez de Title Case
 
 ------------------------------------------------------------
-v1.20 — 2026-07-21 · Tarjeta de crédito arreglada + gastos por tipo de cuenta
+v1.20 — 2026-07-21 · Tarjeta de crédito arreglada + gastos por tipo de cuenta  [BUGFIX]
 ------------------------------------------------------------
 • Tarjeta visual de crédito: el número enmascarado y "Disponible" ya no se
   superponen en pantallas grandes — número acortado a "•••• 1234"
@@ -536,7 +536,7 @@ v1.20 — 2026-07-21 · Tarjeta de crédito arreglada + gastos por tipo de cuent
   que el swipe no se sienta atrapado por el estado del componente
 
 ------------------------------------------------------------
-v1.21 — 2026-07-21 · Historial por sección + selector de fecha en préstamos
+v1.21 — 2026-07-21 · Historial por sección + selector de fecha en préstamos  [HISTORIAL]
 ------------------------------------------------------------
 • Tarjetas (Balance): cada sección (Débito, Crédito, Efectivo, Préstamos)
   tiene ahora un ícono de reloj junto al título para ver su propio
@@ -553,7 +553,7 @@ v1.21 — 2026-07-21 · Historial por sección + selector de fecha en préstamos
   (se veían cortados en pantallas grandes, ej. "$500" en vez de "$500.000")
 
 ------------------------------------------------------------
-v1.22 — 2026-07-21 · Deslizable de mes arreglado de verdad + montos de leyenda visibles
+v1.22 — 2026-07-21 · Deslizable de mes arreglado de verdad + montos de leyenda visibles  [BUGFIX]
 ------------------------------------------------------------
 • Balance General (Resumen): el arreglo de v1.21 no era suficiente — cada
   slide (mes actual/anterior) estaba envuelto en un botón que cubría toda
@@ -574,7 +574,7 @@ v1.22 — 2026-07-21 · Deslizable de mes arreglado de verdad + montos de leyend
   qué hace cada botón sin tener que adivinar.
 
 ------------------------------------------------------------
-v1.23 — 2026-07-21 · Billetera general primero + leyendas completas en todos los diagramas
+v1.23 — 2026-07-21 · Billetera general primero + leyendas completas en todos los diagramas  [VISUAL]
 ------------------------------------------------------------
 • Resumen: el carrusel de diagramas ahora empieza en "Billetera general"
   (antes iba último), seguido de Gastos del mes, Metas de ahorro y
@@ -591,7 +591,7 @@ v1.23 — 2026-07-21 · Billetera general primero + leyendas completas en todos 
   que ya se podía al registrar un gasto desde el botón "+" de Resumen.
 
 ------------------------------------------------------------
-v1.24 — 2026-07-21 · Seguimiento de gastos fijos pagados por quincena
+v1.24 — 2026-07-21 · Seguimiento de gastos fijos pagados por quincena  [RECURRENTES]
 ------------------------------------------------------------
 • Resumen: la tarjeta de Quincena 1/2 ahora muestra "X de Y gastos fijos
   pagados" — cuántos de tus gastos recurrentes ya registraste en esa
@@ -603,7 +603,7 @@ v1.24 — 2026-07-21 · Seguimiento de gastos fijos pagados por quincena
   permite frecuencia Quincenal, además de Semanal y Mensual.
 
 ------------------------------------------------------------
-v1.25 — 2026-07-21 · Gastos recurrentes con su propia frecuencia y fecha de pago
+v1.25 — 2026-07-21 · Gastos recurrentes con su propia frecuencia y fecha de pago  [RECURRENTES]
 ------------------------------------------------------------
 • Categorías: en la lista de gastos, uno marcado como recurrente ahora
   muestra su frecuencia (Semanal/Quincenal/Mensual) en vez de "1ª/2ª
@@ -614,14 +614,14 @@ v1.25 — 2026-07-21 · Gastos recurrentes con su propia frecuencia y fecha de p
   30/7/2026").
 
 ------------------------------------------------------------
-v1.26 — 2026-07-21 · Tarjetas de Quincena más simples
+v1.26 — 2026-07-21 · Tarjetas de Quincena más simples  [QUINCENA]
 ------------------------------------------------------------
 • Resumen: la tarjeta de Quincena 1/2 ya no muestra el monto gastado —
   solo queda la barra de progreso del periodo y el contador de gastos
   fijos pagados.
 
 ------------------------------------------------------------
-v1.27 — 2026-07-21 · Edita cualquier gasto desde "Gastos del mes"
+v1.27 — 2026-07-21 · Edita cualquier gasto desde "Gastos del mes"  [EDICION]
 ------------------------------------------------------------
 • Resumen: el popup "Gastos del mes" (donut de Gastos) ahora permite
   editar cualquier gasto del mes desde ahí mismo — nombre, monto, tarjeta,
@@ -634,7 +634,7 @@ v1.27 — 2026-07-21 · Edita cualquier gasto desde "Gastos del mes"
   queda correctamente descontado.
 
 ------------------------------------------------------------
-v1.28 — 2026-07-22 · Montos completos + total gastado sincronizado
+v1.28 — 2026-07-22 · Montos completos + total gastado sincronizado  [BUGFIX]
 ------------------------------------------------------------
 • Tarjetas: se quitó la tarjeta naranja "Total deuda", redundante desde
   que "Préstamos" ya muestra el mismo total con su propio ícono de
@@ -655,7 +655,7 @@ v1.28 — 2026-07-22 · Montos completos + total gastado sincronizado
   de la app.
 
 ------------------------------------------------------------
-v1.29 — 2026-07-22 · Recurrentes vs no recurrentes en el resumen del mes
+v1.29 — 2026-07-22 · Recurrentes vs no recurrentes en el resumen del mes  [RECURRENTES]
 ------------------------------------------------------------
 • Tarjeta "Presupuesto mensual": se agregó la leyenda "Toca para ver el
   resumen del mes →" para que quede claro qué pasa al tocarla, y se quitó
@@ -665,7 +665,7 @@ v1.29 — 2026-07-22 · Recurrentes vs no recurrentes en el resumen del mes
   lo gastado en gastos fijos/recurrentes vs el resto.
 
 ------------------------------------------------------------
-v1.30 — 2026-07-22 · Ajustes de la auditoría del 21 de julio
+v1.30 — 2026-07-22 · Ajustes de la auditoría del 21 de julio  [AUDITORIA]
 ------------------------------------------------------------
 • Accesibilidad: agregado accessibilityLabel/Role a los 3 componentes
   reutilizables que quedaron fuera de la ronda del 2026-07-06 —
@@ -682,7 +682,7 @@ v1.30 — 2026-07-22 · Ajustes de la auditoría del 21 de julio
   prueba con amigos, por pedido explícito del usuario.
 
 ------------------------------------------------------------
-v1.31 — 2026-07-22 · Ajustes de los IMAGINA del 21 y 22 de julio
+v1.31 — 2026-07-22 · Ajustes de los IMAGINA del 21 y 22 de julio  [VISUAL]
 ------------------------------------------------------------
 • Onboarding: los pasos "¿Cómo quieres empezar?", "¿Cómo manejas tu
   dinero?", "¿Tienes un ingreso fijo?" y "¿Cuánto gastas en cosas fijas?"
@@ -708,7 +708,7 @@ v1.31 — 2026-07-22 · Ajustes de los IMAGINA del 21 y 22 de julio
 • npx tsc --noEmit: 0 errores tras los 4 cambios.
 
 ------------------------------------------------------------
-v1.32 — 2026-07-22 · Marcar gastos fijos como pagados con un toque
+v1.32 — 2026-07-22 · Marcar gastos fijos como pagados con un toque  [RECURRENTES]
 ------------------------------------------------------------
 • Resumen: la tarjeta "Gastos recurrentes" (antes "Gastos fijos
   mensuales", renombrada) ya no es el único lugar para gestionarlos — el
@@ -746,7 +746,7 @@ v1.32 — 2026-07-22 · Marcar gastos fijos como pagados con un toque
   (saldo/cupo − gastado del mes).
 
 ------------------------------------------------------------
-v1.33 — 2026-07-22 · Hub de Gastos recurrentes + limpieza visual
+v1.33 — 2026-07-22 · Hub de Gastos recurrentes + limpieza visual  [RECURRENTES]
 ------------------------------------------------------------
 • Pedido del usuario: en toda la app costaba distinguir gastos fijos
   pendientes de pagar vs. ya pagados. Se creó lib/recurringPayments.ts
@@ -782,7 +782,7 @@ v1.33 — 2026-07-22 · Hub de Gastos recurrentes + limpieza visual
   en la tablet, no solo revisando código.
 
 ------------------------------------------------------------
-v1.34 — 2026-07-23 · Crear gastos recurrentes sin pagarlos todavía
+v1.34 — 2026-07-23 · Crear gastos recurrentes sin pagarlos todavía  [RECURRENTES]
 ------------------------------------------------------------
 • "Gastos del mes" (diagrama de torta): ya no excluye un gasto recurrente
   con fecha de pago futura aunque ya esté registrado — antes eso lo
@@ -803,7 +803,7 @@ v1.34 — 2026-07-23 · Crear gastos recurrentes sin pagarlos todavía
   la tablet se desconectó a mitad de esta ronda.
 
 ------------------------------------------------------------
-v1.35 — 2026-07-26 · Botones tapados por el teclado en varios formularios
+v1.35 — 2026-07-26 · Botones tapados por el teclado en varios formularios  [BUGFIX]
 ------------------------------------------------------------
 • Bug encontrado por el usuario al fin probar en la tablet real lo de
   v1.34 (botón "+" de Gastos recurrentes): al abrir el teclado en ese
@@ -834,7 +834,7 @@ v1.35 — 2026-07-26 · Botones tapados por el teclado en varios formularios
   para confirmar que sí funcionaba.
 
 ------------------------------------------------------------
-v1.36 — 2026-07-26 · Nuevo ícono de app + arreglos encontrados en celular real
+v1.36 — 2026-07-26 · Nuevo ícono de app + arreglos encontrados en celular real  [VISUAL]
 ------------------------------------------------------------
 • Ícono de la app renovado: se eligió el concepto "Anillo de Progreso" (#7 de
   las 10 propuestas del PDF de ESTETIK del 22 de julio) — un anillo blanco al
@@ -862,7 +862,7 @@ v1.36 — 2026-07-26 · Nuevo ícono de app + arreglos encontrados en celular re
 • npx tsc --noEmit: 0 errores.
 
 ------------------------------------------------------------
-v1.37 — 2026-07-26 · MEJORAX — 10 pendientes resueltos de un tirón
+v1.37 — 2026-07-26 · MEJORAX — 10 pendientes resueltos de un tirón  [MEJORAX]
 ------------------------------------------------------------
 • Nueva pantalla "Personaliza tu vida financiera" (desde Perfil → Tu
   experiencia): agrupa Periodicidad de cuenta, Presupuesto mensual y Gasto
@@ -891,7 +891,7 @@ v1.37 — 2026-07-26 · MEJORAX — 10 pendientes resueltos de un tirón
   cada uno de los 10 puntos.
 
 ------------------------------------------------------------
-v1.38 — 2026-07-27 · Efectivo deslizable + arreglo de carrusel
+v1.38 — 2026-07-27 · Efectivo deslizable + arreglo de carrusel  [BUGFIX]
 ------------------------------------------------------------
 • Efectivo: las cuentas ya se pueden editar/eliminar deslizando la fila,
   igual que Préstamos.
@@ -910,7 +910,7 @@ v1.38 — 2026-07-27 · Efectivo deslizable + arreglo de carrusel
   "en progreso".
 
 ------------------------------------------------------------
-v1.39 — 2026-07-27 · Presupuesto en el onboarding + diagramas vacíos abren el "+"
+v1.39 — 2026-07-27 · Presupuesto en el onboarding + diagramas vacíos abren el "+"  [ONBOARDING]
 ------------------------------------------------------------
 • Onboarding: nuevo paso "¿Cuál es tu presupuesto mensual?" (opcional,
   se puede omitir) entre "¿Cómo manejas tu dinero?" y "¿Tienes un ingreso

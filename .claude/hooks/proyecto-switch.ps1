@@ -3,9 +3,12 @@ $prompt = $json.prompt
 if ($prompt) {
     $t = $prompt.Trim()
     $proyecto = $null
-    if ($t -ieq 'WALLET CONTROL') { $proyecto = 'wallet-control' }
-    elseif ($t -ieq 'RUTA SEGURA') { $proyecto = 'ruta-segura' }
-    elseif ($t -ieq 'POLLITO') { $proyecto = 'pollito' }
+    $skill = 'PECAS'
+    $rutaProyecto = $null
+    if ($t -ieq 'WALLET CONTROL') { $proyecto = 'wallet-control'; $rutaProyecto = "APPS/wallet-control" }
+    elseif ($t -ieq 'RUTA SEGURA') { $proyecto = 'ruta-segura'; $rutaProyecto = "APPS/ruta-segura" }
+    elseif ($t -ieq 'POLLITO') { $proyecto = 'pollito'; $rutaProyecto = "APPS/pollito" }
+    elseif ($t -ieq 'INDEPENDIENTE') { $proyecto = 'INDEPENDIENTE'; $skill = 'FREE'; $rutaProyecto = "INDEPENDIENTE" }
 
     if ($proyecto) {
         $repoDir = $env:CLAUDE_PROJECT_DIR
@@ -36,11 +39,11 @@ if ($prompt) {
             Pop-Location
         }
 
-        $msg = "El usuario quiere arrancar una sesion enfocada en el proyecto '$proyecto'. " +
+        $msg = "El usuario quiere arrancar una sesion enfocada en el proyecto '$proyecto' (carpeta '$rutaProyecto'). " +
                "$pullStatus " +
-               "Como primera accion: menciona brevemente ese resultado de git, invoca la skill PECAS y saluda recomendandole al usuario " +
+               "Como primera accion: menciona brevemente ese resultado de git, invoca la skill $skill y saluda recomendandole al usuario " +
                "que ejecute /clear para empezar con un contexto limpio antes de seguir " +
-               "trabajando especificamente en '$proyecto'."
+               "trabajando especificamente en '$rutaProyecto'."
         $out = @{
             hookSpecificOutput = @{
                 hookEventName     = 'UserPromptSubmit'

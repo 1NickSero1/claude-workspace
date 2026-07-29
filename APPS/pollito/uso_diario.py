@@ -7,10 +7,18 @@ vez que se abre, asi que guardar el conteo ahi lo borraria en cada arranque.
 """
 import json
 import os
+import threading
 from datetime import date
 from pathlib import Path
 
 from config import LIMITE_TOKENS_DIARIOS
+
+# Las 5 skills pueden tener una respuesta de la API pendiente al mismo
+# tiempo (cada una en su propio hilo, sin importar cual se este viendo en
+# pantalla) - sin este lock, dos llamadas a registrar_uso() casi
+# simultaneas pueden leer el mismo valor viejo y pisarse la actualizacion,
+# subcontando el gasto real del dia.
+_lock_uso = threading.Lock()
 
 
 def _ruta_archivo_uso() -> Path:
@@ -47,6 +55,7 @@ def limite_alcanzado() -> bool:
 
 
 def registrar_uso(tokens_usados_en_esta_llamada: int) -> None:
-    estado = _leer_estado()
-    estado["tokens_usados"] += tokens_usados_en_esta_llamada
-    _guardar_estado(estado)
+    with _lock_uso:
+        estado = _leer_estado()
+        estado["tokens_usados"] += tokens_usados_en_esta_llamada
+        _guardar_estado(estado)

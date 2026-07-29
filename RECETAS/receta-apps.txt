@@ -159,6 +159,28 @@ Aplicar desde el Paso 0/1 de la receta, no al final del proyecto.
   deuda tecnica en wallet-control: hubo que agregar esto de golpe a
   ~10 pantallas ya maduras en vez de tenerlo desde el principio.
 
+[PRUEBAS AUTOMATIZADAS — JEST]
+- Configurar Jest (o el equivalente del stack elegido) desde el Paso 1 de
+  setup en cualquier app nueva, no como retrofit despues de que un bug de
+  logica ya se detecto en produccion o en una auditoria manual. Cubrir desde
+  el dia 1 al menos la logica de negocio mas sensible a errores silenciosos
+  (calculos de fechas, cortes de ciclo, montos, condiciones de "una sola vez").
+- Detectado en wallet-control: la suite de Jest (lib/__tests__/) recien se
+  configuro el 2026-07-29, mas de un mes despues de iniciado el proyecto, y
+  justo sobre la logica de corte de tarjeta que habia causado el hallazgo #1
+  (doble conteo de deuda) de la auditoria del 28 de julio. De haber existido
+  desde el principio, esas pruebas hubieran atrapado el bug apenas se escribio
+  el codigo, no semanas despues en una auditoria manual.
+- Para apps React Native/Expo: instalar jest + jest-expo como devDependency y
+  configurar el script "test" en package.json desde el scaffold inicial, y
+  crear la carpeta lib/__tests__/ aunque quede vacia hasta que exista la
+  primera funcion de logica que probar.
+- Ideal conectarlo cuanto antes a un comando de verificacion rapida (mismo
+  patron que REVISEMOS en wallet-control: corre la suite y, si algo falla,
+  activa el protocolo de diagnostico de FIXA sobre la salida real de Jest)
+  desde que exista aunque sea una sola prueba, sin esperar a tener una suite
+  grande para empezar a usarlo.
+
 [CAMINO DE LANZAMIENTO RECOMENDADO]
 1. Build APK con "eas build --profile preview" -> compartir con 5-10
    personas de confianza (reemplaza depender de Expo Go + servidor).
@@ -593,3 +615,15 @@ HISTORIAL DE CAMBIOS
   "npm install" que corre "expo install --fix" por debajo (estaba
   instalado con --no-save, nunca declarado en package.json) — ver leccion
   nueva "GENERACION DE PDFs CON PUPPETEER" mas arriba en este archivo.
+
+[2026-07-29] Leccion nueva: configurar Jest desde el Paso 1, no como retrofit
+- A raiz del cierre de v1.0 de wallet-control (suite de Jest en
+  lib/__tests__/ configurada recien el 2026-07-29, mas de un mes despues de
+  iniciado el proyecto, justo sobre la logica de corte de tarjeta que causo
+  el hallazgo #1 de la auditoria del 28-jul), el usuario pidio dejar como
+  leccion general que cualquier app nueva instale y configure Jest desde el
+  arranque del proyecto, no despues de encontrar el primer bug de logica.
+- Se agrego la seccion "PRUEBAS AUTOMATIZADAS — JEST" a las lecciones
+  generales de este archivo, con el caso real de wallet-control como
+  ejemplo y el patron de conectarlo a un comando de verificacion rapida
+  (mismo enfoque que la palabra clave REVISEMOS) desde la primera prueba.

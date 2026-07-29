@@ -1,14 +1,32 @@
-"""Pollito - ventana principal (menu).
+"""Pollito - ventana principal (menu + vistas de skill).
+
+Una sola ventana para toda la app: cada skill es un panel que cubre la
+ventana entera y vuelve al menu con su boton "Atras" (skills/base.py), en
+vez de abrir una ventana nueva por skill - asi el icono/titulo de la
+ventana es siempre el mismo y no hay que andar cerrando ventanas viejas
+para cambiar de skill.
 
 TODO pendiente: nombre personalizado de cada skill (dentro de cada modulo
 en skills/) - el usuario los dara mas adelante, antes de cerrar el proyecto.
 """
+import sys
+
 import customtkinter as ctk
 from PIL import Image
 
 import tema
 from config import APP_NAME, get_base_path
 from skills import finanzas, gym_nutricion, maquillaje_skincare, moda, psicologia
+
+# customtkinter revisa cada 100ms si el DPI del monitor cambio respecto al
+# que detecto al crear la ventana (window.winfo_id() -> MonitorFromWindow) y,
+# si detecta una diferencia, reescala TODA la UI de golpe - eso es lo que
+# causaba que el recuadro de chat se viera bien el primer segundo y despues
+# "saltara" con un espacio de mas (columnas internas de CTkScrollableFrame
+# recalculadas con otro factor de escala). La ventana es de tamano fijo
+# (ver TAMANO_VENTANA / _bloquear_maximizado), no hace falta ese reajuste
+# automatico - se desactiva antes de crear cualquier ventana.
+ctk.deactivate_automatic_dpi_awareness()
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")  # colores reales aplicados manualmente via tema.py
@@ -25,11 +43,11 @@ TAMANO_VENTANA = (420, 580)
 TAMANO_MASCOTA = 130
 
 SKILLS = [
-    ("Maquillaje y Skincare", maquillaje_skincare.abrir_ventana),
-    ("Moda", moda.abrir_ventana),
-    ("Finanzas", finanzas.abrir_ventana),
-    ("Gym y Nutricion", gym_nutricion.abrir_ventana),
-    ("Psicologia", psicologia.abrir_ventana),
+    ("Maquillaje y Skincare", maquillaje_skincare.crear_vista),
+    ("Moda", moda.crear_vista),
+    ("Finanzas", finanzas.crear_vista),
+    ("Gym y Nutricion", gym_nutricion.crear_vista),
+    ("Psicologia", psicologia.crear_vista),
 ]
 
 
@@ -39,12 +57,27 @@ class MenuPrincipal(ctk.CTk):
         self.title(APP_NAME)
         self.geometry("{}x{}".format(*TAMANO_VENTANA))
         self.resizable(False, False)
+        # resizable(False, False) ya saca el boton de maximizar y el
+        # arrastre de bordes, pero Windows igual puede maximizar la ventana
+        # con Win+flecha arriba o Aero Snap contra el borde superior - este
+        # bind lo revierte apenas pasa, para que el tamano de la ventana sea
+        # siempre el mismo (el del onboarding), tanto en el menu como en
+        # cualquier skill.
+        self.bind("<Configure>", self._bloquear_maximizado)
         self.configure(fg_color=tema.FONDO)
-        self._ventanas_abiertas = {}
+        # Vistas de skill ya creadas, cacheadas por nombre para conservar su
+        # conversacion al ir y volver del menu (no se recrean de cero cada
+        # vez que se re-entra a la misma skill).
+        self._vistas_skill = {}
         self._aplicar_icono()
         self._agregar_fondo_sakura()
         self._construir_ui()
         self._agregar_mascota()
+
+    def _bloquear_maximizado(self, event=None):
+        if self.state() == "zoomed":
+            self.state("normal")
+            self.geometry("{}x{}".format(*TAMANO_VENTANA))
 
     def _aplicar_icono(self):
         icono = get_base_path() / "assets" / "icons" / "icon.ico"
@@ -84,7 +117,7 @@ class MenuPrincipal(ctk.CTk):
         fuente_botones = ctk.CTkFont(family="Segoe Print", size=15, weight="bold")
 
         self._ultimo_boton = None
-        for nombre, abrir_ventana in SKILLS:
+        for nombre, crear_vista in SKILLS:
             boton = ctk.CTkButton(
                 self,
                 text=nombre,
@@ -95,7 +128,7 @@ class MenuPrincipal(ctk.CTk):
                 fg_color=tema.ACENTOS.get(nombre, tema.BOTON_PRINCIPAL),
                 hover_color=tema.BOTON_PRINCIPAL_HOVER,
                 text_color=tema.TEXTO,
-                command=lambda fn=abrir_ventana, n=nombre: self._abrir_skill(n, fn),
+                command=lambda fn=crear_vista, n=nombre: self._abrir_skill(n, fn),
             )
             boton.pack(pady=10)
             self._ultimo_boton = boton
@@ -132,16 +165,41 @@ class MenuPrincipal(ctk.CTk):
 
         etiqueta.place(x=x, y=y)
 
-    def _abrir_skill(self, nombre, abrir_ventana):
-        # Evita abrir dos veces la misma ventana de chat si ya esta abierta.
-        ventana_existente = self._ventanas_abiertas.get(nombre)
-        if ventana_existente is not None and ventana_existente.winfo_exists():
-            ventana_existente.focus()
-            return
-        nueva_ventana = abrir_ventana(self)
-        self._ventanas_abiertas[nombre] = nueva_ventana
+    def _abrir_skill(self, nombre, crear_vista):
+        # Reusa la vista si ya se creo antes (conserva su conversacion) -
+        # solo se crea de cero la primera vez que se entra a esa skill.
+        vista = self._vistas_skill.get(nombre)
+        if vista is None:
+            vista = crear_vista(self, self._volver_al_menu)
+            self._vistas_skill[nombre] = vista
+        # La vista cubre toda la ventana (mismo tamano que el menu, no
+        # cambia) y queda por encima del menu (boton, fondo sakura, mascota)
+        # sin necesidad de ocultarlos aparte.
+        vista.place(x=0, y=0, relwidth=1, relheight=1)
+        vista.lift()
+
+    def _volver_al_menu(self):
+        for vista in self._vistas_skill.values():
+            vista.place_forget()
 
 
 if __name__ == "__main__":
+    if sys.platform == "win32":
+        # Sin esto, al correr main.py directo con python.exe (antes de
+        # compilarlo a .exe con PyInstaller) Windows agrupa la ventana bajo
+        # el icono generico de python.exe en la barra de tareas, sin
+        # importar lo que ya se le paso a iconbitmap() en _aplicar_icono().
+        # Forzar un AppUserModelID propio hace que Windows trate este
+        # proceso como su propia app y respete el icono real (icon.ico)
+        # tambien ahi. Una vez compilado a .exe esto deja de hacer falta,
+        # pero no molesta dejarlo.
+        import ctypes
+
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                "pollito.sofi.app"
+            )
+        except Exception:
+            pass
     app = MenuPrincipal()
     app.mainloop()

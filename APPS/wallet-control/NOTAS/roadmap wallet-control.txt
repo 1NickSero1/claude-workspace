@@ -1,0 +1,145 @@
+ROADMAP — wallet-control (Finando)
+Última actualización: 29 de julio de 2026
+
+Este archivo resume qué se hizo, qué falta y qué sigue en cada versión.
+Se sigue al pie de la letra — actualizar aquí cada vez que cambie algo
+de la estrategia, no solo en la conversación con Claude.
+
+===============================================================
+V1.0 — HOY (finalizada, fase de pruebas con amigos)
+===============================================================
+
+Estado: FINALIZADA el 28 de julio de 2026.
+
+Qué se hizo:
+- Auditoría completa (código + UI en dispositivo real) — 16 hallazgos
+  encontrados y los 16 corregidos y reprobados en vivo:
+    * Doble conteo de deuda al activar el corte de tarjeta de crédito
+    * Corte de tarjeta que nunca se activaba si se configuraba desde
+      la creación de la tarjeta
+    * "Billetera general" mezclaba deuda de tarjetas con saldos reales
+    * Fuga de datos entre cuenta anónima y cuenta real (varios amigos
+      probando en el mismo dispositivo)
+    * Selector de tarjeta faltante al agregar gasto desde una categoría
+    * Race condition al borrar categorías (candados/mutex)
+    * Emoji de categoría faltante en "Top categorías" de Historial
+    * Barra de navegación visible detrás del modal "Registrar" (Android)
+    * Inconsistencia entre tarjetas ofrecidas para pagar y disponibles
+    * Cambio de correo no sincronizaba tabla de perfiles
+    * Finando IA no reconocía alias parciales de tarjeta
+    * Wizard de onboarding sin manejo de errores
+    * Contraseña mínima subida de 6 a 8 caracteres
+    * Notificación de corte no se cancelaba al borrar la tarjeta
+    * Pluralización incorrecta en Historial ("1 gastos" → "1 gasto")
+    * Código muerto eliminado (script de íconos, asset huérfano)
+- Finando IA corre en Claude Sonnet 5, sin límite de mensajes — uso
+  interno con pocos amigos, costo insignificante (~$11-15 USD/mes
+  total para 5 personas en uso diario normal)
+- npx tsc --noEmit en 0 errores
+
+Pendiente puntual antes de repartir el build: NINGUNO — se cerraron
+los dos últimos pendientes puntuales hoy mismo (ver abajo).
+
+Resuelto hoy (29 de julio de 2026):
+- Confirmado en el celular real (Samsung A24, no solo la tablet) que
+  el arreglo de la barra de navegación detrás del modal "Registrar"
+  sigue resuelto, con y sin teclado abierto.
+- Identidad visual renovada — nuevo ícono de "billetera" (wallet)
+  reemplaza el "Anillo de Progreso" anterior en icon.png y las 3 capas
+  del ícono adaptativo de Android (foreground/background/monochrome).
+  Splash screen actualizado a una tarjeta lila inclinada + texto
+  "WALLET CONTROL" sobre el fondo oscuro de marca. Ícono de
+  notificación actualizado a una silueta de escudo (blanco puro sobre
+  transparente, sin relleno) — se eligió sobre una alternativa de
+  alcancía por ser una forma más simple y legible a 24×24dp real.
+  Favicon web también actualizado al mismo ícono de billetera. Todos
+  los PNG se generaron a partir de los glifos de Ionicons ya incluidos
+  en el proyecto (@expo/vector-icons), renderizados con Puppeteer.
+  El icon de notificación en app.json ya tenía icon/color configurados
+  correctamente desde antes (el hallazgo del PDF del 28-jul sobre esto
+  ya estaba resuelto) — solo se reemplazó el PNG referenciado.
+- Bug nuevo encontrado en pruebas: el modal "Registrar" se volvía
+  invisible en Android al enfocar el campo de monto con tipo
+  "Ingreso" (formularios cortos, sin categoría ni tarjeta). Reproducido
+  en vivo en el celular real y corregido en components/BottomSheet.tsx
+  — con el teclado abierto ahora se fuerza un alto exacto en vez de
+  solo un tope máximo, así el formulario nunca queda "flotando" fuera
+  del área visible sin importar qué tan corto sea el contenido.
+  Confirmado en vivo con Gasto e Ingreso.
+- Variables de Supabase (EXPO_PUBLIC_SUPABASE_URL y
+  EXPO_PUBLIC_SUPABASE_ANON_KEY) registradas en el entorno "preview"
+  de EAS — necesarias para que los amigos puedan crear cuentas reales
+  al instalar el build.
+- "Confirm email" desactivado en el dashboard de Supabase — así los
+  amigos pueden crear varias cuentas en el mismo celular sin
+  verificación de correo. Se reactiva en la v2.0, antes del
+  lanzamiento público.
+
+Sin política de tratamiento de datos todavía — no se necesita para
+esta fase cerrada con amigos. Se pospuso para la v2.0.
+
+Duración de esta fase: 15 días de pruebas con amigos, en paralelo
+mientras se desarrollan la v2.0 y v3.0 (ver nota de ejecución al final).
+
+Objetivo de esta fase: feedback real de uso, no monetización.
+
+===============================================================
+V2.0 — Lanzamiento público (Play Store / App Store)
+===============================================================
+
+Estado: por desarrollar (en paralelo mientras los amigos prueban v1.0)
+
+Qué cambia respecto a v1.0:
+- Finando IA pasa de Sonnet 5 a Claude Haiku 4.5 — la tarea es
+  extracción simple (anotar gastos/ingresos sueltos del día a día:
+  "compré salchipapa $8.000", "gasolina a la moto $15.000"), no
+  necesita razonamiento profundo, y cuesta la mitad que Sonnet 5
+- Límite de 30-40 mensajes/día por usuario — red de seguridad contra
+  abuso o bugs, no una fricción real (un uso normal de ~10 gastos/día
+  queda muy por debajo del tope)
+- Gratis para todos los usuarios
+- Política de tratamiento de datos redactada y publicada — obligatoria
+  aquí: formulario "Data safety" de Play Store + Ley 1581 de 2012
+  (Habeas Data) en Colombia, porque la app maneja datos financieros
+  personales de usuarios reales (no solo amigos de confianza)
+
+Costo estimado: ~$0.40 USD/usuario activo/mes
+
+Objetivo: publicar en tiendas, conseguir base de usuarios reales,
+validar el producto a escala antes de monetizar.
+
+===============================================================
+V3.0 — Capa premium: asistente financiero personal
+===============================================================
+
+Estado: por desarrollar (en paralelo mientras los amigos prueban v1.0)
+
+Qué agrega sobre la v2.0:
+- Finando IA en la capa paga usa Claude Sonnet 5 (o el modelo vigente
+  en ese momento — los modelos de Claude se reemplazan con el tiempo,
+  no es un precio fijo "para siempre"; revisar antes de lanzar)
+- Suscripción paga — precio TODAVÍA POR VALIDAR, no cerrado en $1.99:
+    * Descontar la comisión de tienda (15% si califica para el
+      programa de pequeñas empresas de Apple/Google, 30% si no)
+    * Simular el costo real de un usuario COMPROMETIDO (el que sí usa
+      la asesoría a fondo, no el promedio ligero) antes de fijar precio
+    * Referencia: apps de "asesor financiero IA" suelen cobrar
+      $3.99-4.99 USD/mes — probablemente más realista que $1.99
+- Personalización 100% por usuario/necesidad: análisis financiero,
+  recomendaciones de ahorro e inversión, más interacción tipo
+  "asistente financiero personal" real (no solo registrar gastos)
+- Tope generoso también aquí (ej. 200 mensajes/mes) como red de
+  seguridad — no un límite que el usuario pagado normal vaya a sentir
+
+Objetivo: monetización sostenible del producto.
+
+===============================================================
+NOTA DE EJECUCIÓN
+===============================================================
+
+A la fase de pruebas de la v1.0 se le dan 15 días. Mientras los amigos
+prueban, la v2.0 y v3.0 se desarrollan EN PARALELO — no son fases
+secuenciales estrictas de desarrollo, solo de lanzamiento (primero sale
+v2.0 al público, después se activa la capa premium de v3.0 sobre la
+misma base). El feedback y los errores que reporten los amigos durante
+esos 15 días alimentan directamente las decisiones de la v2.0.

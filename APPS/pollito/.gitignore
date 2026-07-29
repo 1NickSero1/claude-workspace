@@ -7,3 +7,4 @@ dist/
 *.spec
 .env
 secreto.py
+.pytest_cache/

@@ -13,7 +13,8 @@ COMANDO RÁPIDO:
 [PENDIENTE] por MI
 ------------------------------------------------------------
 
-  — (vacío por ahora)
+ crea el swipe de editar eliminar también las metas de ahorro
+
 
 
 

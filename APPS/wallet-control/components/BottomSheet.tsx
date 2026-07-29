@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal, View, TouchableOpacity, KeyboardAvoidingView, StyleSheet, ViewStyle, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Modal, View, TouchableOpacity, KeyboardAvoidingView, StyleSheet, ViewStyle, Platform, Keyboard } from 'react-native';
 import { useColors } from '@/constants/ThemeContext';
 import { useResponsive } from '@/constants/responsive';
 import { SPACING, RADIUS } from '@/constants/theme';
@@ -38,6 +38,22 @@ export default function BottomSheet({
     ? windowHeight * (parseFloat(maxHeight) / 100)
     : maxHeight;
 
+  // Con el teclado abierto, una hoja con contenido corto (ej. formulario de
+  // Ingreso, sin categorías ni tarjetas) no llega a tocar el tope de
+  // maxHeight, así que se queda con su alto natural (chico) mientras sigue
+  // "pegada al fondo" (justifyContent: flex-end) del contenedor ya encogido
+  // por el teclado — en Android eso deja a la hoja fuera del área visible
+  // en vez de simplemente más pequeña. Forzar un alto exacto (no solo un
+  // tope) mientras el teclado está abierto la mantiene siempre dentro del
+  // área visible sin importar qué tan corto sea el contenido; al cerrar el
+  // teclado se vuelve al alto natural de siempre.
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
+
   return (
     <Modal visible={visible} animationType="slide" transparent statusBarTranslucent onRequestClose={onClose}>
       <KeyboardAvoidingView
@@ -69,6 +85,7 @@ export default function BottomSheet({
               borderTopLeftRadius: radius,
               borderTopRightRadius: radius,
               maxHeight: resolvedMaxHeight,
+              ...(keyboardVisible && typeof resolvedMaxHeight === 'number' ? { height: resolvedMaxHeight } : null),
             },
             sheetStyle,
           ]}

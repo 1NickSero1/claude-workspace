@@ -259,6 +259,23 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
               </TouchableOpacity>
             </View>
 
+            {/* Amount display — primero que categoría/tarjeta a propósito: es
+                el único campo que abre teclado numérico, y puesto arriba del
+                todo nunca queda tapado cuando el teclado abre (evita depender
+                de hacer scroll-to-field, que resultó frágil en Android). */}
+            <Text style={styles.fieldLabel}>{isGasto ? '¿Cuánto gastaste?' : '¿Cuánto recibiste?'}</Text>
+            <View style={[styles.amountBox, { borderColor: activeColor + '40', backgroundColor: activeBg }]}>
+              <Text style={styles.currencySymbol}>$</Text>
+              <TextInput
+                style={[styles.amountInput, { color: activeColor }]}
+                value={formatThousands(amount)}
+                onChangeText={handleAmountChange}
+                placeholder="0"
+                placeholderTextColor={activeColor + '60'}
+                keyboardType="number-pad"
+              />
+            </View>
+
             {/* Category grid */}
             {isGasto && (
               <>
@@ -339,20 +356,6 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
                 </>
               )
             )}
-
-            {/* Amount display */}
-            <Text style={styles.fieldLabel}>{isGasto ? '¿Cuánto gastaste?' : '¿Cuánto recibiste?'}</Text>
-            <View style={[styles.amountBox, { borderColor: activeColor + '40', backgroundColor: activeBg }]}>
-              <Text style={styles.currencySymbol}>$</Text>
-              <TextInput
-                style={[styles.amountInput, { color: activeColor }]}
-                value={formatThousands(amount)}
-                onChangeText={handleAmountChange}
-                placeholder="0"
-                placeholderTextColor={activeColor + '60'}
-                keyboardType="number-pad"
-              />
-            </View>
 
             {/* Description */}
             <View style={styles.descRow}>

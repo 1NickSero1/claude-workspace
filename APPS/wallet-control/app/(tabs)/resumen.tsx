@@ -141,7 +141,6 @@ export default function ResumenScreen() {
   // Goal detail modal
   const [goalDetailVisible, setGoalDetailVisible] = useState(false);
   const [goalDetailTarget, setGoalDetailTarget]   = useState<Goal | null>(null);
-  const [actionGoal, setActionGoal]               = useState<Goal | null>(null);
   const [confirmDeleteGoal, setConfirmDeleteGoal] = useState<Goal | null>(null);
 
   // Quick entry modal
@@ -207,6 +206,7 @@ export default function ResumenScreen() {
   const [editExpDueDateObj, setEditExpDueDateObj]   = useState<Date | null>(null);
   const [editExpShowDatePicker, setEditExpShowDatePicker] = useState(false);
   const [openIncomeRowId, setOpenIncomeRowId] = useState<string | null>(null);
+  const [openGoalRowId, setOpenGoalRowId] = useState<string | null>(null);
   const [editIncomeTarget, setEditIncomeTarget]           = useState<Income | null>(null);
   const [editIncomeDescription, setEditIncomeDescription] = useState('');
   const [editIncomeAmount, setEditIncomeAmount]           = useState('');
@@ -454,7 +454,6 @@ export default function ResumenScreen() {
     await saveGoal(goal); setGoalModal(false); setEditingGoal(null); await load();
   };
   const handleDeleteGoal = (goal: Goal) => {
-    setActionGoal(null);
     setConfirmDeleteGoal(goal);
   };
 
@@ -601,6 +600,16 @@ export default function ResumenScreen() {
   const balanceItems = balanceFilter === 'all' ? balanceItemsAll : balanceItemsAll.filter(it => it.type === balanceFilter);
   const balanceColors = resolveDistinctColors(balanceItems.map(it => ({ id: it.id, color: it.color })));
   const balanceDonutData: DonutSlice[] = balanceItems.map(it => ({ id: it.id, color: balanceColors.get(it.id)!, amount: it.value }));
+  // Cuando el filtro no muestra nada, distinguir "no tiene cuentas de este
+  // tipo" de "sí tiene, pero su cupo/saldo está en $0 ahora mismo" (ej. una
+  // tarjeta de crédito totalmente usada) — sin esto, el estado vacío decía
+  // "agrega tarjetas" aunque la tarjeta ya existiera.
+  const balanceFilterCardTypes: Card['type'][] = balanceFilter === 'all' ? ['debit', 'cash', 'credit'] : [balanceFilter];
+  const hasAccountsForBalanceFilter = cards.some(c => balanceFilterCardTypes.includes(c.type));
+  const balanceEmptyLabel = hasAccountsForBalanceFilter ? 'Sin cupo o saldo disponible' : 'Sin cuentas';
+  const balanceEmptyHint = hasAccountsForBalanceFilter
+    ? (balanceFilter === 'credit' ? 'Ya usaste todo el cupo de tus tarjetas de crédito' : 'El saldo de tus cuentas está en $0 ahora mismo')
+    : 'Agrega tarjetas o efectivo en Balance';
   const totalBalance = balanceItems.reduce((s, it) => s + it.value, 0);
 
   // ── Categorías fijas pendientes por pagar en el periodo activo ────────────
@@ -793,16 +802,6 @@ export default function ResumenScreen() {
     goalSaved: { color: COLORS.text, fontWeight: '600', fontSize: FONT.sm },
     goalTarget: { color: COLORS.textMuted, fontSize: FONT.sm },
     goalDeadline: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: SPACING.xs },
-    goalActOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.55)' },
-    goalActSheet: {
-      backgroundColor: COLORS.card, borderTopLeftRadius: 28, borderTopRightRadius: 28,
-      paddingHorizontal: SPACING.xl, paddingTop: 14, paddingBottom: 32,
-    },
-    goalActHandle: { width: 40, height: 4, backgroundColor: COLORS.border, borderRadius: 2, alignSelf: 'center', marginBottom: SPACING.lg },
-    goalActTitle: { color: COLORS.text, fontWeight: '800', fontSize: FONT.lg, marginBottom: SPACING.lg },
-    goalActRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingVertical: 14, borderTopWidth: 1, borderTopColor: COLORS.border },
-    goalActRowText: { color: COLORS.text, fontWeight: '600', fontSize: FONT.base },
-    goalActRowTextDanger: { color: COLORS.danger },
     goalConfirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 28 },
     goalConfirmCard: {
       backgroundColor: COLORS.card, borderRadius: RADIUS.xl, padding: SPACING.xxl, width: '100%',
@@ -1086,10 +1085,10 @@ export default function ResumenScreen() {
                   total={totalBalance || 1}
                   size={donutSize}
                   centerValue={balanceItems.length > 0 ? formatCOP(totalBalance) : ''}
-                  centerLabel={balanceItems.length > 0 ? 'toca para ver' : 'Sin cuentas'}
+                  centerLabel={balanceItems.length > 0 ? 'toca para ver' : balanceEmptyLabel}
                   centerValueColor={COLORS.primary}
-                  emptyLabel="Sin cuentas"
-                  emptyHint="Agrega tarjetas o efectivo en Balance"
+                  emptyLabel={balanceEmptyLabel}
+                  emptyHint={balanceEmptyHint}
                 />
               </TouchableOpacity>
               {/* Filtro débito / crédito / efectivo */}
@@ -1491,30 +1490,39 @@ export default function ResumenScreen() {
               const remaining = Math.max(goal.targetAmount - goal.savedAmount, 0);
               const done = goal.savedAmount >= goal.targetAmount;
               return (
-                <TouchableOpacity key={goal.id} style={styles.goalCard}
-                  onPress={() => { setGoalDetailTarget(goal); setGoalDetailVisible(true); }}
-                  onLongPress={() => setActionGoal(goal)} activeOpacity={0.85}
+                <SwipeableRow
+                  key={goal.id}
+                  rowId={goal.id}
+                  openRowId={openGoalRowId}
+                  onOpenChange={setOpenGoalRowId}
+                  onDelete={() => handleDeleteGoal(goal)}
+                  onEdit={() => { setEditingGoal(goal); setGoalModal(true); }}
                 >
-                  <View style={[styles.goalDot, { backgroundColor: goal.color }]}>
-                    {goal.emoji
-                      ? <Text style={{ fontSize: 16 }}>{goal.emoji}</Text>
-                      : <Ionicons name={done ? 'checkmark' : 'flag'} size={14} color="#fff" />}
-                  </View>
-                  <View style={styles.goalBody}>
-                    <View style={styles.goalTopRow}>
-                      <Text style={styles.goalName}>{goal.name}</Text>
-                      <Text style={[styles.goalPct, { color: done ? COLORS.debit : COLORS.primary }]}>{Math.round(pct)}%</Text>
+                  <TouchableOpacity style={styles.goalCard}
+                    onPress={() => { setGoalDetailTarget(goal); setGoalDetailVisible(true); }}
+                    activeOpacity={0.85}
+                  >
+                    <View style={[styles.goalDot, { backgroundColor: goal.color }]}>
+                      {goal.emoji
+                        ? <Text style={{ fontSize: 16 }}>{goal.emoji}</Text>
+                        : <Ionicons name={done ? 'checkmark' : 'flag'} size={14} color="#fff" />}
                     </View>
-                    <View style={styles.goalTrack}>
-                      <View style={[styles.goalFill, { width: `${pct}%`, backgroundColor: done ? COLORS.debit : goal.color }]} />
+                    <View style={styles.goalBody}>
+                      <View style={styles.goalTopRow}>
+                        <Text style={styles.goalName}>{goal.name}</Text>
+                        <Text style={[styles.goalPct, { color: done ? COLORS.debit : COLORS.primary }]}>{Math.round(pct)}%</Text>
+                      </View>
+                      <View style={styles.goalTrack}>
+                        <View style={[styles.goalFill, { width: `${pct}%`, backgroundColor: done ? COLORS.debit : goal.color }]} />
+                      </View>
+                      <View style={styles.goalBottomRow}>
+                        <Text style={styles.goalSaved}>{formatCOP(goal.savedAmount)}</Text>
+                        <Text style={styles.goalTarget}>{done ? '¡Meta alcanzada! 🎉' : `Falta ${formatCOP(remaining)}`}</Text>
+                      </View>
+                      {goal.deadline && <Text style={styles.goalDeadline}>📅 {goal.deadline}</Text>}
                     </View>
-                    <View style={styles.goalBottomRow}>
-                      <Text style={styles.goalSaved}>{formatCOP(goal.savedAmount)}</Text>
-                      <Text style={styles.goalTarget}>{done ? '¡Meta alcanzada! 🎉' : `Falta ${formatCOP(remaining)}`}</Text>
-                    </View>
-                    {goal.deadline && <Text style={styles.goalDeadline}>📅 {goal.deadline}</Text>}
-                  </View>
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                </SwipeableRow>
               );
             })}
             </>
@@ -1574,32 +1582,6 @@ export default function ResumenScreen() {
         }}
         onClose={() => { setGoalDetailVisible(false); setGoalDetailTarget(null); }}
       />
-
-      {/* Menú de acciones de meta (reemplaza Alert.alert nativo) */}
-      <Modal visible={!!actionGoal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setActionGoal(null)}>
-        <View style={styles.goalActOverlay}>
-          <TouchableOpacity style={{ flex: 1 }} onPress={() => setActionGoal(null)} activeOpacity={1} />
-          <View style={styles.goalActSheet}>
-            <View style={styles.goalActHandle} />
-            {actionGoal && (
-              <>
-                <Text style={styles.goalActTitle}>{actionGoal.name}</Text>
-                <TouchableOpacity
-                  style={styles.goalActRow}
-                  onPress={() => { setEditingGoal(actionGoal); setGoalModal(true); setActionGoal(null); }}
-                >
-                  <Ionicons name="pencil-outline" size={20} color={COLORS.primary} />
-                  <Text style={styles.goalActRowText}>Editar meta</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.goalActRow} onPress={() => handleDeleteGoal(actionGoal)}>
-                  <Ionicons name="trash-outline" size={20} color={COLORS.danger} />
-                  <Text style={[styles.goalActRowText, styles.goalActRowTextDanger]}>Eliminar</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
 
       {/* Confirmación de eliminar meta (reemplaza Alert.alert nativo) */}
       <Modal visible={!!confirmDeleteGoal} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setConfirmDeleteGoal(null)}>
@@ -2123,6 +2105,7 @@ export default function ResumenScreen() {
 
       {/* ── Metas detail modal (donut de metas) ───── */}
       <Modal visible={metasModal} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setMetasModal(false)}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
         <View style={styles.sheetOverlay}>
           <TouchableOpacity style={styles.sheetDismiss} activeOpacity={1} onPress={() => setMetasModal(false)} />
           <View style={[styles.regSheet, { maxHeight: '80%' }]}>
@@ -2136,13 +2119,22 @@ export default function ResumenScreen() {
                 {goals.map(g => {
                   const pct = g.targetAmount > 0 ? Math.min((g.savedAmount / g.targetAmount) * 100, 100) : 0;
                   return (
-                    <View key={g.id} style={styles.patRow}>
-                      <Text style={styles.patRowEmoji}>{g.emoji ?? '🎯'}</Text>
-                      <Text style={styles.patRowName}>{g.name}</Text>
-                      <Text style={[styles.patRowVal, { color: g.color }]} numberOfLines={1}>
-                        {formatCOP(g.savedAmount)} / {formatCOP(g.targetAmount)} · {Math.round(pct)}%
-                      </Text>
-                    </View>
+                    <SwipeableRow
+                      key={g.id}
+                      rowId={g.id}
+                      openRowId={openGoalRowId}
+                      onOpenChange={setOpenGoalRowId}
+                      onDelete={() => handleDeleteGoal(g)}
+                      onEdit={() => { setEditingGoal(g); setGoalModal(true); }}
+                    >
+                      <View style={styles.patRow}>
+                        <Text style={styles.patRowEmoji}>{g.emoji ?? '🎯'}</Text>
+                        <Text style={styles.patRowName}>{g.name}</Text>
+                        <Text style={[styles.patRowVal, { color: g.color }]} numberOfLines={1}>
+                          {formatCOP(g.savedAmount)} / {formatCOP(g.targetAmount)} · {Math.round(pct)}%
+                        </Text>
+                      </View>
+                    </SwipeableRow>
                   );
                 })}
                 <View style={styles.patTotal}>
@@ -2155,6 +2147,7 @@ export default function ResumenScreen() {
             </ScrollView>
           </View>
         </View>
+        </GestureHandlerRootView>
       </Modal>
 
       {/* ── Ingresos detail modal (donut de ingresos) ── */}

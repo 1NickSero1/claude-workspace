@@ -14,10 +14,18 @@ mas adelante, antes de cerrar el proyecto.
 """
 import tema
 from config import MEMORY_TOOL, WEB_SEARCH_TOOL
-from skills.base import VentanaChat
+from skills.base import VistaChat, construir_intro_bienvenida
 from skills.memoria import crear_manejador_memoria
 
 TITULO = "Psicologia"  # TODO: reemplazar por nombre personalizado
+
+# Primer mensaje que ve Sofi al entrar a la vista, como si la skill le
+# hablara primero (ver skills/base.py).
+BIENVENIDA = construir_intro_bienvenida(TITULO) + (
+    "Estoy para escucharte y acompañarte en tu dia a dia, y para "
+    "enseñarte de a poco sobre psicologia si te interesa. (No reemplazo "
+    "una terapia profesional.) ¿Como estas hoy?"
+)
 
 SYSTEM_PROMPT = """Eres una acompanante emocional calida y juguetona, con humor
 ligero y un tono cercano - como una amiga que sabe escuchar pero tambien sabe
@@ -51,12 +59,14 @@ lo que cuenta no encaja con lo que ya sabes de ella), no lo guardes como si
 fuera de Sofi para no mezclar su informacion con la de alguien mas."""
 
 
-def abrir_ventana(parent):
-    return VentanaChat(
+def crear_vista(parent, volver):
+    return VistaChat(
         parent,
         titulo=TITULO,
         system_prompt=SYSTEM_PROMPT,
+        volver=volver,
         tools=[WEB_SEARCH_TOOL, MEMORY_TOOL],
         acento=tema.ACENTOS[TITULO],
         manejador_herramienta_cliente=crear_manejador_memoria("psicologia"),
+        mensaje_bienvenida=BIENVENIDA,
     )
