@@ -39,7 +39,44 @@ if ($prompt) {
             Pop-Location
         }
 
+        # Auto npm install si package.json/package-lock.json cambiaron desde la ultima instalacion
+        # (evita el error "esta en package.json pero no instalado" al cambiar de maquina o tras un pull)
+        $npmStatus = ""
+        $pkgJson = Join-Path $repoDir "$rutaProyecto/package.json"
+        if (Test-Path $pkgJson) {
+            try {
+                $nodeModules = Join-Path $repoDir "$rutaProyecto/node_modules"
+                $hashFile = Join-Path $nodeModules ".install-hash.txt"
+                $lockFile = Join-Path $repoDir "$rutaProyecto/package-lock.json"
+                $filesToHash = @($pkgJson)
+                if (Test-Path $lockFile) { $filesToHash += $lockFile }
+                $currentHash = ($filesToHash | Sort-Object | ForEach-Object { (Get-FileHash $_ -Algorithm SHA256).Hash }) -join '|'
+
+                $needsInstall = $true
+                if ((Test-Path $nodeModules) -and (Test-Path $hashFile)) {
+                    $savedHash = Get-Content $hashFile -Raw
+                    if ($savedHash.Trim() -eq $currentHash) { $needsInstall = $false }
+                }
+
+                if ($needsInstall) {
+                    Push-Location (Join-Path $repoDir $rutaProyecto)
+                    npm install --no-audit --no-fund --quiet 2>&1 | Out-Null
+                    $npmExit = $LASTEXITCODE
+                    Pop-Location
+                    if ($npmExit -eq 0) {
+                        Set-Content -Path $hashFile -Value $currentHash -NoNewline
+                        $npmStatus = "Dependencias: se detecto que package.json/package-lock.json cambiaron y se corrio 'npm install' automaticamente, quedo al dia."
+                    } else {
+                        $npmStatus = "Aviso: 'npm install' automatico fallo (codigo $npmExit) - puede hacer falta correrlo a mano y revisar el error."
+                    }
+                }
+            } catch {
+                $npmStatus = "Aviso: fallo el chequeo automatico de dependencias npm ($($_.Exception.Message))."
+            }
+        }
+
         $msg = "El usuario quiere arrancar una sesion enfocada en el proyecto '$proyecto' (carpeta '$rutaProyecto'). " +
+               "$npmStatus " +
                "$pullStatus " +
                "Como primera accion: menciona brevemente ese resultado de git, invoca la skill $skill y saluda recomendandole al usuario " +
                "que ejecute /clear para empezar con un contexto limpio antes de seguir " +
