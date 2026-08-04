@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Política de Tratamiento de Datos — Wallet Control</title>
+<style>
+  :root {
+    --bg: #0A0E1A;
+    --card: #131829;
+    --border: #232A3D;
+    --text: #F2F3F7;
+    --muted: #9AA3B8;
+    --accent: #6C5CE7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  header {
+    margin-bottom: 40px;
+  }
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 28px;
+    margin: 0 0 8px;
+  }
+  .updated {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0;
+  }
+  h2 {
+    font-size: 19px;
+    margin: 40px 0 12px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  p, li { color: #D3D7E3; font-size: 15px; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 8px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+  .card p { margin: 0; }
+  .card + .card { margin-top: 12px; }
+  strong { color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { color: var(--muted); font-weight: 600; }
+  footer {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #F7F7FB;
+      --card: #FFFFFF;
+      --border: #E4E4EE;
+      --text: #171923;
+      --muted: #6B7280;
+    }
+    p, li { color: #2E3140; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="badge">WALLET CONTROL</span>
+    <h1>Política de Tratamiento de Datos Personales</h1>
+    <p class="updated">Última actualización: 3 de agosto de 2026</p>
+  </header>
+
+  <p>
+    Esta política explica qué datos recopila <strong>Wallet Control</strong>, para qué se usan,
+    con quién se comparten y cómo puedes ejercer tus derechos sobre ellos, en cumplimiento de la
+    Ley 1581 de 2012 (Habeas Data) de Colombia y de los requisitos de las tiendas de aplicaciones
+    donde se distribuye la app.
+  </p>
+
+  <h2>1. Responsable del tratamiento</h2>
+  <div class="card">
+    <p>
+      <strong>Nicolás Seguro Rojas</strong>, persona natural, desarrollador y responsable de la
+      app Wallet Control.<br>
+      Correo de contacto: <a href="mailto:nicolassegurorojas@gmail.com">nicolassegurorojas@gmail.com</a>
+    </p>
+  </div>
+
+  <h2>2. Qué datos recopilamos y dónde se guardan</h2>
+  <p>No todos los datos de la app se guardan en el mismo lugar. Esta tabla resume qué se recopila y dónde vive cada dato:</p>
+  <table>
+    <tr><th>Dato</th><th>Dónde se guarda</th><th>Detalle</th></tr>
+    <tr>
+      <td>Nombre, apodo y correo de tu perfil</td>
+      <td>Servidor en la nube (Supabase)</td>
+      <td>Necesario para iniciar sesión y mantener tu cuenta sincronizada si cambias de dispositivo.</td>
+    </tr>
+    <tr>
+      <td>Tarjetas, cuentas, gastos, ingresos, metas de ahorro y presupuesto</td>
+      <td><strong>Solo en tu dispositivo</strong></td>
+      <td>Nunca se suben a ningún servidor. Si desinstalas la app o cambias de celular sin haber iniciado sesión con una cuenta, esta información se pierde.</td>
+    </tr>
+    <tr>
+      <td>Mensajes que le escribes a Finando IA</td>
+      <td>Se procesan mediante la API de Claude (Anthropic)</td>
+      <td>El texto de la conversación se envía a Anthropic únicamente para generar la respuesta del asistente — no se usa para entrenar modelos de IA ni se almacena de forma permanente en nuestros sistemas.</td>
+    </tr>
+    <tr>
+      <td>Nombre y correo, al crear una cuenta nueva</td>
+      <td>Registro interno en una hoja de cálculo (Google Sheets)</td>
+      <td>Uso interno para llevar la cuenta de cuántas personas se registran en la app — no se usa con fines publicitarios ni se comparte con nadie más.</td>
+    </tr>
+  </table>
+
+  <h2>3. Con quién compartimos datos</h2>
+  <p>No vendemos tus datos ni los usamos con fines publicitarios. Los únicos terceros que procesan datos en nombre de Wallet Control son los proveedores técnicos necesarios para que la app funcione:</p>
+  <ul>
+    <li><strong>Supabase Inc.</strong> — autenticación de cuentas y almacenamiento del perfil.</li>
+    <li><strong>Anthropic PBC</strong> — procesamiento de las conversaciones con Finando IA.</li>
+    <li><strong>Google LLC</strong> — registro interno de altas de usuarios (Google Sheets / Apps Script).</li>
+  </ul>
+
+  <h2>4. Para qué usamos tus datos</h2>
+  <ul>
+    <li>Permitirte crear una cuenta e iniciar sesión.</li>
+    <li>Ofrecer el asistente financiero Finando IA dentro de la app.</li>
+    <li>Llevar un conteo interno de usuarios activos, para saber cómo va creciendo la app.</li>
+  </ul>
+
+  <h2>5. Tus derechos (Habeas Data)</h2>
+  <p>Como titular de tus datos personales, tienes derecho a:</p>
+  <ul>
+    <li>Conocer, actualizar y rectificar tus datos personales.</li>
+    <li>Solicitar la eliminación de tus datos y de tu cuenta cuando lo desees.</li>
+    <li>Revocar en cualquier momento la autorización otorgada para el tratamiento de tus datos.</li>
+  </ul>
+  <p>
+    Para ejercer cualquiera de estos derechos, escríbenos a
+    <a href="mailto:nicolassegurorojas@gmail.com">nicolassegurorojas@gmail.com</a> — responderemos
+    en un plazo razonable.
+  </p>
+
+  <h2>6. Cómo eliminar tu cuenta y tus datos</h2>
+  <p>
+    Tus datos financieros (tarjetas, gastos, metas, etc.) se eliminan por completo si desinstalas
+    la app, ya que solo existen en tu dispositivo. Para eliminar tu cuenta (perfil, correo y acceso)
+    de nuestros servidores, escríbenos al correo de contacto indicado arriba y la eliminaremos.
+  </p>
+
+  <h2>7. Seguridad</h2>
+  <p>
+    Tu perfil se protege mediante autenticación segura y reglas de acceso a nivel de base de datos
+    (Row Level Security), que garantizan que solo tú puedas ver o modificar tu propia información en
+    Supabase. Nunca almacenamos tu contraseña en texto plano — eso lo gestiona directamente el
+    proveedor de autenticación.
+  </p>
+
+  <h2>8. Cambios a esta política</h2>
+  <p>
+    Esta política puede actualizarse a medida que la app evolucione. La fecha de "Última
+    actualización" en la parte superior siempre reflejará la versión vigente.
+  </p>
+
+  <footer>
+    Wallet Control — Política de Tratamiento de Datos Personales · Colombia
+  </footer>
+
+</div>
+</body>
+</html>

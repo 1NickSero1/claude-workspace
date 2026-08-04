@@ -146,7 +146,7 @@ const buildPdfHtml = (): string => `
   Wallet Control es tu asesor financiero personal para Android. Registra tus gastos
   en lenguaje natural hablando con <strong>Finando IA</strong>, visualiza tus finanzas
   del mes en gráficas coloridas y controla tus tarjetas, cuentas y metas de ahorro —
-  todo guardado en tu dispositivo, sin servidores ni suscripciones.
+  sin suscripciones y con tus datos financieros guardados siempre en tu dispositivo.
 </p>
 
 <table>
@@ -168,7 +168,7 @@ const buildPdfHtml = (): string => `
 <div class="step"><span class="num">5</span> <span class="label">Toca "Crear cuenta"</span> — el botón se habilita cuando todo es válido.</div>
 <div class="step"><span class="num">6</span> <span class="label">¡Listo!</span> Toca "Ir a Wallet Control" para empezar.</div>
 
-<div class="tip">Tus datos se guardan SOLO en este dispositivo. No hay servidores involucrados.</div>
+<div class="tip">Tus datos financieros (tarjetas, gastos, metas) se guardan SOLO en este dispositivo. Tu perfil de cuenta se guarda de forma segura en la nube para que puedas iniciar sesión desde otro celular.</div>
 
 <!-- ── FINANDO ── -->
 <div class="page-break"></div>
@@ -321,7 +321,7 @@ según la fecha en que los registres.</p>
 <h2>7. Privacidad y Seguridad</h2>
 <table>
   <tr><th>Pregunta</th><th>Respuesta</th></tr>
-  <tr><td>¿Mis datos van a la nube?</td><td>Tu perfil de cuenta sí, de forma segura. Tus tarjetas, gastos y metas quedan solo en este dispositivo (AsyncStorage)</td></tr>
+  <tr><td>¿Mis datos van a la nube?</td><td>Tu perfil de cuenta sí, de forma segura. Tus tarjetas, gastos y metas quedan solo en este dispositivo (AsyncStorage) y nunca se suben. Lo único más que sale del dispositivo son los mensajes que le escribes a Finando IA, que se procesan mediante la API de Claude (Anthropic) para generar la respuesta</td></tr>
   <tr><td>¿Necesita internet?</td><td>Solo para el chat con IA y para iniciar sesión. El resto funciona offline</td></tr>
   <tr><td>¿Qué pasa si desinstalo la app?</td><td>Tus tarjetas, gastos y metas se borran junto con la app. Tu cuenta (si creaste una) sigue disponible al reinstalar e iniciar sesión</td></tr>
   <tr><td>¿Puedo hacer backup?</td><td>Sí — desde Resumen puedes exportar un extracto de tu cuenta en PDF con todos tus movimientos del mes, y un reporte financiero con tus gastos por categoría</td></tr>
@@ -632,7 +632,7 @@ export default function AyudaScreen() {
             'Marca un gasto como "recurrente" para llevar el conteo de cuáles ya pagaste cada quincena',
             'Exporta el PDF del mes o tu extracto de cuenta desde el ícono "?" en Resumen',
             'Desliza el título del mes (junto a las flechitas) para revisar meses anteriores',
-            'Tus datos nunca salen de este dispositivo',
+            'Tus datos financieros (tarjetas, gastos y metas) nunca salen de este dispositivo',
           ].map((tip, i) => (
             <View key={i} style={styles.tipRow}>
               <Text style={styles.tipDot}>·</Text>

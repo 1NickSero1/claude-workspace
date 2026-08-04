@@ -26,6 +26,14 @@ COMANDO RÁPIDO:
       2026-07-06): solo falta el toggle en el dashboard, que hoy sigue
       desactivado a propósito mientras se prueba en local / beta cerrada.
 
+  — ANTHROPIC_API_KEY inválida (confirmado en vivo 2026-08-03): con sesión
+    real, Finando IA responde "invalid x api key" en vez de contestar. No es
+    un bug de código — la key configurada en los secrets de Supabase
+    (`supabase secrets set ANTHROPIC_API_KEY=...`) no es válida o quedó
+    vencida. Bloquea el trabajo de v2.0 de cambiar el modelo a Haiku 4.5 y
+    agregar el límite diario de mensajes (ver roadmap) hasta que se
+    configure una key real y con saldo en la consola de Anthropic.
+
 ------------------------------------------------------------
 [EN PROGRESO]
 ------------------------------------------------------------
