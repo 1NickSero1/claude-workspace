@@ -50,11 +50,26 @@ THINKING_CONFIG = {"type": "disabled"}
 # Limite de mensajes por sesion como control de gasto adicional (pregunta 6).
 LIMITE_MENSAJES_SESION = 50
 
-# Limite de gasto diario en tokens (pregunta 6): 20% de la base diaria del
-# usuario. LIMITE_TOKENS_DIARIOS_TOTAL = 100_000 confirmado por el usuario
-# (default conservador) -> tope real de 20_000 tokens/dia.
-LIMITE_TOKENS_DIARIOS_TOTAL = 100_000
-LIMITE_TOKENS_DIARIOS = int(LIMITE_TOKENS_DIARIOS_TOTAL * 0.20)
+# Limite de gasto mensual en USD (pregunta 6, actualizado 2026-07-31 - antes
+# era un tope diario de tokens; se cambio a un tope directo en dolares por
+# mes calendario, mas facil de razonar ("$5 maximo por mes") y no depende de
+# cuantos tokens entren en cada mensaje.
+LIMITE_GASTO_MENSUAL_USD = 5.00
+
+# Precio de Sonnet 5 por millon de tokens, usado para calcular el gasto real
+# de cada llamada. Precio ESTANDAR (no el de lanzamiento $2/$10 que vence el
+# 2026-08-31) - asi el tope no queda corto apenas termine la promo.
+PRECIO_INPUT_POR_MTOK = 3.00
+PRECIO_OUTPUT_POR_MTOK = 15.00
+
+# Precios de prompt caching (ephemeral, TTL de 5 minutos - el default de la
+# API si no se manda "ttl" explicito en cache_control, ver skills/base.py).
+# Escribir en el cache sale mas caro que un input normal (1.25x), pero
+# leerlo de ahi en el siguiente mensaje de la misma conversacion sale casi
+# gratis (0.1x) - se usa para no repagar el system prompt, las tools y el
+# historial ya enviado en cada mensaje nuevo del chat.
+PRECIO_CACHE_ESCRITURA_POR_MTOK = PRECIO_INPUT_POR_MTOK * 1.25
+PRECIO_CACHE_LECTURA_POR_MTOK = PRECIO_INPUT_POR_MTOK * 0.1
 
 
 def get_base_path() -> Path:

@@ -5,11 +5,11 @@ ventana entera y vuelve al menu con su boton "Atras" (skills/base.py), en
 vez de abrir una ventana nueva por skill - asi el icono/titulo de la
 ventana es siempre el mismo y no hay que andar cerrando ventanas viejas
 para cambiar de skill.
-
-TODO pendiente: nombre personalizado de cada skill (dentro de cada modulo
-en skills/) - el usuario los dara mas adelante, antes de cerrar el proyecto.
 """
+import os
 import sys
+import tkinter as tk
+from pathlib import Path
 
 import customtkinter as ctk
 from PIL import Image
@@ -39,16 +39,73 @@ ctk.set_default_color_theme("blue")  # colores reales aplicados manualmente via 
 # funcionar tambien en Windows 7.
 SALUDO = "Hola mi Sofi ♥"
 
+# Mensaje especial (pregunta del usuario, 2026-08-02): aparece UNA sola vez,
+# la primera vez que Sofi abre Pollito en su PC - despues nunca mas, se
+# marca en un archivo aparte en %APPDATA% (ver _ruta_marca_bienvenida).
+MENSAJE_BIENVENIDA_ESPECIAL = (
+    "Feliz aniversario, mi amor ♥\n\n"
+    "Este es tu regalo: te hice a Pollito con mis propias manos, pensando "
+    "en vos y en todo lo que sos capaz de lograr.\n\n"
+    "Ojala te ayude a expandir tus conocimientos y algun dia te animes a "
+    "crear tus propios proyectos, como hice yo con este.\n\n"
+    "Te amo muchisimo."
+)
+
 TAMANO_VENTANA = (420, 580)
 TAMANO_MASCOTA = 130
 
+
+def _ruta_marca_bienvenida() -> Path:
+    base = Path(os.environ.get("APPDATA", str(Path.home()))) / "Pollito"
+    base.mkdir(parents=True, exist_ok=True)
+    return base / "bienvenida_especial_mostrada.txt"
+
 SKILLS = [
-    ("Maquillaje y Skincare", maquillaje_skincare.crear_vista),
-    ("Moda", moda.crear_vista),
-    ("Finanzas", finanzas.crear_vista),
-    ("Gym y Nutricion", gym_nutricion.crear_vista),
-    ("Psicologia", psicologia.crear_vista),
+    ("Rosita", "Maquillaje y Skincare", maquillaje_skincare.crear_vista),
+    ("Glow", "Moda", moda.crear_vista),
+    ("Monito", "Finanzas", finanzas.crear_vista),
+    ("Kiwi", "Gym y Nutricion", gym_nutricion.crear_vista),
+    ("Nube", "Psicologia", psicologia.crear_vista),
 ]
+
+
+class _Tooltip:
+    """Tooltip simple que aparece al pasar el mouse sobre un boton, con la
+    categoria "real" de la skill (ej. "Finanzas") - el nombre tierno ya se
+    ve en el boton, esto solo aclara que hace. CTk no trae
+    tooltips de fabrica, se arma a mano con un Toplevel de tkinter puro sin
+    bordes (mas confiable para esto que CTkToplevel, que puede parpadear o
+    aparecer en la barra de tareas en algunas configuraciones de Windows)."""
+
+    def __init__(self, widget, texto):
+        self._widget = widget
+        self._texto = texto
+        self._ventana = None
+        widget.bind("<Enter>", self._mostrar, add="+")
+        widget.bind("<Leave>", self._ocultar, add="+")
+
+    def _mostrar(self, event=None):
+        if self._ventana is not None or event is None:
+            return
+        self._ventana = tk.Toplevel(self._widget)
+        self._ventana.wm_overrideredirect(True)
+        self._ventana.wm_geometry(f"+{event.x_root + 14}+{event.y_root + 18}")
+        tk.Label(
+            self._ventana,
+            text=self._texto,
+            bg=tema.FONDO_SECUNDARIO,
+            fg=tema.TEXTO,
+            font=("Segoe UI", 10),
+            padx=10,
+            pady=4,
+            relief="solid",
+            borderwidth=1,
+        ).pack()
+
+    def _ocultar(self, event=None):
+        if self._ventana is not None:
+            self._ventana.destroy()
+            self._ventana = None
 
 
 class MenuPrincipal(ctk.CTk):
@@ -73,6 +130,10 @@ class MenuPrincipal(ctk.CTk):
         self._agregar_fondo_sakura()
         self._construir_ui()
         self._agregar_mascota()
+        # Se agenda con after() para que el menu ya este dibujado y
+        # posicionado en pantalla antes de centrar el mensaje especial
+        # sobre el (winfo_width/height necesitan la ventana ya mapeada).
+        self.after(300, self._mostrar_bienvenida_especial)
 
     def _bloquear_maximizado(self, event=None):
         if self.state() == "zoomed":
@@ -117,7 +178,7 @@ class MenuPrincipal(ctk.CTk):
         fuente_botones = ctk.CTkFont(family="Segoe Print", size=15, weight="bold")
 
         self._ultimo_boton = None
-        for nombre, crear_vista in SKILLS:
+        for nombre, categoria, crear_vista in SKILLS:
             boton = ctk.CTkButton(
                 self,
                 text=nombre,
@@ -131,6 +192,7 @@ class MenuPrincipal(ctk.CTk):
                 command=lambda fn=crear_vista, n=nombre: self._abrir_skill(n, fn),
             )
             boton.pack(pady=10)
+            _Tooltip(boton, categoria)
             self._ultimo_boton = boton
 
     def _agregar_mascota(self):
@@ -181,6 +243,56 @@ class MenuPrincipal(ctk.CTk):
     def _volver_al_menu(self):
         for vista in self._vistas_skill.values():
             vista.place_forget()
+
+    def _mostrar_bienvenida_especial(self):
+        """Ventana modal con el mensaje de aniversario - se salta por
+        completo si ya se mostro antes (ver _ruta_marca_bienvenida), asi
+        que en cualquier apertura despues de la primera esto no hace nada."""
+        if _ruta_marca_bienvenida().exists():
+            return
+
+        ancho, alto = 340, 420
+        ventana = ctk.CTkToplevel(self)
+        ventana.title("")
+        ventana.geometry(f"{ancho}x{alto}")
+        ventana.resizable(False, False)
+        ventana.configure(fg_color=tema.FONDO)
+        # transient + grab_set: queda encima del menu y bloquea que se
+        # interactue con el de fondo hasta que la cierre - un mensaje asi
+        # no deberia poder ignorarse sin querer de refilon.
+        ventana.transient(self)
+        ventana.grab_set()
+        # Cerrar con la X de la ventana cuenta igual que el boton - en
+        # cualquiera de los dos casos no debe volver a aparecer despues.
+        ventana.protocol("WM_DELETE_WINDOW", lambda: self._cerrar_bienvenida_especial(ventana))
+
+        ctk.CTkLabel(
+            ventana,
+            text=MENSAJE_BIENVENIDA_ESPECIAL,
+            font=ctk.CTkFont(family="Segoe Print", size=14),
+            text_color=tema.TEXTO,
+            wraplength=280,
+            justify="center",
+        ).pack(pady=(36, 20), padx=24)
+
+        ctk.CTkButton(
+            ventana,
+            text="Gracias, mi amor ♥",
+            fg_color=tema.BOTON_PRINCIPAL,
+            hover_color=tema.BOTON_PRINCIPAL_HOVER,
+            text_color=tema.TEXTO,
+            command=lambda: self._cerrar_bienvenida_especial(ventana),
+        ).pack(pady=(0, 30))
+
+        # Centrada sobre la ventana principal, no en una esquina cualquiera.
+        self.update_idletasks()
+        x = self.winfo_x() + (self.winfo_width() - ancho) // 2
+        y = self.winfo_y() + (self.winfo_height() - alto) // 2
+        ventana.geometry(f"+{x}+{y}")
+
+    def _cerrar_bienvenida_especial(self, ventana):
+        _ruta_marca_bienvenida().touch()
+        ventana.destroy()
 
 
 if __name__ == "__main__":

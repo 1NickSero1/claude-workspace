@@ -11,12 +11,12 @@ import Watermark from '../components/Watermark';
 const CHIPS = ['Legal', 'Psicológica', 'Documentos', 'Vivienda', 'Salud', 'Otro'];
 
 export default function MiCasoScreen({ navigation, route }) {
-  const { tipo, nombre, idioma, estado, color } = route?.params || {};
+  const { tipo, chipSugerido, nombre, idioma, estado, color, modoAnonimo } = route?.params || {};
   const accentColor = color || '#C850C0';
-  const tipoInicial = tipo?.split(' ')[0] || '';
-  const [chipActivo, setChipActivo] = useState(tipoInicial);
+  const chipInicial = CHIPS.includes(chipSugerido) ? chipSugerido : '';
+  const [chipActivo, setChipActivo] = useState(chipInicial);
   const [descripcion, setDescripcion] = useState('');
-  const [anonimo, setAnonimo] = useState(false);
+  const [anonimo, setAnonimo] = useState(!!modoAnonimo);
   const [enviado, setEnviado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');

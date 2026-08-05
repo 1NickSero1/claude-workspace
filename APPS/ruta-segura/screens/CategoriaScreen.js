@@ -2,18 +2,22 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Linking } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { getCategoria } from '../data/categorias';
-import { getRecursosPorEstado } from '../data/recursos';
+import { getRecursosPorEstado, normalizar as normalizarTexto } from '../data/recursos';
 import Watermark from '../components/Watermark';
 
 export default function CategoriaScreen({ navigation, route }) {
-  const { id, idioma, estado } = route?.params || {};
+  const { id, idioma, estado, modoAnonimo } = route?.params || {};
   const data = getCategoria(id);
   const recursos = (id === 'legal' || id === 'violencia') ? getRecursosPorEstado(estado, id) : [];
+  const sinRecursosVerificados = (id === 'legal' || id === 'violencia') && recursos.length === 0;
+  const regionVecina = recursos.length > 0 && !normalizarTexto(estado).includes(normalizarTexto(recursos[0].region))
+    ? recursos[0].region
+    : null;
 
   const handlePress = (s) => {
     if (s.esAna) return Linking.openURL('https://wa.me/17542758005?text=Hola%20necesito%20ayuda');
-    if (s.urgente) return navigation.navigate('SOS', { nombre: route?.params?.nombre, idioma, estado });
-    navigation.navigate('MiCaso', { tipo: s.titulo, nombre: route?.params?.nombre, idioma, estado, color: data.color });
+    if (s.urgente) return navigation.navigate('SOS', { nombre: route?.params?.nombre, idioma, estado, modoAnonimo });
+    navigation.navigate('MiCaso', { tipo: s.titulo, chipSugerido: s.chipSugerido, nombre: route?.params?.nombre, idioma, estado, color: data.color, modoAnonimo });
   };
 
   const llamar = (contacto) => Linking.openURL(`tel:${contacto.replace(/[^0-9+]/g, '')}`);
@@ -69,9 +73,22 @@ export default function CategoriaScreen({ navigation, route }) {
             </View>
           ))}
 
+          {sinRecursosVerificados && (
+            <View style={styles.sinRecursosBox}>
+              <Text style={styles.sinRecursosText}>
+                📋 Aún no tenemos recursos verificados para tu estado, pero puedes usar el botón SOS para ayuda inmediata.
+              </Text>
+            </View>
+          )}
+
           {recursos.length > 0 && (
             <>
               <Text style={styles.recursosTitulo}>📋 Recursos verificados en tu zona</Text>
+              {regionVecina && (
+                <Text style={styles.regionVecinaNota}>
+                  Mostrando recursos de {regionVecina} — el más cercano con datos verificados disponibles.
+                </Text>
+              )}
               {recursos.map((r, i) => (
                 <View key={i} style={styles.card}>
                   <View style={styles.cardBody}>
@@ -187,7 +204,15 @@ const styles = StyleSheet.create({
   cardBtnAna: { borderWidth: 2, borderColor: '#C850C0', backgroundColor: 'transparent' },
   cardBtnAnaText: { color: '#C850C0' },
 
+  sinRecursosBox: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
+    alignItems: 'center',
+  },
+  sinRecursosText: { color: '#666', fontSize: 14, lineHeight: 20, textAlign: 'center' },
   recursosTitulo: { fontSize: 15, fontWeight: '800', color: '#1a1a2e', marginTop: 6, marginBottom: 2, paddingHorizontal: 2 },
+  regionVecinaNota: { fontSize: 12, color: '#888', marginBottom: 8, paddingHorizontal: 2, fontStyle: 'italic' },
   recursoRegion: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 },
   recursoBotones: { flexDirection: 'row', gap: 10, marginTop: 4 },
   recursoBtn: { flex: 1, paddingVertical: 11, borderRadius: 20, alignItems: 'center' },

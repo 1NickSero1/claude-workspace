@@ -3,16 +3,13 @@
 Enfoque principal: bajar de peso y cambiar habitos de alimentacion. Como
 ella es quien cocina en su casa, la funcion mas util de esta skill es
 recomendar recetas con los ingredientes que ella misma vaya indicando.
-
-TODO: nombre personalizado de esta skill pendiente - el usuario lo dara
-mas adelante, antes de cerrar el proyecto.
 """
 import tema
 from config import MEMORY_TOOL, WEB_SEARCH_TOOL
 from skills.base import VistaChat, construir_intro_bienvenida
 from skills.memoria import crear_manejador_memoria
 
-TITULO = "Gym y Nutricion"  # TODO: reemplazar por nombre personalizado
+TITULO = "Kiwi"
 
 # Primer mensaje que ve Sofi al entrar a la vista, como si la skill le
 # hablara primero (ver skills/base.py).
@@ -61,6 +58,6 @@ def crear_vista(parent, volver):
         volver=volver,
         tools=[WEB_SEARCH_TOOL, MEMORY_TOOL],
         acento=tema.ACENTOS[TITULO],
-        manejador_herramienta_cliente=crear_manejador_memoria("gym_nutricion"),
+        manejadores_herramientas_cliente={"memory": crear_manejador_memoria("gym_nutricion")},
         mensaje_bienvenida=BIENVENIDA,
     )

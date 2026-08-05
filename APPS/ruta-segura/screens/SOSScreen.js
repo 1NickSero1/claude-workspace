@@ -40,7 +40,7 @@ const LINEAS = [
 ];
 
 export default function SOSScreen({ navigation, route }) {
-  const { nombre, idioma, estado } = route?.params || {};
+  const { nombre, idioma, estado, modoAnonimo } = route?.params || {};
 
   const contactar = (l) => {
     if (l.esTexto) {
@@ -105,7 +105,7 @@ export default function SOSScreen({ navigation, route }) {
           <TouchableOpacity
             style={styles.registrarCaso}
             activeOpacity={0.75}
-            onPress={() => navigation.navigate('MiCaso', { nombre, idioma, estado })}
+            onPress={() => navigation.navigate('MiCaso', { nombre, idioma, estado, modoAnonimo })}
             accessibilityRole="button"
             accessibilityLabel={idioma === 'en' ? 'Register my case' : 'Registrar mi caso'}
           >

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { supabase } from '../lib/supabase';
 import Watermark from '../components/Watermark';
 
 const PAISES = ['México', 'Guatemala', 'Honduras', 'El Salvador', 'Colombia', 'Venezuela', 'Otro'];
@@ -15,16 +16,61 @@ export default function RegistroScreen({ navigation, route }) {
   const [vista, setVista] = useState(null); // null=selección | 'registro' | 'login'
   const [form, setForm] = useState({ nombre: '', correo: '', pais: '', contrasena: '' });
   const [paisOpen, setPaisOpen] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [authError, setAuthError] = useState('');
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
   const correoValido = EMAIL_REGEX.test(form.correo);
-  const puedeRegistrar = form.nombre && correoValido && form.pais && form.contrasena;
+  const puedeRegistrar = form.nombre && correoValido && form.pais && form.contrasena.length >= 6;
   const puedeLogin = correoValido && form.contrasena;
+
+  const es = idioma === 'es';
 
   const irASiguiente = (nombre, modoAnonimo = false) =>
     navigation.navigate('Estado', { nombre, idioma, modoAnonimo });
 
-  const es = idioma === 'es';
+  const traducirErrorAuth = (mensaje) => {
+    const m = (mensaje || '').toLowerCase();
+    if (m.includes('already registered') || m.includes('already exists')) {
+      return es ? 'Ya existe una cuenta con ese correo. Intenta iniciar sesión.' : 'An account with that email already exists. Try logging in.';
+    }
+    if (m.includes('invalid login credentials')) {
+      return es ? 'Correo o contraseña incorrectos.' : 'Incorrect email or password.';
+    }
+    if (m.includes('password')) {
+      return es ? 'La contraseña debe tener al menos 6 caracteres.' : 'Password must be at least 6 characters.';
+    }
+    return es ? 'Algo salió mal. Intenta de nuevo.' : 'Something went wrong. Please try again.';
+  };
+
+  const manejarSubmit = async () => {
+    setAuthError('');
+    setEnviando(true);
+
+    if (vista === 'registro') {
+      const { data, error } = await supabase.auth.signUp({
+        email: form.correo,
+        password: form.contrasena,
+        options: { data: { nombre: form.nombre, pais: form.pais } },
+      });
+      setEnviando(false);
+      if (error) return setAuthError(traducirErrorAuth(error.message));
+      if (!data.session) {
+        return setAuthError(es
+          ? 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.'
+          : 'Account created. Check your email to confirm it, then log in.');
+      }
+      irASiguiente(form.nombre);
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: form.correo,
+        password: form.contrasena,
+      });
+      setEnviando(false);
+      if (error) return setAuthError(traducirErrorAuth(error.message));
+      irASiguiente(data.user?.user_metadata?.nombre || 'Usuaria');
+    }
+  };
 
   /* ── Pantalla de selección ─────────────────────────────── */
   if (!vista) {
@@ -186,16 +232,27 @@ export default function RegistroScreen({ navigation, route }) {
             onChangeText={v => update('contrasena', v)}
           />
 
+          {authError.length > 0 && (
+            <View style={styles.authErrorBox}>
+              <Text style={styles.authErrorText}>⚠️ {authError}</Text>
+            </View>
+          )}
+
           <TouchableOpacity
-            style={[styles.boton, !(vista === 'registro' ? puedeRegistrar : puedeLogin) && styles.botonDisabled]}
-            disabled={!(vista === 'registro' ? puedeRegistrar : puedeLogin)}
-            onPress={() => irASiguiente(form.nombre || 'Usuaria')}
+            style={[
+              styles.boton,
+              (!(vista === 'registro' ? puedeRegistrar : puedeLogin) || enviando) && styles.botonDisabled,
+            ]}
+            disabled={!(vista === 'registro' ? puedeRegistrar : puedeLogin) || enviando}
+            onPress={manejarSubmit}
             activeOpacity={0.85}
           >
             <Text style={styles.botonText}>
-              {vista === 'registro'
-                ? (es ? 'Crear mi cuenta' : 'Create my account')
-                : (es ? 'Entrar' : 'Log in')}
+              {enviando
+                ? (es ? 'Un momento...' : 'One moment...')
+                : vista === 'registro'
+                  ? (es ? 'Crear mi cuenta' : 'Create my account')
+                  : (es ? 'Entrar' : 'Log in')}
             </Text>
           </TouchableOpacity>
 
@@ -292,6 +349,13 @@ const styles = StyleSheet.create({
   inputText: { fontSize: 16, color: '#1a1a2e' },
   placeholder: { fontSize: 16, color: '#aaa' },
   errorText: { color: '#c0392b', fontSize: 12, marginTop: 6 },
+  authErrorBox: {
+    backgroundColor: '#fdecea',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 20,
+  },
+  authErrorText: { color: '#c0392b', fontSize: 13, textAlign: 'center' },
   dropdown: {
     borderWidth: 1.5,
     borderColor: '#e0e0e0',

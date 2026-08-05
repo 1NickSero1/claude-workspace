@@ -2,16 +2,13 @@
 
 Busqueda web habilitada por defecto (ver skills/base.py) para dar
 informacion actualizada y veridica sobre tiendas, tendencias y precios.
-
-TODO: nombre personalizado de esta skill pendiente - el usuario lo dara
-mas adelante, antes de cerrar el proyecto.
 """
 import tema
 from config import MEMORY_TOOL, WEB_SEARCH_TOOL
 from skills.base import VistaChat, construir_intro_bienvenida
 from skills.memoria import crear_manejador_memoria
 
-TITULO = "Moda"  # TODO: reemplazar por nombre personalizado
+TITULO = "Glow"
 
 # Primer mensaje que ve Sofi al entrar a la vista, como si la skill le
 # hablara primero (ver skills/base.py).
@@ -49,6 +46,6 @@ def crear_vista(parent, volver):
         volver=volver,
         tools=[WEB_SEARCH_TOOL, MEMORY_TOOL],
         acento=tema.ACENTOS[TITULO],
-        manejador_herramienta_cliente=crear_manejador_memoria("moda"),
+        manejadores_herramientas_cliente={"memory": crear_manejador_memoria("moda")},
         mensaje_bienvenida=BIENVENIDA,
     )

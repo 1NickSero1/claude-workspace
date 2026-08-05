@@ -35,8 +35,9 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 |---|---|---|---|
 | wallet-control | PECAS | En progreso | `APPS/wallet-control` |
 | ruta-segura | PECAS | En progreso | `APPS/ruta-segura` |
-| pollito | PECAS | En definición | `APPS/pollito` |
 | INDEPENDIENTE | FREE | En definición | `INDEPENDIENTE` |
+| TRADING | TRADE | En definición | `TRADING` |
+| trade | PECAS | En definición | `APPS/trade` |
 
 ---
 
@@ -44,7 +45,7 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 
 | Proyecto | Skill usada | Fecha | Dónde se vende |
 |---|---|---|---|
-| — | — | — | — |
+| pollito | PECAS | 2026-08-02 | Regalo personal para Sofi (novia del usuario), creado por Nicolás (no se vende) — `.exe` empaquetado en `APPS/pollito/dist/Pollito.exe`. Datos personales de ella (rutinas, alimentación, plan freelance) se guardan aparte en `P.P/SOFI/` (local-only, fuera de git) |
 
 ---
 
@@ -76,14 +77,17 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 ├── SKILLS/FIFAS.md       ← Analista estadístico deportivo (fútbol)
 ├── SKILLS/AUDITA.md      ← Auditor profesional de proyectos (con PECAS)
 ├── SKILLS/ESTETIK.md     ← Auditor visual y de experiencia de usuario (con PECAS)
-└── SKILLS/FREE.md        ← Coach de freelance y networking digital
+├── SKILLS/FREE.md        ← Coach de freelance y networking digital
+└── SKILLS/TRADE.md       ← Coach de trading y psicología de mercados (forex/cripto, con FINANDO)
 │
 ├── APPS/                 ← Código de todos los proyectos
 │   ├── wallet-control/
 │   ├── ruta-segura/
 │   └── pollito/
 │
-└── INDEPENDIENTE/        ← Plan y seguimiento del negocio freelance (con FREE) — fuera de APPS/
+├── INDEPENDIENTE/        ← Plan y seguimiento del negocio freelance (con FREE) — fuera de APPS/
+├── TRADING/              ← Solo lo compartido de trading (nico.md, equipo.md, bitacora.md, con TRADE) — fuera de APPS/
+└── P.P/                  ← Datos personales por persona (NICO, SOFI, SEBAS, MATEO) — local-only, gitignorada, fuera de APPS/
 ```
 
 ---
@@ -100,6 +104,7 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 | Auditar un proyecto (bugs/mejoras/eliminaciones) | AUDITA | "AUDITA" (siempre pregunta cuál proyecto) |
 | Auditar el visual/UX de un proyecto | ESTETIK | "ESTETIK" (siempre pregunta cuál proyecto) |
 | Consulta de freelance/networking/clientes | FREE | "FREE, ¿cuánto debería cobrar por [servicio]?" |
+| Trading, psicología de mercados (con Sebas) | TRADE | "TRADE, hazme el test para saber en qué nivel estoy" |
 
 ---
 
@@ -192,6 +197,9 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 - Al terminar una tarea: 1-2 oraciones de qué cambió y qué sigue
 - Aplicar las lecciones aprendidas de la sección correspondiente
 - Cada vez que se cree una palabra clave nueva (con o sin hook real), agregar una fila en `APPS/palabras-clave.txt` con su significado en una palabra y si es general o específica de una skill/proyecto
+- Todo dato personal (rutinas, ejercicio, alimentación, finanzas, etc. — no proyectos/negocio) de cualquiera de las personas relevantes en este repo se guarda en `P.P/<PERSONA>/`, carpeta local-only en la raíz del repo (gitignorada — no se sincroniza con la máquina del hermano): `P.P/NICO/` (el usuario), `P.P/SOFI/` (novia), `P.P/SEBAS/` (amigo de trading), `P.P/MATEO/` (hermano), y las que se agreguen después. Nunca se mezcla el contenido de una persona con el de otra. Excepción: proyectos de negocio/carrera del usuario (`INDEPENDIENTE/`) y código/apps que le pertenecen a otra persona pero son producto de desarrollo (ej. `APPS/trade` de Sebas, `APPS/pollito` como regalo hecho por el usuario para Sofi) se quedan donde están, solo con una nota de a quién pertenece/para quién es — no se mueven a `P.P/`
+- Esto no es un hook real automático (un script de PowerShell no puede detectar "esto es sobre Sofi" por contenido) — es una regla que Claude aplica activamente cada vez que crea o encuentra algo sobre una de estas personas: lo guarda directo en `P.P/<PERSONA>/` en vez de dejarlo suelto en otra carpeta
+- Para no confundir al usuario con su hermano Mateo (comparten este repo desde máquinas distintas, ver Lección 4 y `feedback_nombres_local_remoto`): lo que se crea o edita en la sesión actual (esta máquina) es de Nico → `P.P/NICO/`. Lo que aparece de golpe tras un `git pull`/auto-sync sin haber sido creado en esta sesión — especialmente si vino en un commit `Auto-sync: <fecha>` — es de la máquina del hermano → se investiga y, si es personal (no código de proyecto), se atribuye a Mateo → `P.P/MATEO/`. Ante la duda real, preguntar antes de asumir de quién es
 
 ---
 
@@ -349,6 +357,11 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 | 2026-07-29 | Agregado proyecto `INDEPENDIENTE` (carpeta en la raíz del repo, fuera de `APPS/`) a Proyectos Activos; agregada palabra clave `INDEPENDIENTE` en `proyecto-switch.ps1` (mismo patrón que WALLET CONTROL/RUTA SEGURA/POLLITO, pero invocando FREE en vez de PECAS) |
 | 2026-07-29 | Corregido: pese a lo documentado el 2026-07-22, `ESTETIK` seguía sin copia real en el registro de comandos (que en realidad es la carpeta global `C:\Users\Lenovo Ideapad\.claude\commands\`, no una carpeta dentro del repo) — `/estetik` no funcionaba. Copiado `SKILLS/ESTETIK.md` a esa carpeta; ya es invocable de verdad, igual que `FREE.md` recién creado |
 | 2026-07-29 | Agregada palabra clave `REVISION A FONDO` (hook real `.claude/hooks/revision-a-fondo.ps1`) — primera palabra clave que combina dos skills de diagnóstico (AUDITA + ESTETIK) en un solo PDF con dos secciones y un resumen ejecutivo combinado, en `APPS/<proyecto>/AUDITORIAS/revision-a-fondo-<fecha>.pdf`; no arregla nada sola, PECAS/FIXA quedan disponibles después si se pide |
+| 2026-08-02 | Creada skill `TRADE` (generada vía KILLER) — coach de trading y psicología de mercados (forex, cripto, acciones/bonos/dividendos, binarias) para el usuario (Nico) y su amigo de trading (Sebas); primera pasada la interpretó mal como facilitador de sociedad de negocio, corregido tras aclaración del usuario. Enfoque real: cerrar la brecha entre conocimiento teórico (5 años de experiencia) y disciplina/psicología real de operar (historial de cuentas quemadas), con test diagnóstico inicial, contexto de mercado actualizado vía búsqueda web, y perfiles independientes por persona. Memoria persistente en 4 archivos (`nico.md`, `sebas.md`, `equipo.md`, `bitacora.md`) dentro de `TRADING/` (carpeta en la raíz del repo, fuera de `APPS/`). Coordina con **FINANDO** solo para lo que cada uno haga con las ganancias ya retiradas de la cuenta de trading — TRADE no toca finanzas personales ni ejecuta operaciones reales. Copiada a `.claude/commands/TRADE.md` (carpeta global) desde su creación para que sea invocable de inmediato |
+| 2026-08-02 | Agregado proyecto `TRADING` (carpeta en la raíz del repo, fuera de `APPS/`) a Proyectos Activos — análogo a `INDEPENDIENTE` pero para el seguimiento de trading de Nico y Sebas (vía TRADE) |
+| 2026-08-05 | Creada carpeta `SOFI/` (raíz del repo, **local-only**, agregada a `.gitignore` — no se sincroniza con la máquina del hermano) para consolidar todo lo relacionado con Sofi (novia del usuario), separado de la memoria de Nico y de Sebas: plan freelance, rutina, plan alimenticio/recetas y balance financiero, movidos ahí desde `INDEPENDIENTE/hv/` y desde `SONIC/` (carpeta de generadores de PDF sin trackear en git). Aclarado en la fila de `pollito` (Proyectos Terminados) que es un regalo hecho por Nicolás para Sofi; su memoria persistente (`%APPDATA%\Pollito\memoria_<skill>\`) queda pendiente de consolidar en `SOFI/perfil.md` cuando tenga contenido real de uso |
+| 2026-08-05 | Reemplazada `SOFI/` por `P.P/` (raíz del repo, con su propio `.gitignore` interno con `*` — local-only, no sincroniza con el hermano) — carpeta única para todas las personas cercanas al usuario, una subcarpeta por persona: `P.P/SOFI/` (todo lo que antes estaba en `SOFI/`), `P.P/SEBAS/sebas.md` (movido desde `TRADING/`, que se quedó solo con lo compartido: `nico.md`, `equipo.md`, `bitacora.md`), y `P.P/MATEO/perfil.md` (nuevo — perfil del hermano del usuario, arranca con lo poco confirmado hasta ahora). Actualizadas las referencias a `sebas.md` en `SKILLS/TRADE.md` y en el comando global `TRADE.md` para apuntar a la nueva ruta. Agregada regla operativa: nada de esto es un hook real (un script no puede clasificar contenido por significado) — es una regla que Claude aplica activamente cada vez que crea o encuentra algo sobre Sofi/Sebas/Mateo, guardándolo directo en `P.P/<PERSONA>/` sin mezclarlo entre personas ni con la memoria del usuario; el código/apps de esas personas (`APPS/trade`, `APPS/pollito`) se queda en `APPS/`, no se mueve |
+| 2026-08-05 | Agregada `P.P/NICO/` — datos personales del propio usuario (rutina, plan alimenticio, hoja de economía mensual), movidos desde `SONIC/` con el mismo criterio que Sofi (los generadores `.js` se quedan en `SONIC/` como herramienta, solo los archivos de datos se mueven). Agregada regla de desambiguación Nico/Mateo: lo creado o editado en la sesión actual (esta máquina) es de Nico; lo que aparece de golpe tras un `git pull`/auto-sync sin haberse creado en la sesión — sobre todo si vino en un commit `Auto-sync: <fecha>` — se investiga como posible contenido de la máquina del hermano antes de asumir que es de Nico |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise

@@ -5,13 +5,20 @@ mismo para las 5. No es una ventana propia (ver main.py): es un panel que
 ocupa toda la ventana principal y vuelve al menu con el boton "Atras" en
 vez de abrir/cerrar una ventana nueva por cada skill. _llamar_api() hace la
 llamada real a la API de Anthropic (Claude Sonnet 5), con busqueda web
-server-side habilitada por defecto.
+server-side habilitada por defecto. Tambien soporta adjuntar una foto o un
+PDF por mensaje (boton 📎) - se manda como bloque de imagen/documento nativo
+de la API, asi que las 5 skills lo "leen" solas sin cambios propios.
 """
+import base64
 import threading
+import tkinter.font as tkfont
+from pathlib import Path
+from tkinter import filedialog
 from typing import Callable, Optional
 
 import anthropic
 import customtkinter as ctk
+import httpx
 
 import tema
 from config import (
@@ -22,12 +29,33 @@ from config import (
     WEB_SEARCH_TOOL,
     get_api_key,
 )
-from uso_diario import limite_alcanzado, registrar_uso
+from uso_mensual import limite_alcanzado, registrar_uso
 
 # Tope de reintentos si el loop server-side de busqueda web pausa
 # (stop_reason == "pause_turn") por llegar a su limite interno de
 # iteraciones. Evita un loop infinito en un caso patologico.
 _MAX_REINTENTOS_PAUSE_TURN = 5
+
+# Extensiones soportadas para adjuntar, mapeadas a su media_type real (no al
+# tipo de bloque de la API - ver ADJUNTOS_TIPO_BLOQUE) y su tamano maximo en
+# bytes. Limites de la API de Anthropic: 5MB por imagen, 32MB por documento.
+_TIPOS_IMAGEN = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+}
+_TIPOS_DOCUMENTO = {".pdf": "application/pdf"}
+_TAMANO_MAXIMO_IMAGEN_BYTES = 5 * 1024 * 1024
+_TAMANO_MAXIMO_DOCUMENTO_BYTES = 32 * 1024 * 1024
+
+# El cuadro de mensaje crece con lo que va escribiendo (ver
+# _ajustar_alto_entrada) hasta este tope de lineas visuales - de ahi para
+# arriba sigue escribiendo pero el cuadro no crece mas (auto-scroll interno
+# del widget, como WhatsApp/Telegram).
+_ENTRADA_LINEAS_MIN = 1
+_ENTRADA_LINEAS_MAX = 5
 
 
 def construir_intro_bienvenida(nombre: str) -> str:
@@ -48,14 +76,45 @@ _cliente: Optional[anthropic.Anthropic] = None
 _cliente_lock = threading.Lock()
 
 
+def _marcar_cache_en_ultimo_mensaje(mensaje: dict) -> dict:
+    """Copia el mensaje con cache_control en su ultimo bloque de contenido -
+    marca hasta donde cachear el historial de la conversacion para esta
+    llamada puntual. No modifica el mensaje original (self.historial queda
+    intacto): cada llamada arma su propia copia con la marca en el nuevo
+    ultimo mensaje, no hace falta "borrar" la marca de la llamada anterior -
+    el cache busca el prefijo mas largo que calce con lo ya guardado, sin
+    importar en que mensaje viejo haya quedado un cache_control anterior."""
+    contenido = mensaje["content"]
+    if isinstance(contenido, str):
+        bloques = [{"type": "text", "text": contenido}]
+    else:
+        # Los turnos del asistente guardan los bloques de respuesta reales
+        # del SDK (TextBlock, ToolUseBlock, etc - objetos pydantic, no
+        # dicts); se convierten para poder anexarles cache_control.
+        bloques = [
+            bloque.model_dump() if hasattr(bloque, "model_dump") else dict(bloque)
+            for bloque in contenido
+        ]
+    bloques[-1] = {**bloques[-1], "cache_control": {"type": "ephemeral"}}
+    return {**mensaje, "content": bloques}
+
+
 def _obtener_cliente() -> anthropic.Anthropic:
     """Cliente de Anthropic compartido por las 5 vistas de chat, creado
-    de forma perezosa (recien en el primer mensaje) y una sola vez."""
+    de forma perezosa (recien en el primer mensaje) y una sola vez.
+    trust_env=False fuerza a httpx a ignorar cualquier proxy configurado
+    en Windows (registro/env vars) - sin esto, un proxy local activado por
+    otro programa (una VPN, una herramienta de desarrollo, etc.) puede
+    romper la conexion con un WinError 10054 en pleno handshake TLS,
+    aunque el resto de la PC tenga internet normal."""
     global _cliente
     if _cliente is None:
         with _cliente_lock:
             if _cliente is None:
-                _cliente = anthropic.Anthropic(api_key=get_api_key())
+                _cliente = anthropic.Anthropic(
+                    api_key=get_api_key(),
+                    http_client=httpx.Client(trust_env=False),
+                )
     return _cliente
 
 
@@ -68,8 +127,10 @@ class VistaChat(ctk.CTkFrame):
         volver: Callable[[], None],
         tools=None,
         acento: Optional[str] = None,
-        manejador_herramienta_cliente: Optional[Callable[[dict], str]] = None,
+        manejadores_herramientas_cliente: Optional[dict] = None,
         mensaje_bienvenida: Optional[str] = None,
+        boton_extra_texto: Optional[str] = None,
+        boton_extra_comando: Optional[Callable[["VistaChat"], None]] = None,
     ):
         super().__init__(parent, fg_color=tema.FONDO)
         # Se guarda como atributo propio (no hay wm_title en un Frame) -
@@ -79,16 +140,33 @@ class VistaChat(ctk.CTkFrame):
         # Por defecto, las 5 skills tienen busqueda web habilitada.
         self.tools = tools if tools is not None else [WEB_SEARCH_TOOL]
         self.acento = acento or tema.BOTON_PRINCIPAL
-        # Herramienta de memoria, ejecutada del lado cliente - cada skill
-        # pasa su propio manejador (ver skills/memoria.py).
-        self.manejador_herramienta_cliente = manejador_herramienta_cliente
+        # Herramientas ejecutadas del lado cliente, por nombre de tool (ej.
+        # "memory" -> skills/memoria.py, "excel_finanzas" ->
+        # finanzas_excel.py) - cada skill pasa las suyas, una skill puede
+        # tener varias (ver skills/finanzas.py).
+        self.manejadores_herramientas_cliente = manejadores_herramientas_cliente or {}
+        # Boton opcional extra en la barra de mensaje (ej. "📊" en Finanzas
+        # para conectar el excel) - recibe esta misma vista como argumento,
+        # asi la skill puede mostrar avisos con self._agregar_mensaje sin
+        # que base.py tenga que conocer nada especifico de esa skill.
+        self._boton_extra_texto = boton_extra_texto
+        self._boton_extra_comando = boton_extra_comando
         self.historial = []
         self._mensajes_enviados = 0
+        # Foto o PDF elegido con el boton 📎, pendiente de mandar en el
+        # proximo _enviar() - ver _elegir_adjunto/_quitar_adjunto.
+        self._adjunto_pendiente: Optional[dict] = None
         # Evita mandar dos mensajes en paralelo (doble Enter, click repetido
         # en "Enviar") mientras se espera la respuesta de la API - sin esto,
         # dos hilos de _llamar_api corriendo a la vez pueden gastar tokens de
         # mas y desordenar self.historial (dos hilos escribiendolo a la vez).
         self._esperando_respuesta = False
+        # Estado del cuadro de mensaje (CTkTextbox, sin placeholder nativo
+        # como tenia el CTkEntry viejo - se reimplementa a mano, ver
+        # _fijar_texto_gris/_limpiar_texto_gris/_al_desenfocar_entrada).
+        self._placeholder_activo = False
+        self._placeholder_texto_actual = "Escribe tu mensaje..."
+        self._entrada_tiene_foco = False
         self._construir_ui(volver)
         if mensaje_bienvenida:
             # Burbuja fija que explica que hace la skill, mostrada como si la
@@ -161,28 +239,96 @@ class VistaChat(ctk.CTkFrame):
             "<Configure>", lambda evento: self._actualizar_scrollbar(), add="+"
         )
 
-        frame_input = ctk.CTkFrame(self, fg_color="transparent")
-        frame_input.pack(fill="x", padx=16, pady=(0, 16))
-
-        self.entrada = ctk.CTkEntry(
-            frame_input,
-            placeholder_text="Escribe tu mensaje...",
-            fg_color=tema.FONDO,
+        # Barra de adjunto pendiente - arranca sin empaquetar (oculta) y solo
+        # se muestra (con "before=self.frame_input" para no perder su lugar
+        # arriba del input pase lo que pase con el orden de pack) mientras
+        # haya una foto/PDF elegida sin mandar todavia, ver
+        # _elegir_adjunto/_quitar_adjunto.
+        self._frame_adjunto = ctk.CTkFrame(self, fg_color=tema.FONDO_SECUNDARIO, corner_radius=8)
+        self._etiqueta_adjunto = ctk.CTkLabel(
+            self._frame_adjunto,
+            text="",
             text_color=tema.TEXTO,
-            placeholder_text_color=tema.TEXTO_SECUNDARIO,
+            font=ctk.CTkFont(size=12),
+        )
+        self._etiqueta_adjunto.pack(side="left", padx=(10, 4), pady=4)
+        ctk.CTkButton(
+            self._frame_adjunto,
+            text="✕",
+            width=24,
+            height=24,
+            corner_radius=12,
+            fg_color="transparent",
+            hover_color=tema.FONDO,
+            text_color=tema.TEXTO_SECUNDARIO,
+            command=self._quitar_adjunto,
+        ).pack(side="right", padx=(4, 6), pady=4)
+
+        self.frame_input = ctk.CTkFrame(self, fg_color="transparent")
+        self.frame_input.pack(fill="x", padx=16, pady=(0, 16))
+
+        # Boton para elegir una foto o un PDF para mandar junto al mensaje
+        # (leido por la skill como imagen/documento nativo de la API, ver
+        # _elegir_adjunto).
+        ctk.CTkButton(
+            self.frame_input,
+            text="📎",
+            width=32,
+            fg_color=tema.FONDO_SECUNDARIO,
+            hover_color=self.acento,
+            text_color=tema.TEXTO,
+            command=self._elegir_adjunto,
+        ).pack(side="left", padx=(0, 8))
+
+        # Boton extra opcional, especifico de la skill (ej. "📊" en
+        # Finanzas para conectar el excel) - base.py no sabe que hace, solo
+        # le pasa esta misma vista para que la skill muestre avisos.
+        if self._boton_extra_texto and self._boton_extra_comando:
+            ctk.CTkButton(
+                self.frame_input,
+                text=self._boton_extra_texto,
+                width=32,
+                fg_color=tema.FONDO_SECUNDARIO,
+                hover_color=self.acento,
+                text_color=tema.TEXTO,
+                command=lambda: self._boton_extra_comando(self),
+            ).pack(side="left", padx=(0, 8))
+
+        # CTkTextbox en vez de CTkEntry: crece de a poco a medida que
+        # escribe (ver _ajustar_alto_entrada) para que pueda ver todo el
+        # mensaje, algo que un CTkEntry (una sola linea, sin wrap) no puede
+        # hacer. No tiene placeholder nativo como el CTkEntry - se
+        # reimplementa a mano (_fijar_texto_gris/_limpiar_texto_gris).
+        self._entrada_alto_base_px = 32
+        self.entrada = ctk.CTkTextbox(
+            self.frame_input,
+            height=self._entrada_alto_base_px,
+            fg_color=tema.FONDO,
+            text_color=tema.TEXTO_SECUNDARIO,
             border_color=self.acento,
             border_width=1,
+            wrap="word",
+            activate_scrollbars=False,
         )
+        self._entrada_alto_por_linea_px = tkfont.Font(font=self.entrada._textbox.cget("font")).metrics("linespace")
         self.entrada.pack(side="left", fill="x", expand=True, padx=(0, 8))
-        self.entrada.bind("<Return>", lambda evento: self._enviar())
-        # CTkEntry no cambia de color al enfocarse (solo esconde el
-        # placeholder) - sin esto, alguien navegando con Tab no tiene forma
-        # de saber si el campo esta enfocado.
-        self.entrada.bind("<FocusIn>", lambda evento: self.entrada.configure(border_color=tema.TEXTO))
-        self.entrada.bind("<FocusOut>", lambda evento: self.entrada.configure(border_color=self.acento))
+        # <Return> manda el mensaje en vez de insertar un salto de linea
+        # ("break" corta la propagacion al binding de clase que inserta el
+        # \n por defecto) - Shift+Return es una secuencia distinta, no la
+        # toca este binding, asi que sigue insertando un salto de linea
+        # normal si alguna vez hace falta un mensaje de varias lineas.
+        self.entrada.bind("<Return>", self._al_apretar_enter)
+        self.entrada.bind("<KeyRelease>", self._ajustar_alto_entrada)
+        # CTkTextbox no cambia de color al enfocarse (a diferencia del
+        # CTkEntry viejo, que tampoco lo hacia solo - ver el bind de abajo)
+        # y tampoco tiene placeholder propio, asi que ambas cosas se
+        # resuelven en el mismo handler de foco.
+        self.entrada.bind("<FocusIn>", self._al_enfocar_entrada)
+        self.entrada.bind("<FocusOut>", self._al_desenfocar_entrada)
+        self._fijar_texto_gris(self._placeholder_texto_actual)
 
         self.boton_enviar = ctk.CTkButton(
-            frame_input,
+            self.frame_input,
             text="Enviar",
             width=80,
             fg_color=self.acento,
@@ -256,6 +402,11 @@ class VistaChat(ctk.CTkFrame):
         completamente afuera del layout (no solo escondida) para no dejar
         ningun rastro de su forma en el recuadro."""
         canvas = self.area_chat._parent_canvas
+        # Fuerza a Tkinter a terminar el recalculo de layout pendiente
+        # (wraplength de texto largo, sobre todo) antes de leer bbox/altura
+        # - sin esto, a veces la comparacion de abajo corre con medidas
+        # todavia viejas y la barra no aparece aunque el contenido desborde.
+        self.update_idletasks()
         bbox = canvas.bbox("all")
         if bbox is None:
             return
@@ -271,14 +422,89 @@ class VistaChat(ctk.CTkFrame):
             # derecha para no invadir la curva de la esquina redondeada.
             canvas.grid_configure(padx=(self._border_spacing, self._border_spacing))
 
+    def _texto_entrada_crudo(self) -> str:
+        """Contenido real del cuadro de mensaje, sin el "-1c" final que
+        tkinter.Text siempre agrega (el \\n implicito de fin de buffer)."""
+        return self.entrada.get("1.0", "end-1c")
+
+    def _ajustar_alto_entrada(self, evento=None):
+        """Agranda (o achica) el cuadro de mensaje segun cuantas lineas
+        visuales ocupa el texto actual (contando el wrap real, no solo los
+        saltos de linea explicitos), hasta el tope _ENTRADA_LINEAS_MAX -
+        asi puede ver todo lo que va escribiendo en vez de quedar cortado
+        en una sola linea."""
+        lineas = self.entrada._textbox.count("1.0", "end", "displaylines")
+        lineas = lineas[0] if isinstance(lineas, tuple) else (lineas or 1)
+        lineas = max(_ENTRADA_LINEAS_MIN, min(lineas, _ENTRADA_LINEAS_MAX))
+        alto = self._entrada_alto_base_px + (lineas - 1) * self._entrada_alto_por_linea_px
+        if alto != getattr(self, "_entrada_alto_actual_px", None):
+            self._entrada_alto_actual_px = alto
+            self.entrada.configure(height=alto)
+
+    def _resetear_alto_entrada(self):
+        """Vuelve el cuadro a su alto base (una linea) sin medir nada -
+        usado al limpiar el texto o poner un placeholder (siempre entran en
+        una linea). A diferencia de _ajustar_alto_entrada, no depende de
+        que el widget ya tenga su ancho real asignado por el geometry
+        manager: se necesita justo al construir la vista, antes de que
+        exista esa geometria, momento en el que medir "displaylines" da
+        cualquier cosa (el ancho todavia es ~0, el wrap corta larga cada
+        palabra y arranca directo en el maximo)."""
+        if getattr(self, "_entrada_alto_actual_px", None) != self._entrada_alto_base_px:
+            self._entrada_alto_actual_px = self._entrada_alto_base_px
+            self.entrada.configure(height=self._entrada_alto_base_px)
+
+    def _al_apretar_enter(self, evento=None):
+        self._enviar()
+        return "break"
+
+    def _fijar_texto_gris(self, texto: str):
+        """Sobreescribe el cuadro con un texto gris (el placeholder normal
+        o el aviso "Esperando respuesta..." mientras llega la API) -
+        respeta el estado disabled/normal en el que este (un Text
+        deshabilitado no deja hacer insert/delete, hay que reactivarlo un
+        instante y devolverlo como estaba)."""
+        self._placeholder_activo = True
+        # CTkTextbox.cget() no reconoce "state" (solo lo pasa a construir /
+        # configure) - hay que leerlo del tkinter.Text interno directamente.
+        estado_previo = self.entrada._textbox.cget("state")
+        if estado_previo == "disabled":
+            self.entrada.configure(state="normal")
+        self.entrada.delete("1.0", "end")
+        self.entrada.insert("1.0", texto)
+        self.entrada.configure(text_color=tema.TEXTO_SECUNDARIO)
+        if estado_previo == "disabled":
+            self.entrada.configure(state="disabled")
+        self._resetear_alto_entrada()
+
+    def _limpiar_texto_gris(self):
+        if self._placeholder_activo:
+            self._placeholder_activo = False
+            self.entrada.delete("1.0", "end")
+            self.entrada.configure(text_color=tema.TEXTO)
+            self._resetear_alto_entrada()
+
+    def _al_enfocar_entrada(self, evento=None):
+        self._entrada_tiene_foco = True
+        self.entrada.configure(border_color=tema.TEXTO)
+        self._limpiar_texto_gris()
+
+    def _al_desenfocar_entrada(self, evento=None):
+        self._entrada_tiene_foco = False
+        self.entrada.configure(border_color=self.acento)
+        if self._texto_entrada_crudo() == "":
+            self._fijar_texto_gris(self._placeholder_texto_actual)
+
     def _enviar(self):
         # Ignora envios duplicados mientras ya hay una respuesta pendiente
         # (doble Enter, click repetido en "Enviar").
         if self._esperando_respuesta:
             return
 
-        mensaje = self.entrada.get().strip()
-        if not mensaje:
+        mensaje = "" if self._placeholder_activo else self._texto_entrada_crudo().strip()
+        adjunto = self._adjunto_pendiente
+        # Se puede mandar solo la foto/PDF sin texto (adjunto sin comentario).
+        if not mensaje and not adjunto:
             return
 
         if self._mensajes_enviados >= LIMITE_MENSAJES_SESION:
@@ -289,26 +515,119 @@ class VistaChat(ctk.CTkFrame):
             )
             return
 
-        # Verificacion del limite diario de tokens ANTES de llamar a la API.
+        # Verificacion del limite de gasto mensual ANTES de llamar a la API.
         if limite_alcanzado():
             self._agregar_mensaje(
                 "Sistema",
-                "Se alcanzo el limite diario de uso de Pollito. Intenta de "
-                "nuevo manana.",
+                "Se alcanzo el limite de gasto mensual de Pollito. Intenta "
+                "de nuevo el mes que viene.",
             )
             return
 
-        self.entrada.delete(0, "end")
-        self._agregar_mensaje("Sofi", mensaje)
-        self.historial.append({"role": "user", "content": mensaje})
+        self.entrada.delete("1.0", "end")
+        self._resetear_alto_entrada()
+
+        if adjunto:
+            self._agregar_mensaje("Sofi", f"📎 {adjunto['nombre']}\n{mensaje}" if mensaje else f"📎 {adjunto['nombre']}")
+            # El bloque de imagen/documento va antes que el texto (orden
+            # recomendado por Anthropic para que el comentario se lea como
+            # referido a lo adjuntado). Si no escribio nada, se manda un
+            # texto minimo igual - la API no acepta un bloque de texto vacio.
+            self.historial.append({
+                "role": "user",
+                "content": [
+                    {
+                        "type": adjunto["tipo_bloque"],
+                        "source": {
+                            "type": "base64",
+                            "media_type": adjunto["media_type"],
+                            "data": adjunto["data"],
+                        },
+                    },
+                    {"type": "text", "text": mensaje or f"(Te mande {adjunto['nombre']}, sin comentario.)"},
+                ],
+            })
+            self._quitar_adjunto()
+        else:
+            self._agregar_mensaje("Sofi", mensaje)
+            self.historial.append({"role": "user", "content": mensaje})
+
         self._mensajes_enviados += 1
 
         self._esperando_respuesta = True
-        self.entrada.configure(state="disabled", placeholder_text="Esperando respuesta...")
+        self._placeholder_texto_actual = "Esperando respuesta..."
+        self.entrada.configure(state="disabled")
+        self._fijar_texto_gris(self._placeholder_texto_actual)
         self.boton_enviar.configure(state="disabled")
 
         hilo = threading.Thread(target=self._llamar_api, daemon=True)
         hilo.start()
+
+    def _elegir_adjunto(self):
+        """Abre el selector de archivos de Windows para elegir una foto o un
+        PDF. Lee y codifica el archivo ahi mismo (rapido para el tamano de
+        archivo que se acepta, no hace falta hilo aparte) y lo deja
+        guardado en self._adjunto_pendiente hasta el proximo _enviar()."""
+        ruta_str = filedialog.askopenfilename(
+            title="Adjuntar foto o documento",
+            filetypes=[
+                ("Fotos y PDF", "*.png *.jpg *.jpeg *.gif *.webp *.pdf"),
+                ("Fotos", "*.png *.jpg *.jpeg *.gif *.webp"),
+                ("PDF", "*.pdf"),
+            ],
+        )
+        if not ruta_str:
+            return
+
+        ruta = Path(ruta_str)
+        extension = ruta.suffix.lower()
+        if extension in _TIPOS_IMAGEN:
+            tipo_bloque = "image"
+            media_type = _TIPOS_IMAGEN[extension]
+            tamano_maximo = _TAMANO_MAXIMO_IMAGEN_BYTES
+        elif extension in _TIPOS_DOCUMENTO:
+            tipo_bloque = "document"
+            media_type = _TIPOS_DOCUMENTO[extension]
+            tamano_maximo = _TAMANO_MAXIMO_DOCUMENTO_BYTES
+        else:
+            self._agregar_mensaje(
+                "Sistema",
+                "Ese tipo de archivo no esta soportado. Elegi una foto "
+                "(png, jpg, gif, webp) o un PDF.",
+            )
+            return
+
+        tamano_bytes = ruta.stat().st_size
+        if tamano_bytes > tamano_maximo:
+            self._agregar_mensaje(
+                "Sistema",
+                f"Ese archivo pesa demasiado (limite {tamano_maximo // (1024 * 1024)} MB).",
+            )
+            return
+
+        self._adjunto_pendiente = {
+            "tipo_bloque": tipo_bloque,
+            "media_type": media_type,
+            "data": base64.b64encode(ruta.read_bytes()).decode("ascii"),
+            "nombre": ruta.name,
+        }
+        self._etiqueta_adjunto.configure(text=f"📎 {ruta.name}")
+        self._frame_adjunto.pack(fill="x", padx=16, pady=(0, 4), before=self.frame_input)
+
+    def _quitar_adjunto(self):
+        self._adjunto_pendiente = None
+        self._frame_adjunto.pack_forget()
+
+    def _tools_con_cache(self):
+        """Copia self.tools con cache_control en la ultima herramienta - las
+        tools de cada skill son siempre las mismas en toda la conversacion
+        (WEB_SEARCH_TOOL / MEMORY_TOOL), asi que cachear hasta ahi evita
+        repagar su definicion en cada mensaje nuevo."""
+        if not self.tools:
+            return self.tools
+        herramientas = [dict(herramienta) for herramienta in self.tools]
+        herramientas[-1] = {**herramientas[-1], "cache_control": {"type": "ephemeral"}}
+        return herramientas
 
     def _finalizar_envio(self):
         """Reactiva el campo de texto y el boton "Enviar" - se llama una
@@ -316,34 +635,64 @@ class VistaChat(ctk.CTkFrame):
         abajo), asi no hace falta repetir esta logica en cada camino de
         salida."""
         self._esperando_respuesta = False
-        self.entrada.configure(state="normal", placeholder_text="Escribe tu mensaje...")
+        self.entrada.configure(state="normal")
         self.boton_enviar.configure(state="normal")
+        self._placeholder_texto_actual = "Escribe tu mensaje..."
+        # Mandar con Enter no le saca el foco al campo - si sigue enfocado
+        # no hay que insertar el placeholder, porque no se va a limpiar
+        # solo cuando siga escribiendo (no se dispara un <FocusIn> nuevo).
+        # Sin este chequeo el placeholder queda insertado de verdad y lo
+        # que escriba a continuacion se pega DESPUES ("Escribe tu
+        # mensaje...hola") en vez de reemplazarlo.
+        if self._entrada_tiene_foco:
+            self._limpiar_texto_gris()
+        else:
+            self._fijar_texto_gris(self._placeholder_texto_actual)
 
     def _llamar_api(self):
         mensajes = list(self.historial)
-        tokens_totales = 0
+        tokens_entrada_totales = 0
+        tokens_salida_totales = 0
+        tokens_cache_escritura_totales = 0
+        tokens_cache_lectura_totales = 0
         intentos = 0
 
         try:
             cliente = _obtener_cliente()
 
             while True:
+                # system y tools son identicos en cada llamada de esta skill
+                # (nunca cambian durante la conversacion) - cachearlos evita
+                # repagar su definicion en cada mensaje. El ultimo mensaje
+                # tambien se marca para cachear el historial ya enviado:
+                # asi el mensaje nuevo de cada turno es lo unico que se paga
+                # a precio completo, no toda la conversacion de nuevo.
                 respuesta = cliente.messages.create(
                     model=MODEL_ID,
                     max_tokens=MAX_TOKENS_RESPUESTA,
-                    system=self.system_prompt,
-                    tools=self.tools,
+                    system=[
+                        {
+                            "type": "text",
+                            "text": self.system_prompt,
+                            "cache_control": {"type": "ephemeral"},
+                        }
+                    ],
+                    tools=self._tools_con_cache(),
                     thinking=THINKING_CONFIG,
-                    messages=mensajes,
+                    messages=mensajes[:-1] + [_marcar_cache_en_ultimo_mensaje(mensajes[-1])],
                 )
-                tokens_totales += respuesta.usage.input_tokens + respuesta.usage.output_tokens
+                tokens_entrada_totales += respuesta.usage.input_tokens
+                tokens_salida_totales += respuesta.usage.output_tokens
+                tokens_cache_escritura_totales += respuesta.usage.cache_creation_input_tokens or 0
+                tokens_cache_lectura_totales += respuesta.usage.cache_read_input_tokens or 0
 
                 if intentos >= _MAX_REINTENTOS_PAUSE_TURN:
                     break
 
-                if respuesta.stop_reason == "tool_use" and self.manejador_herramienta_cliente:
-                    # Herramienta ejecutada del lado cliente (ej. memoria de
-                    # la skill de Psicologia). Se ejecuta cada bloque
+                if respuesta.stop_reason == "tool_use" and self.manejadores_herramientas_cliente:
+                    # Herramientas ejecutadas del lado cliente (memoria,
+                    # excel de finanzas, etc. - una skill puede tener mas de
+                    # una, se despacha por nombre). Se ejecuta cada bloque
                     # tool_use, se devuelven todos los tool_result juntos en
                     # un solo mensaje de usuario, y se vuelve a llamar a la
                     # API para que continue con el resultado.
@@ -351,7 +700,9 @@ class VistaChat(ctk.CTkFrame):
                         {
                             "type": "tool_result",
                             "tool_use_id": bloque.id,
-                            "content": self.manejador_herramienta_cliente(bloque.input),
+                            "content": self.manejadores_herramientas_cliente[bloque.name](bloque.input)
+                            if bloque.name in self.manejadores_herramientas_cliente
+                            else "Error: no hay manejador para la herramienta '{}'.".format(bloque.name),
                         }
                         for bloque in respuesta.content
                         if bloque.type == "tool_use"
@@ -438,7 +789,12 @@ class VistaChat(ctk.CTkFrame):
         # server-side usadas en proximos mensajes.
         self.historial.append({"role": "assistant", "content": respuesta.content})
 
-        registrar_uso(tokens_totales)
+        registrar_uso(
+            tokens_entrada_totales,
+            tokens_salida_totales,
+            tokens_cache_escritura_totales,
+            tokens_cache_lectura_totales,
+        )
 
         self.after(
             0,

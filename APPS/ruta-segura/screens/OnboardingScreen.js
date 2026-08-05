@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   icon: { fontSize: 40 },
   bienvenida: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
+    color: 'rgba(255,255,255,0.8)',
     letterSpacing: 2,
     textTransform: 'uppercase',
     textAlign: 'center',

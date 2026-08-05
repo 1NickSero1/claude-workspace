@@ -5,7 +5,7 @@ import { CATEGORIAS } from '../data/categorias';
 import Watermark from '../components/Watermark';
 
 export default function MenuPrincipalScreen({ navigation, route }) {
-  const { nombre, idioma, estado } = route?.params || {};
+  const { nombre, idioma, estado, modoAnonimo } = route?.params || {};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -17,7 +17,7 @@ export default function MenuPrincipalScreen({ navigation, route }) {
           <TouchableOpacity
             style={styles.sosMini}
             activeOpacity={0.8}
-            onPress={() => navigation.navigate('SOS', { idioma, nombre, estado })}
+            onPress={() => navigation.navigate('SOS', { idioma, nombre, estado, modoAnonimo })}
             accessibilityRole="button"
             accessibilityLabel={idioma === 'en' ? 'Emergency, go to SOS screen' : 'Emergencia, ir a pantalla SOS'}
           >
@@ -26,13 +26,15 @@ export default function MenuPrincipalScreen({ navigation, route }) {
           </TouchableOpacity>
 
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{(nombre || 'A')[0].toUpperCase()}</Text>
+            <Text style={styles.avatarText}>{modoAnonimo ? '🔒' : (nombre || 'A')[0].toUpperCase()}</Text>
           </View>
         </View>
 
         {/* Saludo */}
         <View style={styles.saludo}>
-          <Text style={styles.saludoTexto}>Hola, {nombre || 'amiga'}</Text>
+          <Text style={styles.saludoTexto}>
+            {modoAnonimo ? (idioma === 'en' ? 'Hello 👋' : 'Hola 👋') : `Hola, ${nombre || 'amiga'}`}
+          </Text>
           <Text style={styles.estadoTexto}>📍 {estado}</Text>
         </View>
 
@@ -46,7 +48,7 @@ export default function MenuPrincipalScreen({ navigation, route }) {
             key={cat.id}
             style={styles.card}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('Categoria', { id: cat.id, idioma, estado, nombre })}
+            onPress={() => navigation.navigate('Categoria', { id: cat.id, idioma, estado, nombre, modoAnonimo })}
           >
             <View style={[styles.cardIcon, { backgroundColor: cat.light }]}>
               <Text style={styles.cardEmoji}>{cat.emoji}</Text>

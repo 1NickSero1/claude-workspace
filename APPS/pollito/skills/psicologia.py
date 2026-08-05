@@ -8,16 +8,13 @@ Tiene memoria persistente entre sesiones (herramienta memory_20250818,
 manejada en skills/memoria.py, compartida por las 5 skills) para que "la vaya
 conociendo" con el tiempo, y para trackear que conceptos de psicologia ya le
 fue ensenando (ella quiere aprender sobre el tema de a poco).
-
-TODO: nombre personalizado de esta skill pendiente - el usuario lo dara
-mas adelante, antes de cerrar el proyecto.
 """
 import tema
 from config import MEMORY_TOOL, WEB_SEARCH_TOOL
 from skills.base import VistaChat, construir_intro_bienvenida
 from skills.memoria import crear_manejador_memoria
 
-TITULO = "Psicologia"  # TODO: reemplazar por nombre personalizado
+TITULO = "Nube"
 
 # Primer mensaje que ve Sofi al entrar a la vista, como si la skill le
 # hablara primero (ver skills/base.py).
@@ -67,6 +64,6 @@ def crear_vista(parent, volver):
         volver=volver,
         tools=[WEB_SEARCH_TOOL, MEMORY_TOOL],
         acento=tema.ACENTOS[TITULO],
-        manejador_herramienta_cliente=crear_manejador_memoria("psicologia"),
+        manejadores_herramientas_cliente={"memory": crear_manejador_memoria("psicologia")},
         mensaje_bienvenida=BIENVENIDA,
     )

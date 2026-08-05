@@ -21,9 +21,9 @@ BOTON_PRINCIPAL_HOVER = "#E8829F"
 # Un tono de rosa distinto por skill - diferencia cada ventana de chat sin
 # salirse de la misma familia de colores.
 ACENTOS = {
-    "Maquillaje y Skincare": "#F7B6D2",  # rosa bebe
-    "Moda": "#EC7FA9",  # rosa fucsia suave
-    "Finanzas": "#D9A4B5",  # rosa antiguo / mauve
-    "Gym y Nutricion": "#F48FB1",  # rosa chicle
-    "Psicologia": "#E6A8C0",  # rosa polvo, tono mas calmado
+    "Rosita": "#F7B6D2",  # rosa bebe (Maquillaje y Skincare)
+    "Glow": "#EC7FA9",  # rosa fucsia suave (Moda)
+    "Monito": "#D9A4B5",  # rosa antiguo / mauve (Finanzas)
+    "Kiwi": "#F48FB1",  # rosa chicle (Gym y Nutricion)
+    "Nube": "#E6A8C0",  # rosa polvo, tono mas calmado (Psicologia)
 }

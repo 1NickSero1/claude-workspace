@@ -124,7 +124,7 @@ export const RECURSOS = {
   },
 };
 
-function normalizar(str) {
+export function normalizar(str) {
   return (str || '')
     .toLowerCase()
     .normalize('NFD')

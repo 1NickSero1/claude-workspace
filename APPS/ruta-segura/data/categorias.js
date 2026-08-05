@@ -14,6 +14,7 @@ export const CATEGORIAS = [
         sub: 'Por etapa migratoria',
         desc: 'Conecta con mujeres en tu misma etapa: recién llegada, en tránsito o ya establecida. No estás sola.',
         accion: 'Unirme a un foro',
+        chipSugerido: 'Otro',
       },
       {
         emoji: '📍',
@@ -21,6 +22,7 @@ export const CATEGORIAS = [
         sub: 'Mapa local verificado',
         desc: 'Consulados, clínicas pro-bono, iglesias de ayuda y refugios actualizados en tu estado.',
         accion: 'Ver mapa de recursos',
+        chipSugerido: 'Otro',
       },
       {
         emoji: '🌟',
@@ -28,6 +30,7 @@ export const CATEGORIAS = [
         sub: 'Mujer a mujer · Sin costo',
         desc: 'Habla con una mujer que ya pasó por lo mismo. Voluntarias verificadas, disponibles hoy.',
         accion: 'Pedir una mentora',
+        chipSugerido: 'Otro',
       },
       {
         emoji: '📚',
@@ -35,6 +38,7 @@ export const CATEGORIAS = [
         sub: 'Gratuitos · En tu área',
         desc: 'Clases de inglés para migrantes. Presenciales y online, sin costo. Certificados reconocidos.',
         accion: 'Ver cursos disponibles',
+        chipSugerido: 'Otro',
       },
     ],
   },
@@ -53,6 +57,7 @@ export const CATEGORIAS = [
         sub: 'Cerca de ti',
         desc: 'Directorio actualizado de bancos de alimentos, despensas comunitarias y comedores.',
         accion: 'Buscar bancos',
+        chipSugerido: 'Otro',
       },
       {
         emoji: '🍎',
@@ -60,6 +65,7 @@ export const CATEGORIAS = [
         sub: 'Guía y aplicación',
         desc: 'Te explicamos paso a paso cómo aplicar a los programas de asistencia alimentaria del gobierno.',
         accion: 'Guía SNAP/WIC',
+        chipSugerido: 'Otro',
       },
       {
         emoji: '🏢',
@@ -67,6 +73,7 @@ export const CATEGORIAS = [
         sub: 'Por ciudad',
         desc: 'Organizaciones no gubernamentales que ofrecen despensas y comidas calientes sin documentos.',
         accion: 'Ver ONGs',
+        chipSugerido: 'Otro',
       },
     ],
   },
@@ -85,6 +92,7 @@ export const CATEGORIAS = [
         sub: 'Pro-bono · Sin costo',
         desc: 'Red de abogadas con licencia verificada en el State Bar. Especializadas en inmigración y asilo.',
         accion: 'Encontrar mi abogada',
+        chipSugerido: 'Legal',
       },
       {
         emoji: '📋',
@@ -92,6 +100,7 @@ export const CATEGORIAS = [
         sub: 'Asilo · DACA · Trabajo',
         desc: 'Formularios pre-llenados con instrucciones en español. Asilo, DACA y permisos de trabajo.',
         accion: 'Ver formularios',
+        chipSugerido: 'Documentos',
       },
       {
         emoji: '🌐',
@@ -99,6 +108,7 @@ export const CATEGORIAS = [
         sub: 'Bilingüe · Confidencial',
         desc: 'Voluntarias bilingües te ayudan a traducir documentos oficiales. Servicio verificado y sin costo.',
         accion: 'Solicitar traducción',
+        chipSugerido: 'Documentos',
       },
     ],
   },
@@ -117,6 +127,7 @@ export const CATEGORIAS = [
         sub: 'Aprende a tu ritmo',
         desc: 'Videos cortos sobre tus derechos, cómo navegar el sistema de salud y cómo integrarte.',
         accion: 'Ver cápsulas',
+        chipSugerido: 'Otro',
       },
       {
         emoji: '📅',
@@ -124,6 +135,7 @@ export const CATEGORIAS = [
         sub: 'Encuentros',
         desc: 'Talleres, ferias de recursos y encuentros comunitarios en tu área.',
         accion: 'Ver eventos',
+        chipSugerido: 'Otro',
       },
       {
         emoji: '💜',
@@ -138,6 +150,7 @@ export const CATEGORIAS = [
         sub: 'Tu país en EE.UU.',
         desc: 'Directorio de consulados latinoamericanos por estado. Documentos, emergencias y servicios consulares.',
         accion: 'Encontrar mi consulado',
+        chipSugerido: 'Documentos',
       },
       {
         emoji: '👩‍💼',
@@ -172,6 +185,7 @@ export const CATEGORIAS = [
         sub: 'Cercanos a ti',
         desc: 'Lista de casas de acogida y refugios verificados en tu estado. Disponibles ahora.',
         accion: 'Ver refugios cerca',
+        chipSugerido: 'Vivienda',
       },
       {
         emoji: '💗',
@@ -179,6 +193,7 @@ export const CATEGORIAS = [
         sub: 'Bilingüe · Sin costo',
         desc: 'Habla con una psicóloga bilingüe. Confidencial. Respuesta en menos de 24 horas.',
         accion: 'Pedir apoyo',
+        chipSugerido: 'Psicológica',
       },
     ],
   },

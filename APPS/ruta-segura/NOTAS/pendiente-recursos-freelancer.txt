@@ -1,0 +1,30 @@
+========================================
+  pendiente-recursos-freelancer.txt
+  Proyecto: ruta-segura
+  Origen: hallazgo de la auditoria "Revision a Fondo" (30-jul-2026)
+  Para: Ana / Carolina (misma persona — Founder & CEO, Ana's Immigration Solutions LLC)
+========================================
+
+[PENDIENTE — preguntarle a Ana]
+
+Faltan recursos verificados (Legal + Violencia de genero, como minimo) para:
+
+  - California
+  - Texas
+  - New York
+
+Son los 3 primeros botones grandes en la pantalla de seleccion de estado
+(EstadoScreen.js) y los 3 estados con mas poblacion migrante latina del pais —
+hoy no tienen ningun dato cargado en data/recursos.js, asi que la seccion
+"Recursos verificados en tu zona" no aparece para ninguno de los tres.
+
+Los demas estados (Florida, Georgia, North/South Carolina, Tennessee, Boston,
+Las Vegas, Seattle) se cargaron a partir de un documento real del freelancer
+(Directorio_de_Recursos_EEUU_Julio_2026.pdf, ver PDF/). Hace falta pedirle el
+mismo tipo de directorio verificado para California, Texas y New York antes
+de sumarlos al codigo — no se debe inventar esta informacion (nombres de
+abogadas, refugios, telefonos) en una app de este tipo.
+
+Una vez llegue el documento: cargarlo en data/recursos.js siguiendo el mismo
+formato que las demas regiones (nombre, desc, contacto, sitio) y agregar los
+alias correspondientes ('California', 'Texas', 'New York') en el objeto ALIAS.

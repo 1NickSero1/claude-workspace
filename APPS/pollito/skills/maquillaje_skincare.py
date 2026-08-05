@@ -1,14 +1,10 @@
-"""Skill: Maquillaje y Skincare.
-
-TODO: nombre personalizado de esta skill pendiente - el usuario lo dara
-mas adelante, antes de cerrar el proyecto.
-"""
+"""Skill: Maquillaje y Skincare."""
 import tema
 from config import MEMORY_TOOL, WEB_SEARCH_TOOL
 from skills.base import VistaChat, construir_intro_bienvenida
 from skills.memoria import crear_manejador_memoria
 
-TITULO = "Maquillaje y Skincare"  # TODO: reemplazar por nombre personalizado
+TITULO = "Rosita"
 
 # Primer mensaje que ve Sofi al entrar a la vista, como si la skill le
 # hablara primero (ver skills/base.py).
@@ -57,6 +53,6 @@ def crear_vista(parent, volver):
         volver=volver,
         tools=[WEB_SEARCH_TOOL, MEMORY_TOOL],
         acento=tema.ACENTOS[TITULO],
-        manejador_herramienta_cliente=crear_manejador_memoria("maquillaje_skincare"),
+        manejadores_herramientas_cliente={"memory": crear_manejador_memoria("maquillaje_skincare")},
         mensaje_bienvenida=BIENVENIDA,
     )

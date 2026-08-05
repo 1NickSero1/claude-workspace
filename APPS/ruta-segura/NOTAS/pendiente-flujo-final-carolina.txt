@@ -1,0 +1,126 @@
+========================================
+  pendiente-flujo-final-carolina.txt
+  Proyecto: ruta-segura
+  Origen: revision de flujo funcional pedida por Nicolas (30-jul-2026)
+  Para: Ana / Carolina (misma persona — Founder & CEO, Ana's Immigration Solutions LLC)
+========================================
+
+[PENDIENTE — pedirle a Carolina]
+
+Se revisaron los 18 botones de accion dentro de las categorias (CategoriaScreen.js /
+data/categorias.js) para ver si cada uno lleva a un destino real y funcional, o si
+solo abre el formulario generico "Mi Caso". Resultado: 14 de 18 (78%) no tienen
+destino propio — prometen algo distinto pero todos caen en el mismo formulario.
+
+Los otros 4 SI funcionan y no necesitan nada nuevo:
+  - "Contacta a Ana Laverde" (Social) -> abre WhatsApp real
+  - "AYUDA INMEDIATA" (Violencia) -> pantalla SOS real (911, lineas de crisis, etc.)
+  - Boton SOS en menu/onboarding -> misma pantalla SOS
+  - "Llamar" / "Sitio oficial" en Recursos verificados -> reales, pero solo existen
+    para Legal y Violencia, y solo en 8 estados (ver pendiente-recursos-freelancer.txt)
+
+------------------------------------------------------------
+🏘️ COMUNIDAD (4 de 4 sin destino — la peor categoria)
+------------------------------------------------------------
+
+1. "Unirme a un foro" (Foros de apoyo)
+   Que hace falta: ¿existe ya un grupo real (WhatsApp/Facebook/Discord) de apoyo
+   entre mujeres migrantes al que conectarlas? Si no existe todavia, decir si se
+   deja como "proximamente" mientras se arma.
+
+2. "Ver mapa de recursos" (Recursos cerca de ti)
+   Que hace falta: listado o mapa real de consulados, clinicas pro-bono, iglesias
+   de ayuda y refugios, por estado. Mismo tipo de fuente que el directorio de
+   Legal/Violencia (ver pendiente-recursos-freelancer.txt).
+
+3. "Pedir una mentora" (Mentoria)
+   Que hace falta: esto es mas una solicitud de contacto que contenido para
+   mostrar — probablemente se resuelve dejandolo como formulario, pero con el
+   chip/categoria corregido (hoy no calza con ninguna opcion del formulario).
+   Confirmar si el proceso real de match mentor-mentee es distinto a esto.
+
+4. "Ver cursos disponibles" (Cursos de ingles) — EJEMPLO que dio Nicolas
+   Que hace falta: recursos reales y gratuitos de ingles para migrantes.
+   Propuesta (a confirmar antes de usar): USAHello, clases gratuitas de
+   bibliotecas publicas locales, recursos ESL de USCIS. Confirmar si Carolina
+   tiene algo mas especifico/verificado antes de cargar cualquier link.
+
+------------------------------------------------------------
+🧺 ALIMENTACION (3 de 3 sin destino)
+------------------------------------------------------------
+
+1. "Buscar bancos" (Bancos de comida)
+   Que hace falta: directorio real por estado, o confirmar si sirve un buscador
+   nacional conocido (ej. Feeding America) en vez de listado propio por estado.
+
+2. "Guia SNAP/WIC"
+   Que hace falta: contenido real explicando como aplicar — puede ser guia propia
+   verificada o referencia a la fuente oficial (USDA/FNS).
+
+3. "Ver ONGs"
+   Que hace falta: directorio de ONGs por estado (mismo tipo de fuente que el
+   directorio de Legal/Violencia).
+
+------------------------------------------------------------
+⚖️ LEGAL (3 tarjetas genericas sin destino — los recursos reales de abajo ya
+   funcionan para los 8 estados que tienen datos)
+------------------------------------------------------------
+
+1. "Encontrar mi abogada" (Abogadas verificadas)
+   Que hace falta: como "Pedir una mentora" — es una solicitud de match, no
+   contenido para mostrar. Confirmar si el proceso real es distinto al formulario.
+
+2. "Ver formularios" (Formularios listos — Asilo/DACA/Trabajo)
+   Que hace falta: confirmar si se puede enlazar directo a los formularios
+   oficiales de USCIS (I-589 asilo, I-821D DACA, I-765 permiso de trabajo) o si
+   Carolina tiene formularios pre-llenados propios como dice el texto actual.
+
+3. "Solicitar traduccion" (Traduccion de documentos)
+   Que hace falta: como "Pedir una mentora" — solicitud de servicio, no contenido.
+   Confirmar el proceso real (¿hay voluntarias bilingues ya organizadas?).
+
+------------------------------------------------------------
+📖 SOCIAL (4 de 5 sin destino — "Contacta a Ana Laverde" ya funciona)
+------------------------------------------------------------
+
+1. "Ver capsulas" (Capsulas educativas)
+   Que hace falta: ¿existen videos cortos ya grabados? Si no, decidir si se deja
+   como "proximamente".
+
+2. "Ver eventos"
+   Que hace falta: calendario real de talleres/ferias/encuentros, o dejar como
+   "sin eventos programados por ahora" en vez de prometer algo que no existe.
+
+3. "Ser embajadora"
+   Que hace falta: proceso real para unirse al programa (¿formulario? ¿WhatsApp
+   directo?).
+
+4. "Encontrar mi consulado"
+   Que hace falta: directorio de consulados latinoamericanos por estado
+   (nombre, direccion, telefono, sitio oficial).
+
+------------------------------------------------------------
+💜 VIOLENCIA DE GENERO (2 de 3 sin destino — el boton SOS ya funciona)
+------------------------------------------------------------
+
+1. "Ver refugios cerca" (Refugios seguros)
+   Que hace falta: mismo tipo de directorio que Legal/Violencia por estado
+   (ver pendiente-recursos-freelancer.txt) — posiblemente ya cubierto ahi mismo,
+   confirmar con Carolina si refugios ya estan incluidos en ese directorio.
+
+2. "Pedir apoyo" (Apoyo emocional)
+   Que hace falta: como "Pedir una mentora" — solicitud de contacto con
+   psicologa bilingue, no contenido para mostrar. Confirmar proceso real.
+
+------------------------------------------------------------
+NOTA
+------------------------------------------------------------
+Los items marcados como "solicitud de contacto" (Mentoria, Abogadas, Traduccion,
+Embajadoras, Apoyo emocional) no necesariamente requieren contenido nuevo de
+Carolina — se pueden resolver arreglando el formulario "Mi Caso" para que tenga
+sentido con lo que promete cada boton. Eso lo resuelve Claude directamente en el
+codigo, sin depender de esta lista.
+
+Los que si dependen de Carolina son los de contenido real para mostrar: mapa de
+recursos, cursos de ingles, bancos de comida, guia SNAP/WIC, ONGs, formularios,
+capsulas, eventos, consulados y refugios.
