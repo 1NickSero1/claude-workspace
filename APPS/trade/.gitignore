@@ -8,3 +8,6 @@ dist/
 .env
 secreto.py
 .pytest_cache/
+
+# Memoria de coaching de la skill TRADE (local-only, no es código de la app)
+equipo/

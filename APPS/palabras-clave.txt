@@ -12,6 +12,7 @@ detras). La fuente de verdad de COMO funciona cada una varia segun el tipo:
 - Generales y las que tienen hook real -> CLAUDE.md (secciones "Palabra(s) Clave de ...")
 - MEJORAX -> SKILLS/FIXA.md
 - "abre el servidor" / "actualiza el plan" -> RECETAS/receta-apps.txt
+- TEST INICIAL FINANCIERO -> SKILLS/TEST-INICIAL-FINANCIERO.md
 Aqui solo va el resumen rapido de una linea por palabra.
 
 --------------------------------------------------------------------------------------------------------------
@@ -32,6 +33,7 @@ REVISION A FONDO       | Auditar+visualizar      | Especifica de skill         |
 "abre el servidor"     | Levantar                | Contextual (proyecto activo)| wallet-control Y ruta-segura
 "actualiza el plan"    | Regenerar               | Especifica de proyecto      | Solo wallet-control (por ahora)
 SUBIR PROYECTO (*)     | Buildear                | Especifica de proyecto      | Solo wallet-control (eas build)
+TEST INICIAL FINANCIERO| Diagnosticar            | General (sin hook real)     | Cualquier persona, fuera de proyectos
 --------------------------------------------------------------------------------------------------------------
 (*) No esta escrita todavia en ningun archivo del repo (ni CLAUDE.md, ni NOTAS, ni RECETAS) - solo
     vive en la memoria de Claude entre sesiones. Riesgo real de perderse si esa memoria se borra.
@@ -92,6 +94,17 @@ Detalle de cada una:
 - SUBIR PROYECTO: segun la memoria de Claude, en wallet-control dispara
   "eas build --platform android --profile preview" - distinto de SUBIR (que es git push). No
   confirmado por escrito en ningun archivo del repo todavia.
+- TEST INICIAL FINANCIERO: sin hook real (regla de comportamiento, definida en
+  SKILLS/TEST-INICIAL-FINANCIERO.md) - corre un test interactivo de perfil emprendedor (una
+  pregunta a la vez, 12-15 preguntas de opcion multiple) y entrega un informe final en 7 secciones
+  (perfil, habilidad, negocio ideal, por donde empezar, plan de 90 dias, errores a evitar,
+  recursos), generado tambien en PDF automatico (Puppeteer, sin preguntar si se quiere PDF - mismo
+  criterio que PDF AUDITA/IMAGINA). No esta atada a wallet-control/ruta-segura ni a ninguna persona
+  fija - cada vez que se dispara, Claude relee el archivo desde cero y el informe se construye solo
+  con las respuestas de esa sesion, sin mezclar perfiles de otras personas ni de sesiones
+  anteriores. El PDF se guarda en P.P/<PERSONA>/ si quien responde tiene carpeta ahi (Nico por
+  defecto, o Sofi/Sebas/Mateo si se indica), o en SKILLS/TEST-INICIAL-FINANCIERO/PDF/ (gitignorada)
+  si es alguien sin carpeta propia en el repo.
 
 Ultima actualizacion: 2026-07-09 (agregadas MEJORAX, "abre el servidor", "actualiza el plan" y
 SUBIR PROYECTO tras una revision completa del repo; eliminados los indices duplicados que vivian
@@ -108,3 +121,9 @@ invoca una skill nueva, FREE, en vez de PECAS.
 2026-07-29: agregada REVISION A FONDO (hook real en revision-a-fondo.ps1) - primera palabra clave
 que combina DOS skills de diagnostico (AUDITA + ESTETIK) en un solo PDF, en vez de invocar una
 sola. PECAS y FIXA quedan disponibles para aplicar los hallazgos despues, si se pide.
+
+2026-08-12: agregada TEST INICIAL FINANCIERO (sin hook real, mismo patron que MEJORAX) - primera
+palabra clave que no esta atada a ningun proyecto de APPS/ ni a una persona fija: corre un test
+interactivo de diagnostico de perfil emprendedor para cualquiera que lo tome, con aislamiento
+explicito entre sesiones/personas para que el informe final nunca se contamine con respuestas de
+otra sesion.

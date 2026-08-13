@@ -33,7 +33,6 @@
     },
     "owner": "nicksero",
     "plugins": [
-      "expo-status-bar",
       [
         "expo-splash-screen",
         {

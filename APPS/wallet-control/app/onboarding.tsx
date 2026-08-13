@@ -11,8 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   saveUserProfile, getUserProfile, UserProfile, BudgetPeriod,
-  addIncomes, getCurrentMonthKey, saveBudget,
-  migrateNamespaceData, wipeNamespaceData, saveCard, getCards, Card, appendCardEvent,
+  addIncomes, getCurrentMonthKey, saveBudget, creditCashFromIncome,
+  migrateNamespaceData, wipeNamespaceData,
   getCategories, saveCategory, CustomCategory, saveRecurringDefinition,
 } from '@/lib/storage';
 import { scheduleRecurringReminder } from '@/lib/notifications';
@@ -315,8 +315,10 @@ export default function OnboardingScreen() {
         const day = new Date().getDate();
         const quincena: 1 | 2 = day <= 15 ? 1 : 2;
         const notificationId = await scheduleRecurringReminder('Sueldo', 'monthly', new Date());
+        const incomeId = `inc_${Date.now()}`;
+        const fundedCardId = await creditCashFromIncome(amount, 'Sueldo', incomeId);
         await addIncomes(monthKey, [{
-          id: `inc_${Date.now()}`,
+          id: incomeId,
           description: 'Sueldo',
           amount,
           quincena,
@@ -325,37 +327,8 @@ export default function OnboardingScreen() {
           isRecurring: true,
           recurrenceFrequency: 'monthly',
           notificationId,
+          fundedCardId,
         }]);
-
-        // Un ingreso por sí solo no es dinero "en" ninguna cuenta — sin esto,
-        // alguien que recién puso su ingreso fijo no tendría con qué
-        // registrar ni un solo gasto (Registrar gasto solo deja elegir
-        // cuentas con saldo disponible). Se fondea (o se crea) una cuenta
-        // de Efectivo con ese monto para arrancar con saldo real.
-        const existingCards = await getCards();
-        const cashCard = existingCards.find(c => c.type === 'cash');
-        let cashCardId: string;
-        if (cashCard) {
-          await saveCard({ ...cashCard, balance: (cashCard.balance ?? 0) + amount });
-          cashCardId = cashCard.id;
-        } else {
-          const newCash: Card = {
-            id: `card_${Date.now()}`,
-            name: 'Efectivo',
-            type: 'cash',
-            bank: '',
-            lastFour: '',
-            color: COLORS.cash,
-            emoji: '💵',
-            balance: amount,
-            createdAt: new Date().toISOString(),
-          };
-          await saveCard(newCash);
-          cashCardId = newCash.id;
-        }
-        // Queda registrado en el mini historial de Efectivo que este depósito
-        // vino del ingreso fijo mensual, no como un aumento de saldo sin explicar.
-        await appendCardEvent(cashCardId, { type: 'deposit', amount, date: new Date().toISOString(), note: 'Sueldo' });
       }
       setStep('fixedExpense');
     } catch (e: any) {
@@ -495,6 +468,16 @@ export default function OnboardingScreen() {
     },
 
     // Welcome
+    bgGlowTop: {
+      position: 'absolute', top: -80, right: -60,
+      width: 260, height: 260, borderRadius: 130,
+      backgroundColor: COLORS.primary, opacity: 0.18,
+    },
+    bgGlowBottom: {
+      position: 'absolute', bottom: -100, left: -80,
+      width: 300, height: 300, borderRadius: 150,
+      backgroundColor: COLORS.debit, opacity: 0.10,
+    },
     welcomeScroll: { flexGrow: 1 },
     welcomeContainer: {
       flexGrow: 1, paddingHorizontal: 28, paddingTop: 48, paddingBottom: 36,
@@ -502,27 +485,33 @@ export default function OnboardingScreen() {
     },
     topBlock: { width: '100%', alignItems: 'center' },
     midBlock: { width: '100%' },
-    bottomBlock: { width: '100%' },
+    bottomBlock: { width: '100%', alignItems: 'center' },
     logoWrap: {
-      width: 88, height: 88, borderRadius: 44,
+      width: 88, height: 88, borderRadius: 26,
       alignItems: 'center', justifyContent: 'center',
       marginBottom: SPACING.xl,
-      elevation: 4, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25, shadowRadius: 10,
+      elevation: 6, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.35, shadowRadius: 14,
     },
-    logoMonogram: { color: '#fff', fontWeight: '900', fontSize: 40 },
     welcomeTitle: { color: COLORS.text, fontWeight: '900', fontSize: 32, marginBottom: 10 },
     welcomeSub: {
       color: COLORS.textMuted, fontSize: FONT.base, textAlign: 'center',
       lineHeight: 24,
     },
-    featureList: { width: '100%', gap: 14 },
-    featureRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+    featureCard: {
+      width: '100%', backgroundColor: COLORS.card, borderRadius: RADIUS.xl,
+      borderWidth: 1, borderColor: COLORS.border, padding: SPACING.lg,
+      elevation: 3, shadowColor: COLORS.shadow,
+      shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 12,
+    },
+    featureRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingVertical: 12 },
+    featureRowDivider: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
     featureIcon: {
       width: 36, height: 36, borderRadius: 10,
       backgroundColor: COLORS.primaryBg, alignItems: 'center', justifyContent: 'center',
     },
     featureText: { flex: 1, color: COLORS.text, fontSize: FONT.md, lineHeight: 20 },
+    welcomeFooterNote: { color: COLORS.textDim, fontSize: FONT.xs, marginTop: 12, textAlign: 'center' },
 
     // Choice
     choiceContainer: { flexGrow: 1, paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl, paddingBottom: SPACING.xxl },
@@ -558,7 +547,7 @@ export default function OnboardingScreen() {
     },
 
     // Form
-    formScroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl, paddingBottom: 40 },
+    formScroll: { flexGrow: 1, justifyContent: 'flex-start', paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl, paddingBottom: 40 },
     backBtn: {
       width: 40, height: 40, borderRadius: RADIUS.md,
       backgroundColor: COLORS.card, alignItems: 'center', justifyContent: 'center',
@@ -592,6 +581,7 @@ export default function OnboardingScreen() {
 
     // Inputs
     label: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 6, marginTop: 14 },
+    nicknameHint: { color: COLORS.textDim, fontSize: FONT.xs, marginTop: 6 },
     inputWrap: { position: 'relative' },
     input: {
       backgroundColor: COLORS.card, borderRadius: RADIUS.md, padding: 14,
@@ -671,6 +661,11 @@ export default function OnboardingScreen() {
   if (step === 'welcome') {
     return (
       <SafeAreaView style={styles.safe}>
+        {/* Resplandores de fondo — antes era un bg plano; le dan profundidad
+            sin depender de ningún asset/imagen externa. */}
+        <View style={styles.bgGlowTop} pointerEvents="none" />
+        <View style={styles.bgGlowBottom} pointerEvents="none" />
+
         <TouchableOpacity
           onPress={toggleTheme}
           style={styles.themeToggleBtn}
@@ -689,7 +684,7 @@ export default function OnboardingScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.logoWrap}
             >
-              <Text style={styles.logoMonogram}>W</Text>
+              <Ionicons name="wallet" size={36} color="#fff" />
             </LinearGradient>
             <Text style={styles.welcomeTitle}>Wallet Control</Text>
             <Text style={styles.welcomeSub}>
@@ -698,14 +693,14 @@ export default function OnboardingScreen() {
           </View>
 
           <View style={styles.midBlock}>
-            <View style={styles.featureList}>
+            <View style={styles.featureCard}>
               {[
-                { icon: 'hardware-chip-outline', text: 'Finando IA registra tus gastos en lenguaje natural' },
-                { icon: 'card-outline',          text: 'Gestiona cuentas débito y tarjetas de crédito' },
-                { icon: 'bar-chart-outline',     text: 'Resumen visual de tus finanzas del mes' },
-                { icon: 'flag-outline',          text: 'Metas de ahorro con historial de aportes' },
-              ].map(f => (
-                <View key={f.icon} style={styles.featureRow}>
+                { icon: 'hardware-chip-outline', text: 'Le cuentas a Finando lo que gastaste, como a un amigo, y él lo anota' },
+                { icon: 'card-outline',          text: 'Todas tus cuentas y tarjetas, en un solo lugar' },
+                { icon: 'bar-chart-outline',     text: 'Gráficas claras para saber en qué se te va la plata' },
+                { icon: 'flag-outline',          text: 'Metas de ahorro que sí puedes seguir de cerca' },
+              ].map((f, i, arr) => (
+                <View key={f.icon} style={[styles.featureRow, i < arr.length - 1 && styles.featureRowDivider]}>
                   <View style={styles.featureIcon}>
                     <Ionicons name={f.icon as any} size={18} color={COLORS.primary} />
                   </View>
@@ -716,9 +711,11 @@ export default function OnboardingScreen() {
           </View>
 
           <View style={styles.bottomBlock}>
-            <TouchableOpacity onPress={() => setStep('choice')} style={styles.primaryBtn}>
-              <Text style={styles.primaryBtnText}>Únete a la comunidad 🚀</Text>
+            <TouchableOpacity onPress={() => setStep('choice')} style={styles.primaryBtn} activeOpacity={0.85}>
+              <Text style={styles.primaryBtnText}>Vamos a organizar tu plata</Text>
+              <Ionicons name="arrow-forward" size={18} color="#fff" />
             </TouchableOpacity>
+            <Text style={styles.welcomeFooterNote}>Gratis, sin tarjeta y tus datos se quedan en tu celular</Text>
           </View>
         </View>
         </ScrollView>
@@ -1227,7 +1224,7 @@ export default function OnboardingScreen() {
           </View>
 
           {/* Nickname / nombre de usuario */}
-          <Text style={styles.label}>¿Cómo quieres que te llame Finando? (tu nombre de usuario)</Text>
+          <Text style={styles.label}>¿Cómo te llamamos?</Text>
           <TextInput
             style={styles.input}
             value={nickname}
@@ -1236,6 +1233,7 @@ export default function OnboardingScreen() {
             placeholderTextColor={COLORS.textDim}
             autoCapitalize="words"
           />
+          <Text style={styles.nicknameHint}>Así te va a llamar Finando, tu asesor financiero con IA, cuando lo necesites.</Text>
 
           {/* Email */}
           <Text style={styles.label}>Correo electrónico</Text>

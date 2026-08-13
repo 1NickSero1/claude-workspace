@@ -1,0 +1,9 @@
+{
+  "name": "test-inicial-financiero-pdf",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Generador de PDF del informe final del TEST INICIAL FINANCIERO (puppeteer, HTML embebido -> PDF).",
+  "dependencies": {
+    "puppeteer": "^24.0.0"
+  }
+}

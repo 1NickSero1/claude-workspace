@@ -7,6 +7,9 @@ export interface CardEvent {
   amount: number;
   date: string;
   note?: string;
+  // Vincula un depósito con el Income que lo generó (ver creditCashFromIncome)
+  // — permite revertir/ajustar el saldo si ese ingreso se borra o se edita.
+  incomeId?: string;
 }
 
 export interface Card {
@@ -73,6 +76,11 @@ export interface Income {
   isRecurring?: boolean;
   recurrenceFrequency?: RecurrenceFrequency;
   notificationId?: string;
+  // Cuenta que creditCashFromIncome fondeó al registrar este ingreso — si
+  // está presente, borrar o cambiar el monto del ingreso ajusta esa cuenta
+  // también (ver deleteIncome/updateIncome). Ausente en ingresos viejos que
+  // nunca fondearon ninguna cuenta (no hay nada que revertir ahí).
+  fundedCardId?: string;
 }
 
 export interface GoalDeposit {
@@ -380,6 +388,75 @@ export async function deleteCard(id: string): Promise<void> {
   });
 }
 
+// Un ingreso registrado por sí solo no es dinero "en" ninguna cuenta — sin
+// esto, cualquier ingreso (fijo del onboarding o suelto desde Registrar) deja
+// a la persona sin con qué pagar un gasto, porque Registrar gasto solo deja
+// elegir cuentas con saldo disponible. Se fondea (o se crea) la cuenta de
+// Efectivo con el monto del ingreso, igual para ambos flujos.
+// Devuelve el id de la cuenta fondeada — quien llama lo guarda como
+// Income.fundedCardId para poder revertir/ajustar este depósito después
+// (ver reverseIncomeCashCredit/adjustIncomeCashCredit).
+export async function creditCashFromIncome(amount: number, note: string, incomeId?: string): Promise<string> {
+  const existingCards = await getCards();
+  const cashCard = existingCards.find(c => c.type === 'cash');
+  let cashCardId: string;
+  if (cashCard) {
+    await saveCard({ ...cashCard, balance: (cashCard.balance ?? 0) + amount });
+    cashCardId = cashCard.id;
+  } else {
+    const newCash: Card = {
+      id: `card_${Date.now()}`,
+      name: 'Efectivo',
+      type: 'cash',
+      bank: '',
+      lastFour: '',
+      color: '#00C896',
+      emoji: '💵',
+      balance: amount,
+      createdAt: new Date().toISOString(),
+    };
+    await saveCard(newCash);
+    cashCardId = newCash.id;
+  }
+  await appendCardEvent(cashCardId, { type: 'deposit', amount, date: new Date().toISOString(), note, incomeId });
+  return cashCardId;
+}
+
+// Quita el depósito que creditCashFromIncome generó para un ingreso y
+// descuenta su monto de la cuenta — se llama al borrar ese ingreso, para
+// que el saldo no quede inflado en silencio. Si la cuenta ya no existe
+// (se eliminó aparte) no hay nada que ajustar.
+async function reverseIncomeCashCredit(cardId: string, incomeId: string, amount: number): Promise<void> {
+  const ns = await getActiveNamespace();
+  return withKeyLock(K_CARDS(ns), async () => {
+    const cards = await getCards();
+    const idx = cards.findIndex(c => c.id === cardId);
+    if (idx < 0) return;
+    const events = (cards[idx].events ?? []).filter(e => e.incomeId !== incomeId);
+    cards[idx] = { ...cards[idx], balance: (cards[idx].balance ?? 0) - amount, events };
+    await AsyncStorage.setItem(K_CARDS(ns), JSON.stringify(cards));
+  });
+}
+
+// Corrige el depósito que creditCashFromIncome generó para un ingreso cuando
+// se le cambia el monto — ajusta la cuenta por la diferencia y actualiza el
+// monto del depósito en el historial, en vez de dejar los dos desalineados.
+async function adjustIncomeCashCredit(cardId: string, incomeId: string, newAmount: number): Promise<void> {
+  const ns = await getActiveNamespace();
+  return withKeyLock(K_CARDS(ns), async () => {
+    const cards = await getCards();
+    const idx = cards.findIndex(c => c.id === cardId);
+    if (idx < 0) return;
+    const events = cards[idx].events ?? [];
+    const eventIdx = events.findIndex(e => e.incomeId === incomeId);
+    if (eventIdx < 0) return;
+    const delta = newAmount - events[eventIdx].amount;
+    const updatedEvents = events.map((e, i) => i === eventIdx ? { ...e, amount: newAmount } : e);
+    cards[idx] = { ...cards[idx], balance: (cards[idx].balance ?? 0) + delta, events: updatedEvents };
+    await AsyncStorage.setItem(K_CARDS(ns), JSON.stringify(cards));
+  });
+}
+
 export async function appendCardEvent(cardId: string, event: CardEvent): Promise<void> {
   const ns = await getActiveNamespace();
   return withKeyLock(K_CARDS(ns), async () => {
@@ -593,20 +670,36 @@ export async function addIncomes(monthKey: string, incomes: Income[]): Promise<v
 
 export async function updateIncome(monthKey: string, updated: Partial<Income> & { id: string }): Promise<void> {
   const ns = await getActiveNamespace();
-  return withKeyLock(K_EXP(ns, monthKey), async () => {
+  const cashAdjust = await withKeyLock(K_EXP(ns, monthKey), async () => {
     const data = await getMonthData(monthKey);
+    const existing = data.incomes.find(i => i.id === updated.id);
+    const adjust = existing?.fundedCardId && updated.amount !== undefined && updated.amount !== existing.amount
+      ? { cardId: existing.fundedCardId, newAmount: updated.amount }
+      : null;
     data.incomes = data.incomes.map(i => i.id === updated.id ? { ...i, ...updated } : i);
     await AsyncStorage.setItem(K_EXP(ns, monthKey), JSON.stringify(data));
+    return adjust;
   });
+  if (cashAdjust) {
+    await adjustIncomeCashCredit(cashAdjust.cardId, updated.id, cashAdjust.newAmount);
+  }
 }
 
 export async function deleteIncome(monthKey: string, id: string): Promise<void> {
   const ns = await getActiveNamespace();
-  return withKeyLock(K_EXP(ns, monthKey), async () => {
+  const cashReverse = await withKeyLock(K_EXP(ns, monthKey), async () => {
     const data = await getMonthData(monthKey);
+    const existing = data.incomes.find(i => i.id === id);
+    const reverse = existing?.fundedCardId
+      ? { cardId: existing.fundedCardId, amount: existing.amount }
+      : null;
     data.incomes = data.incomes.filter(i => i.id !== id);
     await AsyncStorage.setItem(K_EXP(ns, monthKey), JSON.stringify(data));
+    return reverse;
   });
+  if (cashReverse) {
+    await reverseIncomeCashCredit(cashReverse.cardId, id, cashReverse.amount);
+  }
 }
 
 export async function assignCardToExpenses(

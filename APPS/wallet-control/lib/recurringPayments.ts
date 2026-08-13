@@ -52,16 +52,23 @@ export function splitRecurringByPaid(
 // Para mostrar "Pagados en la quincena X": splitRecurringByPaid clasifica un
 // gasto MENSUAL como pagado si hay match en cualquiera de las dos quincenas
 // del mes (a propósito — pagar en la quincena 1 no debe volver a pedirlo en
-// la 2). Pero eso hacía que ese mismo gasto apareciera listado como "pagado"
-// en AMBAS quincenas aunque solo se pagó en una. Este filtro es solo para la
-// lista visible — no cambia si algo cuenta como pendiente o pagado.
+// la 2). Este filtro es solo para la lista visible — no cambia si algo
+// cuenta como pendiente o pagado.
+//
+// Un gasto MENSUAL no se organiza por quincena (igual que uno semanal) — si
+// se filtrara por "quincena === quincena actual", un gasto pagado en la
+// quincena 1 desaparecía de la lista de pagados en cuanto la quincena que se
+// está viendo cambiaba a la 2 (por rollover de fecha, por navegar la
+// pantalla, o al cambiar la periodicidad de la cuenta), dando la impresión
+// de que no se había pagado. Se muestra como pagado si hay match en
+// cualquiera de las dos quincenas del mes, igual que splitRecurringByPaid.
 export function paidInQuincena(
   paid: RecurringTemplate[],
   expenses: Expense[],
   quincena: 1 | 2,
 ): RecurringTemplate[] {
   return paid.filter(t => {
-    if (t.frequency === 'weekly') return true; // no se organiza por quincena
+    if (t.frequency === 'weekly' || t.frequency === 'monthly') return true;
     return expenses.some(e =>
       e.quincena === quincena
       && e.name.trim().toLowerCase() === t.name.trim().toLowerCase()

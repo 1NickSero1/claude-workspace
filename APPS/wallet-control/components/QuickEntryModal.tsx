@@ -5,13 +5,16 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { router } from 'expo-router';
 import { COLORS as _COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { useColors } from '@/constants/ThemeContext';
 import BottomSheet from './BottomSheet';
 import CardView from './CardView';
+import CategoryFormModal from './CategoryFormModal';
 import {
   CustomCategory, Card, Expense, Income, RecurrenceFrequency,
-  getCurrentMonthKey, addExpenses, addIncomes, getCardCurrentCycleSpent,
+  getCurrentMonthKey, addExpenses, addIncomes, getCardCurrentCycleSpent, creditCashFromIncome,
+  saveCategory,
 } from '@/lib/storage';
 import { getPayableCards, getCardAvailable } from '@/lib/recurringPayments';
 import { scheduleRecurringReminder } from '@/lib/notifications';
@@ -40,14 +43,35 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
   const [frequency, setFrequency] = useState<RecurrenceFrequency>('monthly');
   const [incomeDate, setIncomeDate] = useState<Date | null>(null);
   const [showIncomeDatePicker, setShowIncomeDatePicker] = useState(false);
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  // Copia local editable — permite que una categoría creada al vuelo (sin
+  // salir de este formulario) aparezca de inmediato en la grilla, sin
+  // esperar a que el padre recargue su propia lista (eso solo pasa cuando
+  // este modal se cierra del todo).
+  const [localCategories, setLocalCategories] = useState<CustomCategory[]>(categories);
 
   const payableCards = useMemo(() => getPayableCards(cards, expenses), [cards, expenses]);
 
+  useEffect(() => { setLocalCategories(categories); }, [categories]);
+
+  async function handleCreateCategory(cat: CustomCategory) {
+    await saveCategory(cat);
+    setLocalCategories(prev => [...prev, cat]);
+    setSelectedCategoryId(cat.id);
+    setCategoryModalVisible(false);
+  }
+
+  function handleManageCategories() {
+    onClose();
+    router.push('/categorias');
+  }
+
   useEffect(() => {
     if (visible) {
-      setType(initialType ?? 'gasto');
+      const startType = initialType ?? 'gasto';
+      setType(startType);
       setAmount('');
-      setDescription('');
+      setDescription(startType === 'ingreso' ? 'Sueldo' : '');
       setSelectedCategoryId(null);
       setSelectedCardId(null);
       setSaving(false);
@@ -103,13 +127,17 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
         await addExpenses(monthKey, [expense]);
       } else {
         const incomeQuincena: 1 | 2 = incomeDate ? (incomeDate.getDate() <= 15 ? 1 : 2) : quincena;
+        const incomeId = `inc_${Date.now()}`;
+        const incomeDescription = description.trim() || 'Ingreso';
+        const fundedCardId = await creditCashFromIncome(finalAmount, incomeDescription, incomeId);
         const income: Income = {
-          id: `inc_${Date.now()}`,
-          description: description.trim() || 'Ingreso',
+          id: incomeId,
+          description: incomeDescription,
           amount: finalAmount,
           quincena: incomeQuincena,
           createdAt: incomeDate ? incomeDate.toISOString() : now,
           monthKey,
+          fundedCardId,
         };
         await addIncomes(monthKey, [income]);
       }
@@ -163,6 +191,10 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
     },
     dateIconText: { color: COLORS.debit, fontSize: 10, fontWeight: '700' },
     fieldLabel: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: 8 },
+    fieldLabelRow: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    },
+    manageCatText: { color: COLORS.primary, fontSize: FONT.sm, fontWeight: '700', marginBottom: 8 },
     cardScroll: { marginBottom: SPACING.md },
     cardChipRow: { flexDirection: 'row', gap: SPACING.sm, paddingRight: SPACING.md },
     noFundsBox: {
@@ -176,15 +208,20 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
       gap: SPACING.sm, paddingBottom: SPACING.sm, marginBottom: SPACING.sm,
     },
     categoryCell: {
-      width: '30.5%', alignItems: 'center', paddingVertical: 10, paddingHorizontal: SPACING.xs,
-      borderRadius: 14, borderWidth: 1.5, borderColor: COLORS.border,
+      width: '30.5%', alignItems: 'center', paddingVertical: 6, paddingHorizontal: SPACING.xs,
+      borderRadius: 10, borderWidth: 1.5, borderColor: COLORS.border,
       backgroundColor: COLORS.bg, position: 'relative',
     },
     catIconCircle: {
-      width: 44, height: 44, borderRadius: 22,
-      alignItems: 'center', justifyContent: 'center', marginBottom: 6,
+      width: 24, height: 24, borderRadius: 12,
+      alignItems: 'center', justifyContent: 'center', marginBottom: 3,
     },
     catName: { color: COLORS.textMuted, fontSize: 11, textAlign: 'center' },
+    newCategoryCell: {
+      width: '30.5%', alignItems: 'center', paddingVertical: 6, paddingHorizontal: SPACING.xs,
+      borderRadius: 10, borderWidth: 1.5, borderColor: COLORS.primary + '60', borderStyle: 'dashed',
+      backgroundColor: 'transparent',
+    },
     checkDot: {
       position: 'absolute', top: 6, right: 6,
       width: 16, height: 16, borderRadius: RADIUS.sm,
@@ -217,6 +254,7 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
   const activeBg = isGasto ? COLORS.creditBg : COLORS.debitBg;
 
   return (
+    <>
     <BottomSheet
       visible={visible}
       onClose={onClose}
@@ -251,7 +289,7 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.toggleBtn, !isGasto && { backgroundColor: COLORS.debitBg, borderColor: COLORS.debit }]}
-                onPress={() => setType('ingreso')}
+                onPress={() => { setType('ingreso'); setDescription(d => d.trim() === '' ? 'Sueldo' : d); }}
                 activeOpacity={0.8}
               >
                 <Ionicons name="arrow-up-circle" size={16} color={!isGasto ? COLORS.debit : COLORS.textDim} />
@@ -279,15 +317,14 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
             {/* Category grid */}
             {isGasto && (
               <>
-                <Text style={styles.fieldLabel}>Elige una categoría disponible</Text>
-                {categories.length === 0 && (
-                  <View style={styles.noFundsBox}>
-                    <Ionicons name="pricetags-outline" size={18} color={COLORS.danger} />
-                    <Text style={styles.noFundsText}>Todavía no tienes categorías. Créalas desde Personaliza tu vida financiera.</Text>
-                  </View>
-                )}
+                <View style={styles.fieldLabelRow}>
+                  <Text style={styles.fieldLabel}>Elige una categoría disponible</Text>
+                  <TouchableOpacity onPress={handleManageCategories} accessibilityRole="button" accessibilityLabel="Gestionar todas las categorías">
+                    <Text style={styles.manageCatText}>Gestionar</Text>
+                  </TouchableOpacity>
+                </View>
                 <View style={styles.categoryGrid}>
-                  {categories.map(cat => {
+                  {localCategories.map(cat => {
                     const selected = selectedCategoryId === cat.id;
                     return (
                       <TouchableOpacity
@@ -301,8 +338,8 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
                       >
                         <View style={[styles.catIconCircle, { backgroundColor: cat.color + '25' }]}>
                           {cat.emoji
-                            ? <Text style={{ fontSize: 20 }}>{cat.emoji}</Text>
-                            : <Ionicons name={cat.icon as any} size={20} color={cat.color} />}
+                            ? <Text style={{ fontSize: 14 }}>{cat.emoji}</Text>
+                            : <Ionicons name={cat.icon as any} size={14} color={cat.color} />}
                         </View>
                         <Text style={[styles.catName, selected && { color: cat.color, fontWeight: '700' }]} numberOfLines={1}>
                           {cat.name}
@@ -315,6 +352,20 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
                       </TouchableOpacity>
                     );
                   })}
+                  <TouchableOpacity
+                    style={styles.newCategoryCell}
+                    onPress={() => setCategoryModalVisible(true)}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel="Crear nueva categoría"
+                  >
+                    <View style={[styles.catIconCircle, { backgroundColor: COLORS.bg }]}>
+                      <Ionicons name="add" size={16} color={COLORS.primary} />
+                    </View>
+                    <Text style={[styles.catName, { color: COLORS.primary, fontWeight: '700' }]} numberOfLines={1}>
+                      Nueva
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </>
             )}
@@ -358,12 +409,13 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
             )}
 
             {/* Description */}
+            <Text style={styles.fieldLabel}>{isGasto ? 'Descripción (opcional)' : 'Descripción'}</Text>
             <View style={styles.descRow}>
               <TextInput
                 style={[styles.descInput, { flex: 1 }]}
                 value={description}
                 onChangeText={setDescription}
-                placeholder={isGasto ? 'Descripción (opcional)' : 'Descripción'}
+                placeholder={isGasto ? 'Ej: Mercado, Uber...' : 'Ej: Sueldo, Freelance...'}
                 placeholderTextColor={COLORS.textDim}
                 returnKeyType="done"
               />
@@ -441,6 +493,13 @@ export default function QuickEntryModal({ visible, categories, cards, expenses, 
             </TouchableOpacity>
           </ScrollView>
     </BottomSheet>
+    <CategoryFormModal
+      visible={categoryModalVisible}
+      categories={localCategories}
+      onSave={handleCreateCategory}
+      onClose={() => setCategoryModalVisible(false)}
+    />
+    </>
   );
 }
 

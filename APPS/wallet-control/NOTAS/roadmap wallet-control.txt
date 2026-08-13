@@ -108,6 +108,14 @@ Costo estimado: ~$0.40 USD/usuario activo/mes
 Objetivo: publicar en tiendas, conseguir base de usuarios reales,
 validar el producto a escala antes de monetizar.
 
+Pendiente (agregado 2026-08-08, pedido por Sebas): login con Google y
+Facebook, además de correo/contraseña. Factible con Supabase Auth (ya
+integrado en lib/supabase.ts) sin costo adicional de licencia — falta
+crear las apps en Google Cloud Console y Meta for Developers (gratis)
+e integrar el flujo (expo-auth-session o SDK nativo). Si algún día se
+publica en iOS, Apple exige ofrecer también "Sign in with Apple" junto
+a cualquier login social.
+
 ===============================================================
 V3.0 — Capa premium: asistente financiero personal
 ===============================================================

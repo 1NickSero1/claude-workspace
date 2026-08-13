@@ -6,12 +6,14 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-# TODO: nombre definitivo de la app (placeholder, mismo patron que Pollito
-# arranco generico y se personalizo despues) - lo mismo aplica al mensaje de
-# bienvenida especial que Pollito tiene en main.py (ver
-# MENSAJE_BIENVENIDA_ESPECIAL alla) y que aca todavia no existe: falta
-# definir con el usuario la ocasion/motivo del regalo para Sebas.
-APP_NAME = "Trade"
+# Nombre definitivo, elegido por el usuario (2026-08-06) - "copiloto" ya era
+# el rol que describe el SYSTEM_PROMPT, TradePilot lo hace parte del nombre.
+# TODO: sigue pendiente el mensaje de bienvenida ESPECIAL (como el de
+# aniversario que tiene Pollito en main.py, ver MENSAJE_BIENVENIDA_ESPECIAL
+# alla) - el usuario todavia no dijo si hay una ocasion/motivo puntual para
+# Sebas o si el regalo va sin fecha especial. BIENVENIDA de mas abajo ya usa
+# el nombre nuevo, pero es el saludo de siempre, no uno especial de una sola vez.
+APP_NAME = "TradePilot"
 NOMBRE_USUARIO = "Sebas"
 
 MODEL_ID = "claude-sonnet-5"
@@ -190,9 +192,23 @@ PRECIO_CACHE_ESCRITURA_POR_MTOK = PRECIO_INPUT_POR_MTOK * 2.0
 PRECIO_CACHE_LECTURA_POR_MTOK = PRECIO_INPUT_POR_MTOK * 0.1
 
 BIENVENIDA = (
-    f"Hola {NOMBRE_USUARIO} - soy tu copiloto de trading e inversion. Te "
-    "ayudo a pensar el analisis de mercado, la gestion de riesgo y a "
-    "mantener la cabeza fria a la hora de operar. ¿En que estas mirando hoy?"
+    f"Hola {NOMBRE_USUARIO}, soy {APP_NAME} - tu copiloto de trading e "
+    "inversion. Te ayudo a pensar el analisis de mercado, la gestion de "
+    "riesgo y a mantener la cabeza fria a la hora de operar. ¿En que estas mirando hoy?"
+)
+
+# Mensaje especial (pedido del usuario, 2026-08-06): aparece UNA sola vez, la
+# primera vez que Sebas abre TradePilot - despues nunca mas (ver
+# _ruta_marca_bienvenida/_mostrar_bienvenida_especial en main.py, mismo
+# mecanismo que Pollito). Es un regalo de cumpleaños de parte del usuario.
+MENSAJE_BIENVENIDA_ESPECIAL = (
+    "Feliz cumpleaños, hermano 🎂\n\n"
+    "Este es tu regalo: te armé a TradePilot con mis propias manos, "
+    "pensando en vos y en todo lo que le metés a esto día a día.\n\n"
+    "Estoy muy orgulloso de vos y de lo lejos que ya llegaste. No estás "
+    "solo en esto - contá conmigo siempre, en las rachas buenas y también "
+    "en las malas.\n\n"
+    "Seguí dándole duro. Vamos a llegar lejos. 💪"
 )
 
 # Perfil real de Sebas, cargado desde TRADING/sebas.md (test diagnostico de
@@ -205,9 +221,10 @@ BIENVENIDA = (
 # NUNCA usar TRADING/nico.md como fuente aca - es el perfil privado del
 # propio usuario para su coaching personal, no tiene nada que ver con este
 # proyecto (regla explicita del usuario, ver memoria del proyecto).
-SYSTEM_PROMPT = f"""Eres un copiloto de trading e inversion para {NOMBRE_USUARIO}. Tu trabajo no
-es dar señales de compra/venta ni garantizar resultados, sino ayudarlo a pensar con claridad y,
-sobre todo, a cerrar la brecha entre lo que el ya sabe y lo que hace bajo presion cuando opera.
+SYSTEM_PROMPT = f"""Te llamas {APP_NAME} y sos el copiloto de trading e inversion de
+{NOMBRE_USUARIO}. Tu trabajo no es dar señales de compra/venta ni garantizar resultados, sino
+ayudarlo a pensar con claridad y, sobre todo, a cerrar la brecha entre lo que el ya sabe y lo que
+hace bajo presion cuando opera.
 
 Lo que ya sabes de {NOMBRE_USUARIO} (perfil real, no generico):
 

@@ -6,8 +6,10 @@ sin pantalla de menu ni boton "Atras".
 """
 import base64
 import io
+import os
 import sys
 import threading
+import tkinter.font as tkfont
 from pathlib import Path
 from tkinter import filedialog
 
@@ -26,6 +28,7 @@ from config import (
     LIMITE_MENSAJES_SESION,
     MAX_TOKENS_RESPUESTA,
     MEMORY_TOOL,
+    MENSAJE_BIENVENIDA_ESPECIAL,
     MODEL_ID,
     NOMBRE_USUARIO,
     REGISTRAR_OPERACION_TOOL,
@@ -124,6 +127,14 @@ FORMATOS_IMAGEN = {
 # rechazar de entrada.
 TAMANO_MAX_IMAGEN_BYTES = 5 * 1024 * 1024
 
+# El cuadro de mensaje crece con lo que va escribiendo (ver
+# _ajustar_alto_entrada) hasta este tope de lineas visuales - de ahi para
+# arriba sigue escribiendo pero el cuadro no crece mas (auto-scroll interno
+# del widget, como WhatsApp/Telegram). Mismo patron y mismos nombres que
+# APPS/pollito/skills/base.py.
+_ENTRADA_LINEAS_MIN = 1
+_ENTRADA_LINEAS_MAX = 5
+
 # Tope de reintentos si el loop server-side de busqueda web pausa
 # (stop_reason == "pause_turn") por llegar a su limite interno de
 # iteraciones. Evita un loop infinito en un caso patologico.
@@ -177,12 +188,23 @@ class VentanaTrade(ctk.CTk):
         # referencia propia - Tkinter la recolecta como basura si nada la
         # retiene, y la miniatura desaparece del chat sola.
         self._miniaturas_refs = []
+        # Estado del cuadro de mensaje (CTkTextbox, sin placeholder nativo
+        # como tenia el CTkEntry viejo - se reimplementa a mano, mismo
+        # patron que APPS/pollito/skills/base.py, ver
+        # _fijar_texto_gris/_limpiar_texto_gris/_al_desenfocar_entrada).
+        self._placeholder_activo = False
+        self._placeholder_texto_actual = "Escribe tu mensaje..."
+        self._entrada_tiene_foco = False
 
         self._construir_ui()
         # Burbuja fija que explica que hace la app, mostrada como si hablara
         # primero - texto estatico, no se manda a la API ni cuenta contra el
         # limite de mensajes ni el gasto mensual.
         self._agregar_mensaje(APP_NAME, BIENVENIDA)
+        # Se agenda con after() para que la ventana ya este dibujada y
+        # posicionada en pantalla antes de centrar el mensaje especial sobre
+        # ella (winfo_width/height necesitan la ventana ya mapeada).
+        self.after(300, self._mostrar_bienvenida_especial)
 
     def _bloquear_maximizado(self, event=None):
         if self.state() == "zoomed":
@@ -196,6 +218,65 @@ class VentanaTrade(ctk.CTk):
                 self.iconbitmap(str(icono))
             except Exception:
                 pass  # sin icono no rompe la app, solo se ve el default de Tk
+
+    def _ruta_marca_bienvenida(self) -> Path:
+        """Carpeta interna bajo el codename de proyecto ("Trade"), no bajo
+        el nombre de marca ("TradePilot") - mismo criterio que
+        memoria.py/uso_mensual.py/bitacora.py, para que esto no dependa de
+        que el nombre de marca no vuelva a cambiar en el futuro."""
+        base = Path(os.environ.get("APPDATA", str(Path.home()))) / "Trade"
+        base.mkdir(parents=True, exist_ok=True)
+        return base / "bienvenida_especial_mostrada.txt"
+
+    def _mostrar_bienvenida_especial(self):
+        """Ventana modal con el mensaje de cumpleanos - se salta por
+        completo si ya se mostro antes (ver _ruta_marca_bienvenida), asi
+        que en cualquier apertura despues de la primera esto no hace nada.
+        Mismo mecanismo que Pollito, con la estetica propia de TradePilot
+        (sin la tipografia/mascota pensadas para el tema rosa de Pollito)."""
+        if self._ruta_marca_bienvenida().exists():
+            return
+
+        ancho, alto = 340, 420
+        ventana = ctk.CTkToplevel(self)
+        ventana.title("")
+        ventana.geometry(f"{ancho}x{alto}")
+        ventana.resizable(False, False)
+        ventana.configure(fg_color=tema.FONDO)
+        # transient + grab_set: queda encima de la ventana principal y
+        # bloquea que se interactue con ella hasta que la cierre - un
+        # mensaje asi no deberia poder ignorarse sin querer de refilon.
+        ventana.transient(self)
+        ventana.grab_set()
+        ventana.protocol("WM_DELETE_WINDOW", lambda: self._cerrar_bienvenida_especial(ventana))
+
+        ctk.CTkLabel(
+            ventana,
+            text=MENSAJE_BIENVENIDA_ESPECIAL,
+            font=ctk.CTkFont(size=14),
+            text_color=tema.TEXTO,
+            wraplength=280,
+            justify="center",
+        ).pack(pady=(36, 20), padx=24)
+
+        ctk.CTkButton(
+            ventana,
+            text="Gracias 💪",
+            fg_color=tema.BOTON_PRINCIPAL,
+            hover_color=tema.BOTON_PRINCIPAL_HOVER,
+            text_color=tema.TEXTO,
+            command=lambda: self._cerrar_bienvenida_especial(ventana),
+        ).pack(pady=(0, 30))
+
+        # Centrada sobre la ventana principal, no en una esquina cualquiera.
+        self.update_idletasks()
+        x = self.winfo_x() + (self.winfo_width() - ancho) // 2
+        y = self.winfo_y() + (self.winfo_height() - alto) // 2
+        ventana.geometry(f"+{x}+{y}")
+
+    def _cerrar_bienvenida_especial(self, ventana):
+        self._ruta_marca_bienvenida().touch()
+        ventana.destroy()
 
     def _construir_ui(self):
         ctk.CTkLabel(
@@ -236,7 +317,7 @@ class VentanaTrade(ctk.CTk):
 
         self.boton_adjuntar = ctk.CTkButton(
             frame_input,
-            text="📎",
+            text="📷",
             width=40,
             fg_color=tema.FONDO_SECUNDARIO,
             hover_color=tema.BOTON_PRINCIPAL_HOVER,
@@ -245,19 +326,40 @@ class VentanaTrade(ctk.CTk):
         )
         self.boton_adjuntar.pack(side="left", padx=(0, 8))
 
-        self.entrada = ctk.CTkEntry(
+        # CTkTextbox en vez de CTkEntry: crece de a poco a medida que
+        # escribe (ver _ajustar_alto_entrada) para que pueda ver todo el
+        # mensaje, algo que un CTkEntry (una sola linea, sin wrap) no puede
+        # hacer. No tiene placeholder nativo como el CTkEntry - se
+        # reimplementa a mano (_fijar_texto_gris/_limpiar_texto_gris).
+        # Mismo patron que APPS/pollito/skills/base.py.
+        self._entrada_alto_base_px = 32
+        self.entrada = ctk.CTkTextbox(
             frame_input,
-            placeholder_text="Escribe tu mensaje...",
+            height=self._entrada_alto_base_px,
             fg_color=tema.FONDO,
-            text_color=tema.TEXTO,
-            placeholder_text_color=tema.TEXTO_SECUNDARIO,
+            text_color=tema.TEXTO_SECUNDARIO,
             border_color=tema.ACENTO,
             border_width=1,
+            wrap="word",
+            activate_scrollbars=False,
         )
+        self._entrada_alto_por_linea_px = tkfont.Font(
+            font=self.entrada._textbox.cget("font")
+        ).metrics("linespace")
         self.entrada.pack(side="left", fill="x", expand=True, padx=(0, 8))
-        self.entrada.bind("<Return>", lambda evento: self._enviar())
-        self.entrada.bind("<FocusIn>", lambda evento: self.entrada.configure(border_color=tema.TEXTO))
-        self.entrada.bind("<FocusOut>", lambda evento: self.entrada.configure(border_color=tema.ACENTO))
+        # <Return> manda el mensaje en vez de insertar un salto de linea
+        # ("break" corta la propagacion al binding de clase que inserta el
+        # \n por defecto) - Shift+Return es una secuencia distinta, no la
+        # toca este binding, asi que sigue insertando un salto de linea
+        # normal si alguna vez hace falta un mensaje de varias lineas.
+        self.entrada.bind("<Return>", self._al_apretar_enter)
+        self.entrada.bind("<KeyRelease>", self._ajustar_alto_entrada)
+        # CTkTextbox no cambia de color al enfocarse y tampoco tiene
+        # placeholder propio, asi que ambas cosas se resuelven en el mismo
+        # handler de foco.
+        self.entrada.bind("<FocusIn>", self._al_enfocar_entrada)
+        self.entrada.bind("<FocusOut>", self._al_desenfocar_entrada)
+        self._fijar_texto_gris(self._placeholder_texto_actual)
 
         self.boton_enviar = ctk.CTkButton(
             frame_input,
@@ -269,6 +371,76 @@ class VentanaTrade(ctk.CTk):
             command=self._enviar,
         )
         self.boton_enviar.pack(side="right")
+
+    def _texto_entrada_crudo(self) -> str:
+        """Contenido real del cuadro de mensaje, sin el "-1c" final que
+        tkinter.Text siempre agrega (el \\n implicito de fin de buffer)."""
+        return self.entrada.get("1.0", "end-1c")
+
+    def _ajustar_alto_entrada(self, evento=None):
+        """Agranda (o achica) el cuadro de mensaje segun cuantas lineas
+        visuales ocupa el texto actual (contando el wrap real, no solo los
+        saltos de linea explicitos), hasta el tope _ENTRADA_LINEAS_MAX -
+        asi puede ver todo lo que va escribiendo en vez de quedar cortado
+        en una sola linea."""
+        lineas = self.entrada._textbox.count("1.0", "end", "displaylines")
+        lineas = lineas[0] if isinstance(lineas, tuple) else (lineas or 1)
+        lineas = max(_ENTRADA_LINEAS_MIN, min(lineas, _ENTRADA_LINEAS_MAX))
+        alto = self._entrada_alto_base_px + (lineas - 1) * self._entrada_alto_por_linea_px
+        if alto != getattr(self, "_entrada_alto_actual_px", None):
+            self._entrada_alto_actual_px = alto
+            self.entrada.configure(height=alto)
+
+    def _resetear_alto_entrada(self):
+        """Vuelve el cuadro a su alto base (una linea) sin medir nada -
+        usado al limpiar el texto o poner un placeholder (siempre entran en
+        una linea). A diferencia de _ajustar_alto_entrada, no depende de
+        que el widget ya tenga su ancho real asignado por el geometry
+        manager."""
+        if getattr(self, "_entrada_alto_actual_px", None) != self._entrada_alto_base_px:
+            self._entrada_alto_actual_px = self._entrada_alto_base_px
+            self.entrada.configure(height=self._entrada_alto_base_px)
+
+    def _al_apretar_enter(self, evento=None):
+        self._enviar()
+        return "break"
+
+    def _fijar_texto_gris(self, texto: str):
+        """Sobreescribe el cuadro con un texto gris (el placeholder normal
+        o el aviso "Esperando respuesta..." mientras llega la API) -
+        respeta el estado disabled/normal en el que este (un Text
+        deshabilitado no deja hacer insert/delete, hay que reactivarlo un
+        instante y devolverlo como estaba)."""
+        self._placeholder_activo = True
+        # CTkTextbox.cget() no reconoce "state" (solo lo pasa a construir /
+        # configure) - hay que leerlo del tkinter.Text interno directamente.
+        estado_previo = self.entrada._textbox.cget("state")
+        if estado_previo == "disabled":
+            self.entrada.configure(state="normal")
+        self.entrada.delete("1.0", "end")
+        self.entrada.insert("1.0", texto)
+        self.entrada.configure(text_color=tema.TEXTO_SECUNDARIO)
+        if estado_previo == "disabled":
+            self.entrada.configure(state="disabled")
+        self._resetear_alto_entrada()
+
+    def _limpiar_texto_gris(self):
+        if self._placeholder_activo:
+            self._placeholder_activo = False
+            self.entrada.delete("1.0", "end")
+            self.entrada.configure(text_color=tema.TEXTO)
+            self._resetear_alto_entrada()
+
+    def _al_enfocar_entrada(self, evento=None):
+        self._entrada_tiene_foco = True
+        self.entrada.configure(border_color=tema.TEXTO)
+        self._limpiar_texto_gris()
+
+    def _al_desenfocar_entrada(self, evento=None):
+        self._entrada_tiene_foco = False
+        self.entrada.configure(border_color=tema.ACENTO)
+        if self._texto_entrada_crudo() == "":
+            self._fijar_texto_gris(self._placeholder_texto_actual)
 
     def _elegir_imagen(self):
         ruta_elegida = filedialog.askopenfilename(
@@ -431,7 +603,7 @@ class VentanaTrade(ctk.CTk):
         if self._esperando_respuesta:
             return
 
-        mensaje = self.entrada.get().strip()
+        mensaje = "" if self._placeholder_activo else self._texto_entrada_crudo().strip()
         # Se puede mandar solo imagen (sin texto), solo texto, o ambos - lo
         # unico invalido es no mandar nada.
         if not mensaje and self._imagen_adjunta is None:
@@ -454,7 +626,8 @@ class VentanaTrade(ctk.CTk):
             )
             return
 
-        self.entrada.delete(0, "end")
+        self.entrada.delete("1.0", "end")
+        self._resetear_alto_entrada()
 
         bloques = []
         miniatura = None
@@ -481,7 +654,9 @@ class VentanaTrade(ctk.CTk):
         self.frame_adjunto.pack_forget()
 
         self._esperando_respuesta = True
-        self.entrada.configure(state="disabled", placeholder_text="Esperando respuesta...")
+        self._placeholder_texto_actual = "Esperando respuesta..."
+        self.entrada.configure(state="disabled")
+        self._fijar_texto_gris(self._placeholder_texto_actual)
         self.boton_enviar.configure(state="disabled")
         self.boton_adjuntar.configure(state="disabled")
 
@@ -489,9 +664,21 @@ class VentanaTrade(ctk.CTk):
 
     def _finalizar_envio(self):
         self._esperando_respuesta = False
-        self.entrada.configure(state="normal", placeholder_text="Escribe tu mensaje...")
+        self.entrada.configure(state="normal")
         self.boton_enviar.configure(state="normal")
         self.boton_adjuntar.configure(state="normal")
+        self._placeholder_texto_actual = "Escribe tu mensaje..."
+        # Mandar con Enter no le saca el foco al campo - si sigue enfocado
+        # no hay que insertar el placeholder, porque no se va a limpiar
+        # solo cuando siga escribiendo (no se dispara un <FocusIn> nuevo).
+        # Sin este chequeo el placeholder queda insertado de verdad y lo
+        # que escriba a continuacion se pega DESPUES ("Escribe tu
+        # mensaje...hola") en vez de reemplazarlo - este es justo el bug
+        # que se arreglo en Pollito y se porta aca igual.
+        if self._entrada_tiene_foco:
+            self._limpiar_texto_gris()
+        else:
+            self._fijar_texto_gris(self._placeholder_texto_actual)
 
     def _llamar_api(self):
         mensajes = list(self.historial)

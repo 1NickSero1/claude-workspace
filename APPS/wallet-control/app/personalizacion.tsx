@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   getUserProfile, saveUserProfile, UserProfile, BudgetPeriod,
   getMonthData, getCurrentMonthKey, saveBudget, getEffectiveBudget,
-  addIncomes, updateIncome, Income, getCards, saveCard, Card, appendCardEvent,
+  addIncomes, updateIncome, Income, creditCashFromIncome,
 } from '@/lib/storage';
 import { scheduleRecurringReminder } from '@/lib/notifications';
 import { formatCOP, GASTO_HORMIGA_MAX } from '@/lib/expenseParser';
@@ -63,19 +63,23 @@ export default function PersonalizacionScreen() {
 
   const handleSaveIncome = async (amount: number) => {
     if (fixedIncome) {
-      // Ya existe un ingreso fijo este mes — solo se corrige el monto
-      // guardado, sin tocar ninguna cuenta (ese dinero ya se movió).
+      // Ya existe un ingreso fijo este mes — se corrige el monto guardado, y
+      // updateIncome ajusta también el depósito de Efectivo que lo fondeó
+      // (si tiene fundedCardId) para que el saldo no quede desincronizado.
       await updateIncome(monthKey, { id: fixedIncome.id, amount });
       setFixedIncome({ ...fixedIncome, amount });
     } else {
       // Ingreso fijo nuevo para este mes — mismo flujo que el onboarding:
-      // se registra el ingreso Y se fondea (o crea) la cuenta de Efectivo,
-      // para que el monto quede disponible para gastar de inmediato.
+      // se fondea (o crea) la cuenta de Efectivo y se registra el ingreso
+      // con el id de esa cuenta, para poder revertir/ajustar el depósito
+      // si el ingreso se edita o se borra más adelante.
       const day = new Date().getDate();
       const quincena: 1 | 2 = day <= 15 ? 1 : 2;
       const notificationId = await scheduleRecurringReminder('Sueldo', 'monthly', new Date());
+      const incomeId = `inc_${Date.now()}`;
+      const fundedCardId = await creditCashFromIncome(amount, 'Sueldo', incomeId);
       const income: Income = {
-        id: `inc_${Date.now()}`,
+        id: incomeId,
         description: 'Sueldo',
         amount,
         quincena,
@@ -84,34 +88,10 @@ export default function PersonalizacionScreen() {
         isRecurring: true,
         recurrenceFrequency: 'monthly',
         notificationId,
+        fundedCardId,
       };
       await addIncomes(monthKey, [income]);
       setFixedIncome(income);
-
-      const existingCards = await getCards();
-      const cashCard = existingCards.find(c => c.type === 'cash');
-      let cashCardId: string;
-      if (cashCard) {
-        await saveCard({ ...cashCard, balance: (cashCard.balance ?? 0) + amount });
-        cashCardId = cashCard.id;
-      } else {
-        const newCash: Card = {
-          id: `card_${Date.now()}`,
-          name: 'Efectivo',
-          type: 'cash',
-          bank: '',
-          lastFour: '',
-          color: COLORS.cash,
-          emoji: '💵',
-          balance: amount,
-          createdAt: new Date().toISOString(),
-        };
-        await saveCard(newCash);
-        cashCardId = newCash.id;
-      }
-      // Queda registrado en el mini historial de Efectivo que este depósito
-      // vino del ingreso fijo mensual, no como un aumento de saldo sin explicar.
-      await appendCardEvent(cashCardId, { type: 'deposit', amount, date: new Date().toISOString(), note: 'Sueldo' });
     }
     setIncomeModal(false);
   };
@@ -172,8 +152,8 @@ export default function PersonalizacionScreen() {
         <View style={styles.introCard}>
           <Text style={styles.introTitle}>Ajusta la app a tu manera</Text>
           <Text style={styles.introSub}>
-            Esta sección te ayuda a tener una experiencia más personalizada, para que tengas
-            el control total de tu vida financiera.
+            Aquí defines tus categorías, tu presupuesto y qué cuenta como gasto hormiga —
+            para que la app se ajuste a como tú manejas la plata, no al revés.
           </Text>
         </View>
 

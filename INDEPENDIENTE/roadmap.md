@@ -11,17 +11,17 @@ Hoy: 2026-07-29. Plazo: 2026-12-01 (~18 semanas). Meta: clientes fijos generando
 - [ ] Cobrar el resto antes de entregar el código/acceso final, no después de entregarlo
 - [ ] Si algo se siente raro (urgencia falsa, presión, cliente evasivo con los detalles), frenar y preguntarle a FREE antes de aceptar
 
-## Fase 0 — Fundaciones (esta semana, 29 jul - 4 ago)
+## Fase 0 — Fundaciones (real: arrancada 5 ago, no 29 jul — se corrió 1 semana, sin drama, pero sin más deslices)
 
-- [ ] Reescribir LinkedIn: headline y "Acerca de" enfocados en los 3 pilares (documentación, desarrollo de apps, páginas web como próximo paso), no en traducción/locución
-- [ ] Pausar o eliminar los gigs de Fiverr de traducción/locución; crear 2 gigs nuevos ya: documentación/asistencia administrativa, y app móvil simple. El gig de páginas web se activa más adelante (ver Fase 2), cuando haya evidencia que mostrar
-- [ ] Armar portafolio mínimo (una página simple — puede ser Notion o GitHub Pages) con wallet-control y ruta-segura como evidencia de apps, más una sección de documentación/asistencia (describe el tipo de trabajo, sin usar el nombre del cliente)
-- [ ] Confirmar tarifas iniciales por pilar (ya calculadas en `tarifas.md`, revisar que tengan sentido para ti)
+- [x] Reescribir LinkedIn: headline y "Acerca de" enfocados en los 3 pilares (documentación, desarrollo de apps, páginas web como próximo paso), no en traducción/locución — hecho por HUNTER el 12 ago. Nombre completo (Nicolás Seguro Rojas) y foto de perfil actualizados también
+- [x] Pausar o eliminar los gigs de Fiverr de traducción/locución; crear 2 gigs nuevos ya: documentación/asistencia administrativa, y app móvil simple. El gig de páginas web se activa más adelante (ver Fase 2), cuando haya evidencia que mostrar — gig de podcast/locución ya estaba pausado; los 2 gigs nuevos quedaron publicados y activos el 12 ago. Gig de app móvil ya tiene capturas reales de wallet-control y ruta-segura en la galería; el gig de documentación sigue con portada placeholder (no hay evidencia visual real que mostrar por privacidad del cliente)
+- [x] Armar portafolio mínimo (página simple con wallet-control y ruta-segura como evidencia de apps, más la sección de documentación/asistencia) — hecho por HUNTER el 12 ago. Vive en `Documents/GitHub/nicolas-portfolio/` (fuera de `INDEPENDIENTE`, que está en `.gitignore` completo — por eso no podía ir ahí). Falta el último paso: crear el repo en GitHub y activar Pages (Nicolás debe hacerlo, HUNTER no tiene acceso a su cuenta de GitHub) — ver siguiente ítem en Fase 1
+- [x] Confirmar tarifas iniciales por pilar (ya calculadas en `tarifas.md`) — confirmadas por Nicolás el 12 ago
 
 ## Fase 1 — Presencia en vivo + calentamiento (semanas 1-2, 5 - 18 ago)
 
-- [ ] Portafolio publicado y enlazado en LinkedIn y en los gigs de Fiverr
-- [ ] Gigs de Fiverr activos y visibles con los servicios correctos
+- [x] Portafolio publicado y enlazado en LinkedIn y en los gigs de Fiverr — repo `nicolas-portfolio` publicado en GitHub Pages (`https://1nicksero1.github.io/nicolas-portfolio/`) por Nicolás el 12 ago; HUNTER lo enlazó el mismo día en Información de contacto de LinkedIn (sitio web, tipo "cartera") y en la descripción de ambos gigs de Fiverr. De paso se agregó a la descripción del gig de documentación una mención (anónima, por privacidad) de experiencia adicional organizando documentos para alguien cercano
+- [x] Gigs de Fiverr activos y visibles con los servicios correctos — listo el 12 ago
 - [ ] Avisar a TODOS los contactos existentes que ahora ofreces estos servicios (compañeros de panadería, gente de los cursos de IA, cualquier conocido) — el objetivo es que te tengan en mente o te refieran, no vender directamente en el primer mensaje
 - [ ] Meta de la fase: portafolio + gigs en vivo, mínimo 5 personas avisadas
 
