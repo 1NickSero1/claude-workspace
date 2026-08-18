@@ -2,10 +2,12 @@
   "expo": {
     "name": "talking",
     "slug": "talking",
+    "scheme": "talking",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -22,7 +24,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-speech-recognition",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "TALKING necesita el micrófono para escucharte practicar inglés.",
+          "speechRecognitionPermission": "TALKING necesita reconocimiento de voz para transcribir lo que dices en inglés."
+        }
+      ],
       "expo-router"
     ]
   }
