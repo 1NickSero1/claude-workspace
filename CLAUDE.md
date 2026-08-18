@@ -78,12 +78,14 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 ├── SKILLS/AUDITA.md      ← Auditor profesional de proyectos (con PECAS)
 ├── SKILLS/ESTETIK.md     ← Auditor visual y de experiencia de usuario (con PECAS)
 ├── SKILLS/FREE.md        ← Coach de freelance y networking digital
-└── SKILLS/TRADE.md       ← Coach de trading y psicología de mercados (forex/cripto, con FINANDO)
+├── SKILLS/TRADE.md       ← Coach de trading y psicología de mercados (forex/cripto, con FINANDO)
+└── SKILLS/SPEAKY.md      ← Coach de inglés conversacional, práctica por escenarios reales (con PECAS, app TALKING)
 │
 ├── APPS/                 ← Código de todos los proyectos
 │   ├── wallet-control/
 │   ├── ruta-segura/
-│   └── pollito/
+│   ├── pollito/
+│   └── talking/
 │
 ├── INDEPENDIENTE/        ← Plan y seguimiento del negocio freelance (con FREE) — fuera de APPS/
 ├── TRADING/              ← Solo lo compartido de trading (nico.md, equipo.md, bitacora.md, con TRADE) — fuera de APPS/
@@ -199,7 +201,7 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 - Cada vez que se cree una palabra clave nueva (con o sin hook real), agregar una fila en `APPS/palabras-clave.txt` con su significado en una palabra y si es general o específica de una skill/proyecto
 - Todo dato personal (rutinas, ejercicio, alimentación, finanzas, etc. — no proyectos/negocio) de cualquiera de las personas relevantes en este repo se guarda en `P.P/<PERSONA>/`, carpeta local-only en la raíz del repo (gitignorada — no se sincroniza con la máquina del hermano): `P.P/NICO/` (el usuario), `P.P/SOFI/` (novia), `P.P/SEBAS/` (amigo de trading), `P.P/MATEO/` (hermano), y las que se agreguen después. Nunca se mezcla el contenido de una persona con el de otra. Excepción: proyectos de negocio/carrera del usuario (`INDEPENDIENTE/`) y código/apps que le pertenecen a otra persona pero son producto de desarrollo (ej. `APPS/trade` de Sebas, `APPS/pollito` como regalo hecho por el usuario para Sofi) se quedan donde están, solo con una nota de a quién pertenece/para quién es — no se mueven a `P.P/`
 - Esto no es un hook real automático (un script de PowerShell no puede detectar "esto es sobre Sofi" por contenido) — es una regla que Claude aplica activamente cada vez que crea o encuentra algo sobre una de estas personas: lo guarda directo en `P.P/<PERSONA>/` en vez de dejarlo suelto en otra carpeta
-- Para no confundir al usuario con su hermano Mateo (comparten este repo desde máquinas distintas, ver Lección 4 y `feedback_nombres_local_remoto`): lo que se crea o edita en la sesión actual (esta máquina) es de Nico → `P.P/NICO/`. Lo que aparece de golpe tras un `git pull`/auto-sync sin haber sido creado en esta sesión — especialmente si vino en un commit `Auto-sync: <fecha>` — es de la máquina del hermano → se investiga y, si es personal (no código de proyecto), se atribuye a Mateo → `P.P/MATEO/`. Ante la duda real, preguntar antes de asumir de quién es
+- Para no confundir entre los dos hermanos que comparten este repo desde máquinas distintas (ver Lección 4): la atribución depende de **en qué máquina corre la sesión**, no de asumir siempre la misma persona. Lo que se crea o edita en la sesión actual va a `P.P/<PERSONA-DE-ESA-MÁQUINA>/` — en la máquina con usuario de Windows `mateo` (ruta `C:\Users\mateo\...`, git user `MattheW0W`) esa persona es **Mateo**; en la máquina `Lenovo Ideapad` es **Nicolás**. Lo que aparece de golpe tras un `git pull`/auto-sync sin haber sido creado en esta sesión — especialmente si vino en un commit `Auto-sync: <fecha>` — es de la otra máquina → se investiga y, si es personal (no código de proyecto), se atribuye al hermano correspondiente. La cuenta de Claude Code (email) puede ser la misma en ambas máquinas (suscripción compartida) — no sirve para distinguir quién está al teclado. Ante la duda real (máquina nueva, o alguien usando la sesión de su hermano), preguntar directamente antes de asumir de quién es
 
 ---
 
