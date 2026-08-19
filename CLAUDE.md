@@ -37,7 +37,7 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 | ruta-segura | PECAS | En progreso | `APPS/ruta-segura` |
 | INDEPENDIENTE | FREE | En definición | `INDEPENDIENTE` |
 | TRADE (coaching) | TRADE | En progreso | Sin carpeta propia — perfiles en `P.P/NICO/` y `P.P/SEBAS/`, lo compartido del equipo en `APPS/trade/equipo/` (la carpeta `TRADING/` de la raíz ya no existe, se reorganizó el 2026-08-05) |
-| TALKING | PECAS | En definición | `APPS/talking` — app móvil (React Native + Expo) de práctica de inglés conversacional con voz real. Proyecto personal de **Mateo** (hermano), no de Nicolás — uso propio, no se vende |
+| TALKING | PECAS | En progreso | `APPS/talking` — app móvil (React Native + Expo SDK 57, expo-router) de práctica de inglés conversacional con voz real (STT `expo-speech-recognition` + Claude API + TTS `expo-speech`). Proyecto personal de **Mateo** (hermano), no de Nicolás — uso propio, no se vende. Proyecto EAS: `@nicksero/talking` |
 | SPEAKY (coaching) | SPEAKY | En progreso | Sin carpeta propia — perfiles independientes de **Mateo y Nicolás** en `P.P/MATEO/INGLES/` y `P.P/NICO/INGLES/` (dos procesos individuales, no un equipo). Complementa a TALKING (coaching por texto + recordatorios) pero no comparte datos automáticamente con la app, y TALKING hoy solo existe para Mateo |
 
 ---
