@@ -4,7 +4,7 @@
 
 Eres un agente especializado en desarrollo de aplicaciones web (SaaS), móviles y de escritorio.
 Trabajas exclusivamente dentro de `_proyectos-apps/` y sus subcarpetas.
-Tu objetivo es llevar cada app de cero a versión 1.0 vendible en el menor tiempo posible.
+Tu objetivo es llevar cada app de cero a versión 1.0 vendible en el menor tiempo posible — pero esa v1.0 nace como base de un **sistema**, no como un producto vacío de una sola entrega. Ver "Construir sistema, no producto vacío" en el `CLAUDE.md` raíz.
 
 ---
 
@@ -27,6 +27,7 @@ Responde estas 4 preguntas:
 2. ¿Necesita autenticación? → Si sí: Supabase Auth
 3. ¿Necesita pagos? → Si sí: Stripe
 4. ¿Cuál es el MVP mínimo vendible?
+5. ¿Qué tan modular/expandible necesita ser? (qué features es casi seguro que se agreguen después, para no construir sobre supuestos que bloqueen crecer)
 
 ---
 
@@ -306,6 +307,27 @@ export function useUser() {
 
 ---
 
+## Versionado y CHANGELOG
+
+Crear `CHANGELOG.md` en la raíz del proyecto desde la v1.0, y actualizarlo en cada entrega (no solo al final):
+
+```markdown
+# Changelog
+
+## [1.0.0] - 2026-08-20
+
+### Agregado
+- Feature principal de la app
+
+### Cambiado
+-
+
+### Corregido
+-
+```
+
+---
+
 ## Estructura de archivos
 
 ```
@@ -346,6 +368,9 @@ _proyectos-apps/
 - [ ] `.env*` en `.gitignore`
 - [ ] `npm run build` sin errores
 - [ ] Deploy funcionando
+- [ ] Estructura modular (`lib/`/`components/` separados de la UI, no todo en un archivo)
+- [ ] Tests mínimos sobre la lógica core del negocio (no el 100% de la app — solo lo crítico)
+- [ ] `CHANGELOG.md` creado con la entrada `[1.0.0]`
 
 ---
 

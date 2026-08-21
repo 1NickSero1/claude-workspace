@@ -56,6 +56,7 @@ Cuando el usuario pida una skill nueva, produce un archivo `.md` completo con es
 - Sin comentarios obvios en el código de ejemplo
 - Sin `console.log` en producción
 - Sin `any` en TypeScript si se puede evitar
+- Si la skill nueva crea código (apps, webs, scripts, cualquier producto de software) → debe incluir por defecto los principios de "Construir sistema, no producto vacío" del `CLAUDE.md` raíz (estructura modular, versionado + `CHANGELOG.md`, tests mínimos de la lógica core), igual que PECAS y PAKI — no asumir que cada skill nueva parte de cero en esto
 
 ---
 
@@ -87,8 +88,7 @@ Cuando el usuario pida mejorar una skill:
 | FIFAS | SKILLS/FIFAS.md | Análisis estadístico deportivo (fútbol) |
 | AUDITA | SKILLS/AUDITA.md | Auditoría profesional de proyectos (bugs, mejoras, eliminaciones), con PECAS |
 | ESTETIK | SKILLS/ESTETIK.md | Auditoría visual y de experiencia de usuario (diseño, responsive, accesibilidad, microinteracciones) |
-| FREE | SKILLS/FREE.md | Coach de freelance y networking digital |
-| HUNTER | SKILLS/HUNTER.md | Optimizador de perfiles y reclutador de clientes (Fiverr + LinkedIn) |
+| AUTOMATIZA | SKILLS/AUTOMATIZA.md | Detecta tareas repetitivas y las automatiza (scripts, n8n, hooks, bots) |
 | KILLER | SKILLS/KILLER.md | Este mismo generador |
 
 ---
@@ -103,6 +103,7 @@ Cuando el usuario pida evaluar una skill, revisa:
 - [ ] ¿Los comandos frecuentes cubren el 80% de los casos de uso?
 - [ ] ¿El stack está actualizado al año en curso?
 - [ ] ¿La skill es autónoma? (¿puede operar sin leer otras skills?)
+- [ ] Si la skill crea código: ¿aplica "Construir sistema, no producto vacío" del `CLAUDE.md` raíz (estructura modular, versionado, tests mínimos, `CHANGELOG.md`)?
 
 ---
 

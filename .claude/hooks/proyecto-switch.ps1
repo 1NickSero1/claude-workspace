@@ -8,7 +8,6 @@ if ($prompt) {
     if ($t -ieq 'WALLET CONTROL') { $proyecto = 'wallet-control'; $rutaProyecto = "APPS/wallet-control" }
     elseif ($t -ieq 'RUTA SEGURA') { $proyecto = 'ruta-segura'; $rutaProyecto = "APPS/ruta-segura" }
     elseif ($t -ieq 'POLLITO') { $proyecto = 'pollito'; $rutaProyecto = "APPS/pollito" }
-    elseif ($t -ieq 'INDEPENDIENTE') { $proyecto = 'INDEPENDIENTE'; $skill = 'FREE'; $rutaProyecto = "INDEPENDIENTE" }
 
     if ($proyecto) {
         $repoDir = $env:CLAUDE_PROJECT_DIR

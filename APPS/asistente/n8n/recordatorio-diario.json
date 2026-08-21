@@ -1,0 +1,286 @@
+{
+  "name": "recordatorio-diario",
+  "nodes": [
+    {
+      "id": "fb4cb50a-8b90-48ee-903f-04eebb58b991",
+      "name": "Cron: 7am cada dia",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7771bb25-b54b-477f-ad7a-8944fd31270c",
+      "name": "Leer Agenda",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        150
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Agenda"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "0b7bff5b-fc1a-4510-84be-39b7ccebe69d",
+      "name": "Tag agenda",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        150
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all().map(item => { item.json._source = 'agenda'; return item; });"
+      }
+    },
+    {
+      "id": "34c5f3b4-d0b0-4dcf-8a42-7ffd840caf46",
+      "name": "Leer Habitos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        450
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Habitos"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "58b4d42b-61f5-47c4-ad0e-40778316bb34",
+      "name": "Tag habitos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        450
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all().map(item => { item.json._source = 'habitos'; return item; });"
+      }
+    },
+    {
+      "id": "eb247aac-f8d5-46f0-b0a8-a5ad22f48b1f",
+      "name": "Combinar",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        740,
+        300
+      ],
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 2
+      }
+    },
+    {
+      "id": "9b6c7bb0-11f9-49a4-8787-c1b89a04112c",
+      "name": "Armar recordatorio diario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst hoy = new Date().toISOString().slice(0, 10);\nconst agenda = items.filter(i => i.json._source === 'agenda' && i.json.fecha === hoy);\nconst habitosHoy = items.filter(i => i.json._source === 'habitos' && i.json.fecha === hoy);\n\nconst lineas = [`Buenos dias, Nico. Hoy ${hoy}:`];\n\nif (agenda.length) {\n  lineas.push('', 'Agenda de hoy:');\n  for (const a of agenda) {\n    const hora = a.json.hora ? `${a.json.hora} - ` : '';\n    lineas.push(`- ${hora}${a.json.descripcion}`);\n  }\n} else {\n  lineas.push('', 'No tienes nada agendado para hoy.');\n}\n\nif (habitosHoy.length) {\n  lineas.push('', 'Habitos ya registrados hoy:');\n  for (const h of habitosHoy) {\n    lineas.push(`- ${h.json.nombre}: ${h.json.hecho ? 'hecho' : 'pendiente'}`);\n  }\n} else {\n  lineas.push('', 'Todavia no registras habitos hoy -- escribeme cuando hagas alguno.');\n}\n\nreturn [{ json: { mensaje: lineas.join('\\n') } }];"
+      }
+    },
+    {
+      "id": "0e9872a1-0005-4743-bca6-1c442e703e7b",
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "TU_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "TU_NUMERO_WHATSAPP",
+        "textBody": "={{ $json.mensaje }}"
+      },
+      "credentials": {
+        "whatsAppApi": {
+          "id": "",
+          "name": "WhatsApp Cloud API"
+        }
+      }
+    },
+    {
+      "id": "f53b6722-84ff-4a05-bc9e-17fecec2ae96",
+      "name": "Nota: Este workflow lo dis",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        480
+      ],
+      "parameters": {
+        "content": "Este workflow lo dispara el bot, no tu -- es un mensaje 'business-initiated'. Fuera de la ventana de 24h desde tu ultimo mensaje, Meta exige que este envio use una plantilla aprobada, no texto libre. Si el nodo 'Enviar WhatsApp' falla con un error de plantilla, cambia su operacion a enviar plantilla (Send Template) y usa una que hayas aprobado en Meta Business Manager, pasando el texto armado como parametro de la plantilla.",
+        "height": 180,
+        "width": 420
+      }
+    },
+    {
+      "id": "f4ec2918-e4a4-4ab7-b6d3-d675bf6d17f5",
+      "name": "Nota: Reemplaza TU_PHONE_N",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        480
+      ],
+      "parameters": {
+        "content": "Reemplaza TU_PHONE_NUMBER_ID (el de tu app de WhatsApp Cloud API) y TU_NUMERO_WHATSAPP (tu propio numero, en formato internacional sin +, ej 573001234567) antes de activar este workflow.",
+        "height": 140,
+        "width": 380
+      }
+    }
+  ],
+  "connections": {
+    "Cron: 7am cada dia": {
+      "main": [
+        [
+          {
+            "node": "Leer Agenda",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer Habitos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Agenda": {
+      "main": [
+        [
+          {
+            "node": "Tag agenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Habitos": {
+      "main": [
+        [
+          {
+            "node": "Tag habitos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag agenda": {
+      "main": [
+        [
+          {
+            "node": "Combinar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag habitos": {
+      "main": [
+        [
+          {
+            "node": "Combinar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combinar": {
+      "main": [
+        [
+          {
+            "node": "Armar recordatorio diario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar recordatorio diario": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "44a37b57-7d84-4aef-b9ad-076d94bff2b1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

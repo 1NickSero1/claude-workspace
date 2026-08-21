@@ -91,8 +91,17 @@ automática — sin preguntar si se quiere PDF (mismo criterio que `PDF AUDITA`/
 - Generar un script Node.js temporal (en el scratchpad de la sesión) con el HTML del informe
   embebido como string — mismo patrón ya usado en el resto del repo: `page.setContent(html,
   {waitUntil:'networkidle0'})` y `page.pdf({path, format:'A4', printBackground:true})`. Ejecutarlo
-  con `node <script>.js` desde `SKILLS/TEST-INICIAL-FINANCIERO/` (para que resuelva
-  `node_modules/puppeteer` de esa carpeta).
+  con `NODE_PATH="<ruta absoluta a SKILLS/TEST-INICIAL-FINANCIERO/node_modules>" node <script>.js`
+  (el script vive en el scratchpad, no en esa carpeta, así que Node no resuelve
+  `require('puppeteer')` por sí solo sin `NODE_PATH`).
+- **Chrome del propio Puppeteer poco confiable en esta máquina** (detectado 2026-08-12): la
+  descarga automática de Chrome que hace `npm install`/`npx puppeteer browsers install chrome` se
+  corrompió (zip de ~190MB se queda a medias). Esta máquina ya tiene un Chrome funcional cacheado
+  por otra herramienta en `C:\Users\Lenovo Ideapad\.cache\puppeteer\chrome\win64-<version>\
+  chrome-win64\chrome.exe` — antes de reintentar la descarga, revisar
+  `C:\Users\Lenovo Ideapad\.cache\puppeteer\chrome\` por una carpeta `win64-*` que ya tenga
+  `chrome.exe` real adentro, y apuntarla con la variable de entorno `PUPPETEER_EXECUTABLE_PATH` al
+  correr el script.
 - Diseño del HTML: limpio, tipografía legible, una sección por bloque del informe (con su título),
   sin necesidad de igualar el sistema visual de ninguna app — este test no pertenece a ningún
   proyecto de `APPS/`.

@@ -1,0 +1,150 @@
+{
+  "name": "recordatorio-semanal",
+  "nodes": [
+    {
+      "id": "49f63d56-4e2f-4d8b-8763-489ae9f840f3",
+      "name": "Cron: lunes 8am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a23c7773-bee0-488c-ac6f-9b5c0ee639cb",
+      "name": "Leer Pendientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Pendientes"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "f88c38c9-eb17-49a2-afff-f3a70a2e1ae5",
+      "name": "Armar recordatorio semanal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().filter(r => (r.json.estado || '').toLowerCase() !== 'hecho');\n\nif (!rows.length) {\n  return [{ json: { mensaje: 'Buen inicio de semana, Nico. No tienes pendientes abiertos ahora mismo.' } }];\n}\n\nconst lineas = [`Pendientes de la semana (${rows.length}):`];\nfor (const r of rows) {\n  const venc = r.json.fecha_vencimiento ? ` (vence ${r.json.fecha_vencimiento})` : '';\n  lineas.push(`- ${r.json.descripcion}${venc}`);\n}\n\nreturn [{ json: { mensaje: lineas.join('\\n') } }];"
+      }
+    },
+    {
+      "id": "0d6f3d22-fb78-4076-9780-5830b3cabd0a",
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        740,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "TU_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "TU_NUMERO_WHATSAPP",
+        "textBody": "={{ $json.mensaje }}"
+      },
+      "credentials": {
+        "whatsAppApi": {
+          "id": "",
+          "name": "WhatsApp Cloud API"
+        }
+      }
+    },
+    {
+      "id": "637da405-cc46-4e03-8afd-05d17644963f",
+      "name": "Nota: Mismo caso que recor",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        740,
+        480
+      ],
+      "parameters": {
+        "content": "Mismo caso que recordatorio-diario: este mensaje lo inicia el bot, asi que fuera de la ventana de 24h necesita una plantilla aprobada en Meta, no texto libre. Reemplaza TU_PHONE_NUMBER_ID y TU_NUMERO_WHATSAPP antes de activar.",
+        "height": 160,
+        "width": 420
+      }
+    }
+  ],
+  "connections": {
+    "Cron: lunes 8am": {
+      "main": [
+        [
+          {
+            "node": "Leer Pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Pendientes": {
+      "main": [
+        [
+          {
+            "node": "Armar recordatorio semanal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar recordatorio semanal": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "6fef21d2-c7b5-4eba-948c-69edd1a7bf45",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

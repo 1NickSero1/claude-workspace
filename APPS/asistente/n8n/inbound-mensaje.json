@@ -1,0 +1,1118 @@
+{
+  "name": "inbound-mensaje",
+  "nodes": [
+    {
+      "id": "ebeed6c1-988a-45e8-bf77-6f074e91b557",
+      "name": "WhatsApp: mensaje entrante",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        600
+      ],
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      },
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "",
+          "name": "WhatsApp Cloud API"
+        }
+      }
+    },
+    {
+      "id": "df3848b0-283b-41a0-a3cf-161f2b723b6d",
+      "name": "Extraer mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $input.first().json;\nlet value = j;\nif (j.body && j.body.entry) value = j.body.entry[0].changes[0].value;\nelse if (j.entry) value = j.entry[0].changes[0].value;\nconst message = (value.messages && value.messages[0]) || value.message || {};\nconst texto = (message.text && message.text.body) || message.body || j.text || '';\nconst from = message.from || j.from || '';\nconst fecha_hoy = new Date().toISOString().slice(0, 10);\nreturn [{ json: { texto, from, fecha_hoy } }];"
+      }
+    },
+    {
+      "id": "d59e678a-2a1c-4a28-aa9d-1de6d182bd1f",
+      "name": "Preparar prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first().json;\nitem.systemPrompt = 'Eres el asistente personal de Nico. Te escribe por WhatsApp mensajes cortos, informales, a veces sin tildes ni mayusculas, a veces con errores de escritura. Tu unico trabajo es leer el mensaje y devolver un objeto JSON, y nada mas -- sin texto antes, sin texto despues, sin bloque de codigo markdown alrededor.\\n\\nFormato exacto de salida:\\n{\"intent\": \"agregar_pendiente | completar_pendiente | registrar_habito | agregar_evento | marcar_gasto | agregar_abono | agregar_compra | pedir_resumen | conversacion_libre\", \"data\": {}, \"reply\": \"texto breve en espanol, tono cercano, para responder por WhatsApp\"}\\n\\nReglas generales:\\n- Fechas siempre en formato YYYY-MM-DD. Si el usuario no da fecha, usa la fecha de hoy (te la doy en el mensaje del usuario como fecha_hoy).\\n- Montos de dinero siempre como numero entero en pesos colombianos, sin puntos ni signos (ej. \"50 mil\" -> 50000, \"50k\" -> 50000, \"$1.300.000\" -> 1300000).\\n- Si el mensaje no da suficiente informacion para completar un campo obligatorio, usa intent \"conversacion_libre\" y en reply pregunta exactamente lo que falta -- nunca inventes un dato.\\n- reply va siempre en espanol, corto (1-2 frases), sin emojis salvo que el mensaje del usuario los use primero.\\n- Si el mensaje es un saludo, una pregunta general, o no encaja en ninguna intencion de abajo, usa intent \"conversacion_libre\" y responde de forma natural y breve.\\n\\nIntenciones y su data:\\n\\nagregar_pendiente -- el usuario quiere anotar algo por hacer.\\ndata: {\"descripcion\": string, \"categoria\": string opcional default \"personal\", \"fecha_vencimiento\": string o null}\\n\\ncompletar_pendiente -- el usuario dice que ya hizo algo de su lista.\\ndata: {\"descripcion_buscar\": string}\\n\\nregistrar_habito -- el usuario reporta un habito de hoy (hecho o no hecho).\\ndata: {\"nombre\": string, \"hecho\": true o false}\\n\\nagregar_evento -- el usuario quiere agendar algo en una fecha/hora.\\ndata: {\"fecha\": string, \"hora\": string o null, \"descripcion\": string, \"recordar_antes_min\": number o null}\\n\\nmarcar_gasto -- el usuario dice que ya pago (o no) un gasto fijo quincenal existente (arriendo, spotify, internet, etc).\\ndata: {\"descripcion_buscar\": string, \"estado\": \"pagado\"}\\n\\nagregar_abono -- el usuario abono plata a una deuda (Sofi, Mama, Rappi).\\ndata: {\"deuda\": string, \"monto\": number}\\n\\nagregar_compra -- el usuario hizo una compra con la tarjeta (Rappi) que se suma a la deuda.\\ndata: {\"deuda\": \"Rappi\", \"descripcion\": string, \"monto\": number}\\n\\npedir_resumen -- el usuario pregunta como va de plata, pendientes, o habitos.\\ndata: {\"tipo\": \"gastos\" | \"pendientes\" | \"habitos\"}\\n\\nconversacion_libre -- cualquier otra cosa.\\ndata: {}\\n\\nEjemplos:\\n\\nUsuario: \"agregame pagar el internet antes del 25\"\\n{\"intent\":\"agregar_pendiente\",\"data\":{\"descripcion\":\"Pagar el internet\",\"categoria\":\"casa\",\"fecha_vencimiento\":\"2026-08-25\"},\"reply\":\"Anotado: pagar el internet, antes del 25.\"}\\n\\nUsuario: \"ya fui al gym hoy\"\\n{\"intent\":\"registrar_habito\",\"data\":{\"nombre\":\"Gym\",\"hecho\":true},\"reply\":\"Gym marcado hoy. Vamos bien.\"}\\n\\nUsuario: \"abone 50 mil a rappi\"\\n{\"intent\":\"agregar_abono\",\"data\":{\"deuda\":\"Rappi\",\"monto\":50000},\"reply\":\"Abono de $50.000 registrado a Rappi.\"}\\n\\nUsuario: \"compre gasolina por 40k con la tarjeta\"\\n{\"intent\":\"agregar_compra\",\"data\":{\"deuda\":\"Rappi\",\"descripcion\":\"Gasolina\",\"monto\":40000},\"reply\":\"Compra de $40.000 en gasolina sumada a la deuda de Rappi.\"}\\n\\nUsuario: \"como voy este mes\"\\n{\"intent\":\"pedir_resumen\",\"data\":{\"tipo\":\"gastos\"},\"reply\":\"\"}\\n\\nUsuario: \"hola\"\\n{\"intent\":\"conversacion_libre\",\"data\":{},\"reply\":\"Hola Nico, en que te ayudo? Puedo anotar pendientes, marcar habitos, agendar cosas, o decirte como vas de plata.\"}';\nreturn [{ json: item }];"
+      }
+    },
+    {
+      "id": "d934dc81-4baa-4e29-8617-df5910af9b5d",
+      "name": "Claude: clasificar intencion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 500, system: $json.systemPrompt, messages: [{ role: 'user', content: 'Fecha de hoy: ' + $json.fecha_hoy + '\\nMensaje: ' + $json.texto }] }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Anthropic API Key"
+        }
+      }
+    },
+    {
+      "id": "45471d55-d243-4c7e-92f2-71f5e3d2a60c",
+      "name": "Parsear respuesta Claude",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const resp = $input.first().json;\nconst raw = (resp.content && resp.content[0] && resp.content[0].text) || '{}';\nlet text = raw.trim();\nif (text.startsWith('```')) {\n  text = text.replace(/^```(json)?/, '').replace(/```$/, '').trim();\n}\nlet parsed;\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  parsed = { intent: 'conversacion_libre', data: {}, reply: 'No logre entender ese mensaje, me lo repites de otra forma?' };\n}\nconst from = $('Extraer mensaje').item.json.from;\nreturn [{ json: { intent: parsed.intent, data: parsed.data || {}, reply: parsed.reply || '', from } }];"
+      }
+    },
+    {
+      "id": "6f69a74c-c31c-4452-a984-876373c49327",
+      "name": "Enrutar por intencion",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1100,
+        600
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "938775a3-25e9-4060-a7c5-2012e27c6666",
+                    "leftValue": "={{ $json.intent }}",
+                    "rightValue": "agregar_pendiente",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "agregar_pendiente"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "0253463d-2afd-4d50-af0a-b0cfecbcbe70",
+                    "leftValue": "={{ $json.intent }}",
+                    "rightValue": "completar_pendiente",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "completar_pendiente"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "419771a7-10ee-4d78-a255-78d9794375af",
+                    "leftValue": "={{ $json.intent }}",
+                    "rightValue": "registrar_habito",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "registrar_habito"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "e0e0d4e3-90df-4ca7-a6ee-a89ee1d1a4ee",
+                    "leftValue": "={{ $json.intent }}",
+                    "rightValue": "agregar_evento",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "agregar_evento"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "02b3fc6d-8570-43dd-acf3-1c233062fb48",
+                    "leftValue": "={{ $json.intent }}",
+                    "rightValue": "marcar_gasto",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "marcar_gasto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "e3bd369a-ce6f-478f-b0db-1c31fea85b47",
+                    "leftValue": "={{ $json.intent }}",
+                    "rightValue": "agregar_abono",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "agregar_abono"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "67ceb383-54b8-4bf9-834d-5475ec63ecc2",
+                    "leftValue": "={{ $json.intent }}",
+                    "rightValue": "agregar_compra",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "agregar_compra"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "dce33dcf-5efd-414c-86c1-b9ab2784251d",
+                    "leftValue": "={{ $json.intent }}",
+                    "rightValue": "pedir_resumen",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "pedir_resumen"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "conversacion_libre"
+        }
+      }
+    },
+    {
+      "id": "377e35fc-bfe0-4128-86e1-4e11357f9fe4",
+      "name": "Agregar Pendiente",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1380,
+        -700
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Pendientes"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ 'p_' + Date.now() }}",
+            "descripcion": "={{ $json.data.descripcion }}",
+            "categoria": "={{ $json.data.categoria || 'personal' }}",
+            "fecha_creacion": "={{ $('Extraer mensaje').item.json.fecha_hoy }}",
+            "fecha_vencimiento": "={{ $json.data.fecha_vencimiento || '' }}",
+            "estado": "pendiente"
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "9857da86-7c71-4fa2-b06b-c0611c4b37f2",
+      "name": "Leer Pendientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1380,
+        -450
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Pendientes"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "d2e75a9f-3a4a-41b0-b86e-fb6000253f3a",
+      "name": "Buscar pendiente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        -450
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const claude = $('Parsear respuesta Claude').item.json;\nconst buscar = (claude.data.descripcion_buscar || '').toLowerCase();\nconst rows = $input.all();\nlet best = null, bestScore = 0;\nfor (const r of rows) {\n  if ((r.json.estado || '').toLowerCase() === 'hecho') continue;\n  const desc = (r.json.descripcion || '').toLowerCase();\n  if (desc && (desc.includes(buscar) || buscar.includes(desc))) {\n    if (desc.length > bestScore) { best = r.json; bestScore = desc.length; }\n  }\n}\nif (!best) return [{ json: { encontrado: false, id: '__none__' } }];\nreturn [{ json: { id: best.id, encontrado: true } }];"
+      }
+    },
+    {
+      "id": "baa25d47-c20f-4b5b-8d4e-83894e32a50c",
+      "name": "Marcar pendiente hecho",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1820,
+        -450
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Pendientes"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $json.id }}",
+            "estado": "hecho"
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "ba4eef71-37ce-4ac8-b837-6dd2a2e1d196",
+      "name": "Registrar Habito",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1380,
+        -200
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Habitos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ 'h_' + Date.now() }}",
+            "nombre": "={{ $json.data.nombre }}",
+            "frecuencia": "diario",
+            "fecha": "={{ $('Extraer mensaje').item.json.fecha_hoy }}",
+            "hecho": "={{ $json.data.hecho }}",
+            "racha": 0
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "e78dc093-9870-470f-b5f5-1174a5ae9b08",
+      "name": "Agregar Evento",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1380,
+        50
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Agenda"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ 'a_' + Date.now() }}",
+            "fecha": "={{ $json.data.fecha }}",
+            "hora": "={{ $json.data.hora || '' }}",
+            "descripcion": "={{ $json.data.descripcion }}",
+            "recordar_antes_min": "={{ $json.data.recordar_antes_min || '' }}"
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "7aa8f9a6-6196-4570-9f2a-d1470f9e7d39",
+      "name": "Leer GastosQuincenales (marcar)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1380,
+        300
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "GastosQuincenales"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "4411aed0-bfa5-4517-bb8e-a9b65c21f3db",
+      "name": "Buscar gasto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const claude = $('Parsear respuesta Claude').item.json;\nconst buscar = (claude.data.descripcion_buscar || '').toLowerCase();\nconst rows = $input.all();\nlet best = null, bestScore = 0;\nfor (const r of rows) {\n  if ((r.json.estado || '').toLowerCase() !== 'pendiente') continue;\n  const desc = (r.json.descripcion || '').toLowerCase();\n  if (desc && (desc.includes(buscar) || buscar.includes(desc))) {\n    if (desc.length > bestScore) { best = r.json; bestScore = desc.length; }\n  }\n}\nif (!best) return [{ json: { encontrado: false, descripcion: '__none__', quincena: '__none__' } }];\nreturn [{ json: { descripcion: best.descripcion, quincena: best.quincena, encontrado: true } }];"
+      }
+    },
+    {
+      "id": "e2679318-5bc3-4e9e-9428-a6d96b4e6889",
+      "name": "Marcar gasto pagado",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1820,
+        300
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "GastosQuincenales"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "descripcion",
+            "quincena"
+          ],
+          "value": {
+            "descripcion": "={{ $json.descripcion }}",
+            "quincena": "={{ $json.quincena }}",
+            "estado": "pagado"
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "f2e6f40d-e2b6-4237-a8d0-08f0418e0327",
+      "name": "Leer Deudas (abono)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1380,
+        550
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deudas"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "fb81724f-2d60-4720-8ab4-969710ea9ac0",
+      "name": "Sumar abono",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        550
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const claude = $('Parsear respuesta Claude').item.json;\nconst deudaNombre = (claude.data.deuda || '').toLowerCase();\nconst rows = $input.all();\nconst match = rows.find(r => (r.json.nombre || '').toLowerCase() === deudaNombre);\nif (!match) return [{ json: { encontrado: false, nombre: '__none__' } }];\nconst abonoNuevo = parseFloat(claude.data.monto) || 0;\nconst abonadoActual = parseFloat(match.json.abonado) || 0;\nreturn [{ json: { nombre: match.json.nombre, abonado: abonadoActual + abonoNuevo, encontrado: true } }];"
+      }
+    },
+    {
+      "id": "b2e3a505-fb42-4e73-ae38-d8f4608db985",
+      "name": "Actualizar abonado",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1820,
+        550
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deudas"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "nombre"
+          ],
+          "value": {
+            "nombre": "={{ $json.nombre }}",
+            "abonado": "={{ $json.abonado }}"
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "808fb84a-0863-4556-8dc6-5760a2e94c9b",
+      "name": "Agregar Compra Tarjeta",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1380,
+        800
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ComprasTarjeta"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "deuda": "={{ $json.data.deuda }}",
+            "fecha": "={{ $('Extraer mensaje').item.json.fecha_hoy }}",
+            "descripcion": "={{ $json.data.descripcion }}",
+            "monto": "={{ $json.data.monto }}"
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "f79ce707-5683-4240-8a9a-42e393faca31",
+      "name": "Ejecutar resumen-gastos",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1380,
+        1050
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "resumen-gastos"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b5a91f6c-fbcc-4c9a-889d-977014c5b441",
+      "name": "Preparar respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2500,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const base = $('Parsear respuesta Claude').item.json;\nconst mensaje = $json.mensaje || base.reply || 'Listo.';\nreturn [{ json: { to: base.from, mensaje } }];"
+      }
+    },
+    {
+      "id": "8a1eae87-18c2-4763-a42a-b311fb1a2000",
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        2740,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "TU_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $json.to }}",
+        "textBody": "={{ $json.mensaje }}"
+      },
+      "credentials": {
+        "whatsAppApi": {
+          "id": "",
+          "name": "WhatsApp Cloud API"
+        }
+      }
+    },
+    {
+      "id": "65af8a72-5f9f-4f84-a6c0-43625bcb3f9d",
+      "name": "Nota: Revisa este nodo des",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        220,
+        780
+      ],
+      "parameters": {
+        "content": "Revisa este nodo despues de importar: el payload real del webhook de WhatsApp puede variar un poco segun version de n8n. Ejecuta el workflow una vez con un mensaje real y ajusta las rutas texto/from si hace falta (mira el output del nodo 'WhatsApp: mensaje entrante').",
+        "height": 160,
+        "width": 380
+      }
+    },
+    {
+      "id": "aa8d3e52-194d-49fa-b23b-ffcc655a6d03",
+      "name": "Nota: En 'Enrutar por inte",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        780
+      ],
+      "parameters": {
+        "content": "En 'Enrutar por intencion': si las reglas aparecen en rojo al importar, es solo que tu version de n8n espera el operador 'equals' seleccionado de nuevo por el dropdown -- no hay que reescribir nada, 30 segundos por regla.",
+        "height": 160,
+        "width": 380
+      }
+    },
+    {
+      "id": "1a044cf6-aa96-4e7b-a0e1-596875797f01",
+      "name": "Nota: Reemplaza TU_PHONE_N",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2740,
+        480
+      ],
+      "parameters": {
+        "content": "Reemplaza TU_PHONE_NUMBER_ID por el Phone Number ID real que te da Meta al crear la app de WhatsApp Cloud API (Meta for Developers > tu app > WhatsApp > Configuracion de la API).",
+        "height": 140,
+        "width": 340
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp: mensaje entrante": {
+      "main": [
+        [
+          {
+            "node": "Extraer mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer mensaje": {
+      "main": [
+        [
+          {
+            "node": "Preparar prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar prompt": {
+      "main": [
+        [
+          {
+            "node": "Claude: clasificar intencion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: clasificar intencion": {
+      "main": [
+        [
+          {
+            "node": "Parsear respuesta Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear respuesta Claude": {
+      "main": [
+        [
+          {
+            "node": "Enrutar por intencion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutar por intencion": {
+      "main": [
+        [
+          {
+            "node": "Agregar Pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer Pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar Habito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agregar Evento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer GastosQuincenales (marcar)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer Deudas (abono)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agregar Compra Tarjeta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ejecutar resumen-gastos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Pendientes": {
+      "main": [
+        [
+          {
+            "node": "Buscar pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar pendiente": {
+      "main": [
+        [
+          {
+            "node": "Marcar pendiente hecho",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer GastosQuincenales (marcar)": {
+      "main": [
+        [
+          {
+            "node": "Buscar gasto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar gasto": {
+      "main": [
+        [
+          {
+            "node": "Marcar gasto pagado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Deudas (abono)": {
+      "main": [
+        [
+          {
+            "node": "Sumar abono",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sumar abono": {
+      "main": [
+        [
+          {
+            "node": "Actualizar abonado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregar Pendiente": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar pendiente hecho": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Habito": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregar Evento": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar gasto pagado": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar abonado": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregar Compra Tarjeta": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar resumen-gastos": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar respuesta": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "412ead81-b929-4ec6-9a8e-ef0663dec85f",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

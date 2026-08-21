@@ -35,8 +35,8 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 |---|---|---|---|
 | wallet-control | PECAS | En progreso | `APPS/wallet-control` |
 | ruta-segura | PECAS | En progreso | `APPS/ruta-segura` |
-| INDEPENDIENTE | FREE | En definición | `INDEPENDIENTE` |
 | TRADE (coaching) | TRADE | En progreso | Sin carpeta propia — perfiles en `P.P/NICO/` y `P.P/SEBAS/`, lo compartido del equipo en `APPS/trade/equipo/` (la carpeta `TRADING/` de la raíz ya no existe, se reorganizó el 2026-08-05) |
+| asistente (WhatsApp + n8n) | Ninguna (infraestructura, no skill conversacional) | En definición | `APPS/asistente` — asistente personal por WhatsApp (n8n + Claude API + Google Sheets) para pendientes, hábitos, agenda, recordatorios semanales y cuadre de gastos (mismo modelo de datos que el Artifact "Cuadre Quincenal"); falta que Nico monte el VPS/Meta Cloud API siguiendo `SETUP.md` |
 
 ---
 
@@ -77,8 +77,8 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 ├── SKILLS/FIFAS.md       ← Analista estadístico deportivo (fútbol)
 ├── SKILLS/AUDITA.md      ← Auditor profesional de proyectos (con PECAS)
 ├── SKILLS/ESTETIK.md     ← Auditor visual y de experiencia de usuario (con PECAS)
-├── SKILLS/FREE.md        ← Coach de freelance y networking digital
-└── SKILLS/TRADE.md       ← Coach de trading y psicología de mercados (forex/cripto, con FINANDO)
+├── SKILLS/TRADE.md       ← Coach de trading y psicología de mercados (forex/cripto, con FINANDO)
+└── SKILLS/AUTOMATIZA.md  ← Detecta tareas repetitivas y las automatiza (scripts, n8n, hooks, bots)
 │
 ├── APPS/                 ← Código de todos los proyectos
 │   ├── wallet-control/
@@ -103,8 +103,8 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 | Debuggear un error | FIXA | "FIXA, este error: [error]" |
 | Auditar un proyecto (bugs/mejoras/eliminaciones) | AUDITA | "AUDITA" (siempre pregunta cuál proyecto) |
 | Auditar el visual/UX de un proyecto | ESTETIK | "ESTETIK" (siempre pregunta cuál proyecto) |
-| Consulta de freelance/networking/clientes | FREE | "FREE, ¿cuánto debería cobrar por [servicio]?" |
 | Trading, psicología de mercados (con Sebas) | TRADE | "TRADE, hazme el test para saber en qué nivel estoy" |
+| Automatizar una tarea repetitiva | AUTOMATIZA | "AUTOMATIZA, tengo que hacer [tarea] cada semana a mano" |
 
 ---
 
@@ -171,6 +171,17 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 - Manejo de errores solo en boundaries (user input, APIs externas)
 - Serverless/sin backend propio cuando sea posible
 
+### Construir sistema, no producto vacío
+
+> Aplica a **PECAS**, **PAKI**, y a cualquier skill nueva que **KILLER** genere para crear código (apps, webs, scripts). El objetivo no es solo llegar rápido a v1.0 — es que esa v1.0 ya nazca como base de un sistema que se puede seguir vendiendo y mejorando, no un entregable de una sola vez y se olvida.
+
+- Estructura modular desde el día 1 (separar UI / lógica / datos), aunque el proyecto sea chico — no todo en un archivo
+- Git desde el primer commit, con historial real de cambios (no un solo commit gigante al final)
+- Tests mínimos sobre la lógica core del negocio — no el 100% de la app (mismo criterio que ya se aplicó en `wallet-control` tras el hallazgo del corte de tarjeta, ver `lib/__tests__/`)
+- Versionado simple (v1.0, v1.1...) + `CHANGELOG.md` que se actualiza en cada entrega, no solo al final
+- Documentar decisiones de arquitectura no obvias (por qué ese stack, por qué esa estructura de datos) — para poder retomar el proyecto meses después sin perder el hilo
+- Pensar el pricing/empaquetado desde la Fase 0, no como ocurrencia de último momento
+
 ---
 
 ## Formato de Respuesta
@@ -199,7 +210,13 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 - Cada vez que se cree una palabra clave nueva (con o sin hook real), agregar una fila en `APPS/palabras-clave.txt` con su significado en una palabra y si es general o específica de una skill/proyecto
 - Todo dato personal (rutinas, ejercicio, alimentación, finanzas, etc. — no proyectos/negocio) de cualquiera de las personas relevantes en este repo se guarda en `P.P/<PERSONA>/`, carpeta local-only en la raíz del repo (gitignorada — no se sincroniza con la máquina del hermano): `P.P/NICO/` (el usuario), `P.P/SOFI/` (novia), `P.P/SEBAS/` (amigo de trading), `P.P/MATEO/` (hermano), y las que se agreguen después. Nunca se mezcla el contenido de una persona con el de otra. Excepción: proyectos de negocio/carrera del usuario (`INDEPENDIENTE/`) y código/apps que le pertenecen a otra persona pero son producto de desarrollo (ej. `APPS/trade` de Sebas, `APPS/pollito` como regalo hecho por el usuario para Sofi) se quedan donde están, solo con una nota de a quién pertenece/para quién es — no se mueven a `P.P/`
 - Esto no es un hook real automático (un script de PowerShell no puede detectar "esto es sobre Sofi" por contenido) — es una regla que Claude aplica activamente cada vez que crea o encuentra algo sobre una de estas personas: lo guarda directo en `P.P/<PERSONA>/` en vez de dejarlo suelto en otra carpeta
-- Para no confundir al usuario con su hermano Mateo (comparten este repo desde máquinas distintas, ver Lección 4 y `feedback_nombres_local_remoto`): lo que se crea o edita en la sesión actual (esta máquina) es de Nico → `P.P/NICO/`. Lo que aparece de golpe tras un `git pull`/auto-sync sin haber sido creado en esta sesión — especialmente si vino en un commit `Auto-sync: <fecha>` — es de la máquina del hermano → se investiga y, si es personal (no código de proyecto), se atribuye a Mateo → `P.P/MATEO/`. Ante la duda real, preguntar antes de asumir de quién es
+- Para no confundir al usuario con su hermano Mateo (comparten este repo desde máquinas distintas, ver Lección 4 y `feedback_nombres_local_remoto`), el método **principal** para saber en qué máquina se está corriendo es determinístico, no una suposición por timing de sesión: revisar `$env:COMPUTERNAME` (PowerShell) al arrancar o ante cualquier duda de identidad.
+  - `COMPUTERNAME = ELNICKY` → esta es la máquina de **Nico** (confirmado 2026-08-20)
+  - Cualquier otro valor → tratar como la máquina de **Mateo**, y si es la primera vez que se ve ese valor, registrarlo (avisar al usuario y anotarlo en memoria) para futuras sesiones
+  - Cruce adicional al revisar autoría de commits en `git log`: el email decide, no el nombre — `mateogracia158@gmail.com` (nombre de commit `MattheW0W`) = Mateo con certeza; `nicolassegurorojas@gmail.com` = Nico **aunque el nombre de commit diga "Mateo"** (hay una config de git antigua con ese nombre mal puesto pero el email de Nico — no es de fiar el nombre solo)
+  - Solo como respaldo secundario, si por algún motivo no se puede leer `COMPUTERNAME`: lo creado o editado en la sesión actual es de Nico → `P.P/NICO/`; lo que aparece de golpe tras un `git pull`/auto-sync sin haber sido creado en esta sesión (sobre todo en un commit `Auto-sync: <fecha>`) se investiga como posible contenido de Mateo → `P.P/MATEO/`
+  - Esto es independiente de que el usuario avise en su propia sesión "estás hablando con Sofi/Sebas" — ese aviso no cambia la identidad de máquina, solo enruta ese contenido puntual a `P.P/SOFI/` o `P.P/SEBAS/`
+  - Ante la duda real, preguntar antes de asumir de quién es
 
 ---
 
@@ -244,7 +261,6 @@ En apps con Claude API: **sonnet-4-6** por defecto. **Prompt caching** activado 
 | `WALLET CONTROL` | Hace `git pull --ff-only` automático (ver nota), invoca la skill PECAS y saluda, recomendando al usuario correr `/clear` antes de seguir (contexto limpio), para trabajar específicamente en `APPS/wallet-control` |
 | `RUTA SEGURA` | Igual, pero enfocado en `APPS/ruta-segura` |
 | `POLLITO` | Igual, pero enfocado en `APPS/pollito` (app de escritorio, regalo) |
-| `INDEPENDIENTE` | Igual (git pull + saludo + recomendación de `/clear`), pero invoca la skill **FREE** (no PECAS) y enfoca en la carpeta **`INDEPENDIENTE`** — a diferencia de las otras tres, vive en la raíz del repo, no bajo `APPS/` |
 
 **Nota:** Claude no puede borrar su propio contexto de conversación desde un hook — eso solo lo dispara el usuario con `/clear`. El hook recomienda hacerlo, no lo fuerza.
 
@@ -364,6 +380,11 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 | 2026-08-05 | Agregada `P.P/NICO/` — datos personales del propio usuario (rutina, plan alimenticio, hoja de economía mensual), movidos desde `SONIC/` con el mismo criterio que Sofi (los generadores `.js` se quedan en `SONIC/` como herramienta, solo los archivos de datos se mueven). Agregada regla de desambiguación Nico/Mateo: lo creado o editado en la sesión actual (esta máquina) es de Nico; lo que aparece de golpe tras un `git pull`/auto-sync sin haberse creado en la sesión — sobre todo si vino en un commit `Auto-sync: <fecha>` — se investiga como posible contenido de la máquina del hermano antes de asumir que es de Nico |
 | 2026-08-11 | Proyecto `trade` (app **TradePilot**, `APPS/trade`) movido a Proyectos Terminados — regalo de cumpleaños para Sebas, técnica y visualmente listo desde la revisión a fondo del 2026-08-06 (toque personal — nombre y mensaje de bienvenida — cerrado ese mismo día). **La palabra clave `trade` (minúscula) queda liberada**: durante la construcción de la app había quedado reservada informalmente para ese proyecto (regla dada por el usuario el 2026-08-02, documentada solo en memoria, nunca en este archivo), lo que chocaba con la fila ya existente de la skill **TRADE** en "Cómo usar el sistema". Con el proyecto cerrado, el usuario pidió explícitamente revertir esa regla: de ahora en adelante, decir "trade" invoca siempre la skill de coaching de trading, no el proyecto cerrado. Corregida también la fila de Proyectos Activos que todavía apuntaba a la carpeta `TRADING/` (eliminada el 2026-08-05 en la reorganización a `P.P/` + `APPS/trade/equipo/`) |
 | 2026-08-12 | Reorganizado `APPS/trade/` a pedido del usuario — creada `APPS/trade/app/` y movido ahí todo el código/artefactos de la app TradePilot (`main.py`, `config.py`, resto de `.py`, `assets/`, `tests/`, `requirements*.txt`, `secreto.py`/`.example.py`, `Trade.spec`, `build/`, `dist/`, `AUDITORIAS/`, `PDF/`), separado de `APPS/trade/equipo/` (coaching/notas de trabajo con Sebas vía la skill TRADE, ya existía y sigue local-only/gitignorada). El PDF `plan-etf-nico-sebas-2026-08-07.pdf` (contenido de equipo, no de la app) se movió a `equipo/` en vez de a `app/PDF/`. El `.gitignore` de `APPS/trade/` se dejó en la raíz del proyecto (sin cambios) — sus patrones sin `/` inicial (`build/`, `dist/`, `equipo/`, etc.) siguen aplicando igual dentro de `app/` y `equipo/` sin importar el anidado. Actualizada la ruta del `.exe` en la fila de Proyectos Terminados (`APPS/trade/dist/` → `APPS/trade/app/dist/`) |
+| 2026-08-19 | Agregado proyecto `asistente` (`APPS/asistente/`) a Proyectos Activos — asistente personal por WhatsApp con n8n como orquestador, Claude API como cerebro de clasificación de intención, y Google Sheets como backend compartido (pendientes, hábitos, agenda, gastos quincenales/deudas/ahorro — mismo modelo que el Artifact "Cuadre Quincenal" hecho para wallet-control). Investigación previa confirmó que ni wallet-control (datos solo en AsyncStorage local) ni los Artifacts (solo `localStorage` del navegador) son alcanzables por n8n, de ahí que la fuente de verdad se moviera a un Google Sheet real (ya creado: ver `data-schema.md`). Entregados los 4 workflows de n8n (`inbound-mensaje`, `recordatorio-diario`, `recordatorio-semanal`, `resumen-gastos`), el system prompt del clasificador, y `docker-compose.yml`+`SETUP.md` para levantar n8n en un VPS con HTTPS (Caddy) — primera vez que se combinan n8n + WhatsApp Business Cloud API + Claude API en este repo. Falta que el usuario complete la parte que solo él puede hacer: cuenta de Meta for Developers, VPS, y credenciales dentro de n8n (documentado paso a paso en `SETUP.md`) |
+| 2026-08-20 | Reemplazada la regla de desambiguación Nico/Mateo (que dependía de "qué se creó en esta sesión") por un check determinístico: `$env:COMPUTERNAME` — `ELNICKY` es la máquina de Nico (confirmado), cualquier otro valor se trata como la de Mateo. Como cruce adicional, se documentó que la autoría de `git log` se decide por email (`mateogracia158@gmail.com` = Mateo con certeza; `nicolassegurorojas@gmail.com` = Nico aunque el nombre de commit diga "Mateo", config antigua ambigua detectada). La regla por timing de sesión queda solo como respaldo si no se puede leer `COMPUTERNAME`. Motivo: el usuario reportó inconsistencias reales con la heurística anterior. Creada además `cowork-nico/`, carpeta hermana de `claude-workspace` (fuera de `APPS/`, fuera del sistema de este `CLAUDE.md`) para un proyecto aparte con Claude Cowork, repo git local sin remoto todavía |
+| 2026-08-20 | Agregada subsección "Construir sistema, no producto vacío" en "Principios de Desarrollo" — cualquier app/web/script que se cree debe nacer con estructura modular, git desde el primer commit, tests mínimos de la lógica core, versionado + `CHANGELOG.md`, y pensar el empaquetado/venta desde la Fase 0, no solo llegar rápido a un MVP descartable. Aplica a PECAS y PAKI (actualizadas con checklist y plantilla de `CHANGELOG.md`), y KILLER hereda el principio por defecto para cualquier skill nueva que genere y que cree código. Investigado antes el repo público `glebis/claude-skills` por pedido del usuario — no tenía una skill de arquitectura vendible lista para traer, pero sí conceptos aprovechables (tests con puertas de verificación, checklist de release con changelog/docs) que se adaptaron aquí en vez de importarse como archivos nuevos |
+| 2026-08-20 | Creada skill `AUTOMATIZA` (generada vía KILLER) — detecta tareas repetitivas en cualquier proyecto de `APPS/` o proceso personal/de negocio del usuario y las automatiza (scripts + Task Scheduler, workflows n8n, hooks de Claude Code, bots con Claude API), aplicando primero un check rápido de ROI (tiempo ahorrado vs. tiempo de construir/mantener) antes de automatizar cualquier cosa. Catálogo único de lo automatizado en `AUTOMATIZACIONES/registro.md` (raíz del repo, se crea la primera vez que haya algo real que registrar). Motivado por la revisión del repo público `glebis/claude-skills` — no tenía una skill de automatización transferible a este caso de uso (las suyas eran o muy generales o específicas al dueño del repo: YouTube, facturación alemana), así que se construyó una propia en vez de importar |
+| 2026-08-20 | El usuario movió `INDEPENDIENTE/` (con todo su contenido, incluido lo gitignorado en `NICO/`) de la raíz de `claude-workspace` a `cowork-nico/`, y confirmó que se queda ahí permanentemente — junto con las skills **FREE** y **HUNTER**, que también se mudaron (copiadas a `cowork-nico/SKILLS/` y a los comandos globales, eliminadas de `SKILLS/` aquí). Se quitó de este repo: la fila de `INDEPENDIENTE` en "Proyectos Activos", las referencias a FREE en el mapa del sistema y en "Cómo usar el sistema", la palabra clave `INDEPENDIENTE` (tabla y rama `elseif` en `.claude/hooks/proyecto-switch.ps1`), la fila de FREE/HUNTER en el registro de `KILLER.md`, y la fila `INDEPENDIENTE` de `APPS/palabras-clave.txt`. Detectado porque el usuario borró la carpeta sin avisar antes de un `TERMINAR` — se investigó en vez de commitear el borrado a ciegas (ver Protocolo de seguridad de git) |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise

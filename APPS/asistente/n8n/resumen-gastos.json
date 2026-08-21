@@ -1,0 +1,441 @@
+{
+  "name": "resumen-gastos",
+  "nodes": [
+    {
+      "id": "baee4472-12b7-47f3-af72-66d5cb0267e5",
+      "name": "Al pedir un resumen",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "0c727f6f-34b6-46bf-93ba-be24651f83ad",
+      "name": "Leer Ingresos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Ingresos"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "f988632e-ce4f-446b-a518-0095af4ed892",
+      "name": "Tag ingresos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all().map(item => {\n  item.json._source = 'ingresos';\n  return item;\n});"
+      }
+    },
+    {
+      "id": "bdbc0890-ab2e-4a4b-b36f-e7e41bb291bb",
+      "name": "Leer GastosQuincenales",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        150
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "GastosQuincenales"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "b0097799-31bc-431e-875e-91bbaa99a70e",
+      "name": "Tag gastos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        150
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all().map(item => {\n  item.json._source = 'gastos';\n  return item;\n});"
+      }
+    },
+    {
+      "id": "c4a1df7f-3549-410e-92dd-87d933ff04fd",
+      "name": "Leer Deudas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deudas"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "e7acd672-dccc-4e3b-b82d-ab763c6e735f",
+      "name": "Tag deudas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all().map(item => {\n  item.json._source = 'deudas';\n  return item;\n});"
+      }
+    },
+    {
+      "id": "967de1b3-e03b-47ea-9a73-1be1f8c10d10",
+      "name": "Leer ComprasTarjeta",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        450
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ComprasTarjeta"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "9a322cc1-270f-4e2e-9202-4b1a7159c2a6",
+      "name": "Tag compras",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        450
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all().map(item => {\n  item.json._source = 'compras';\n  return item;\n});"
+      }
+    },
+    {
+      "id": "31b9d473-14e9-4419-a325-8531826d1140",
+      "name": "Leer Ahorro",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        260,
+        600
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1UKuBqbY6_7VO6Z2UdYvUvEdPXNUXzN_6_QRGBYv3vXc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Ahorro"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets - Asistente Nico"
+        }
+      }
+    },
+    {
+      "id": "8e8fea22-e0e7-43eb-b101-0296e4844623",
+      "name": "Tag ahorro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all().map(item => {\n  item.json._source = 'ahorro';\n  return item;\n});"
+      }
+    },
+    {
+      "id": "2e254d4f-d2e0-43bc-9c58-beab3c290ca9",
+      "name": "Combinar",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        780,
+        300
+      ],
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 5
+      }
+    },
+    {
+      "id": "6029e580-f44a-4b7b-9acd-599fa980f4f6",
+      "name": "Calcular resumen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst by = {ingresos: [], gastos: [], deudas: [], ahorro: [], compras: []};\nfor (const it of items) {\n  const s = it.json._source;\n  if (by[s]) by[s].push(it.json);\n}\n\nfunction num(v) {\n  const n = parseFloat(v);\n  return isNaN(n) ? 0 : n;\n}\n\nfunction fmt(n) {\n  const sign = n < 0 ? '-' : '';\n  return sign + '$' + Math.round(Math.abs(n)).toLocaleString('es-CO');\n}\n\nconst totalIngresos = by.ingresos.reduce((s, r) => s + num(r.monto), 0);\n\nconst gastos = by.gastos;\nconst totalGastos = gastos.reduce((s, r) => s + num(r.monto), 0);\nconst gastosPagados = gastos\n  .filter(r => (r.estado || '').toString().toLowerCase() === 'pagado')\n  .reduce((s, r) => s + num(r.monto), 0);\nconst gastosPendientes = totalGastos - gastosPagados;\n\nconst comprasPorDeuda = {};\nfor (const c of by.compras) {\n  const k = c.deuda;\n  comprasPorDeuda[k] = (comprasPorDeuda[k] || 0) + num(c.monto);\n}\n\nlet deudaConocida = 0;\nlet totalAbonos = 0;\nconst deudaLineas = [];\nfor (const d of by.deudas) {\n  const abonado = num(d.abonado);\n  totalAbonos += abonado;\n  const compras = comprasPorDeuda[d.nombre] || 0;\n  const sinTotal = d.total_base === '' || d.total_base === null || d.total_base === undefined;\n  if (sinTotal) {\n    deudaLineas.push(`- ${d.nombre}: por confirmar` + (abonado ? ` (abonado ${fmt(abonado)})` : ''));\n  } else {\n    const total = num(d.total_base) + compras;\n    const pendiente = Math.max(total - abonado, 0);\n    deudaConocida += pendiente;\n    deudaLineas.push(`- ${d.nombre}: ${fmt(pendiente)} de ${fmt(total)}`);\n  }\n}\n\nconst teQuedaAhora = totalIngresos - gastosPagados - totalAbonos;\nconst ahorro = by.ahorro[0] || {};\n\nconst mensaje = [\n  `Resumen`,\n  `Ingresos: ${fmt(totalIngresos)}`,\n  `Gastos fijos: ${fmt(totalGastos)} (${fmt(gastosPagados)} pagado, ${fmt(gastosPendientes)} pendiente)`,\n  `Te queda ahora: ${fmt(teQuedaAhora)}`,\n  `Deuda activa conocida: ${fmt(deudaConocida)}`,\n  ...deudaLineas,\n  `Ahorro ${ahorro.meta || ''}: ${fmt(num(ahorro.guardado))}`,\n].join('\\n');\n\nreturn [{ json: { mensaje } }];"
+      }
+    },
+    {
+      "id": "941f8afc-9c6a-40bd-907b-391e23d40ce2",
+      "name": "Nota: Sub-workflow reusabl",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        520
+      ],
+      "parameters": {
+        "content": "Sub-workflow reusable: lo invoca inbound-mensaje.json cuando el intent es 'pedir_resumen', y tambien lo puedes llamar desde un Cron si quieres un resumen quincenal automatico. Devuelve un solo campo 'mensaje' con el texto final listo para mandar por WhatsApp.",
+        "height": 160,
+        "width": 500
+      }
+    }
+  ],
+  "connections": {
+    "Al pedir un resumen": {
+      "main": [
+        [
+          {
+            "node": "Leer Ingresos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer GastosQuincenales",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer Deudas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer ComprasTarjeta",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leer Ahorro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Ingresos": {
+      "main": [
+        [
+          {
+            "node": "Tag ingresos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer GastosQuincenales": {
+      "main": [
+        [
+          {
+            "node": "Tag gastos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Deudas": {
+      "main": [
+        [
+          {
+            "node": "Tag deudas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer ComprasTarjeta": {
+      "main": [
+        [
+          {
+            "node": "Tag compras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Ahorro": {
+      "main": [
+        [
+          {
+            "node": "Tag ahorro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag ingresos": {
+      "main": [
+        [
+          {
+            "node": "Combinar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag gastos": {
+      "main": [
+        [
+          {
+            "node": "Combinar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag deudas": {
+      "main": [
+        [
+          {
+            "node": "Combinar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag compras": {
+      "main": [
+        [
+          {
+            "node": "Combinar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag ahorro": {
+      "main": [
+        [
+          {
+            "node": "Combinar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combinar": {
+      "main": [
+        [
+          {
+            "node": "Calcular resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "bae921f5-c39a-4c92-b82f-53e4152dd108",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

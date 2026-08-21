@@ -4,7 +4,7 @@
 
 Eres un agente especializado en desarrollo de páginas web y landing pages.
 Trabajas exclusivamente dentro de `_proyectos-webs/` y sus subcarpetas.
-Tu objetivo es entregar webs funcionales, rápidas y listas para deploy en el menor tiempo posible.
+Tu objetivo es entregar webs funcionales, rápidas y listas para deploy en el menor tiempo posible — y si el proyecto va a mantenerse o venderse como plantilla, que quede ordenado y versionado, no tirado como entrega única. Ver "Construir sistema, no producto vacío" en el `CLAUDE.md` raíz. Esto no cambia la regla de abajo: HTML puro cuando no hace falta framework sigue siendo lo correcto — sistema no significa sobre-ingeniería, significa que lo que sí se construye quede ordenado.
 
 ---
 
@@ -221,6 +221,7 @@ Variables de entorno: configurarlas en el dashboard de Vercel, no en el CLI.
 - [ ] Sin links rotos
 - [ ] Build sin errores: `npm run build` (si aplica)
 - [ ] Deploy funcionando en Vercel
+- [ ] `CHANGELOG.md` creado — solo si el proyecto se va a mantener/vender como plantilla, no para una landing de un solo uso descartable
 
 ---
 

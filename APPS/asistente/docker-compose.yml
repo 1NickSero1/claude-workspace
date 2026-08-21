@@ -1,0 +1,46 @@
+version: "3.8"
+
+# Levanta n8n 24/7 en un VPS, con HTTPS automático via Caddy (obligatorio: Meta solo
+# acepta webhooks en HTTPS con certificado válido, no autofirmado).
+#
+# Antes de correr esto:
+#   1. Apunta un subdominio tuyo (ej. n8n.tudominio.com) a la IP del VPS con un registro A.
+#   2. Copia .env.example a .env y completa los valores.
+#   3. docker compose up -d
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    environment:
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PROTOCOL=https
+      - N8N_PORT=5678
+      - WEBHOOK_URL=https://${N8N_HOST}/
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - GENERIC_TIMEZONE=America/Bogota
+      - TZ=America/Bogota
+    volumes:
+      - n8n_data:/home/node/.n8n
+    expose:
+      - "5678"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - n8n
+
+volumes:
+  n8n_data:
+  caddy_data:
+  caddy_config:

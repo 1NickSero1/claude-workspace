@@ -44,6 +44,13 @@
             "shell": "powershell",
             "timeout": 15,
             "statusMessage": "Comprobando comando REVISION A FONDO..."
+          },
+          {
+            "type": "command",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\hooks\\empezar-sesion-sebas.ps1\"",
+            "shell": "powershell",
+            "timeout": 30,
+            "statusMessage": "Comprobando inicio de sesion con Sebas..."
           }
         ]
       }
