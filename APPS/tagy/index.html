@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tagy — Reseñas de Google con un toque</title>
+<meta name="description" content="Renovamos tu carta y ponemos una tarjeta NFC en tu negocio para que tus clientes te califiquen en Google con un solo toque, sin cámara ni QR.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'sans-serif'] },
+        colors: {
+          ink: '#0b0f0e',
+          panel: '#111714',
+          accent: '#39e6a4',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body { background: #0b0f0e; }
+  .glow { box-shadow: 0 0 80px rgba(57,230,164,0.15); }
+  .tap-ring { animation: tapring 2.2s ease-out infinite; }
+  @keyframes tapring {
+    0% { transform: scale(0.8); opacity: 0.9; }
+    70% { transform: scale(1.8); opacity: 0; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+</style>
+</head>
+<body class="font-sans text-slate-100 antialiased">
+
+<header class="sticky top-0 z-50 backdrop-blur bg-ink/80 border-b border-white/5">
+  <div class="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between">
+    <span class="text-xl font-extrabold tracking-tight">Tag<span class="text-accent">y</span></span>
+    <a href="https://wa.me/573214434426?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20el%20paquete%20Tagy%20para%20mi%20negocio"
+       target="_blank" rel="noopener"
+       class="text-sm font-semibold bg-accent text-ink px-4 py-2 rounded-full hover:brightness-110 transition">
+      Escríbenos
+    </a>
+  </div>
+</header>
+
+<section class="max-w-5xl mx-auto px-5 pt-16 pb-20 text-center">
+  <div class="relative inline-flex items-center justify-center mb-10">
+    <span class="absolute w-20 h-20 rounded-full border border-accent/50 tap-ring"></span>
+    <div class="relative w-20 h-20 rounded-2xl bg-panel border border-white/10 flex items-center justify-center glow">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#39e6a4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6.34 17.66a8 8 0 1 1 11.32 0"/>
+        <path d="M9.17 14.83a4 4 0 1 1 5.66 0"/>
+        <circle cx="12" cy="18" r="1" fill="#39e6a4"/>
+      </svg>
+    </div>
+  </div>
+
+  <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
+    Reseñas de Google<br class="hidden sm:block"> con un solo <span class="text-accent">toque</span>
+  </h1>
+  <p class="mt-6 text-lg text-slate-400 max-w-xl mx-auto">
+    Renovamos la carta de tu negocio y ponemos una tarjeta NFC en el mostrador o la mesa.
+    Tu cliente acerca el celular, sin abrir cámara ni enfocar un QR, y llega directo a dejarte
+    la reseña en segundos.
+  </p>
+  <div class="mt-9 flex flex-col sm:flex-row gap-3 justify-center">
+    <a href="https://wa.me/573214434426?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20el%20paquete%20Tagy%20para%20mi%20negocio"
+       target="_blank" rel="noopener"
+       class="bg-accent text-ink font-bold px-7 py-3.5 rounded-full hover:brightness-110 transition">
+      Quiero Tagy para mi negocio
+    </a>
+    <a href="#como-funciona"
+       class="border border-white/15 text-slate-200 font-semibold px-7 py-3.5 rounded-full hover:bg-white/5 transition">
+      Ver cómo funciona
+    </a>
+  </div>
+</section>
+
+<section class="border-y border-white/5 bg-panel/40">
+  <div class="max-w-5xl mx-auto px-5 py-14">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="bg-panel border border-white/10 rounded-2xl p-6">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Con QR</p>
+        <ul class="space-y-2 text-slate-300 text-sm">
+          <li>1. Sacar el celular</li>
+          <li>2. Abrir la cámara</li>
+          <li>3. Enfocar y esperar</li>
+          <li>4. Tocar el link que aparece</li>
+          <li>5. Recién ahí abre la reseña</li>
+        </ul>
+        <p class="mt-4 text-sm text-rose-400/80 font-medium">La mayoría abandona antes del paso 4.</p>
+      </div>
+      <div class="bg-panel border border-accent/30 rounded-2xl p-6 relative overflow-hidden">
+        <p class="text-xs font-bold uppercase tracking-wider text-accent mb-3">Con Tagy (NFC)</p>
+        <ul class="space-y-2 text-slate-200 text-sm">
+          <li>1. Acercar el celular a la tarjeta</li>
+          <li>2. Ya está abierta la reseña</li>
+        </ul>
+        <p class="mt-4 text-sm text-accent font-medium">Un toque. Sin apps, sin cámara, sin esperar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="como-funciona" class="max-w-5xl mx-auto px-5 py-20">
+  <h2 class="text-3xl font-extrabold text-center mb-3">Cómo funciona</h2>
+  <p class="text-center text-slate-400 mb-12 max-w-lg mx-auto">Tres pasos, cero fricción para tu cliente.</p>
+  <div class="grid md:grid-cols-3 gap-6">
+    <div class="bg-panel border border-white/10 rounded-2xl p-7">
+      <div class="w-10 h-10 rounded-full bg-accent/15 text-accent font-bold flex items-center justify-center mb-5">1</div>
+      <h3 class="font-bold text-lg mb-2">Tu cliente termina de consumir</h3>
+      <p class="text-slate-400 text-sm">En la mesa, el mostrador o al pagar — donde ya tienes su atención.</p>
+    </div>
+    <div class="bg-panel border border-white/10 rounded-2xl p-7">
+      <div class="w-10 h-10 rounded-full bg-accent/15 text-accent font-bold flex items-center justify-center mb-5">2</div>
+      <h3 class="font-bold text-lg mb-2">Acerca el celular a la tarjeta Tagy</h3>
+      <p class="text-slate-400 text-sm">Sin cámara, sin apps, sin conexión especial — la mayoría de celulares desde 2015 lo leen solos.</p>
+    </div>
+    <div class="bg-panel border border-white/10 rounded-2xl p-7">
+      <div class="w-10 h-10 rounded-full bg-accent/15 text-accent font-bold flex items-center justify-center mb-5">3</div>
+      <h3 class="font-bold text-lg mb-2">Deja la reseña en Google</h3>
+      <p class="text-slate-400 text-sm">Directo, sin pasos de más. Más reseñas, más rápido, más visibilidad para tu negocio.</p>
+    </div>
+  </div>
+</section>
+
+<section class="border-y border-white/5 bg-panel/40">
+  <div class="max-w-5xl mx-auto px-5 py-20">
+    <h2 class="text-3xl font-extrabold text-center mb-3">Qué incluye el paquete</h2>
+    <p class="text-center text-slate-400 mb-12 max-w-lg mx-auto">Todo lo que necesitas para renovar la imagen de tu negocio y activar tus reseñas.</p>
+    <div class="grid sm:grid-cols-2 gap-5">
+      <div class="flex gap-4">
+        <div class="shrink-0 w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center text-accent font-bold">✓</div>
+        <div>
+          <h3 class="font-semibold mb-1">Carta digital renovada</h3>
+          <p class="text-slate-400 text-sm">Diseño limpio, fácil de actualizar cuando cambian precios o platos.</p>
+        </div>
+      </div>
+      <div class="flex gap-4">
+        <div class="shrink-0 w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center text-accent font-bold">✓</div>
+        <div>
+          <h3 class="font-semibold mb-1">Carta física renovada</h3>
+          <p class="text-slate-400 text-sm">Diseño listo para imprimir, adaptado a tu marca.</p>
+        </div>
+      </div>
+      <div class="flex gap-4">
+        <div class="shrink-0 w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center text-accent font-bold">✓</div>
+        <div>
+          <h3 class="font-semibold mb-1">Tarjeta NFC instalada</h3>
+          <p class="text-slate-400 text-sm">En mesa o mostrador, programada y lista para usar desde el día uno.</p>
+        </div>
+      </div>
+      <div class="flex gap-4">
+        <div class="shrink-0 w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center text-accent font-bold">✓</div>
+        <div>
+          <h3 class="font-semibold mb-1">Soporte y reposición</h3>
+          <p class="text-slate-400 text-sm">Si el tag se daña o se pierde, lo reponemos.</p>
+        </div>
+      </div>
+    </div>
+    <p class="mt-10 text-center text-sm text-slate-500 max-w-lg mx-auto">
+      ¿Quieres que tus clientes también paguen por NFC? No lo operamos nosotros directamente,
+      pero te conectamos con proveedores certificados en Colombia (Bold, Wompi, Movii) para
+      activarlo de forma segura.
+    </p>
+  </div>
+</section>
+
+<section class="max-w-3xl mx-auto px-5 py-20 text-center">
+  <h2 class="text-3xl font-extrabold mb-4">Precio</h2>
+  <p class="text-slate-400 mb-8">Cotización personalizada según el tamaño de tu negocio y cuántas tarjetas necesitas.</p>
+  <a href="https://wa.me/573214434426?text=Hola%2C%20quiero%20cotizar%20el%20paquete%20Tagy%20para%20mi%20negocio"
+     target="_blank" rel="noopener"
+     class="inline-block bg-accent text-ink font-bold px-8 py-4 rounded-full hover:brightness-110 transition">
+    Pedir cotización por WhatsApp
+  </a>
+</section>
+
+<footer class="border-t border-white/5">
+  <div class="max-w-5xl mx-auto px-5 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <span class="text-lg font-extrabold">Tag<span class="text-accent">y</span></span>
+    <p class="text-sm text-slate-500">Bogotá, Colombia · <a href="https://wa.me/573214434426" target="_blank" rel="noopener" class="text-accent hover:underline">WhatsApp 321 443 4426</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
