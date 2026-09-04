@@ -10,6 +10,7 @@ export default function RootLayout() {
         <StatusBar style="dark" />
         <Stack screenOptions={{ headerTitleAlign: "center" }}>
           <Stack.Screen name="index" options={{ title: "TALKING" }} />
+          <Stack.Screen name="onboarding" options={{ title: "Test de nivel", headerBackVisible: false, gestureEnabled: false }} />
           <Stack.Screen name="conversation" options={{ title: "Práctica" }} />
           <Stack.Screen
             name="summary"

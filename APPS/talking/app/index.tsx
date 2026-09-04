@@ -2,34 +2,40 @@ import { useCallback, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { SCENARIOS } from "../src/scenarios";
-import { getProgress } from "../src/lib/storage";
-import type { Difficulty } from "../src/types";
-
-const DIFFICULTY_LABEL: Record<Difficulty, string> = {
-  basico: "Básico",
-  intermedio: "Intermedio",
-  avanzado: "Avanzado",
-};
-
-const DIFFICULTY_COLOR: Record<Difficulty, string> = {
-  basico: "#2f9e44",
-  intermedio: "#e8590c",
-  avanzado: "#c92a2a",
-};
+import { getLevelProfile, getProgress } from "../src/lib/storage";
+import { colors, difficultyColors, difficultyLabel, radius, spacing } from "../src/theme";
+import type { LevelProfile } from "../src/types";
 
 export default function ScenarioListScreen() {
   const router = useRouter();
   const [streak, setStreak] = useState(0);
   const [completed, setCompleted] = useState<string[]>([]);
+  const [levelProfile, setLevelProfile] = useState<LevelProfile | null | undefined>(undefined);
 
   useFocusEffect(
     useCallback(() => {
-      getProgress().then((progress) => {
+      let cancelled = false;
+      Promise.all([getProgress(), getLevelProfile()]).then(([progress, profile]) => {
+        if (cancelled) return;
         setStreak(progress.streak);
         setCompleted(progress.scenariosCompleted);
+        setLevelProfile(profile);
+        if (!profile) router.replace("/onboarding");
       });
-    }, []),
+      return () => {
+        cancelled = true;
+      };
+    }, [router]),
   );
+
+  if (levelProfile === undefined || levelProfile === null) {
+    return <View style={styles.container} />;
+  }
+
+  const scenarios = [...SCENARIOS].sort((a, b) => {
+    if (a.difficulty === b.difficulty) return 0;
+    return a.difficulty === levelProfile.level ? -1 : b.difficulty === levelProfile.level ? 1 : 0;
+  });
 
   return (
     <View style={styles.container}>
@@ -38,10 +44,20 @@ export default function ScenarioListScreen() {
         <Text style={styles.streakLabel}>{streak === 1 ? "día seguido" : "días seguidos"}</Text>
       </View>
 
+      <Pressable style={styles.levelBanner} onPress={() => router.push("/onboarding")}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.levelBannerTitle}>
+            Tu nivel: <Text style={{ color: difficultyColors[levelProfile.level] }}>{difficultyLabel[levelProfile.level]}</Text>
+          </Text>
+          <Text style={styles.levelBannerSubtitle}>{levelProfile.weakness}</Text>
+        </View>
+        <Text style={styles.levelBannerLink}>Repetir test</Text>
+      </Pressable>
+
       <Text style={styles.sectionTitle}>Elige un escenario</Text>
 
       <FlatList
-        data={SCENARIOS}
+        data={scenarios}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
@@ -54,9 +70,11 @@ export default function ScenarioListScreen() {
               {completed.includes(item.id) && <Text style={styles.check}>✓</Text>}
             </View>
             <Text style={styles.cardDescription}>{item.description}</Text>
-            <Text style={[styles.badge, { color: DIFFICULTY_COLOR[item.difficulty] }]}>
-              {DIFFICULTY_LABEL[item.difficulty]}
-            </Text>
+            <View style={[styles.badge, { backgroundColor: `${difficultyColors[item.difficulty]}1a` }]}>
+              <Text style={[styles.badgeText, { color: difficultyColors[item.difficulty] }]}>
+                {difficultyLabel[item.difficulty]}
+              </Text>
+            </View>
           </Pressable>
         )}
       />
@@ -65,22 +83,37 @@ export default function ScenarioListScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 20, paddingTop: 12 },
-  streakBox: { alignItems: "center", marginBottom: 20 },
-  streakNumber: { fontSize: 40, fontWeight: "700", color: "#1c1c1e" },
-  streakLabel: { fontSize: 14, color: "#6b7280" },
-  sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: 12, color: "#1c1c1e" },
-  list: { paddingBottom: 24, gap: 12 },
+  container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  streakBox: { alignItems: "center", marginBottom: spacing.md },
+  streakNumber: { fontSize: 40, fontWeight: "700", color: colors.text },
+  streakLabel: { fontSize: 14, color: colors.textMuted },
+  levelBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.bgSubtle,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
+  },
+  levelBannerTitle: { fontSize: 15, fontWeight: "700", color: colors.text },
+  levelBannerSubtitle: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  levelBannerLink: { fontSize: 13, fontWeight: "600", color: colors.primary },
+  sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: spacing.md, color: colors.text },
+  list: { paddingBottom: spacing.xl, gap: spacing.md },
   card: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 14,
-    padding: 16,
-    backgroundColor: "#fafafa",
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    backgroundColor: colors.card,
   },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  cardTitle: { fontSize: 17, fontWeight: "600", color: "#1c1c1e" },
-  check: { fontSize: 16, color: "#2f9e44", fontWeight: "700" },
-  cardDescription: { fontSize: 14, color: "#4b5563", marginTop: 4 },
-  badge: { fontSize: 12, fontWeight: "700", marginTop: 10, textTransform: "uppercase" },
+  cardTitle: { fontSize: 17, fontWeight: "600", color: colors.text },
+  check: { fontSize: 16, color: colors.success, fontWeight: "700" },
+  cardDescription: { fontSize: 14, color: colors.textMuted, marginTop: 4 },
+  badge: { alignSelf: "flex-start", borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 3, marginTop: spacing.sm },
+  badgeText: { fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
 });

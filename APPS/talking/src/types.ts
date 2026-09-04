@@ -28,3 +28,10 @@ export type ProgressData = {
   scenariosCompleted: string[];
   sessions: SessionRecord[];
 };
+
+export type LevelProfile = {
+  level: Difficulty;
+  weakness: string;
+  goal: string;
+  assessedAt: string;
+};

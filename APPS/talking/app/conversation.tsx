@@ -10,10 +10,11 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { getScenarioById } from "../src/scenarios";
-import { continueScenario, generateFeedback, MissingApiKeyError, startScenario } from "../src/lib/claude";
+import { continueScenario, generateFeedback, startScenario } from "../src/lib/claude";
 import { useVoiceConversation } from "../src/lib/speech";
 import { recordSession } from "../src/lib/storage";
 import { setLastSessionResult } from "../src/lib/sessionStore";
+import { colors, radius, spacing } from "../src/theme";
 import type { ConversationTurn } from "../src/types";
 
 export default function ConversationScreen() {
@@ -42,7 +43,7 @@ export default function ConversationScreen() {
         speak(line);
       })
       .catch((err) => {
-        setStartError(err instanceof MissingApiKeyError ? err.message : "No se pudo iniciar la práctica. Revisa tu conexión.");
+        setStartError(err instanceof Error ? err.message : "No se pudo iniciar la práctica. Revisa tu conexión.");
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scenario]);
@@ -58,7 +59,7 @@ export default function ConversationScreen() {
         setTurns((prev) => [...prev, { role: "assistant", text: reply }]);
         speak(reply);
       } catch (err) {
-        Alert.alert("Ups", err instanceof MissingApiKeyError ? err.message : "No se pudo enviar tu respuesta. Intenta de nuevo.");
+        Alert.alert("Ups", err instanceof Error ? err.message : "No se pudo enviar tu respuesta. Intenta de nuevo.");
       } finally {
         setIsLoadingReply(false);
       }
@@ -158,8 +159,16 @@ export default function ConversationScreen() {
       {error ? <Text style={styles.errorInline}>{error}</Text> : null}
 
       <View style={styles.footer}>
-        <Pressable onPress={handleEndSession} disabled={isEndingSession} style={styles.endButton}>
-          {isEndingSession ? <ActivityIndicator /> : <Text style={styles.endButtonText}>Terminar sesión</Text>}
+        <Pressable
+          onPress={handleEndSession}
+          disabled={isEndingSession || isLoadingReply}
+          style={styles.endButton}
+        >
+          {isEndingSession ? (
+            <ActivityIndicator />
+          ) : (
+            <Text style={[styles.endButtonText, isLoadingReply && styles.endButtonTextDisabled]}>Terminar sesión</Text>
+          )}
         </Pressable>
 
         <Pressable
@@ -183,31 +192,32 @@ export default function ConversationScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 },
-  errorText: { fontSize: 15, color: "#c92a2a", textAlign: "center" },
-  errorInline: { fontSize: 13, color: "#c92a2a", textAlign: "center", paddingBottom: 4 },
-  link: { fontSize: 15, color: "#1c7ed6", fontWeight: "600" },
-  transcript: { padding: 16, gap: 10 },
-  bubble: { maxWidth: "82%", borderRadius: 16, paddingVertical: 10, paddingHorizontal: 14 },
-  bubbleUser: { backgroundColor: "#1c7ed6", alignSelf: "flex-end" },
-  bubbleAssistant: { backgroundColor: "#f1f3f5", alignSelf: "flex-start" },
+  container: { flex: 1, backgroundColor: colors.bg },
+  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: spacing.md, padding: spacing.lg },
+  errorText: { fontSize: 15, color: colors.danger, textAlign: "center" },
+  errorInline: { fontSize: 13, color: colors.danger, textAlign: "center", paddingBottom: spacing.xs },
+  link: { fontSize: 15, color: colors.primary, fontWeight: "600" },
+  transcript: { padding: spacing.lg, gap: spacing.sm },
+  bubble: { maxWidth: "82%", borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: spacing.md },
+  bubbleUser: { backgroundColor: colors.primary, alignSelf: "flex-end" },
+  bubbleAssistant: { backgroundColor: colors.bgSubtle, alignSelf: "flex-start" },
   bubbleInterim: { opacity: 0.5 },
   bubbleTextUser: { color: "#fff", fontSize: 15 },
-  bubbleTextAssistant: { color: "#1c1c1e", fontSize: 15 },
-  footer: { alignItems: "center", paddingVertical: 16, borderTopWidth: 1, borderTopColor: "#e5e7eb", gap: 8 },
-  endButton: { position: "absolute", right: 20, top: 4, padding: 6 },
-  endButtonText: { color: "#c92a2a", fontSize: 13, fontWeight: "600" },
+  bubbleTextAssistant: { color: colors.text, fontSize: 15 },
+  footer: { alignItems: "center", paddingVertical: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.sm },
+  endButton: { position: "absolute", right: spacing.lg, top: spacing.xs, padding: spacing.sm },
+  endButtonText: { color: colors.danger, fontSize: 13, fontWeight: "600" },
+  endButtonTextDisabled: { color: colors.textSubtle },
   micButton: {
     width: 68,
     height: 68,
-    borderRadius: 34,
-    backgroundColor: "#1c7ed6",
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  micButtonActive: { backgroundColor: "#c92a2a" },
-  micButtonDisabled: { backgroundColor: "#adb5bd" },
+  micButtonActive: { backgroundColor: colors.danger },
+  micButtonDisabled: { backgroundColor: colors.textSubtle },
   micIcon: { fontSize: 28 },
-  micHint: { fontSize: 13, color: "#6b7280" },
+  micHint: { fontSize: 13, color: colors.textMuted },
 });

@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { ProgressData, SessionRecord } from "../types";
+import type { LevelProfile, ProgressData, SessionRecord } from "../types";
 
 const STORAGE_KEY = "@talking/progress";
+const LEVEL_KEY = "@talking/level";
 
 const EMPTY_PROGRESS: ProgressData = {
   streak: 0,
@@ -64,4 +65,18 @@ export async function recordSession(session: SessionRecord): Promise<ProgressDat
 
   await saveProgress(updated);
   return updated;
+}
+
+export async function getLevelProfile(): Promise<LevelProfile | null> {
+  const raw = await AsyncStorage.getItem(LEVEL_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as LevelProfile;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveLevelProfile(profile: LevelProfile): Promise<void> {
+  await AsyncStorage.setItem(LEVEL_KEY, JSON.stringify(profile));
 }
