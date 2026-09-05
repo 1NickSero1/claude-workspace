@@ -85,7 +85,7 @@ export default function ConversationScreen() {
     if (isListening) {
       stopListening();
     } else {
-      startListening();
+      startListening(true);
     }
   };
 
@@ -184,7 +184,13 @@ export default function ConversationScreen() {
         </Pressable>
 
         <Text style={styles.micHint}>
-          {isSpeaking ? "Hablando..." : isListening ? "Escuchando... habla en inglés" : isLoadingReply ? "Pensando..." : "Toca para hablar"}
+          {isSpeaking
+            ? "Hablando..."
+            : isListening
+              ? "Escuchando... toca de nuevo para terminar"
+              : isLoadingReply
+                ? "Pensando..."
+                : "Toca para hablar"}
         </Text>
       </View>
     </View>

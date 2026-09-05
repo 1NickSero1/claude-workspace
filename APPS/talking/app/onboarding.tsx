@@ -24,7 +24,7 @@ function VoiceCapture({ onDone }: { onDone: (text: string) => void }) {
       stopListening();
       if (transcript.trim()) onDone(transcript.trim());
     } else {
-      startListening();
+      startListening(true);
     }
   };
 
