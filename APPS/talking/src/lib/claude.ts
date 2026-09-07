@@ -1,4 +1,4 @@
-import type { ConversationTurn } from "../types";
+import type { ConversationTurn, LevelProfile } from "../types";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-6";
@@ -69,11 +69,12 @@ export async function continueScenario(
   return callClaude(systemPrompt, messages);
 }
 
-const FEEDBACK_SYSTEM = `You are SPEAKY, a demanding but encouraging English coach reviewing a practice conversation a Spanish-speaking learner just had. You will receive the full transcript. Write your feedback IN SPANISH, brief and direct:
+const FEEDBACK_SYSTEM = `You are SPEAKY, a demanding but encouraging English coach reviewing a practice conversation a Spanish-speaking learner just had. You will receive the full transcript, and — when available — the learner's level, self-reported main weakness and goal from an earlier diagnostic test. Write your feedback IN SPANISH, brief and direct:
 1. Una frase de lo que hizo bien.
 2. 2-3 errores concretos y específicos (gramática, vocabulario o fluidez) con la corrección — cita la frase exacta que dijo mal y cómo se dice bien. Si no hubo errores notables, dilo.
-3. Una frase corta motivándolo a seguir practicando mañana.
-Sin rodeos, sin relleno. Máximo 120 palabras.`;
+3. Si te dieron su debilidad conocida, decí explícitamente si en ESTA conversación mostró progreso en ese punto puntual o si sigue cometiendo el mismo tipo de error — esto es lo más valioso para él, no lo omitas.
+4. Una frase corta motivándolo a seguir practicando mañana — si te dieron su objetivo, conectá la motivación con eso.
+Sin rodeos, sin relleno. Máximo 140 palabras.`;
 
 const ASSESS_SYSTEM = `You are SPEAKY, an honest English-level assessor for a Spanish-speaking learner. You will receive: (1) how they introduced themselves in English, (2) how they handled a short "order a coffee" roleplay, (3) what they said in Spanish is their biggest struggle, (4) their goal for learning English. Judge their REAL fluency, vocabulary and functional grammar from (1) and (2) — do not inflate or deflate the level to be nice.
 
@@ -103,14 +104,21 @@ export async function assessLevel(
   return parsed as LevelAssessment;
 }
 
-export async function generateFeedback(scenarioTitle: string, history: ConversationTurn[]): Promise<string> {
+export async function generateFeedback(
+  scenarioTitle: string,
+  history: ConversationTurn[],
+  levelProfile: LevelProfile | null,
+): Promise<string> {
   const transcript = history
     .map((turn) => `${turn.role === "user" ? "Learner" : "Character"}: ${turn.text}`)
     .join("\n");
+  const profileContext = levelProfile
+    ? `\n\nNivel del alumno (de un test anterior): ${levelProfile.level}\nSu debilidad conocida: "${levelProfile.weakness}"\nSu objetivo: "${levelProfile.goal}"`
+    : "";
   return callClaude(FEEDBACK_SYSTEM, [
     {
       role: "user",
-      content: `Escenario: ${scenarioTitle}\n\nTranscripción:\n${transcript}`,
+      content: `Escenario: ${scenarioTitle}\n\nTranscripción:\n${transcript}${profileContext}`,
     },
   ]);
 }

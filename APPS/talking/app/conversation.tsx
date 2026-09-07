@@ -12,7 +12,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { getScenarioById } from "../src/scenarios";
 import { continueScenario, generateFeedback, startScenario } from "../src/lib/claude";
 import { useVoiceConversation } from "../src/lib/speech";
-import { recordSession } from "../src/lib/storage";
+import { getLevelProfile, recordSession } from "../src/lib/storage";
 import { setLastSessionResult } from "../src/lib/sessionStore";
 import { colors, radius, spacing } from "../src/theme";
 import type { ConversationTurn } from "../src/types";
@@ -98,7 +98,8 @@ export default function ConversationScreen() {
     if (isListening) stopListening();
     setIsEndingSession(true);
     try {
-      const feedback = await generateFeedback(scenario.title, turns);
+      const levelProfile = await getLevelProfile();
+      const feedback = await generateFeedback(scenario.title, turns, levelProfile);
       const session = {
         id: `${Date.now()}`,
         scenarioId: scenario.id,
