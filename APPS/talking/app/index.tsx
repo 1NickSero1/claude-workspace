@@ -3,7 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { SCENARIOS } from "../src/scenarios";
 import { getLevelProfile, getProgress } from "../src/lib/storage";
-import { colors, difficultyColors, difficultyLabel, radius, spacing } from "../src/theme";
+import { colors, difficultyColors, difficultyLabel, radius, shadow, spacing } from "../src/theme";
 import type { LevelProfile } from "../src/types";
 
 export default function ScenarioListScreen() {
@@ -40,8 +40,11 @@ export default function ScenarioListScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.streakBox}>
-        <Text style={styles.streakNumber}>{streak}</Text>
-        <Text style={styles.streakLabel}>{streak === 1 ? "día seguido" : "días seguidos"}</Text>
+        <Text style={styles.streakEmoji}>{streak > 0 ? "🔥" : "💤"}</Text>
+        <View>
+          <Text style={styles.streakNumber}>{streak}</Text>
+          <Text style={styles.streakLabel}>{streak === 1 ? "día seguido" : "días seguidos"}</Text>
+        </View>
       </View>
 
       <Pressable style={styles.levelBanner} onPress={() => router.push("/onboarding")}>
@@ -84,19 +87,33 @@ export default function ScenarioListScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingTop: spacing.md },
-  streakBox: { alignItems: "center", marginBottom: spacing.md },
-  streakNumber: { fontSize: 40, fontWeight: "700", color: colors.text },
-  streakLabel: { fontSize: 14, color: colors.textMuted },
+  streakBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    alignSelf: "center",
+    backgroundColor: colors.bgSubtle,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    ...shadow,
+  },
+  streakEmoji: { fontSize: 26 },
+  streakNumber: { fontSize: 24, fontWeight: "800", color: colors.text, textAlign: "center" },
+  streakLabel: { fontSize: 12, color: colors.textMuted },
   levelBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.bgSubtle,
+    backgroundColor: colors.card,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
     padding: spacing.md,
     marginBottom: spacing.lg,
     gap: spacing.sm,
+    ...shadow,
   },
   levelBannerTitle: { fontSize: 15, fontWeight: "700", color: colors.text },
   levelBannerSubtitle: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
@@ -109,6 +126,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     backgroundColor: colors.card,
+    ...shadow,
   },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   cardTitle: { fontSize: 17, fontWeight: "600", color: colors.text },

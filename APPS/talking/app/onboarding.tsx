@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { assessLevel } from "../src/lib/claude";
 import { useVoiceConversation } from "../src/lib/speech";
 import { saveLevelProfile } from "../src/lib/storage";
-import { colors, difficultyLabel, radius, spacing } from "../src/theme";
+import { colors, difficultyLabel, radius, shadow, spacing } from "../src/theme";
 import type { Difficulty } from "../src/types";
 
 type Step = "welcome" | "introduce" | "scenario" | "struggle" | "goal" | "assessing" | "result" | "error";
@@ -218,6 +218,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
+    ...shadow,
+    shadowOpacity: 0.18,
   },
   micButtonActive: { backgroundColor: colors.danger },
   micIcon: { fontSize: 30 },
@@ -231,6 +233,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     backgroundColor: colors.card,
+    ...shadow,
   },
   optionText: { fontSize: 15, color: colors.text, fontWeight: "500" },
   textInput: {
@@ -251,6 +254,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
+    ...shadow,
   },
   resultCardLabel: { fontSize: 12, fontWeight: "700", color: colors.textSubtle, textTransform: "uppercase", marginBottom: 4 },
   resultCardText: { fontSize: 15, color: colors.text, lineHeight: 20 },

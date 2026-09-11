@@ -14,7 +14,7 @@ import { continueScenario, generateFeedback, startScenario } from "../src/lib/cl
 import { useVoiceConversation } from "../src/lib/speech";
 import { getLevelProfile, recordSession } from "../src/lib/storage";
 import { setLastSessionResult } from "../src/lib/sessionStore";
-import { colors, radius, spacing } from "../src/theme";
+import { colors, radius, shadow, spacing } from "../src/theme";
 import type { ConversationTurn } from "../src/types";
 
 export default function ConversationScreen() {
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   errorInline: { fontSize: 13, color: colors.danger, textAlign: "center", paddingBottom: spacing.xs },
   link: { fontSize: 15, color: colors.primary, fontWeight: "600" },
   transcript: { padding: spacing.lg, gap: spacing.sm },
-  bubble: { maxWidth: "82%", borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: spacing.md },
+  bubble: { maxWidth: "82%", borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: spacing.md, ...shadow },
   bubbleUser: { backgroundColor: colors.primary, alignSelf: "flex-end" },
   bubbleAssistant: { backgroundColor: colors.bgSubtle, alignSelf: "flex-start" },
   bubbleInterim: { opacity: 0.5 },
@@ -222,6 +222,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
+    ...shadow,
+    shadowOpacity: 0.18,
   },
   micButtonActive: { backgroundColor: colors.danger },
   micButtonDisabled: { backgroundColor: colors.textSubtle },

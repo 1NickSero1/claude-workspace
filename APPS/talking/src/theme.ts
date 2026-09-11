@@ -39,3 +39,11 @@ export const radius = {
   lg: 20,
   pill: 999,
 };
+
+export const shadow = {
+  shadowColor: "#1c1c1e",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.06,
+  shadowRadius: 8,
+  elevation: 2,
+};
