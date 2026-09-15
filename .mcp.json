@@ -8,6 +8,15 @@
         "@mobilenext/mobile-mcp@latest"
       ],
       "env": {}
+    },
+    "imagegen": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@pinkpixel/mcpollinations@latest"
+      ],
+      "env": {}
     }
   }
 }
