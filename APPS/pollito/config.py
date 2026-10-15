@@ -2,13 +2,24 @@
 import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 APP_NAME = "Pollito"
 
+# Modo de prueba (solo desarrollo, opcional): si esta seteada la variable de
+# entorno POLLITO_API_BASE_URL, las llamadas van a ese endpoint en vez de a
+# la API de Anthropic. Pensado para OmniRoute (gateway local compatible con
+# la API de Claude, http://localhost:20128 - ver modo_prueba_omniroute.ps1)
+# para probar como se sienten las respuestas sin gastar la key real. En ese
+# modo la key de secreto.py NO se usa (ver get_api_key). Se lee en tiempo de
+# ejecucion, asi que el .exe de Sofi (sin la variable) sigue yendo a
+# Anthropic normal.
+API_BASE_URL = os.environ.get("POLLITO_API_BASE_URL") or None
+
 # Claude Sonnet 5: buen balance costo/calidad, con herramienta de busqueda
 # web nativa server-side (las 5 skills la necesitan - respuesta a pregunta 3).
-MODEL_ID = "claude-sonnet-5"
+# POLLITO_MODEL_ID solo para el modo de prueba (elegir un modelo del gateway).
+MODEL_ID = os.environ.get("POLLITO_MODEL_ID") or "claude-sonnet-5"
 
 # Tope de tokens de salida por respuesta. Conservador: es un chat personal,
 # no necesita respuestas de miles de tokens.
@@ -55,6 +66,11 @@ LIMITE_MENSAJES_SESION = 50
 # mes calendario, mas facil de razonar ("$5 maximo por mes") y no depende de
 # cuantos tokens entren en cada mensaje.
 LIMITE_GASTO_MENSUAL_USD = 5.00
+
+# Tope de imagenes generadas con Higgsfield por mes calendario (compartido
+# entre las 5 skills) - cada imagen consume creditos reales de esa cuenta,
+# ver uso_imagenes.py / imagen_higgsfield.py.
+LIMITE_IMAGENES_MENSUAL = 30
 
 # Precio de Sonnet 5 por millon de tokens, usado para calcular el gasto real
 # de cada llamada. Precio ESTANDAR (no el de lanzamiento $2/$10 que vence el

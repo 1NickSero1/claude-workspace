@@ -16,6 +16,7 @@ from PIL import Image
 
 import tema
 from config import APP_NAME, get_base_path
+from estadisticas_uso import registrar_apertura
 from skills import finanzas, gym_nutricion, maquillaje_skincare, moda, psicologia
 
 # customtkinter revisa cada 100ms si el DPI del monitor cambio respecto al
@@ -23,9 +24,9 @@ from skills import finanzas, gym_nutricion, maquillaje_skincare, moda, psicologi
 # si detecta una diferencia, reescala TODA la UI de golpe - eso es lo que
 # causaba que el recuadro de chat se viera bien el primer segundo y despues
 # "saltara" con un espacio de mas (columnas internas de CTkScrollableFrame
-# recalculadas con otro factor de escala). La ventana es de tamano fijo
-# (ver TAMANO_VENTANA / _bloquear_maximizado), no hace falta ese reajuste
-# automatico - se desactiva antes de crear cualquier ventana.
+# recalculadas con otro factor de escala). Ese reajuste automatico no hace
+# falta (el cambio de tamano manual de la ventana se maneja aparte, ver
+# _al_redimensionar) - se desactiva antes de crear cualquier ventana.
 ctk.deactivate_automatic_dpi_awareness()
 
 ctk.set_appearance_mode("light")
@@ -51,7 +52,12 @@ MENSAJE_BIENVENIDA_ESPECIAL = (
     "Te amo muchisimo."
 )
 
-TAMANO_VENTANA = (420, 580)
+# Tamano de arranque, y limites para cuando Sofi la agranda/achica a mano
+# (pedido suyo): el minimo es el tamano original, con el que se diseño todo
+# el layout; el maximo evita que el fondo decorativo se estire de mas.
+TAMANO_VENTANA = (520, 700)
+TAMANO_VENTANA_MINIMA = (420, 580)
+TAMANO_VENTANA_MAXIMA = (900, 1000)
 TAMANO_MASCOTA = 130
 
 
@@ -113,32 +119,46 @@ class MenuPrincipal(ctk.CTk):
         super().__init__()
         self.title(APP_NAME)
         self.geometry("{}x{}".format(*TAMANO_VENTANA))
-        self.resizable(False, False)
-        # resizable(False, False) ya saca el boton de maximizar y el
-        # arrastre de bordes, pero Windows igual puede maximizar la ventana
-        # con Win+flecha arriba o Aero Snap contra el borde superior - este
-        # bind lo revierte apenas pasa, para que el tamano de la ventana sea
-        # siempre el mismo (el del onboarding), tanto en el menu como en
-        # cualquier skill.
-        self.bind("<Configure>", self._bloquear_maximizado)
+        # minsize/maxsize se los impone Tk a Windows directamente - tambien
+        # aplican a maximizar con Win+flecha arriba o Aero Snap.
+        self.minsize(*TAMANO_VENTANA_MINIMA)
+        self.maxsize(*TAMANO_VENTANA_MAXIMA)
         self.configure(fg_color=tema.FONDO)
         # Vistas de skill ya creadas, cacheadas por nombre para conservar su
         # conversacion al ir y volver del menu (no se recrean de cero cada
         # vez que se re-entra a la misma skill).
         self._vistas_skill = {}
+        self._tamano_actual = TAMANO_VENTANA
+        self._redimension_pendiente = None
         self._aplicar_icono()
         self._agregar_fondo_sakura()
         self._construir_ui()
         self._agregar_mascota()
+        # Un bind en la ventana raiz tambien recibe los <Configure> de todos
+        # sus hijos (bindtags de Tk) - _al_configurar filtra por widget.
+        self.bind("<Configure>", self._al_configurar)
         # Se agenda con after() para que el menu ya este dibujado y
         # posicionado en pantalla antes de centrar el mensaje especial
         # sobre el (winfo_width/height necesitan la ventana ya mapeada).
         self.after(300, self._mostrar_bienvenida_especial)
 
-    def _bloquear_maximizado(self, event=None):
-        if self.state() == "zoomed":
-            self.state("normal")
-            self.geometry("{}x{}".format(*TAMANO_VENTANA))
+    def _al_configurar(self, event=None):
+        if event is not None and event.widget is not self:
+            return
+        tamano = (self.winfo_width(), self.winfo_height())
+        if tamano == self._tamano_actual:
+            return
+        self._tamano_actual = tamano
+        # <Configure> llega por cada pixel mientras arrastra el borde - se
+        # agrupa y se recalcula una sola vez cuando deja de mover.
+        if self._redimension_pendiente is not None:
+            self.after_cancel(self._redimension_pendiente)
+        self._redimension_pendiente = self.after(150, self._al_redimensionar)
+
+    def _al_redimensionar(self):
+        self._redimension_pendiente = None
+        self._actualizar_fondo_sakura()
+        self._posicionar_mascota()
 
     def _aplicar_icono(self):
         icono = get_base_path() / "assets" / "icons" / "icon.ico"
@@ -152,16 +172,26 @@ class MenuPrincipal(ctk.CTk):
         """Ramas de sakura decorativas en dos esquinas opuestas (ver
         assets/generar_fondo_sakura.py) - se crea antes que el resto de la
         UI para quedar detras en el orden de apilado de Tk, sin competir
-        con la lectura de los botones."""
+        con la lectura de los botones. Se reescala al tamano actual de la
+        ventana en _actualizar_fondo_sakura (tambien al redimensionar)."""
+        self._etiqueta_fondo = None
         ruta_imagen = get_base_path() / "assets" / "fondo_sakura.png"
         if not ruta_imagen.exists():
             return
-        imagen_pil = Image.open(ruta_imagen)
+        self._imagen_fondo_pil = Image.open(ruta_imagen)
+        self._etiqueta_fondo = ctk.CTkLabel(self, text="", fg_color="transparent")
+        self._etiqueta_fondo.place(x=0, y=0)
+        self._actualizar_fondo_sakura()
+
+    def _actualizar_fondo_sakura(self):
+        if self._etiqueta_fondo is None:
+            return
         imagen = ctk.CTkImage(
-            light_image=imagen_pil, dark_image=imagen_pil, size=TAMANO_VENTANA
+            light_image=self._imagen_fondo_pil,
+            dark_image=self._imagen_fondo_pil,
+            size=self._tamano_actual,
         )
-        etiqueta = ctk.CTkLabel(self, image=imagen, text="", fg_color="transparent")
-        etiqueta.place(x=0, y=0)
+        self._etiqueta_fondo.configure(image=imagen)
 
     def _construir_ui(self):
         titulo = ctk.CTkLabel(
@@ -200,7 +230,9 @@ class MenuPrincipal(ctk.CTk):
         (recortado por Tk al no dibujar lo que queda fuera del area de la
         ventana) - se ve completo de arriba a abajo, solo se recorta a la
         derecha. Reusa el mismo arte que el icono
-        (assets/generar_icono.py)."""
+        (assets/generar_icono.py). La posicion se recalcula en
+        _posicionar_mascota (tambien al redimensionar la ventana)."""
+        self._etiqueta_mascota = None
         ruta_imagen = get_base_path() / "assets" / "icons" / "icon.png"
         if not ruta_imagen.exists():
             return
@@ -208,8 +240,12 @@ class MenuPrincipal(ctk.CTk):
         imagen = ctk.CTkImage(
             light_image=imagen_pil, dark_image=imagen_pil, size=(TAMANO_MASCOTA, TAMANO_MASCOTA)
         )
-        etiqueta = ctk.CTkLabel(self, image=imagen, text="", fg_color="transparent")
+        self._etiqueta_mascota = ctk.CTkLabel(self, image=imagen, text="", fg_color="transparent")
+        self._posicionar_mascota()
 
+    def _posicionar_mascota(self):
+        if self._etiqueta_mascota is None:
+            return
         self.update_idletasks()
         ancho_ventana = self.winfo_width()
         alto_ventana = self.winfo_height()
@@ -225,9 +261,13 @@ class MenuPrincipal(ctk.CTk):
         # derecho de la ventana.
         x = ancho_ventana - int(TAMANO_MASCOTA * 0.65)
 
-        etiqueta.place(x=x, y=y)
+        self._etiqueta_mascota.place(x=x, y=y)
 
     def _abrir_skill(self, nombre, crear_vista):
+        # Se cuenta cada click, se reuse o no la vista cacheada - asi refleja
+        # cuanto entra Sofi a cada skill en la practica (ver
+        # estadisticas_uso.py / ver_estadisticas.py).
+        registrar_apertura(nombre)
         # Reusa la vista si ya se creo antes (conserva su conversacion) -
         # solo se crea de cero la primera vez que se entra a esa skill.
         vista = self._vistas_skill.get(nombre)

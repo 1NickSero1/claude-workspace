@@ -1,5 +1,5 @@
 // Lista de activos a seguir. Edita esta lista cuando Nico y Sebas cierren
-// los tickers reales del plan (ver APPS/trade/equipo/equipo-etf-plan.md,
+// los tickers reales del plan (ver cowork-nico/equipo/equipo-etf-plan.md,
 // seccion 4 - todavia "pendientes" al crear este dashboard). El campo
 // "grupo" solo se usa para agrupar visualmente en el dashboard.
 export type Grupo = "Nucleo" | "Satelite" | "Otros";

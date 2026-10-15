@@ -104,8 +104,9 @@
   LIMITE_TOKENS_DIARIOS temporalmente para probarlo rapido), y la memoria
   persistente de cada skill (confirmar que cada una crea y reutiliza sus
   archivos en %APPDATA%/Pollito/memoria_<skill>/ entre sesiones distintas).
-- Empaquetar con PyInstaller (pyinstaller --onefile --windowed
-  --icon=assets/icons/icon.ico --name Pollito main.py) y probarlo en una
-  carpeta distinta sin variables de entorno, simulando la PC de la novia
-  (recordar: puede salir el aviso de Windows SmartScreen la primera vez, es
-  esperado en un .exe sin firmar).
+- Empaquetar con PyInstaller (pyinstaller Pollito.spec - desde 2026-09-10 la
+  spec es --onedir: sale dist/Pollito/ completa, se le manda esa carpeta
+  zippeada a Sofi, no un .exe suelto) y probarlo en una carpeta distinta sin
+  variables de entorno, simulando la PC de la novia (recordar: puede salir
+  el aviso de Windows SmartScreen la primera vez, es esperado en un .exe sin
+  firmar).

@@ -1,0 +1,124 @@
+RESUMEN — COSTOS DE IA Y ESTRATEGIA FREEMIUM PARA FINANDO
+wallet-control · 28 de julio de 2026
+
+===============================================================
+1. CÓMO FUNCIONA HOY (v1.0, fase de pruebas con amigos)
+===============================================================
+
+- Modelo usado: Claude Sonnet 5 (claude-sonnet-5)
+- Precio de lanzamiento vigente HASTA el 31 de agosto de 2026:
+    $2 USD / millón de tokens de entrada
+    $10 USD / millón de tokens de salida
+- Después del 31 de agosto (precio estándar):
+    $3 USD / millón de tokens de entrada
+    $15 USD / millón de tokens de salida
+  (sube ~50%, pero NO depende de cuándo se compila o publica la
+  app — depende de cuándo el usuario manda el mensaje real. No
+  hay que apurar el lanzamiento por esta fecha.)
+
+- El chat de Finando no guarda historial entre sesiones — cada
+  vez que se abre la pestaña empieza de cero. Eso mantiene las
+  conversaciones cortas y el costo controlado.
+
+- Costo estimado por usuario activo (uso real, no el tope máximo):
+  ~10 gastos/día en días normales, 2-3 días de pago más cargados.
+    Sonnet 5 (precio actual):    ~$0.80 USD/usuario/mes
+    Sonnet 5 (precio estándar):  ~$1.20 USD/usuario/mes
+
+===============================================================
+2. TABLA DE MODELOS — DE MÁS BARATO A MÁS CARO
+===============================================================
+
+Ojo con esto: el número de versión (4.7, 4.8, 5...) NO indica si
+es más barato. Lo que cambia el precio es el TIER (familia):
+
+  Haiku 4.5   →  $1  / $5   por millón tokens (entrada/salida)
+  Sonnet 5    →  $2* / $10* por millón (*precio lanzamiento, hasta 31-ago-2026)
+  Sonnet 5    →  $3  / $15  por millón (precio estándar, después)
+  Opus 4.7/4.8/5 → $5  / $25  por millón (mismo precio en TODAS las
+                    versiones de Opus — no baja por usar 4.7 en vez de 5)
+
+Conclusión: "bajar" a Opus 4.7 en realidad SUBE el costo 2.5x
+frente a Sonnet 5. Si se busca algo más barato/ligero, el modelo
+correcto es Haiku 4.5, no una versión anterior de Opus.
+
+===============================================================
+3. ESTRATEGIA FREEMIUM PROPUESTA (fase 3.0)
+===============================================================
+
+PLAN GRATIS — Haiku 4.5
+  Uso: anotar gastos e ingresos sueltos del día a día
+  ("compré salchipapa $8.000", "le invité un tinto a una
+  compañera $3.000", "eché gasolina $15.000")
+  Por qué Haiku: es pura extracción de datos (monto, categoría,
+  tarjeta) — no necesita razonamiento profundo, y cuesta la
+  mitad que Sonnet 5.
+  Tope sugerido: 20-30 mensajes/día — es una red de seguridad
+  contra abuso/bugs, NO un límite que el usuario normal vaya a
+  sentir (con ~10 gastos/día sobra de lejos).
+  Costo real estimado por usuario activo: ~$0.40 USD/mes
+
+PLAN PAGADO — Sonnet 5 (a futuro, el que esté vigente)
+  Uso: "asistente financiero personal" — análisis de finanzas,
+  recomendaciones de ahorro/inversión, más interacción y
+  conversación de ida y vuelta.
+  Precio propuesto inicial: $1.99 USD/mes
+  Por qué Sonnet: la asesoría sí se beneficia de más
+  razonamiento y respuestas más elaboradas.
+
+===============================================================
+4. EL RIESGO DEL MARGEN EN EL PLAN PAGADO — LEER ANTES DE FIJAR PRECIO
+===============================================================
+
+Dos factores que bajan el margen real de los $1.99:
+
+a) Comisión de las tiendas (Apple/Google):
+   - 15% si calificas para el programa de pequeñas empresas
+     (facturación bajo $1M USD/año)
+   - 30% si no calificas
+   De $1.99 quedan netos entre $1.39 y $1.69, no el total.
+
+b) Selección adversa: quien paga por un "asesor financiero
+   personal" es justo el que MÁS lo va a usar (análisis
+   frecuentes, respuestas largas, conversaciones extensas) —
+   no el usuario ligero del plan gratis.
+   Un usuario pagado COMPROMETIDO puede costar realistamente
+   $2-4 USD/mes en API — más que el precio de la suscripción.
+
+RECOMENDACIÓN antes de fijar el precio final:
+  - Simular el costo de un usuario "pesado" real (varias
+    sesiones de análisis por semana), no solo el promedio.
+  - Considerar un precio más alto ($3.99-4.99 USD/mes es lo
+    típico en apps de "asesor financiero IA").
+  - Dejar un tope generoso también en el plan pagado (ej. 200
+    mensajes/mes) como red de seguridad — no para limitar el
+    uso normal, sino para que un caso extremo no se coma el
+    margen de todos los demás usuarios.
+
+===============================================================
+5. NOTA A FUTURO (no urgente, pensarlo en la v3.0)
+===============================================================
+
+"Sonnet 5 al precio que esté para siempre" no aplica tal cual —
+los modelos de Claude eventualmente se reemplazan por versiones
+nuevas (como pasó con versiones anteriores de Sonnet/Opus). En
+algún momento de la vida de la app tocará migrar de modelo. No
+es algo de qué preocuparse ahora, pero sí un mantenimiento
+periódico a tener en el radar cuando la app ya esté publicada
+y generando ingresos.
+
+===============================================================
+RESUMEN EJECUTIVO
+===============================================================
+
+- Fase de pruebas con amigos (ahora): costo insignificante,
+  ~$11-15 USD/mes total para 5 personas. No hay que optimizar
+  nada todavía.
+- Plan gratis (Haiku 4.5) para anotar gastos: ~$0.40 USD/mes
+  por usuario — muy sostenible incluso sin monetizar.
+- Plan pagado (Sonnet 5) como asesor financiero: el riesgo real
+  está aquí — validar el costo de un usuario comprometido antes
+  de comprometerse con $1.99/mes; probablemente valga más.
+- No hay apuro por publicar antes del 31 de agosto de 2026 —
+  el precio de Sonnet 5 solo sube ~50% después, y sigue siendo
+  barato para el patrón de uso esperado.

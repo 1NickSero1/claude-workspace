@@ -41,12 +41,15 @@ if ($prompt) {
         $fecha = Get-Date -Format 'yyyy-MM-dd'
         $pdfPath = Join-Path $escritorio "sesion-sebas-$fecha.pdf"
 
+        $equipoDir = "C:\Users\Lenovo Ideapad\Documents\GitHub\cowork-nico\equipo"
         $msg = "El usuario (Nico) quiere arrancar una sesion de la skill TRADE enfocada especificamente en " +
                "el plan de equipo con Sebas (no el coaching individual de Nico). $pullStatus " +
-               "Nota: la carpeta APPS/trade/equipo/ es local-only (gitignorada), el pull de arriba no la " +
-               "afecta - vive solo en esta maquina. " +
+               "Nota de rutas (desde 2026-08-21): la carpeta de equipo YA NO vive en APPS/trade/equipo/ de " +
+               "este repo - se movio a '$equipoDir' (repo separado cowork-nico, local-only, ruta " +
+               "absoluta obligatoria porque el cwd actual es claude-workspace, no cowork-nico). El pull de " +
+               "arriba es solo de este repo (claude-workspace) y no afecta esos archivos. " +
                "Como primera accion: menciona brevemente el resultado de git si hubo cambios relevantes, " +
-               "invoca la skill TRADE, y arranca leyendo el estado actual de APPS/trade/equipo/ " +
+               "invoca la skill TRADE, y arranca leyendo el estado actual de '$equipoDir' " +
                "(equipo.md, equipo-etf-plan.md, y las entradas mas recientes de bitacora.md) para saludar " +
                "retomando exactamente donde quedo pendiente el plan con Sebas (ej. instrumentos del " +
                "nucleo/satelite que falten por elegir, tareas abiertas de la seccion 4 de " +

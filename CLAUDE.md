@@ -35,10 +35,11 @@ Soy un creador de productos digitales independiente. Construyo apps, webs, herra
 |---|---|---|---|
 | wallet-control | PECAS | En progreso | `APPS/wallet-control` |
 | ruta-segura | PECAS | En progreso | `APPS/ruta-segura` |
-| TRADE (coaching) | TRADE | En progreso | Sin carpeta propia — perfiles en `P.P/NICO/` y `P.P/SEBAS/`, lo compartido del equipo en `APPS/trade/equipo/` (la carpeta `TRADING/` de la raíz ya no existe, se reorganizó el 2026-08-05) |
+| TRADE (coaching) | TRADE | En progreso | Sin carpeta propia — perfiles en `P.P/NICO/` y `P.P/SEBAS/`, lo compartido del equipo en `cowork-nico/equipo/` (repo separado, movido ahí el 2026-08-21; antes vivía en `APPS/trade/equipo/`, que ahora es solo el código de la app de Sebas) |
 | asistente (WhatsApp + n8n) | Ninguna (infraestructura, no skill conversacional) | En definición | `APPS/asistente` — asistente personal por WhatsApp (n8n + Claude API + Google Sheets) para pendientes, hábitos, agenda, recordatorios semanales y cuadre de gastos (mismo modelo de datos que el Artifact "Cuadre Quincenal"); falta que Nico monte el VPS/Meta Cloud API siguiendo `SETUP.md` |
 | TALKING | PECAS | En progreso | `APPS/talking` — app móvil (React Native + Expo SDK 57, expo-router) de práctica de inglés conversacional con voz real (STT `expo-speech-recognition` + Claude API + TTS `expo-speech`). Proyecto personal de **Mateo** (hermano), no de Nicolás — uso propio, no se vende. Proyecto EAS: `@nicksero/talking` |
 | SPEAKY (coaching) | SPEAKY | En progreso | Sin carpeta propia — perfiles independientes de **Mateo y Nicolás** en `P.P/MATEO/INGLES/` y `P.P/NICO/INGLES/` (dos procesos individuales, no un equipo). Complementa a TALKING (coaching por texto + recordatorios) pero no comparte datos automáticamente con la app, y TALKING hoy solo existe para Mateo |
+| EQUIPO (coaching) | EQUIPO | En progreso | `EQUIPO/` — negocio compartido de **Nico y Mateo**: Nico diseña/construye, Mateo vende. A diferencia de TRADE/DROPY, Mateo chatea él mismo con esta skill desde su propia máquina (no se entera por fuera) — por eso vive acá y no en `cowork-nico`. Pendiente: hacer el onboarding de 8 preguntas (`diagnostico.md` todavía no existe) |
 
 ---
 
@@ -81,7 +82,8 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 ├── SKILLS/ESTETIK.md     ← Auditor visual y de experiencia de usuario (con PECAS)
 ├── SKILLS/TRADE.md       ← Coach de trading y psicología de mercados (forex/cripto, con FINANDO)
 ├── SKILLS/AUTOMATIZA.md  ← Detecta tareas repetitivas y las automatiza (scripts, n8n, hooks, bots)
-└── SKILLS/SPEAKY.md      ← Coach de inglés conversacional, práctica por escenarios reales (con PECAS, app TALKING)
+├── SKILLS/SPEAKY.md      ← Coach de inglés conversacional, práctica por escenarios reales (con PECAS, app TALKING)
+└── SKILLS/EQUIPO.md      ← Coach de negocio compartido Nico+Mateo (Nico construye, Mateo vende)
 │
 ├── APPS/                 ← Código de todos los proyectos
 │   ├── wallet-control/
@@ -90,6 +92,7 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 │   └── talking/
 │
 ├── TRADING/              ← Solo lo compartido de trading (nico.md, equipo.md, bitacora.md, con TRADE) — fuera de APPS/
+├── EQUIPO/               ← Negocio compartido de Nico y Mateo (diagnostico.md, roadmap.md, ideas.md, producto.md, ventas.md, con EQUIPO) — fuera de APPS/
 └── P.P/                  ← Datos personales por persona (NICO, SOFI, SEBAS, MATEO) — local-only, gitignorada, fuera de APPS/
 ```
 
@@ -109,6 +112,7 @@ CLAUDE.md  ←  Estás aquí — raíz de todo el sistema
 | Trading, psicología de mercados (con Sebas) | TRADE | "TRADE, hazme el test para saber en qué nivel estoy" |
 | Automatizar una tarea repetitiva | AUTOMATIZA | "AUTOMATIZA, tengo que hacer [tarea] cada semana a mano" |
 | Practicar inglés conversacional, coaching diario | SPEAKY | "SPEAKY, hazme el test para saber mi nivel" |
+| Negocio con Mateo (plan, ventas, hitos chicos) | EQUIPO | "EQUIPO, hagamos el test inicial" |
 
 ---
 
@@ -394,6 +398,8 @@ máquina del hermano, esto aplica en ambos sentidos: cualquiera de las dos máqu
 | 2026-08-20 | Agregada subsección "Construir sistema, no producto vacío" en "Principios de Desarrollo" — cualquier app/web/script que se cree debe nacer con estructura modular, git desde el primer commit, tests mínimos de la lógica core, versionado + `CHANGELOG.md`, y pensar el empaquetado/venta desde la Fase 0, no solo llegar rápido a un MVP descartable. Aplica a PECAS y PAKI (actualizadas con checklist y plantilla de `CHANGELOG.md`), y KILLER hereda el principio por defecto para cualquier skill nueva que genere y que cree código. Investigado antes el repo público `glebis/claude-skills` por pedido del usuario — no tenía una skill de arquitectura vendible lista para traer, pero sí conceptos aprovechables (tests con puertas de verificación, checklist de release con changelog/docs) que se adaptaron aquí en vez de importarse como archivos nuevos |
 | 2026-08-20 | Creada skill `AUTOMATIZA` (generada vía KILLER) — detecta tareas repetitivas en cualquier proyecto de `APPS/` o proceso personal/de negocio del usuario y las automatiza (scripts + Task Scheduler, workflows n8n, hooks de Claude Code, bots con Claude API), aplicando primero un check rápido de ROI (tiempo ahorrado vs. tiempo de construir/mantener) antes de automatizar cualquier cosa. Catálogo único de lo automatizado en `AUTOMATIZACIONES/registro.md` (raíz del repo, se crea la primera vez que haya algo real que registrar). Motivado por la revisión del repo público `glebis/claude-skills` — no tenía una skill de automatización transferible a este caso de uso (las suyas eran o muy generales o específicas al dueño del repo: YouTube, facturación alemana), así que se construyó una propia en vez de importar |
 | 2026-08-20 | El usuario movió `INDEPENDIENTE/` (con todo su contenido, incluido lo gitignorado en `NICO/`) de la raíz de `claude-workspace` a `cowork-nico/`, y confirmó que se queda ahí permanentemente — junto con las skills **FREE** y **HUNTER**, que también se mudaron (copiadas a `cowork-nico/SKILLS/` y a los comandos globales, eliminadas de `SKILLS/` aquí). Se quitó de este repo: la fila de `INDEPENDIENTE` en "Proyectos Activos", las referencias a FREE en el mapa del sistema y en "Cómo usar el sistema", la palabra clave `INDEPENDIENTE` (tabla y rama `elseif` en `.claude/hooks/proyecto-switch.ps1`), la fila de FREE/HUNTER en el registro de `KILLER.md`, y la fila `INDEPENDIENTE` de `APPS/palabras-clave.txt`. Detectado porque el usuario borró la carpeta sin avisar antes de un `TERMINAR` — se investigó en vez de commitear el borrado a ciegas (ver Protocolo de seguridad de git). **Nota para Mateo:** este borrado se propaga a tu máquina en el próximo pull — si tenías trabajo pendiente en `INDEPENDIENTE/`, `SKILLS/FREE.md` o `SKILLS/HUNTER.md` sin subir, avisa antes de sincronizar |
+| 2026-08-21 | El usuario movió `APPS/trade/equipo/` (bitácora y plan de equipo con Sebas) a `cowork-nico/equipo/`, para separarla del código de la app de Sebas (`APPS/trade/app/`) que sí se queda en `claude-workspace`. A diferencia de FREE/HUNTER, **TRADE no se mudó por completo** — sigue activa aquí (`SKILLS/TRADE.md`) para el coaching individual de Nico y Sebas vía `P.P/`, pero ahora referencia `equipo/` con ruta absoluta a `cowork-nico` en vez de una carpeta local. Se creó una copia adaptada en `cowork-nico/SKILLS/TRADE.md` + `.claude/hooks/empezar-sesion-sebas.ps1` + `.claude/settings.json` (nuevo ahí) para poder arrancar la sesión de equipo con la palabra clave `empezar sesion sebas` también desde `cowork-nico`, no solo desde aquí — mismo comportamiento final (PDF al Escritorio + borrador de Gmail al cerrar). Actualizadas las referencias sueltas a la ruta vieja en `SKILLS/TRADE.md`, el hook de aquí, la fila de `TRADE (coaching)` en "Proyectos Activos", y `P.P/NICO/etf-plan-nico.md` |
+| 2026-10-14 | Creada skill `EQUIPO` (a pedido de Nico) — coach de negocio para la dupla con su hermano Mateo: Nico diseña/construye, Mateo vende con su experiencia real cerrando clientes. A diferencia de TRADE (Sebas) y DROPY (Sofi, en `cowork-nico`), Mateo va a chatear él mismo con esta skill desde su propia máquina — por eso se creó acá, en `claude-workspace` (el repo que los dos hermanos ya sincronizan de verdad, con remoto real en GitHub), y no en `cowork-nico` (espacio personal de Nico, sin remoto, nunca llega a la máquina de Mateo). Reusa la heurística de desambiguación Nico/Mateo ya documentada arriba para saber con quién habla. Carpeta de trabajo nueva `EQUIPO/` (fuera de `APPS/` y de `P.P/`, es negocio compartido no dato personal), con onboarding de 8 preguntas que dispara la creación de `diagnostico.md` y `roadmap.md` la primera vez que se invoque — todavía no corrido, los archivos no existen aún. El roadmap que resulte debe cerrar cada fase en un hito chico y verificable (mismo principio que "mínimo 5 personas avisadas" de FREE o "primeras 15 ventas" de DROPY), por pedido explícito de Nico de generar confianza con victorias chicas antes de ir a lo grande. Copiada a `.claude/commands/equipo.md` (carpeta global de Nico) desde su creación; pendiente que Mateo copie `SKILLS/EQUIPO.md` a su propia carpeta global de comandos tras el próximo `git pull` — mismo paso manual ya documentado para SPEAKY |
 
 > **Comandos para entrenar este archivo:**
 > - "soy experto en [tema]" → agrega a la tabla de Expertise

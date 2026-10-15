@@ -19,9 +19,11 @@ from typing import Callable, Optional
 import anthropic
 import customtkinter as ctk
 import httpx
+from PIL import Image
 
 import tema
 from config import (
+    API_BASE_URL,
     LIMITE_MENSAJES_SESION,
     MAX_TOKENS_RESPUESTA,
     MODEL_ID,
@@ -29,6 +31,7 @@ from config import (
     WEB_SEARCH_TOOL,
     get_api_key,
 )
+from estadisticas_uso import registrar_mensaje
 from uso_mensual import limite_alcanzado, registrar_uso
 
 # Tope de reintentos si el loop server-side de busqueda web pausa
@@ -57,6 +60,19 @@ _TAMANO_MAXIMO_DOCUMENTO_BYTES = 32 * 1024 * 1024
 _ENTRADA_LINEAS_MIN = 1
 _ENTRADA_LINEAS_MAX = 5
 
+# Ancho de texto de las burbujas: se calcula contra el ancho real del area de
+# chat (ver _actualizar_wraplength) para que al agrandar o achicar la ventana
+# el texto se reacomode en vez de quedar con un ancho fijo. _WRAPLENGTH_INICIAL
+# solo se usa para los mensajes creados antes de que el canvas tenga tamano
+# real (el de bienvenida) - se corrigen solos en el primer <Configure>.
+_WRAPLENGTH_INICIAL = 300
+_WRAPLENGTH_MINIMO = 200
+_MARGEN_BURBUJA_PX = 60
+# Tamano maximo con el que se muestra una imagen generada dentro del chat
+# (ver _agregar_mensaje_imagen) - entra en el ancho minimo de la ventana.
+_ANCHO_MAXIMO_IMAGEN_PX = 260
+_ALTO_MAXIMO_IMAGEN_PX = 320
+
 
 def construir_intro_bienvenida(nombre: str) -> str:
     """Introduccion compartida al inicio del saludo de bienvenida de las 5
@@ -71,6 +87,20 @@ def construir_intro_bienvenida(nombre: str) -> str:
         "tus tareas diarias. Recorda que el te quiere mucho. "
     )
 
+
+# Se agrega al final del system prompt de las 5 skills (ver VistaChat.__init__)
+# - feedback directo de Sofi: las respuestas le resultaban largas y poco
+# concretas, y le daba pereza leerlas enteras. Vive aca y no repetido en cada
+# skills/<nombre>.py para que el estilo sea el mismo en las 5 y se ajuste en
+# un solo lugar.
+INSTRUCCION_ESTILO_RESPUESTA = (
+    "ESTILO DE RESPUESTA (muy importante): Sofi prefiere respuestas cortas y "
+    "concretas. Anda directo al punto, sin introducciones ni repetir lo que "
+    "ella ya dijo. Por defecto responde en pocas lineas; usa listas cortas "
+    "solo si de verdad ayudan. Da UNA recomendacion clara en vez de muchas "
+    "opciones. Si el tema es largo, da lo esencial primero y ofrece ampliar "
+    "si ella quiere, en vez de explicarlo todo de una."
+)
 
 _cliente: Optional[anthropic.Anthropic] = None
 _cliente_lock = threading.Lock()
@@ -113,6 +143,9 @@ def _obtener_cliente() -> anthropic.Anthropic:
             if _cliente is None:
                 _cliente = anthropic.Anthropic(
                     api_key=get_api_key(),
+                    # None = API de Anthropic (default del SDK); en modo de
+                    # prueba apunta al gateway local (ver config.py).
+                    base_url=API_BASE_URL,
                     http_client=httpx.Client(trust_env=False),
                 )
     return _cliente
@@ -136,7 +169,7 @@ class VistaChat(ctk.CTkFrame):
         # Se guarda como atributo propio (no hay wm_title en un Frame) -
         # se usa como remitente de las respuestas en el chat.
         self.titulo = titulo
-        self.system_prompt = system_prompt
+        self.system_prompt = system_prompt + "\n\n" + INSTRUCCION_ESTILO_RESPUESTA
         # Por defecto, las 5 skills tienen busqueda web habilitada.
         self.tools = tools if tools is not None else [WEB_SEARCH_TOOL]
         self.acento = acento or tema.BOTON_PRINCIPAL
@@ -167,6 +200,11 @@ class VistaChat(ctk.CTkFrame):
         self._placeholder_activo = False
         self._placeholder_texto_actual = "Escribe tu mensaje..."
         self._entrada_tiene_foco = False
+        # Etiquetas de texto ya creadas (burbujas y avisos), para poder
+        # reajustarles el wraplength cuando cambia el ancho de la ventana.
+        self._etiquetas_texto = []
+        self._wraplength_actual = None
+        self._wraplength_pendiente = None
         self._construir_ui(volver)
         if mensaje_bienvenida:
             # Burbuja fija que explica que hace la skill, mostrada como si la
@@ -236,7 +274,7 @@ class VistaChat(ctk.CTkFrame):
         # add="+" para no pisar el binding interno de CTkScrollableFrame que
         # ajusta el ancho del contenido al canvas.
         self.area_chat._parent_canvas.bind(
-            "<Configure>", lambda evento: self._actualizar_scrollbar(), add="+"
+            "<Configure>", lambda evento: self._al_configurar_canvas(), add="+"
         )
 
         # Barra de adjunto pendiente - arranca sin empaquetar (oculta) y solo
@@ -338,58 +376,125 @@ class VistaChat(ctk.CTkFrame):
         )
         self.boton_enviar.pack(side="right")
 
+    def _crear_contenedor_burbuja(self, remitente: str):
+        """Fila + contenedor alineado (propios a la derecha, skill a la
+        izquierda) con el nombre del remitente arriba - comun a las burbujas
+        de texto y a las de imagen. Devuelve (contenedor, es_propio)."""
+        fila = ctk.CTkFrame(self.area_chat, fg_color="transparent")
+        fila.pack(fill="x", pady=4)
+
+        es_propio = remitente == "Sofi"
+        contenedor = ctk.CTkFrame(fila, fg_color="transparent")
+        contenedor.pack(
+            side="right" if es_propio else "left",
+            anchor="e" if es_propio else "w",
+        )
+
+        ctk.CTkLabel(
+            contenedor,
+            text=remitente,
+            text_color=tema.TEXTO_SECUNDARIO,
+            font=ctk.CTkFont(size=11, weight="bold"),
+        ).pack(anchor="e" if es_propio else "w", padx=4)
+        return contenedor, es_propio
+
     def _agregar_mensaje(self, remitente: str, texto: str):
         """Agrega un mensaje al chat como burbuja (estilo WhatsApp): los
         propios a la derecha, las respuestas de la skill a la izquierda. Los
         avisos del sistema (errores, limites) van centrados y sin burbuja,
         para no confundirlos con una respuesta real de la skill."""
-        fila = ctk.CTkFrame(self.area_chat, fg_color="transparent")
-        fila.pack(fill="x", pady=4)
+        wraplength = self._wraplength_actual or _WRAPLENGTH_INICIAL
 
         if remitente == "Sistema":
-            ctk.CTkLabel(
+            fila = ctk.CTkFrame(self.area_chat, fg_color="transparent")
+            fila.pack(fill="x", pady=4)
+            etiqueta = ctk.CTkLabel(
                 fila,
                 text=texto,
                 text_color=tema.TEXTO_SECUNDARIO,
                 font=ctk.CTkFont(size=12, slant="italic"),
-                wraplength=340,
+                wraplength=wraplength,
                 justify="center",
-            ).pack(anchor="center")
-        else:
-            es_propio = remitente == "Sofi"
-            contenedor = ctk.CTkFrame(fila, fg_color="transparent")
-            contenedor.pack(
-                side="right" if es_propio else "left",
-                anchor="e" if es_propio else "w",
             )
-
-            ctk.CTkLabel(
-                contenedor,
-                text=remitente,
-                text_color=tema.TEXTO_SECUNDARIO,
-                font=ctk.CTkFont(size=11, weight="bold"),
-            ).pack(anchor="e" if es_propio else "w", padx=4)
-
-            burbuja = ctk.CTkLabel(
+            etiqueta.pack(anchor="center")
+        else:
+            contenedor, es_propio = self._crear_contenedor_burbuja(remitente)
+            etiqueta = ctk.CTkLabel(
                 contenedor,
                 text=texto,
                 fg_color=tema.BOTON_PRINCIPAL if es_propio else self.acento,
                 text_color=tema.TEXTO,
                 corner_radius=16,
-                wraplength=300,
+                wraplength=wraplength,
                 justify="left",
                 anchor="w",
             )
-            burbuja.pack(
+            etiqueta.pack(
                 anchor="e" if es_propio else "w",
                 ipadx=10,
                 ipady=6,
             )
 
+        self._etiquetas_texto.append(etiqueta)
         # _parent_canvas es el Canvas interno real que maneja el scroll (no
         # hay metodo publico en CTkScrollableFrame para esto). Se agenda con
         # after() porque hace falta que pack() ya haya actualizado la region
         # de scroll antes de leerla/moverla.
+        self.after(10, self._refrescar_scroll)
+
+    def _agregar_mensaje_imagen(self, remitente: str, ruta_imagen: Path):
+        """Burbuja con una imagen (generada por imagen_higgsfield.py),
+        escalada para entrar en el chat manteniendo la proporcion. Se llama
+        siempre desde el hilo principal (los manejadores la agendan con
+        after(), ver imagen_higgsfield.py)."""
+        try:
+            imagen_pil = Image.open(ruta_imagen)
+            imagen_pil.load()
+        except (OSError, ValueError):
+            self._agregar_mensaje("Sistema", "No se pudo mostrar la imagen generada.")
+            return
+
+        ancho, alto = imagen_pil.size
+        escala = min(_ANCHO_MAXIMO_IMAGEN_PX / ancho, _ALTO_MAXIMO_IMAGEN_PX / alto, 1.0)
+        imagen = ctk.CTkImage(
+            light_image=imagen_pil,
+            dark_image=imagen_pil,
+            size=(max(1, int(ancho * escala)), max(1, int(alto * escala))),
+        )
+
+        contenedor, es_propio = self._crear_contenedor_burbuja(remitente)
+        ctk.CTkLabel(
+            contenedor,
+            image=imagen,
+            text="",
+            fg_color=tema.BOTON_PRINCIPAL if es_propio else self.acento,
+            corner_radius=16,
+        ).pack(anchor="e" if es_propio else "w", ipadx=6, ipady=6)
+
+        self.after(10, self._refrescar_scroll)
+
+    def _al_configurar_canvas(self):
+        self._actualizar_scrollbar()
+        # <Configure> llega por cada pixel mientras se arrastra el borde de
+        # la ventana - se agrupa y se reajusta una sola vez cuando para.
+        if self._wraplength_pendiente is not None:
+            self.after_cancel(self._wraplength_pendiente)
+        self._wraplength_pendiente = self.after(150, self._actualizar_wraplength)
+
+    def _actualizar_wraplength(self):
+        """Reajusta el ancho de texto de todas las burbujas al ancho real del
+        area de chat, asi los mensajes ya escritos tambien se reacomodan al
+        agrandar/achicar la ventana (no solo los nuevos)."""
+        self._wraplength_pendiente = None
+        ancho_canvas = self.area_chat._parent_canvas.winfo_width()
+        if ancho_canvas <= 1:
+            return  # todavia sin tamano real (no mapeado)
+        nuevo = max(_WRAPLENGTH_MINIMO, ancho_canvas - _MARGEN_BURBUJA_PX)
+        if nuevo == self._wraplength_actual:
+            return
+        self._wraplength_actual = nuevo
+        for etiqueta in self._etiquetas_texto:
+            etiqueta.configure(wraplength=nuevo)
         self.after(10, self._refrescar_scroll)
 
     def _refrescar_scroll(self):
@@ -553,6 +658,7 @@ class VistaChat(ctk.CTkFrame):
             self.historial.append({"role": "user", "content": mensaje})
 
         self._mensajes_enviados += 1
+        registrar_mensaje(self.titulo)
 
         self._esperando_respuesta = True
         self._placeholder_texto_actual = "Esperando respuesta..."

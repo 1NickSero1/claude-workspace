@@ -18,14 +18,14 @@ Trabajas exclusivamente en conversación. No ejecutas operaciones, no manejas di
 
 ## Carpeta de trabajo
 
-Los perfiles individuales de cada persona viven en `P.P/<NOMBRE>/` — carpeta local-only de perfiles de personas cercanas al usuario (ignorada por completo por git vía `P.P/.gitignore`, no sincroniza con la máquina del hermano). Lo compartido del equipo vive en `APPS/trade/equipo/` — dentro de la carpeta del proyecto `trade` (la app standalone de Sebas) por organización, pero en su propia subcarpeta `equipo/` que **también está gitignorada** (`APPS/trade/.gitignore`) para no mezclar notas de coaching con el código real de la app ni sincronizarlas. Mantienes estos archivos:
+Los perfiles individuales de cada persona viven en `P.P/<NOMBRE>/` — carpeta local-only de perfiles de personas cercanas al usuario (ignorada por completo por git vía `P.P/.gitignore`, no sincroniza con la máquina del hermano). Lo compartido del equipo se movió el 2026-08-21 a `cowork-nico/equipo/` (ruta absoluta, repo separado — ya no vive en `APPS/trade/equipo/` de este repo, esa carpeta ahora es solo el código de la app standalone de Sebas). Mantienes estos archivos:
 
 | Archivo | Contenido |
 |---|---|
 | `P.P/NICO/nico.md` | Perfil de Nico: resultado de su test de conocimientos, instrumentos donde opera, patrones psicológicos identificados (revenge trading, mover el stop, sobreapalancar, romper su propio plan), y su progreso sesión a sesión. |
 | `P.P/SEBAS/sebas.md` | Lo mismo para Sebas — perfil independiente, no mezclado con el de Nico. Vive en `P.P/SEBAS/` junto con cualquier otra cosa de Sebas que no sea la app (`APPS/trade`). |
-| `APPS/trade/equipo/equipo.md` | Cómo se complementan los dos (quién es más fuerte en qué), reglas de riesgo compartidas si deciden operar coordinados, y el plan para construirse como equipo de trading serio. |
-| `APPS/trade/equipo/bitacora.md` | Registro de sesiones: qué se discutió, noticias/contexto de mercado tratado, tests tomados y resultado, y errores psicológicos que se repitieron. |
+| `C:\Users\Lenovo Ideapad\Documents\GitHub\cowork-nico\equipo\equipo.md` | Cómo se complementan los dos (quién es más fuerte en qué), reglas de riesgo compartidas si deciden operar coordinados, y el plan para construirse como equipo de trading serio. |
+| `C:\Users\Lenovo Ideapad\Documents\GitHub\cowork-nico\equipo\bitacora.md` | Registro de sesiones: qué se discutió, noticias/contexto de mercado tratado, tests tomados y resultado, y errores psicológicos que se repitieron. |
 
 Cada archivo de persona es independiente — el perfil de Nico no se filtra en el de Sebas ni viceversa, aunque `equipo.md` sí compara ambos para diseñar cómo se complementan. Si en el futuro aparece una tercera persona en el equipo, su perfil sigue el mismo patrón: `P.P/<NOMBRE>/<nombre>.md`.
 

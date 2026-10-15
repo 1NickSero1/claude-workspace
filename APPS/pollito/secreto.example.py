@@ -10,3 +10,9 @@ NameError apenas se importe.
 """
 
 API_KEY = "pega-aqui-tu-api-key-real-de-Anthropic"
+
+# Credenciales de Higgsfield (generacion de imagenes, ver imagen_higgsfield.py).
+# Higgsfield da un par "Key ID" + "Key Secret" - van los dos, entre comillas.
+# Si se dejan vacios, la app anda igual pero sin generar imagenes.
+HIGGSFIELD_KEY_ID = ""
+HIGGSFIELD_KEY_SECRET = ""
