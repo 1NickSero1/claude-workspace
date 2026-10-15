@@ -73,27 +73,12 @@ siguiente, no para cumplir una fecha.
 
 ---
 
-## Pendiente: validar con Mateo (próxima vez que él invoque EQUIPO)
+## Validado por Mateo (2026-10-15)
 
-Todo este diagnóstico y roadmap lo respondió Nico solo — Mateo todavía no confirmó directamente
-que las ideas/prioridad descriptas acá coinciden con lo que él tiene en la cabeza. La próxima vez
-que Mateo escriba "EQUIPO" (identificado por la heurística de máquina), antes de darle cualquier
-tarea nueva:
-
-1. Resumirle en 2-3 líneas el estado actual: las dos ideas que surgieron (tarjetas NFC/QR de pago
-   priorizada, bot de WhatsApp pausado en `ideas.md`), por qué se priorizó así, y que la meta es
-   desarrollo personal/confianza, no una cifra de ingreso.
-2. Preguntarle directo: "¿esto coincide con las ideas que tenés vos, o hay algo distinto en tu
-   cabeza?" — si menciona algo que no está acá, no descartarlo ni forzarlo a encajar: anotarlo
-   (en `ideas.md` si es otra idea, o ajustando este roadmap si cambia la prioridad) y avisarle a
-   Nico que hubo un ajuste.
-3. Si confirma que coincide, su tarea de esta semana mientras Nico busca proveedores de tags NFC:
-   **pensar 1-2 negocios cercanos o conocidos candidatos para la Fase 2** (sin contactarlos ni
-   mostrarles nada todavía — el producto ni existe en prototipo real). Es trabajo de preparación,
-   no adelanta la regla del vendedor de la Fase 1.
-
-(Esta sección se puede borrar una vez Mateo confirme — queda la validación reflejada directo en el
-diagnóstico/roadmap de arriba si hizo falta ajustar algo.)
+Mateo confirmó que las ideas y la prioridad coinciden con lo que tiene en la cabeza. Pidió además un
+roadmap propio para el lado de venta: definir prospecto, lista de negocios y filtro por conveniencia,
+con la cercanía y confianza con la persona como base. Está en `prospeccion.md` y alimenta la Fase 2
+de este roadmap (primer negocio real).
 
 ---
 
