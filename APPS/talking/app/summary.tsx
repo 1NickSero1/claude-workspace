@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { getLastSessionResult } from "../src/lib/sessionStore";
+import { colors, radius, shadow, spacing } from "../src/theme";
 import type { ProgressData, SessionRecord } from "../src/types";
 
 export default function SummaryScreen() {
@@ -29,15 +30,20 @@ export default function SummaryScreen() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.streakBox}>
-          <Text style={styles.streakNumber}>{progress.streak}</Text>
-          <Text style={styles.streakLabel}>{progress.streak === 1 ? "día seguido" : "días seguidos"}</Text>
+          <Text style={styles.streakEmoji}>{progress.streak > 0 ? "🔥" : "💤"}</Text>
+          <View>
+            <Text style={styles.streakNumber}>{progress.streak}</Text>
+            <Text style={styles.streakLabel}>{progress.streak === 1 ? "día seguido" : "días seguidos"}</Text>
+          </View>
         </View>
 
         <Text style={styles.scenarioTitle}>{session.scenarioTitle}</Text>
         <Text style={styles.turnCount}>{session.turnCount} intercambios</Text>
 
         <Text style={styles.sectionTitle}>Feedback de SPEAKY</Text>
-        <Text style={styles.feedback}>{session.feedback}</Text>
+        <View style={styles.feedbackCard}>
+          <Text style={styles.feedback}>{session.feedback}</Text>
+        </View>
       </ScrollView>
 
       <Pressable style={styles.button} onPress={() => router.replace("/")}>
@@ -48,18 +54,39 @@ export default function SummaryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  content: { padding: 24, alignItems: "center" },
-  streakBox: { alignItems: "center", marginBottom: 20 },
-  streakNumber: { fontSize: 44, fontWeight: "700", color: "#1c1c1e" },
-  streakLabel: { fontSize: 14, color: "#6b7280" },
-  scenarioTitle: { fontSize: 20, fontWeight: "700", color: "#1c1c1e", textAlign: "center" },
-  turnCount: { fontSize: 13, color: "#6b7280", marginTop: 4, marginBottom: 20 },
-  sectionTitle: { fontSize: 15, fontWeight: "600", color: "#1c1c1e", alignSelf: "flex-start", marginBottom: 8 },
-  feedback: { fontSize: 15, color: "#374151", lineHeight: 22 },
-  title: { fontSize: 16, color: "#1c1c1e" },
-  link: { fontSize: 15, color: "#1c7ed6", fontWeight: "600" },
-  button: { margin: 20, backgroundColor: "#1c7ed6", borderRadius: 14, paddingVertical: 14, alignItems: "center" },
+  container: { flex: 1, backgroundColor: colors.bg },
+  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: spacing.md },
+  content: { padding: spacing.lg, alignItems: "center" },
+  streakBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.bgSubtle,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    ...shadow,
+  },
+  streakEmoji: { fontSize: 28 },
+  streakNumber: { fontSize: 26, fontWeight: "800", color: colors.text, textAlign: "center" },
+  streakLabel: { fontSize: 12, color: colors.textMuted },
+  scenarioTitle: { fontSize: 20, fontWeight: "700", color: colors.text, textAlign: "center" },
+  turnCount: { fontSize: 13, color: colors.textMuted, marginTop: spacing.xs, marginBottom: spacing.lg },
+  sectionTitle: { fontSize: 15, fontWeight: "600", color: colors.text, alignSelf: "flex-start", marginBottom: spacing.sm },
+  feedbackCard: {
+    width: "100%",
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    ...shadow,
+  },
+  feedback: { fontSize: 15, color: colors.text, lineHeight: 22 },
+  title: { fontSize: 16, color: colors.text },
+  link: { fontSize: 15, color: colors.primary, fontWeight: "600" },
+  button: { margin: spacing.lg, backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 14, alignItems: "center" },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });
