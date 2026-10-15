@@ -24,6 +24,23 @@ siguiente, no para cumplir una fecha.
 
 ---
 
+## Vista conjunta — quién va en qué paso
+
+Resumen de los dos roadmaps. El detalle de Mateo está en `prospeccion.md`. Marcar con [x] cuando se
+cierre el hito de cada paso.
+
+| Fase de producto (Nico) | Estado | Paso de prospección (Mateo) | Estado |
+|---|---|---|---|
+| Fase 0 — Definir el producto y conseguir el primer tag | [ ] | P0 — Definir prospecto ideal + scorecard | [ ] |
+| Fase 1 — Prototipo que los dos se creen (pago de prueba) | [ ] | P1 — Lista larga de 20-30 negocios · P2 — Filtrar, top 5 y 1-2 pilotos · P3 — Acercamiento sin vender | [ ] |
+| Fase 2 — Primer negocio real (piloto) | [ ] | P4 — Pitch, oferta y entrega del primer tag | [ ] |
+| Fase 3 — Ajustar y repetir (segundo negocio con cobro) | [ ] | Seguimiento en `ventas.md` | [ ] |
+| Fase 4 — Hablar de números | [ ] | — | [ ] |
+
+**Última actualización:** 2026-10-15 — nada cerrado todavía; Nico en Fase 0, Mateo en P0.
+
+---
+
 ## Fase 0 — Definir el producto real (sin fecha fija, se cierra cuando esté claro)
 
 - [ ] Nico define el flujo técnico exacto: tag NFC/QR físico → link de pago Nequi o Bre-B
